@@ -1,0 +1,2 @@
+gcc -o iguana *.c -lcrypto -lpthread -lm
+
