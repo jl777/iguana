@@ -1,0 +1,29 @@
+{
+    "name": "iguana",
+    "url": "iguana.pexe",
+  "short_name": "iguana",
+  "version": "44.1.2",
+  "manifest_version": 2,
+  "description": "iguana",
+  "offline_enabled": true,
+  "icons": {
+    "128": "icon128.png"
+  },
+  "app": {
+    "background": {
+      "scripts": ["background.js"]
+    }
+  },
+    {
+        "name": "iguana",
+        "sockets": {
+            "tcp": { "connect": "" },
+            "tcpServer": { "listen": "127.0.0.1:*" }
+        },
+    "permissions": [
+                    "unlimitedStorage",
+                    "nativeMessaging","networking.config",
+                    "dns", "browser", "filesystem", "storage",
+                    "system.storage", "system.display", "system.network","system.cpu"
+                ]
+}
