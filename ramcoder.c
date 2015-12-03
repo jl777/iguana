@@ -19,7 +19,7 @@
 #ifndef crypto777_ramcoder_h
 #define crypto777_ramcoder_h
 #include <stdio.h>
-#include "../includes/curve25519.h"
+#include "includes/curve25519.h"
 
 struct huffstream { uint8_t *ptr,*buf; uint32_t bitoffset,maski,endpos; uint32_t allocsize:31,allocated:1; };
 typedef struct huffstream HUFF;
