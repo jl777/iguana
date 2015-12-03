@@ -363,6 +363,7 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     iguana_syncmap(&coin->unspents->M,0);
     iguana_syncmap(&coin->unspents->M2,0);
     iguana_syncmap(&coin->spends->M,0);
+    iguana_syncmap(&coin->spends->M2,0);
     iguana_syncmap(&coin->txids->M,0);
     iguana_syncmap(&coin->pkhashes->M,0);
     iguana_syncmap(&coin->pkhashes->M2,0);

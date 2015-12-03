@@ -209,6 +209,7 @@ uint32_t iguana_addspend(struct iguana_info *coin,uint64_t *spentvaluep,uint32_t
     unspentind = coin->T[spendtxidind].firstvout + vout;
     if ( unspentind == 0 || (S.unspentind= unspentind) >= coin->latest.dep.numunspents )
         printf(">>>>>>>>>>>> height.%d T%d error unspent.%d overflow vs %d spend.%d\n",blocknum,txidind,unspentind,coin->latest.dep.numunspents,spendind), getchar();
+    coin->Uextras[unspentind].spendind = spendind;
     buf[0] = unspentind;
     buf[1] = spendind;
     //if ( coin->blocks.parsedblocks == 0 || coin->loadedLEDGER.snapshot.height != coin->blocks.parsedblocks )
