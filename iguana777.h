@@ -18,7 +18,7 @@
 
 //#define IGUANA_DISABLEPEERS
 #ifdef __linux__
-#define IGUANA_MAXPEERS 128
+#define IGUANA_MAXPEERS 64
 #define IGUANA_MAPHASHTABLES 1
 #define IGUANA_MAXMEMALLOCATED (1024L * 1024 * 1024L * 32)
 #else
@@ -81,6 +81,8 @@ void PostMessage(const char* format, ...);
 
 #ifdef __PNACL
 #define printf PostMessage
+#define MS_ASYNC	1		/* Sync memory asynchronously.  */
+#define MS_SYNC		4		/* Synchronous memory sync.  */
 #else
 #define PostMessage printf
 #endif

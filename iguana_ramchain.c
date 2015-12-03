@@ -272,13 +272,89 @@ uint32_t iguana_addtxid(struct iguana_info *coin,uint32_t txidind,bits256 txid,u
     return(0);
 }
 
+int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acct,uint32_t pkind)
+{
+    uint32_t prev,firstunspentind,firstspendind,unspentind; int64_t credits,debits,Udebits;
+    credits = debits = Udebits = 0;
+    if ( acct->lastspendind >= coin->latest.dep.numspends || acct->lastunspentind >= coin->latest.dep.numunspents )
+        return(-1);
+    else
+    {
+        prev = acct->lastunspentind, firstunspentind = 0;
+        while ( prev != 0 )
+        {
+            firstunspentind = prev;
+            if ( coin->Uextras[prev].prevunspentind >= prev )
+            {
+                printf("pkind.%d illegal coin->U[%d].prevunspentind of %d\n",pkind,prev,coin->Uextras[prev].prevunspentind);
+                return(-2);
+            }
+            if ( coin->U[prev].pkind != pkind )
+            {
+                printf("pkind.%d fatal pkind mismatch coin->U[%d].pkind %d != %d pkind\n",pkind,prev,coin->U[prev].pkind,pkind);
+                return(-3);
+            }
+            if ( coin->Uextras[prev].spendind >= coin->latest.dep.numspends )
+            {
+                printf("pkind.%d coin->Uextras[%d] %d >= %d coin->latest.dep.numspends\n",pkind,prev,coin->Uextras[prev].spendind,coin->latest.dep.numspends);
+                return(-4);
+            }
+            if ( coin->Uextras[prev].spendind == 0 )
+                credits += coin->U[prev].value;
+            else Udebits += coin->U[prev].value;
+            prev = coin->Uextras[prev].prevunspentind;
+        }
+        if ( firstunspentind != coin->P[pkind].firstunspentind )
+        {
+            printf("pkind.%d firstunspentind %u != %u coin->P[pkind].firstunspentind\n",pkind,firstunspentind,coin->P[pkind].firstunspentind );
+            return(-5);
+        }
+        prev = acct->lastspendind, firstspendind = 0;
+        while ( prev != 0 )
+        {
+            firstspendind = prev;
+            if ( (unspentind= coin->S[prev].unspentind) == 0 || unspentind >= coin->latest.dep.numunspents )
+            {
+                printf("pkind.%d S[%d] -> U%d illegal numunspents.%d\n",pkind,prev,unspentind,coin->latest.dep.numunspents);
+                return(-6);
+            }
+            if ( coin->Uextras[prev].spendind != prev )
+            {
+                printf("mismatch: pkind.%d coin->Uextras[%d].spendind %d != %d prev\n",pkind,prev,coin->Uextras[prev].spendind,prev);
+                return(-7);
+            }
+            debits += coin->U[unspentind].value;
+            prev = coin->Sextras[prev].prevspendind;
+        }
+        if ( firstspendind != coin->pkextras[pkind].firstspendind )
+        {
+            printf("firstspendind %u != %u coin->P[%d].firstspendind\n",firstspendind,coin->pkextras[pkind].firstspendind,pkind);
+            return(-8);
+        }
+    }
+    if ( debits != Udebits )
+    {
+        printf("pkind.%d: debits %.8f != Udebits %.8f\n",pkind,dstr(debits),dstr(Udebits));
+        return(-9);
+    }
+    if ( acct->balance != (credits - debits) )
+    {
+        printf("pkind.%d balance mismatch %.8f != %.8f (%.8f - %.8f)\n",pkind,dstr(acct->balance),dstr(credits)-dstr(debits),dstr(credits),dstr(debits));
+        if ( credits < debits )
+            return(-10);
+        acct->balance = (credits - debits);
+    }
+    return(acct->balance);
+}
+
 int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *totalfeesp,uint16_t *numvoutsp,uint16_t *numvinsp,int32_t blocknum,int32_t txind,struct iguana_msgtx *tx,uint32_t txidind,uint32_t firstvout,uint32_t firstvin)
 {
-    uint32_t t,spendtxidind,spentind,unspentind,spendind; int64_t inputs,outputs; uint64_t spentvalue,reward;
+    uint32_t t,spendtxidind,spentind,unspentind,spendind,pkind; int64_t inputs,outputs; uint64_t spentvalue,reward;
     int32_t i,numvins=0,numvouts=0; struct iguana_block *block=0,space; struct iguana_msgvin *vin;
     *numvinsp = *numvoutsp = 0;
     unspentind = firstvout;
     spendind = firstvin;
+    pkind = coin->latest.dep.numpkinds;
     //printf("ramchain blocknum.%d firstvin.%d firstvout.%d vouts.%d vins.%d tx.%p txid.(%s)\n",blocknum,firstvin,firstvout,tx->tx_out,tx->tx_in,tx,bits256_str(tx->txid));
     if ( blocknum != coin->blocks.parsedblocks )
     {
@@ -337,6 +413,13 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
                 printf("FEECALC ERROR %s outputs %.8f > inputs %.8f\n",bits256_str(tx->txid),dstr(outputs),dstr(inputs));
             }
             (*totalfeesp) += (outputs - inputs);
+            while ( pkind < coin->latest.dep.numpkinds )
+            {
+                int64_t err;
+                if ( (err= iguana_verifyaccount(coin,&coin->accounts[pkind],pkind)) < 0 )
+                    printf("pkind.%d err.%lld %.8f last.(U%d S%d)\n",pkind,(long long)err,dstr(coin->accounts[pkind].balance),coin->accounts[pkind].lastunspentind,coin->accounts[pkind].lastspendind), getchar();
+                pkind++;
+            }
             return(0);
         } else printf("ERROR block.%u got %d vs txidind.%d\n",blocknum,t,txidind), getchar();
     } else printf("ERROR ramchain_parsetx error blocknum.%u block.%p 1st.%d %d %d\n",blocknum,block,txidind,firstvin,firstvout), getchar();
@@ -418,79 +501,4 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     } //else printf("loaded.%d vs parsed.%d\n",coin->loadedLEDGER.snapshot.height,coin->blocks.parsedblocks);
     coin->blocks.parsedblocks++;
     return(0);
-}
-
-int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acct,uint32_t pkind)
-{
-    uint32_t prev,firstunspentind,firstspendind,unspentind; int64_t credits,debits,Udebits;
-    credits = debits = Udebits = 0;
-    if ( acct->lastspendind >= coin->latest.dep.numspends || acct->lastunspentind >= coin->latest.dep.numunspents )
-        return(-1);
-    else
-    {
-        prev = acct->lastunspentind, firstunspentind = 0;
-        while ( prev != 0 )
-        {
-            firstunspentind = prev;
-            if ( coin->Uextras[prev].prevunspentind >= prev )
-            {
-                printf("pkind.%d illegal coin->U[%d].prevunspentind of %d\n",pkind,prev,coin->Uextras[prev].prevunspentind);
-                return(-2);
-            }
-            if ( coin->U[prev].pkind != pkind )
-            {
-                printf("pkind.%d fatal pkind mismatch coin->U[%d].pkind %d != %d pkind\n",pkind,prev,coin->U[prev].pkind,pkind);
-                return(-3);
-            }
-            if ( coin->Uextras[prev].spendind >= coin->latest.dep.numspends )
-            {
-                printf("pkind.%d coin->Uextras[%d] %d >= %d coin->latest.dep.numspends\n",pkind,prev,coin->Uextras[prev].spendind,coin->latest.dep.numspends);
-                return(-4);
-            }
-            if ( coin->Uextras[prev].spendind == 0 )
-                credits += coin->U[prev].value;
-            else Udebits += coin->U[prev].value;
-            prev = coin->Uextras[prev].prevunspentind;
-        }
-        if ( firstunspentind != coin->P[pkind].firstunspentind )
-        {
-            printf("pkind.%d firstunspentind %u != %u coin->P[pkind].firstunspentind\n",pkind,firstunspentind,coin->P[pkind].firstunspentind );
-            return(-5);
-        }
-        prev = acct->lastspendind, firstspendind = 0;
-        while ( prev != 0 )
-        {
-            firstspendind = prev;
-            if ( (unspentind= coin->S[prev].unspentind) == 0 || unspentind >= coin->latest.dep.numunspents )
-            {
-                printf("pkind.%d S[%d] -> U%d illegal numunspents.%d\n",pkind,prev,unspentind,coin->latest.dep.numunspents);
-                return(-6);
-            }
-            if ( coin->Uextras[prev].spendind != prev )
-            {
-                printf("mismatch: pkind.%d coin->Uextras[%d].spendind %d != %d prev\n",pkind,prev,coin->Uextras[prev].spendind,prev);
-                return(-7);
-            }
-            debits += coin->U[unspentind].value;
-            prev = coin->Sextras[prev].prevspendind;
-        }
-        if ( firstspendind != coin->P[pkind].firstunspentind )
-        {
-            printf("firstspendind %u != %u coin->P[%d].firstunspentind\n",firstspendind,coin->P[pkind].firstunspentind,pkind);
-            return(-8);
-        }
-    }
-    if ( debits != Udebits )
-    {
-        printf("pkind.%d: debits %.8f != Udebits %.8f\n",pkind,dstr(debits),dstr(Udebits));
-        return(-9);
-    }
-    if ( acct->balance != (credits - debits) )
-    {
-        printf("pkind.%d balance mismatch %.8f != %.8f (%.8f - %.8f)\n",pkind,dstr(acct->balance),dstr(credits)-dstr(debits),dstr(credits),dstr(debits));
-        if ( credits < debits )
-            return(-6);
-        acct->balance = (credits - debits);
-    }
-    return(acct->balance);
 }

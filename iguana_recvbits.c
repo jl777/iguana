@@ -232,7 +232,7 @@ int32_t iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struc
         ptr->numtx = numtx;
         ptr->origdatalen = origdatalen;
         if ( (rand() % 1000) == 0 )
-            printf("%s recv.%d ptr.%p datalen.%d orig.%d %.3f | parsed.%d hwm.%d longest.%d | %d/%d\n",addr != 0 ? addr->ipaddr : "local",block->height,ptr,datalen,origdatalen,(double)origdatalen/datalen,coin->blocks.parsedblocks,coin->blocks.hwmheight,coin->longestchain,iguana_updatewaiting(coin,coin->blocks.parsedblocks,coin->width*10),coin->width*10);
+            printf("%s recv.%d ptr.%p datalen.%d orig.%d %.3f | parsed.%d hwm.%d longest.%d | %d/%d elapsed %.2f\n",addr != 0 ? addr->ipaddr : "local",block->height,ptr,datalen,origdatalen,(double)origdatalen/datalen,coin->blocks.parsedblocks,coin->blocks.hwmheight,coin->longestchain,iguana_updatewaiting(coin,coin->blocks.parsedblocks,coin->width*10),coin->width*10,(double)(time(NULL)-coin->starttime)/60.);
         coin->R.recvblocks[block->height] = ptr;
     }
     return(0);

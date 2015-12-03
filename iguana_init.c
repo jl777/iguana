@@ -391,16 +391,9 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     return((uint32_t)time(NULL));
 }
 
-// 864e9e8f6fa895d5 20b1148e0c3e4fdc 382603ea5c0e9deb 6036aec0e49c7e8a ea9aaf327b1ea86d 1570da973925b34 -> 52f09880d2114b99ff6819c7fa30b0bd8275f1fee96ae48e19a9e650b020def9 ledgerhashes.10000
-// 28040fd8026fbe85 386c1c45ea684a6b e3106885a7f171f1 99246925e3a4028c a5b27862e4ffffbe f86a5f28b489aeba -> d4e5290695ec3e1dcab3b1d63969c323411f5b93020df785cc29a7f93400ab95 ledgerhashes.20000
-// d29229108717c41c 8501a52f63b1525a 8b55034f62caca1d e5f6c9545df9d936 13e8cfb49b764753 d89b35dbc854459e -> syncs 0781bd3828c5377ff05b4da29f22520b4d77b67ec6be68688c7745c037104212 ledgerhashes.30000
-// d2c74d60e03a6721 e7b37a5842389cee 791cc1f24b79f6d1 68a23c566d2f8d1e f8c3247db868f78d b08282a26a7af995 -> syncs 63ae160f1d90a2345afb0eb54d973d460e2e908b7eb09240c3b55fd1655e05f6 ledgerhashes.40000
-// 652f50787d82d6d3 fc1b7f3ad9f472a3 d416cbb5d7f5f052 971d321e572a71e8 d9bfe762f997045a 5867415f7b2e555a -> syncs b4727eb6d482c235a93e9bea2325756661453420c0391168ca5449e95341bb4b ledgerhashes.50000
-// dc7d53fbcf579086 c70a495512127a89 cc9828bbc618578e 78a07c77cef1da02 6207a25ba7f6f685 129910e33595af68 -> syncs 962988a516ec87eba953db349ddc8258f59289eef5bcc0421ec9278d9b8982ef ledgerhashes.60000
-// 20e90d2a062149d0 ebe47cabb86e7e38 ec695e31c7652e44 4bd8636b86464637 e07b59972da36afb daf46bd674c521e0 -> syncs 3a6c4a6b5a8ca298972c5a4e7b6b35f6613cc202f3664675d74456261015ec15 ledgerhashes.70000
-// 215c5dc623388024 8f8e60823a0153d9 185239156ba1bc7c b521fbddfe6e9acb c536ff28eba4ca10 b4d083c2b99b8962 -> syncs 060c5494fc354fe07241fa8110f9bc760471d2fe2f8cd4e8d2c58a09e2dabdbf ledgerhashes.80000
-// c0131624b3829a40 25e9d7e96fded5a1 f6c1dc1d9163ca0c a0732a6dc326c592 e4b9ead381b2796c ceaaaedb74af39b5 -> syncs 48c378d00510da4c77d080931444494992d1ac4277d51a46e4654477ed466337 ledgerhashes.90000
-// 68c3fc37f1c64d66 ba7f9a8359caa311 fdc2759d3f5d5900 7e25cc8f7d3190c4 2a998a8fe79ee30b b7457471e500cc38 -> syncs b562631054b6718cb9af0b16b823dc05e9bfbe99f6b107d1bb3d86acdc83b615 ledgerhashes.100000
+// 68c3fc37f1c64d66 159e7589c5bd3942 fdc2759d3f5d5900 f278ca55263867ae 2a998a8fe79ee30b b7457471e500cc38 -> syncs adc0d3923d847f2b201e6b847825d827257c91e54a78dc52ec184b9345c56c8b ledgerhashes.100000
+// 53faf4c08ae7cd66 60af0f6074a4460a 7d695aa60788e52c 45a5c96ef55a1797 d2d5788986315066 27372b0616caacf0 -> syncs 8827b2b6d94ef189d2726f548068da3d69873b1a0a43f2dcde7501d8b26eba19 ledgerhashes.200000
+
 
 
 int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
@@ -702,27 +695,27 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
     }
     hwmheight = height;
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds);
-    coin->unspents = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"unspents",0,0,sizeof(struct iguana_unspent),sizeof(struct iguana_unspent),1000000,iguana_verifyunspent,iguana_nullinit,sizeof(*coin->Uextras),0,dep->numunspents);
+    coin->unspents = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"unspents",0,0,sizeof(struct iguana_unspent),sizeof(struct iguana_unspent),10000,iguana_verifyunspent,iguana_nullinit,sizeof(*coin->Uextras),0,dep->numunspents);
     if ( coin->unspents == 0 )
         printf("cant create unspents\n"), exit(1);
     coin->unspents->HDDitemsp = (void **)&coin->U, coin->U = coin->unspents->M.fileptr;
     coin->unspents->HDDitems2p = (void **)&coin->Uextras, coin->Uextras = coin->unspents->M2.fileptr;
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
     
-    coin->spends = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"spends",0,0,sizeof(struct iguana_spend),sizeof(struct iguana_spend),1000000,iguana_verifyspend,iguana_nullinit,sizeof(*coin->Sextras),0,dep->numspends);
+    coin->spends = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"spends",0,0,sizeof(struct iguana_spend),sizeof(struct iguana_spend),10000,iguana_verifyspend,iguana_nullinit,sizeof(*coin->Sextras),0,dep->numspends);
     if ( coin->spends == 0 )
         printf("cant create spends\n"), exit(1);
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
     coin->spends->HDDitemsp = (void **)&coin->S, coin->S = coin->spends->M.fileptr;
     coin->spends->HDDitems2p = (void **)&coin->Sextras, coin->Sextras = coin->spends->M2.fileptr;
 
-    coin->txids = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPTXIDITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"txids",0,sizeof(bits256),sizeof(struct iguana_txid),sizeof(struct iguana_txid),1000000,iguana_verifytxid,iguana_inittxid,0,0,dep->numtxids);
+    coin->txids = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPTXIDITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"txids",0,sizeof(bits256),sizeof(struct iguana_txid),sizeof(struct iguana_txid),10000,iguana_verifytxid,iguana_inittxid,0,0,dep->numtxids);
     if ( coin->txids == 0 )
         printf("cant create txids\n"), exit(1);
     coin->txids->HDDitemsp = (void **)&coin->T, coin->T = coin->txids->M.fileptr;
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
     
-    coin->pkhashes = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPKITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"pkhashes",0,20,sizeof(struct iguana_pkhash),sizeof(struct iguana_pkhash),1000000,iguana_verifypkhash,iguana_nullinit,sizeof(*coin->accounts),sizeof(*coin->pkextras),dep->numpkinds);
+    coin->pkhashes = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPKITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"pkhashes",0,20,sizeof(struct iguana_pkhash),sizeof(struct iguana_pkhash),10000,iguana_verifypkhash,iguana_nullinit,sizeof(*coin->accounts),sizeof(*coin->pkextras),dep->numpkinds);
     if ( coin->pkhashes == 0 )
         printf("cant create pkhashes\n"), exit(1);
     coin->pkhashes->HDDitemsp = (void **)&coin->P, coin->P = coin->pkhashes->M.fileptr;

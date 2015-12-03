@@ -35,13 +35,19 @@ char *iguana_compatible_path(char *str) { return(str); }
 
 void ensure_directory(char *dirname)
 {
-    FILE *fp; int32_t retval;
-    if ( (fp= fopen(iguana_compatible_path(dirname),"rb")) == 0 )
+    FILE *fp; int32_t retval; char fname[512];
+    sprintf(fname,"%s/.tmpmarker",dirname);
+    if ( (fp= fopen(iguana_compatible_path(fname),"rb")) == 0 )
     {
-        retval = mkdir(dirname,511);
-        printf("mkdir.(%s) retval.%d\n",dirname,retval);
-    }
-    else fclose(fp);
+        if ( (fp= fopen(iguana_compatible_path(dirname),"rb")) == 0 )
+        {
+            retval = mkdir(dirname,511);
+            printf("mkdir.(%s) retval.%d\n",dirname,retval);
+        } else fclose(fp), printf("dirname.(%s) exists\n",dirname);
+        if ( (fp= fopen(fname,"wb")) != 0 )
+            fclose(fp), printf("created.(%s)\n",fname);
+        else printf("cant create.(%s)\n",fname);
+    } else fclose(fp), printf("%s exists\n",fname);
 }
 
 int32_t iguana_renamefile(char *fname,char *newfname)

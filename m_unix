@@ -1,2 +1,2 @@
 gcc -o iguana *.c -lcrypto -lpthread -lm
-
+echo it should have created iguana, which can be run with ./iguana

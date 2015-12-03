@@ -812,7 +812,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
             len += iguana_rwbignum(0,&data[len],sizeof(bits256),hash.bytes);
             if ( type == MSG_TX )
             {
-                if ( i == x-1 )
+                if ( (rand() % 1000) == 0 && i == x-1 )
                     printf("%s iv.%c %d of %d: tx.%llx len.%d\n",addr->ipaddr,intvectors,i,(int32_t)x,(long long)hash.txid,len);
             }
             else if ( type == MSG_BLOCK )

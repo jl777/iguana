@@ -544,10 +544,10 @@ void iguana_coinloop(void *arg)
                         if ( ftell(fp) > iguana_filesize(fname) )
                         {
                             printf("new peers.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
+                            fclose(fp);
                             iguana_renamefile(fname,"oldpeers.txt");
                             iguana_copyfile("peers.txt",fname,1);
-                        }
-                        fclose(fp);
+                        } else fclose(fp);
                     }
                 }
                 if ( time(NULL) > coin->lastwaiting ) //iguana_MEMallocated(coin) < IGUANA_MAXMEMALLOCATED &&
