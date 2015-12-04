@@ -575,7 +575,7 @@ void iguana_coinloop(void *arg)
                     width = sqrt(coin->longestchain-coin->blocks.parsedblocks);
                     if ( width < 1 )
                         width = 1;
-                    //if ( (w= iguana_updatewaiting(coin,coin->blocks.parsedblocks,width)) == width )
+                    if ( (w= iguana_updatewaiting(coin,coin->blocks.parsedblocks,width)) == width )
                     {
                         while ( iguana_processrecv(coin) == 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight )
                         {
@@ -589,7 +589,7 @@ void iguana_coinloop(void *arg)
                             }
                             flag++;
                         }
-                    }
+                    } else printf("w.%d of %d: skip processrecv\n",w,width);
                 }
                 portable_mutex_unlock(&coin->blocks.mutex);
             }

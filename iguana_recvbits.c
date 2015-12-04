@@ -142,7 +142,7 @@ int32_t iguana_processrecv(struct iguana_info *coin)
             iguana_waitstart(coin,height);
             iguana_updatewaiting(coin,height+1,100);
         }
-    }
+    } else printf("processrecv: no recvbits!\n");
     return(retval);
 }
 
@@ -352,7 +352,7 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
             {
                 for (i=0; i<coin->R.numold; i++)
                 {
-                    if ( coin->R.oldRSPACE[i].M.fileptr != 0 && coin->blocks.parsedblocks > coin->R.oldRSPACE[i].maxheight )
+                    if ( coin->R.oldRSPACE[i].M.fileptr != 0 && coin->blocks.parsedblocks > coin->R.oldRSPACE[i].maxheight+IGUANA_HDRSCOUNT )
                     {
                         printf("PURGE.(%s) oldRSPACE[%ld] as coin->blocks.parsedblocks %d > %d coin->R.oldRSPACE[i].maxheight\n",coin->R.oldRSPACE[i].M.fname,i,coin->blocks.parsedblocks,coin->R.oldRSPACE[i].maxheight);
                         coin->R.RSPACE.openfiles--;
