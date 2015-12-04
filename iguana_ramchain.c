@@ -513,6 +513,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
         printf("height.%d supply %.8f != %.8f (%.8f - %.8f)\n",block->height,dstr(coin->latest.dep.supply),dstr(coin->latest.credits)-dstr(coin->latest.debits),dstr(coin->latest.credits),dstr(coin->latest.debits));
         getchar();
     }
+#ifdef IGUANA_VERIFYFLAG
     while ( pkind < coin->latest.dep.numpkinds )
     {
         int64_t err;
@@ -520,6 +521,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
             printf("pkind.%d err.%lld %.8f last.(U%d S%d)\n",pkind,(long long)err,dstr(coin->accounts[pkind].balance),coin->accounts[pkind].lastunspentind,coin->accounts[pkind].lastspendind), getchar();
         pkind++;
     }
+#endif
     coin->parsetime = (uint32_t)time(NULL);
     coin->parsemillis = milliseconds();
     iguana_kvwrite(coin,coin->blocks.db,0,block,(uint32_t *)&block->height);

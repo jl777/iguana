@@ -27,6 +27,10 @@
 #define IGUANA_MAXMEMALLOCATED (1024L * 1024 * 1024L * 1)
 #endif
 
+#ifdef __APPLE__
+#define IGUANA_VERIFYFLAG
+#endif
+
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDING ((512 / IGUANA_MAXPEERS) + 1)
 
