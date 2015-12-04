@@ -621,10 +621,10 @@ int32_t iguana_kvdelete(struct iguana_info *coin,struct iguanakv *kv,void *key)
     if ( kv == 0 )
         return(-1);
     iguana_kvlock(coin,kv);
-    HASH_FIND(hh,kv->hashtable,key,kv->keysize,ptr);
+    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,ptr);
     if ( ptr != 0 )
     {
-        HASH_DELETE(hh,kv->hashtable,ptr);
+        HASH_DELETE(hh,kv->hashtables[*(uint8_t *)key],ptr);
         if ( (kv->flags & IGUANA_MAPPED_ITEM) == 0 )
             myfree(ptr,iguana_itemsize(coin,kv));
         retval = 0;
@@ -648,7 +648,7 @@ void *_iguana_kvread(struct iguana_info *coin,struct iguanakv *kv,void *key,void
     }
     valuesize = iguana_valuesize(coin,kv);
     //printf("search for [%llx] keysize.%d\n",*(long long *)key,kv->keysize);
-    HASH_FIND(hh,kv->hashtable,key,kv->keysize,item);
+    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,item);
     if ( item != 0 )
     {
         if ( itemindp != 0 )
@@ -681,7 +681,7 @@ void *_iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,voi
         printf("kvwrite %s only supports itemind MMap access\n",kv->name);
         return(0);
     }
-    HASH_FIND(hh,kv->hashtable,key,kv->keysize,item);
+    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,item);
     if ( item != 0 )
     {
         if ( 0 && itemind != item->hh.itemind && itemind != (uint32_t)-1 )
@@ -725,11 +725,11 @@ void *_iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,voi
         memcpy(itemkey,key,kv->keysize);
         //if ( strcmp(kv->name,"txids") == 0 )
         //printf("add.(%s) itemind.%d kv->numkeys.%d keysize.%d (%s) valuesize.%d:%d\n",kv->name,itemind,kv->numkeys,kv->keysize,bits256_str(*(bits256 *)key),kv->HDDvaluesize,kv->RAMvaluesize);
-        HASH_ADD_KEYPTR(hh,kv->hashtable,itemkey,kv->keysize,item);
+        HASH_ADD_KEYPTR(hh,kv->hashtables[*(uint8_t *)itemkey],(void *)((long)key+1),kv->keysize-1,item);
         kv->M.dirty++;
-        HASH_FIND(hh,kv->hashtable,key,kv->keysize,item);
+        HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,item);
         if ( kv->dispflag != 0 || item == 0 || item->hh.itemind != itemind )
-            fprintf(stderr,">> %s found item.%p iguana_kvwrite numkeys.%d kv.(%p) table.%p write kep.%p key.%s size.%d, %p value.(%08x) size.%d itemind.%d:%d\n",kv->name,item,kv->numkeys,key,kv->hashtable,itemkey,itemkey!=0?bits256_str(*(bits256 *)itemkey):"0",kv->keysize,itemvalue,itemvalue!=0?calc_crc32(0,itemvalue,valuesize):0,valuesize,item!=0?item->hh.itemind:0,itemind);
+            fprintf(stderr,">> %s found item.%p iguana_kvwrite numkeys.%d kv.(%p) table.%p write kep.%p key.%s size.%d, %p value.(%08x) size.%d itemind.%d:%d\n",kv->name,item,kv->numkeys,key,kv->hashtables[*(uint8_t *)itemkey],itemkey,itemkey!=0?bits256_str(*(bits256 *)itemkey):"0",kv->keysize,itemvalue,itemvalue!=0?calc_crc32(0,itemvalue,valuesize):0,valuesize,item!=0?item->hh.itemind:0,itemind);
         if ( item != 0 )
             return(value);
         else printf("null item after find kvwrite error\n"), getchar();
@@ -791,35 +791,41 @@ int32_t iguana_kvchecktable(struct iguana_info *coin,struct iguanakv *kv)
 
 void *iguana_kviterate(struct iguana_info *coin,struct iguanakv *kv,uint64_t args,void *(*iterator)(struct iguana_info *coin,struct iguanakv *kv,struct iguana_kvitem *item,uint64_t args,void *key,void *value,int32_t valuesize))
 {
-    struct iguana_kvitem *item,*tmp; void *ptr=0,*itemvalue,*itemkey=0,*retval = 0;
+    struct iguana_kvitem *item,*tmp; int32_t t; void *ptr=0,*itemvalue,*itemkey=0,*retval = 0;
     if ( kv == 0 )
         return(0);
-    HASH_ITER(hh,kv->hashtable,item,tmp)
+    for (t=0; t<0x100; t++)
     {
-        if ( (kv->flags & IGUANA_ITEMIND_DATA) != 0 )
-            ptr = iguana_itemptr(coin,kv,item->hh.itemind);
-        if ( (itemvalue= iguana_itemvalue(coin,&itemkey,kv,ptr,item)) != 0 && itemkey != 0 )
+        HASH_ITER(hh,kv->hashtables[t],item,tmp)
         {
-            if ( (retval= (*iterator)(coin,kv,item,args,itemkey,itemvalue,kv->RAMvaluesize)) != 0 )
-                return(retval);
-        } else return(retval);
+            if ( (kv->flags & IGUANA_ITEMIND_DATA) != 0 )
+                ptr = iguana_itemptr(coin,kv,item->hh.itemind);
+            if ( (itemvalue= iguana_itemvalue(coin,&itemkey,kv,ptr,item)) != 0 && itemkey != 0 )
+            {
+                if ( (retval= (*iterator)(coin,kv,item,args,itemkey,itemvalue,kv->RAMvaluesize)) != 0 )
+                    return(retval);
+            } else return(retval);
+        }
     }
     return(0);
 }
 
 int32_t iguana_kvtruncate(struct iguana_info *coin,struct iguanakv *kv,uint32_t maxitemind)
 {
-    struct iguana_kvitem *item,*tmp; int32_t n = 0;
+    struct iguana_kvitem *item,*tmp; int32_t t,n = 0;
     if ( kv->numkeys < maxitemind )
         return(-1);
-    HASH_ITER(hh,kv->hashtable,item,tmp)
+    for (t=0; t<0x100; t++)
     {
-        if ( item->hh.itemind >= maxitemind )
+        HASH_ITER(hh,kv->hashtables[t],item,tmp)
         {
-            HASH_DEL(kv->hashtable,item);
-            if ( (kv->flags & IGUANA_MAPPED_ITEM) == 0 )
-                myfree(item,iguana_itemsize(coin,kv));
-            n++;
+            if ( item->hh.itemind >= maxitemind )
+            {
+                HASH_DEL(kv->hashtables[t],item);
+                if ( (kv->flags & IGUANA_MAPPED_ITEM) == 0 )
+                    myfree(item,iguana_itemsize(coin,kv));
+                n++;
+            }
         }
     }
     printf(">>>>>>>>>> kv.%s truncated.%d to maxitemind.%d\n",kv->name,n,maxitemind);
@@ -829,15 +835,18 @@ int32_t iguana_kvtruncate(struct iguana_info *coin,struct iguanakv *kv,uint32_t 
 
 void iguana_kvfree(struct iguana_info *coin,struct iguanakv *kv)
 {
-    struct iguana_kvitem *ptr,*tmp;
+    struct iguana_kvitem *ptr,*tmp; int32_t t;
     if ( kv != 0 )
     {
         iguana_kvlock(coin,kv);
-        HASH_ITER(hh,kv->hashtable,ptr,tmp)
+        for (t=0; t<0x100; t++)
         {
-            HASH_DEL(kv->hashtable,ptr);
-            if ( (kv->flags & IGUANA_MAPPED_ITEM) == 0 )
-                myfree(ptr,iguana_itemsize(coin,kv));
+            HASH_ITER(hh,kv->hashtables[t],ptr,tmp)
+            {
+                HASH_DEL(kv->hashtables[t],ptr);
+                if ( (kv->flags & IGUANA_MAPPED_ITEM) == 0 )
+                    myfree(ptr,iguana_itemsize(coin,kv));
+            }
         }
         iguana_kvunlock(coin,kv);
         myfree(kv,sizeof(*kv));
@@ -846,18 +855,21 @@ void iguana_kvfree(struct iguana_info *coin,struct iguanakv *kv)
 
 int32_t iguana_kvclone(struct iguana_info *coin,struct iguanakv *clone,struct iguanakv *kv)
 {
-    void *ptr=0,*itemkey,*itemvalue; struct iguana_kvitem *item,*tmp; int32_t n = 0;
+    void *ptr=0,*itemkey,*itemvalue; struct iguana_kvitem *item,*tmp; int32_t t,n = 0;
     printf("need to add support for mapped data\n");
     if ( kv != 0 )
     {
-        HASH_ITER(hh,kv->hashtable,item,tmp)
+        for (t=0; t<0x100; t++)
         {
-            if ( (kv->flags & IGUANA_ITEMIND_DATA) != 0 )
-                ptr = iguana_itemptr(coin,kv,item->hh.itemind);
-            if ( (itemvalue= iguana_itemvalue(coin,&itemkey,kv,ptr,item)) != 0 && itemkey != 0 )
+            HASH_ITER(hh,kv->hashtables[t],item,tmp)
             {
-                iguana_kvwrite(coin,clone,itemkey,itemvalue,&item->hh.itemind);
-                n++;
+                if ( (kv->flags & IGUANA_ITEMIND_DATA) != 0 )
+                    ptr = iguana_itemptr(coin,kv,item->hh.itemind);
+                if ( (itemvalue= iguana_itemvalue(coin,&itemkey,kv,ptr,item)) != 0 && itemkey != 0 )
+                {
+                    iguana_kvwrite(coin,clone,itemkey,itemvalue,&item->hh.itemind);
+                    n++;
+                }
             }
         }
     }
@@ -866,20 +878,23 @@ int32_t iguana_kvclone(struct iguana_info *coin,struct iguanakv *clone,struct ig
 
 int32_t iguana_kvdisp(struct iguana_info *coin,struct iguanakv *kv)
 {
-    struct iguana_kvitem *item,*tmp; void *ptr=0,*itemkey,*itemvalue; int32_t n = 0; char hexstr[8192];
+    struct iguana_kvitem *item,*tmp; void *ptr=0,*itemkey,*itemvalue; int32_t t,n = 0; char hexstr[8192];
     printf("iguana_kvdisp.(%s) numkeys.%d\n",kv->name,kv->numkeys);
     if ( kv == 0 )
         return(0);
-    HASH_ITER(hh,kv->hashtable,item,tmp)
+    for (t=0; t<0x100; t++)
     {
-        if ( (kv->flags & IGUANA_ITEMIND_DATA) != 0 )
-            ptr = iguana_itemptr(coin,kv,item->hh.itemind);
-        if ( (itemvalue= iguana_itemvalue(coin,&itemkey,kv,ptr,item)) != 0 )
+        HASH_ITER(hh,kv->hashtables[t],item,tmp)
         {
-            init_hexbytes_noT(hexstr,itemvalue,kv->RAMvaluesize);
-            printf("itemind.%d %s %s len.%d height.%d PoW %.15f\n",item->hh.itemind,bits256_str(*(bits256 *)itemkey),hexstr,kv->RAMvaluesize,((struct iguana_block *)itemvalue)->height,((struct iguana_block *)itemvalue)->L.PoW);
+            if ( (kv->flags & IGUANA_ITEMIND_DATA) != 0 )
+                ptr = iguana_itemptr(coin,kv,item->hh.itemind);
+            if ( (itemvalue= iguana_itemvalue(coin,&itemkey,kv,ptr,item)) != 0 )
+            {
+                init_hexbytes_noT(hexstr,itemvalue,kv->RAMvaluesize);
+                printf("itemind.%d %s %s len.%d height.%d PoW %.15f\n",item->hh.itemind,bits256_str(*(bits256 *)itemkey),hexstr,kv->RAMvaluesize,((struct iguana_block *)itemvalue)->height,((struct iguana_block *)itemvalue)->L.PoW);
+            }
+            n++;
         }
-        n++;
     }
     printf("iguana_kvdisp.(%s) n.%d items\n",kv->name,n);
     return(n);

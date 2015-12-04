@@ -323,7 +323,7 @@ struct iguanakv
     portable_mutex_t KVmutex,MMlock,MMmutex;
     //uint8_t sha256[256 >> 3]; struct sha256_vstate state;
     void *HDDitems,*HDDitems2,*HDDitems3,**HDDitemsp,**HDDitems2p,**HDDitems3p; // linear array of HDDitems;
-    struct iguana_kvitem *hashtable; // of HDDitems
+    struct iguana_kvitem *hashtables[0x100]; // of HDDitems
     struct iguana_mappedptr M,M2,M3;
     struct iguana_memspace HASHPTRS;//,MEM;
     double mult;
