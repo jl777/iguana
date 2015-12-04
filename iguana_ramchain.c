@@ -74,6 +74,7 @@ uint32_t iguana_pkind(struct iguana_info *coin,uint8_t rmd160[20],uint32_t unspe
     memset(&P,0,sizeof(P));
     if ( iguana_kvread(coin,coin->pkhashes,rmd160,&P,&pkind) == 0 )
     {
+        fprintf(stderr,"P");
         pkind = coin->latest.dep.numpkinds;
         memcpy(P.rmd160,rmd160,sizeof(P.rmd160));
         P.firstunspentind = unspentind;
@@ -263,8 +264,8 @@ uint32_t iguana_addtxid(struct iguana_info *coin,uint32_t txidind,bits256 txid,u
         //printf("T%d 1st(U%d S%d)\n",txidind,firstvout,firstvin);
         memset(&tx,0,sizeof(tx));
         tx.txid = txid, tx.firstvout = firstvout, tx.firstvin = firstvin;
-        //if ( coin->blocks.parsedblocks == 0 || coin->loadedLEDGER.snapshot.height != coin->blocks.parsedblocks )
-            vupdate_sha256(coin->latest.lhashes[IGUANA_LHASH_TXIDS].bytes,&coin->latest.states[IGUANA_LHASH_TXIDS],(void *)&tx,sizeof(tx));
+        vupdate_sha256(coin->latest.lhashes[IGUANA_LHASH_TXIDS].bytes,&coin->latest.states[IGUANA_LHASH_TXIDS],(void *)&tx,sizeof(tx));
+        fprintf(stderr,"T");
         iguana_kvwrite(coin,coin->txids,tx.txid.bytes,&tx,&txidind);
         coin->totalsize += sizeof(tx);
         //printf("<<<<<<<<<<<< setnext txidind.%d %llx\n",coin->latest.dep.numtxids,(long long)coin->latest.lhashes[IGUANA_LHASH_TXIDS].txid);
@@ -405,6 +406,7 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
         {
             for (i=0; i<tx->tx_out; i++)
             {
+                fprintf(stderr,"u");
                 iguana_addunspent(coin,blocknum,txidind,unspentind,tx->vouts[i].value,tx->vouts[i].pk_script,tx->vouts[i].pk_scriptlen,tx->txid);
                 numvouts++;
                 unspentind++;
@@ -413,6 +415,7 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
             coin->T[txidind+1].firstvout = unspentind;
             for (i=0; i<tx->tx_in; i++)
             {
+                fprintf(stderr,"s");
                 vin = &tx->vins[i];
                 if ( bits256_nonz(vin->prev_hash) == 0 )
                 {
@@ -428,6 +431,7 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
                 //printf("do spend.%s\n",bits256_str(vin->prev_hash));
                 if ( (spendtxidind= iguana_txidind(coin,&spentind,0,vin->prev_hash)) > 0 )
                 {
+                    fprintf(stderr,"S");
                     iguana_addspend(coin,&spentvalue,blocknum,txidind,spendind,spendtxidind,vin->prev_vout,vin->script,vin->scriptlen,vin->sequence);
                     numvins++;
                     spendind++;
@@ -487,7 +491,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     memcpy(&coin->LEDGER.snapshot.ledgerhash,&coin->latest.ledgerhash,sizeof(coin->latest.ledgerhash));
     memcpy(coin->LEDGER.snapshot.lhashes,coin->latest.lhashes,sizeof(coin->latest.lhashes));
     memcpy(coin->LEDGER.snapshot.states,coin->latest.states,sizeof(coin->latest.states));
-    printf("%08x Block.(h%d t%d u%d s%d p%d) vs (h%d t%d u%d s%d p%d)\n",(uint32_t)coin->latest.ledgerhash.txid,block->height,block->L.numtxids,block->L.numunspents,block->L.numspends,block->L.numpkinds,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,coin->latest.dep.numspends,coin->latest.dep.numpkinds);
+    //printf("%08x Block.(h%d t%d u%d s%d p%d) vs (h%d t%d u%d s%d p%d)\n",(uint32_t)coin->latest.ledgerhash.txid,block->height,block->L.numtxids,block->L.numunspents,block->L.numspends,block->L.numpkinds,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,coin->latest.dep.numspends,coin->latest.dep.numpkinds);
     //for (i=0; i<IGUANA_NUMAPPENDS; i++)
     //    printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
     //printf("-> pre parse %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),coin->blocks.parsedblocks);
@@ -502,6 +506,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     for (txind=block->numvouts=block->numvins=0; txind<block->txn_count; txind++)
     {
         //printf("block.%d txind.%d numvouts.%d numvins.%d block->(%d %d) U%d coin.%d\n",block->height,txind,numvouts,numvins,block->numvouts,block->numvins,block->L.numunspents,coin->latest.dep.numunspents);
+        fprintf(stderr,"t");
         if ( ramchain_parsetx(coin,&coin->mining,&coin->totalfees,&numvouts,&numvins,block->height,txind,&tx[txind],block->L.numtxids+txind,block->L.numunspents + block->numvouts,block->L.numspends + block->numvins) < 0 )
             return(-1);
         block->numvouts += numvouts;

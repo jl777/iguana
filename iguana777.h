@@ -281,7 +281,7 @@ struct iguana_memspace
 {
     portable_mutex_t mutex; void *ptr; long used,size;
     struct iguana_mappedptr M;
-    int32_t alignflag,counter,maxheight,openfiles; uint8_t space[4];
+    int32_t alignflag,counter,maxheight,openfiles,lastcounter; uint8_t space[4];
 };
 
 struct iguana_prevdep { double PoW; uint64_t supply; uint32_t numtxids,numunspents,numspends,numpkinds; } __attribute__((packed));

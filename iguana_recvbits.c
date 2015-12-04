@@ -358,7 +358,11 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
                         coin->R.RSPACE.openfiles--;
 //#ifdef __APPLE__
                         iguana_closemap(&coin->R.oldRSPACE[i].M);
-                        iguana_removefile(coin->R.oldRSPACE[i].M.fname,0);
+                        if ( mem->lastcounter < mem->counter )
+                            mem->lastcounter = mem->counter;
+                        sprintf(fname,"tmp/%s/%s.%d",coin->symbol,name,mem->lastcounter), iguana_compatible_path(fname);
+                        iguana_renamefile(coin->R.oldRSPACE[i].M.fname,fname);
+                        mem->lastcounter++;
 //#endif
                         coin->R.oldRSPACE[i].M.fileptr = 0;
                     }
