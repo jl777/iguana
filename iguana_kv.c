@@ -621,7 +621,7 @@ int32_t iguana_kvdelete(struct iguana_info *coin,struct iguanakv *kv,void *key)
     if ( kv == 0 )
         return(-1);
     iguana_kvlock(coin,kv);
-    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,ptr);
+    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,ptr);
     if ( ptr != 0 )
     {
         HASH_DELETE(hh,kv->hashtables[*(uint8_t *)key],ptr);
@@ -648,7 +648,7 @@ void *_iguana_kvread(struct iguana_info *coin,struct iguanakv *kv,void *key,void
     }
     valuesize = iguana_valuesize(coin,kv);
     //printf("search for [%llx] keysize.%d\n",*(long long *)key,kv->keysize);
-    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,item);
+    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,item);
     if ( item != 0 )
     {
         if ( itemindp != 0 )
@@ -681,7 +681,7 @@ void *_iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,voi
         printf("kvwrite %s only supports itemind MMap access\n",kv->name);
         return(0);
     }
-    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,item);
+    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,item);
     if ( item != 0 )
     {
         if ( 0 && itemind != item->hh.itemind && itemind != (uint32_t)-1 )
@@ -725,9 +725,9 @@ void *_iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,voi
         memcpy(itemkey,key,kv->keysize);
         //if ( strcmp(kv->name,"txids") == 0 )
         //printf("add.(%s) itemind.%d kv->numkeys.%d keysize.%d (%s) valuesize.%d:%d\n",kv->name,itemind,kv->numkeys,kv->keysize,bits256_str(*(bits256 *)key),kv->HDDvaluesize,kv->RAMvaluesize);
-        HASH_ADD_KEYPTR(hh,kv->hashtables[*(uint8_t *)itemkey],(void *)((long)key+1),kv->keysize-1,item);
+        HASH_ADD_KEYPTR(hh,kv->hashtables[*(uint8_t *)itemkey],itemkey,kv->keysize,item);
         kv->M.dirty++;
-        HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],(void *)((long)key+1),kv->keysize-1,item);
+        HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,item);
         if ( kv->dispflag != 0 || item == 0 || item->hh.itemind != itemind )
             fprintf(stderr,">> %s found item.%p iguana_kvwrite numkeys.%d kv.(%p) table.%p write kep.%p key.%s size.%d, %p value.(%08x) size.%d itemind.%d:%d\n",kv->name,item,kv->numkeys,key,kv->hashtables[*(uint8_t *)itemkey],itemkey,itemkey!=0?bits256_str(*(bits256 *)itemkey):"0",kv->keysize,itemvalue,itemvalue!=0?calc_crc32(0,itemvalue,valuesize):0,valuesize,item!=0?item->hh.itemind:0,itemind);
         if ( item != 0 )
