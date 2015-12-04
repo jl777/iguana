@@ -259,7 +259,7 @@ long iguana_ensurefilesize(char *fname,long filesize,int32_t truncateflag)
             {
                 fwrite(zeroes,1,16*1024*1024,fp);
                 n -= 16*1024*1024;
-                fprintf(stderr,".");
+                fprintf(stderr,"+");
             }
             for (i=0; i<n; i++)
                 fputc(0,fp);

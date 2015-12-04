@@ -549,6 +549,7 @@ void iguana_coinloop(void *arg)
                             iguana_copyfile("peers.txt",fname,1);
                         } else fclose(fp);
                     }
+                    iguana_possible_peer(coin,0);
                 }
                 if ( time(NULL) > coin->lastwaiting ) //iguana_MEMallocated(coin) < IGUANA_MAXMEMALLOCATED &&
                 {

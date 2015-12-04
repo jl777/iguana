@@ -398,7 +398,7 @@ struct iguana_info
     struct iguana_blocks blocks;
     struct iguana_peers peers;
     struct iguana_recv R;
-    queue_t blocksQ,priorityQ; double parsemillis;
+    queue_t blocksQ,priorityQ,possibleQ; double parsemillis;
     struct iguana_ledger LEDGER,loadedLEDGER;
 };
 

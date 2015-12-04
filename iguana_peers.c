@@ -643,14 +643,27 @@ int32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
 {
     char checkaddr[64]; uint32_t ipbits,ind,now = (uint32_t)time(NULL); int32_t i;
     struct iguana_iAddr iA; struct iguana_kvitem item;
+    if ( ipaddr != 0 )
+    {
+        queue_enqueue("possibleQ",&coin->possibleQ,queueitem(ipaddr),1);
+        return(0);
+    }
+    else if ( (ipaddr= queue_dequeue(&coin->possibleQ,1)) == 0 )
+        return(0);
 #ifdef IGUANA_DISABLEPEERS
     if ( strcmp(ipaddr,"127.0.0.1") != 0 )
+    {
+        free_queueitem(ipaddr);
         return(0);
+    }
 #endif
     //printf("possible peer.(%s)\n",ipaddr);
     for (i=0; i<IGUANA_MAXPEERS; i++)
         if ( strcmp(ipaddr,coin->peers.active[i].ipaddr) == 0 )
+        {
+            free_queueitem(ipaddr);
             return(0);
+        }
     if ( strncmp("0.0.0",ipaddr,5) != 0 && strcmp("0.0.255.255",ipaddr) != 0 && strcmp("1.0.0.0",ipaddr) != 0 )
     {
         if ( (ipbits= (uint32_t)calc_ipbits(ipaddr)) != 0 )
@@ -665,7 +678,7 @@ int32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
                         iA.status = IGUANA_PEER_ELIGIBLE;
                         if ( iguana_rwiAddrind(coin,1,&iA,ind) == 0 )
                             printf("error updating status for (%s)\n",ipaddr);
-                        else
+                        else if ( coin->peers.numranked < IGUANA_MAXPEERS-IGUANA_MAXPEERS/8 )
                         {
                             memset(&item,0,sizeof(item));
                             item.hh.itemind = ind;
@@ -676,6 +689,7 @@ int32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
             } else printf("reject ipaddr.(%s)\n",ipaddr);
         }
     }
+    free_queueitem(ipaddr);
     return(-1);
 }
 
@@ -788,7 +802,7 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
     struct pollfd fds; uint8_t *buf; int32_t bufsize,flag,timeout = IGUANA_MAXPEERS/64 + 1;
-    //printf("dedicatedloop.%s\n",addr->ipaddr);
+    printf("start dedicatedloop.%s\n",addr->ipaddr);
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
     //printf("send version\n");
@@ -823,6 +837,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     }
     myfree(buf,bufsize);
     iguana_iAkill(coin,addr,addr->dead != 0);
+    printf("finish dedicatedloop.%s\n",addr->ipaddr);
 }
 
 void iguana_peersloop(void *ptr)
