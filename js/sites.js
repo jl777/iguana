@@ -1,44 +1,9 @@
 var SPNAPI = (function(SPNAPI, $, undefined) {
 
 
-    SPNAPI.pageContent.InstantDEX = function () {
-        var site = "InstantDEX";
-        SPNAPI.loadSiteAPI(site,site);
-    };
-
-    SPNAPI.pageContent.pangea = function () {
-        var site = "pangea";
-        SPNAPI.loadSiteAPI(site,"pangea");
-    };
-
-    SPNAPI.pageContent.Jay = function() {
-    var site = "Jay";
-    SPNAPI.loadSiteAPI(site,site);
-    }
-
-    SPNAPI.pageContent.Jumblr = function () {
-        var site = "Jumblr";
-        SPNAPI.loadSiteAPI(site,"Jumblr");
-    };
-
-    SPNAPI.pageContent.MGW = function () {
-        var site = "MGW";
-        SPNAPI.loadSiteAPI(site,"MGW");
-    };
-
-    SPNAPI.pageContent.Atomic = function () {
-        var site = "Atomic";
-        SPNAPI.loadSiteAPI(site,"Atomic");
-    };
-
-    SPNAPI.pageContent.PAX = function () {
-        var site = "PAX";
-        SPNAPI.loadSiteAPI(site,"PAX");
-    };
-
     SPNAPI.pageContent.Tradebots = function () {
-        var site = "Tradebots";
-        SPNAPI.loadSiteAPI(site,"Tradebots");
+        var site = "iguana";
+        SPNAPI.loadSiteAPI(site,"iguana");
     };
 
     SPNAPI.pageContent.Wallet = function () {

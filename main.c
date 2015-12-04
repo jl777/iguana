@@ -246,6 +246,7 @@ int EnqueueMessage(struct PP_Var message)
     // We shouldn't block the main thread waiting for the queue to not be full, so just drop the message.
     if ( IsQueueFull() != 0)
     {
+        PostMessage("EnqueueMessage: full Q, drop message\n");
         pthread_mutex_unlock(&g_queue_mutex);
         return(0);
     }
@@ -263,9 +264,9 @@ struct PP_Var DequeueMessage()
     pthread_mutex_lock(&g_queue_mutex);
     while ( IsQueueEmpty() != 0 )
         pthread_cond_wait(&g_queue_not_empty_cond, &g_queue_mutex);
-        message = g_queue[g_queue_start];
-        g_queue_start = (g_queue_start + 1) % MAX_QUEUE_SIZE;
-        g_queue_size--;
+    message = g_queue[g_queue_start];
+    g_queue_start = (g_queue_start + 1) % MAX_QUEUE_SIZE;
+    g_queue_size--;
     pthread_mutex_unlock(&g_queue_mutex);
     return(message);
 }
@@ -573,12 +574,11 @@ int Handle_iguana(struct PP_Var params,struct PP_Var *output,const char **out_er
 {
     char *iguana_JSON(char *);
     char *retstr;
-    //PostMessage("inside handle SuperNET\n");
+    PostMessage("inside Handle_iguana\n");
     CHECK_PARAM_COUNT(iguana, 1);
     PARAM_STRING(0,jsonstr);
     retstr = iguana_JSON(jsonstr);
     CREATE_RESPONSE(iguana);
-    //RESPONSE_INT(0);
     RESPONSE_STRING(retstr);
     return 0;
 }

@@ -424,7 +424,7 @@ int32_t iguana_addblock(struct iguana_info *coin,bits256 hash2,struct iguana_blo
             //printf("%s height.%d PoW %f\n",bits256_str(hash2),block->height,block->PoW);
             if ( coin->blocks.initblocks != 0 && ((newblock->height % 100) == 0 || coin->blocks.hwmheight > coin->longestchain-10) )
                 printf("ADD %s %d:%d:%d <- (%s) n.%u max.%u PoW %f 1st.%d numtx.%d\n",bits256_str(newblock->hash2),h,iguana_height(coin,coin->blocks.hwmchain),newblock->height,bits256_str(coin->blocks.hwmchain),coin->blocks.hwmheight+1,coin->blocks.maxblocks,newblock->L.PoW,newblock->L.numtxids,newblock->txn_count);
-            iguana_queueblock(coin,newblock->height,hash2);
+            //iguana_queueblock(coin,newblock->height,hash2);
             coin->newhdrs++;
         }
     } else printf("error from setchain.%d\n",newblock->height);
