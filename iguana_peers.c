@@ -787,7 +787,7 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
-    struct pollfd fds; uint8_t *buf; int32_t bufsize,flag,timeout = IGUANA_MAXPEERS/10 + 1;
+    struct pollfd fds; uint8_t *buf; int32_t bufsize,flag,timeout = IGUANA_MAXPEERS/64 + 1;
     //printf("dedicatedloop.%s\n",addr->ipaddr);
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
