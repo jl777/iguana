@@ -715,9 +715,9 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
         printf("cant create unspents\n"), exit(1);
     coin->unspents->HDDitemsp = (void **)&coin->U, coin->U = coin->unspents->M.fileptr;
     coin->unspents->HDDitems2p = (void **)&coin->Uextras, coin->Uextras = coin->unspents->M2.fileptr;
-    printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.,250000000);
+    printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
     
-    coin->spends = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"spends",0,0,sizeof(struct iguana_spend),sizeof(struct iguana_spend),10000,iguana_verifyspend,iguana_nullinit,sizeof(*coin->Sextras),0,dep->numspends);
+    coin->spends = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"spends",0,0,sizeof(struct iguana_spend),sizeof(struct iguana_spend),10000,iguana_verifyspend,iguana_nullinit,sizeof(*coin->Sextras),0,dep->numspends,250000000);
     if ( coin->spends == 0 )
         printf("cant create spends\n"), exit(1);
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
