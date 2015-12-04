@@ -278,31 +278,17 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
 {
     uint32_t prev,firstunspentind,firstspendind,unspentind; int64_t credits,debits,Udebits;
     credits = debits = Udebits = 0;
-    if ( acct->lastspendind >= coin->latest.dep.numspends || acct->lastunspentind >= coin->latest.dep.numunspents )
+    while ( acct->lastunspentind >= coin->latest.dep.numunspents )
     {
-        printf("need to fix account P[%d] ",pkind);
-        prev = acct->lastunspentind;
-        if ( acct->lastunspentind >= coin->latest.dep.numunspents )
-            acct->lastunspentind = 0;
-        if ( acct->lastunspentind == 0 && prev < coin->latest.dep.numunspents )
+        if ( (prev= coin->Uextras[acct->lastunspentind].prevunspentind) < acct->lastunspentind )
             acct->lastunspentind = prev;
-        while ( prev >= coin->latest.dep.numunspents )
-        {
-            printf("(U%d %.8f P%d S%d) ",prev,dstr(coin->U[prev].value),coin->U[prev].pkind,coin->Uextras[prev].spendind);
-            prev = coin->Uextras[prev].prevunspentind;
-        }
-        printf("prevunspentinds for U%d for acct[%d]\n",acct->lastunspentind,pkind);
-        prev = acct->lastspendind;
-        if ( acct->lastspendind >= coin->latest.dep.numspends )
-            acct->lastspendind = 0;
-        if ( acct->lastspendind == 0 && prev < coin->latest.dep.numspends )
+        else return(-1);
+    }
+    while ( acct->lastspendind >= coin->latest.dep.numspends )
+    {
+        if ( (prev= coin->Sextras[acct->lastspendind].prevspendind) < acct->lastspendind )
             acct->lastspendind = prev;
-        while ( prev != 0 )
-        {
-            printf("(U%d %.8f S%d).S%d ",coin->S[prev].unspentind,dstr(coin->U[coin->S[prev].unspentind].value),coin->Sextras[prev].prevspendind,prev);
-            prev = coin->Sextras[prev].prevspendind;
-        }
-        printf("prevspendinds for S%d for acct[%d]\n",acct->lastspendind,pkind);
+        else return(-1);
     }
     prev = acct->lastunspentind, firstunspentind = 0;
     while ( prev != 0 )
@@ -371,9 +357,9 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
     }
     if ( acct->balance != (credits - debits) )
     {
-        printf("pkind.%d balance mismatch %.8f != %.8f (%.8f - %.8f)\n",pkind,dstr(acct->balance),dstr(credits)-dstr(debits),dstr(credits),dstr(debits));
         if ( credits < debits )
         {
+            printf("pkind.%d balance mismatch %.8f != %.8f (%.8f - %.8f)\n",pkind,dstr(acct->balance),dstr(credits)-dstr(debits),dstr(credits),dstr(debits));
             {
                 prev = acct->lastunspentind;
                 while ( prev != 0 )

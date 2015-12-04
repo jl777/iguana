@@ -581,7 +581,7 @@ void iguana_coinloop(void *arg)
                         {
                             if ( (coin->blocks.parsedblocks > coin->longestchain-1000 && (coin->blocks.parsedblocks % 100) == 1) ||
                                 (coin->blocks.parsedblocks > coin->longestchain-10000 && (coin->blocks.parsedblocks % 1000) == 1) ||
-                                //(coin->blocks.parsedblocks > coin->longestchain-150000 && (coin->blocks.parsedblocks % 10000) == 1) ||
+                                (coin->blocks.parsedblocks > coin->longestchain-250000 && (coin->blocks.parsedblocks % 10000) == 1) ||
                                 (coin->blocks.parsedblocks > 100 && (coin->blocks.parsedblocks % 100000) == 1) )
                             {
                                 if ( 1 && coin->blocks.parsedblocks > coin->loadedLEDGER.snapshot.height+2 )
