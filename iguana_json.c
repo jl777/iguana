@@ -77,7 +77,7 @@ void iguana_main(void *arg)
         {
             printf("skip strange coin.(%s)\n",symbol);
             continue;
-        }
+        } 
         sprintf(dirname,"DB/%s",symbol);
         ensure_directory(dirname);
         sprintf(dirname,"tmp/%s",symbol);
