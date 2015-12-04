@@ -753,7 +753,7 @@ int32_t iguana_pollrecv(struct iguana_info *coin,struct iguana_peer *addr,uint8_
 int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
-    char *hashstr = 0; bits256 hash2; int32_t height,datalen,flag = 0;
+    char *hashstr = 0; bits256 hash2; int32_t threshold,height,datalen,flag = 0;
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs == 0 && (hashstr= queue_dequeue(&coin->R.hdrsQ,1)) != 0 )
     {
         if ( (datalen= iguana_gethdrs(coin,serialized,strcmp(coin->name,"bitcoin") != 0 ? "getblocks" : "getheaders",hashstr)) > 0 )
@@ -769,16 +769,19 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
     {
         if ( (hashstr= queue_dequeue(&coin->priorityQ,1)) != 0 )
         {
+            threshold = coin->blocks.parsedblocks + IGUANA_HDRSCOUNT;
             //decode_hex(hash2.bytes,sizeof(hash2),hashstr);
             //height = iguana_height(coin,hash2);
             //printf("dequeued priorityQ.(%s) height.%d width %d/%d\n",hashstr,height,coin->widthready,coin->width);
         }
         else if ( (hashstr= queue_dequeue(&coin->blocksQ,1)) != 0 )
         {
+            threshold = coin->blocks.parsedblocks + 100*IGUANA_HDRSCOUNT;
             //decode_hex(hash2.bytes,sizeof(hash2),hashstr);
             //height = iguana_height(coin,hash2);
             //printf("ht.%d dequeued.(%s) for %s\n",height,hashstr,addr->ipaddr);
         }
+        else threshold = 0;
     }
     if ( hashstr != 0 )
     {
@@ -788,13 +791,18 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
         {
             //if ( height > coin->firstblock )
             //printf("discard %d when parsed.%d\n",height,coin->blocks.parsedblocks);
+            free_queueitem(hashstr);
+        }
+        else if ( height > threshold )
+        {
+            queue_enqueue("resubmit",&coin->blocksQ,(void *)((long)hashstr - sizeof(struct queueitem)),0);
         }
         else
         {
             if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hashstr)) > 0 )
                 iguana_send(coin,addr,serialized,datalen,&addr->sleeptime), addr->pendblocks++, flag++;
+            free_queueitem(hashstr);
         }
-        free_queueitem(hashstr);
     }
     return(flag);
 }

@@ -764,13 +764,6 @@ void *iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,void
             retptr = value;
         else printf("%s %d vs %d RMmmap.1 error\n",kv->name,*itemindp,(int32_t)(kv->M.allocsize/kv->HDDvaluesize));
     } else retptr = _iguana_kvwrite(coin,kv,key,value,itemindp);
-    /*if ( (kv->flags & IGUANA_SHA256) != 0 )
-    {
-        if ( kv->keysize > 0 && key != 0 )
-            memcpy(kv->space,key,kv->keysize);
-        memcpy((void *)((long)kv->space+kv->keysize),value,kv->RAMvaluesize);
-        vupdate_sha256(kv->sha256,&kv->state,kv->space,kv->keysize + kv->RAMvaluesize);
-    }*/
     portable_mutex_unlock(&kv->MMmutex);
     return(retptr);
 }
