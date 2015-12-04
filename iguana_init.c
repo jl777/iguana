@@ -360,6 +360,9 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     FILE *fp; char fnameold[512],fnameold2[512],fname[512],fname2[512]; int32_t i;
     if ( (int32_t)coin->blocks.parsedblocks < 1 )
         return(0);
+    for (i=0; i<IGUANA_NUMAPPENDS; i++)
+        printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
+    printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),coin->blocks.parsedblocks-1);
     iguana_syncmap(&coin->iAddrs->M,0);
     iguana_syncmap(&coin->blocks.db->M,0);
     iguana_syncmap(&coin->unspents->M,0);
@@ -372,14 +375,11 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     iguana_syncmap(&coin->pkhashes->M3,0);
     if ( coin->R.RSPACE.M.fileptr != 0 )
         msync(coin->R.RSPACE.M.fileptr,coin->R.RSPACE.M.allocsize,MS_ASYNC);
-    for (i=0; i<IGUANA_NUMAPPENDS; i++)
-        printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
-    printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),coin->blocks.parsedblocks-1);
     printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
     sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,coin->blocks.parsedblocks-1);
     sprintf(fname2,"DB/%s/ledger",coin->symbol);
-    sprintf(fnameold,"tmp/%s/ledger.old",fname2);
-    sprintf(fnameold2,"tmp/%s/ledger.old2",fname2);
+    sprintf(fnameold,"tmp/%s/ledger.old",coin->symbol);
+    sprintf(fnameold2,"tmp/%s/ledger.old2",coin->symbol);
     iguana_renamefile(fnameold,fnameold2);
     iguana_renamefile(fname2,fnameold);
     if ( (fp= fopen(fname,"wb")) != 0 )
@@ -391,6 +391,7 @@ uint32_t iguana_syncs(struct iguana_info *coin)
         fclose(fp);
         iguana_copyfile(fname,fname2,1);
     }
+    printf("backups created\n");
     return((uint32_t)time(NULL));
 }
 
@@ -593,7 +594,7 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
 
 int32_t iguana_fixsecondary(struct iguana_info *coin,int32_t numtxids,int32_t numunspents,int32_t numspends,int32_t numpkinds,struct iguana_Uextra *Uextras,struct iguana_pkextra *pkextras,struct iguana_account *accounts)
 {
-    int32_t i,m,err;
+    uint32_t i; int32_t m,err;
     if ( numtxids < 2 || numunspents < 2 || numspends < 2 || numpkinds < 2 )
         return(0);
     //struct iguana_Uextra { uint32_t spendind; }; // unspentind
@@ -624,50 +625,61 @@ int32_t iguana_fixsecondary(struct iguana_info *coin,int32_t numtxids,int32_t nu
         iguana_syncmap(&coin->pkhashes->M3,0);
     printf("pkextras beyond numspends.%d m.%d accounts.%p\n",numspends,m,accounts);
     //struct iguana_spend { uint32_t unspentind,prevspendind; }; // dont need nextspend
-    for (i=err=0; i<numspends; i++)
+    /*for (i=err=m=0; i<numspends; i++)
     {
         if ( coin->S[i].unspentind >= numunspents )
             err++, coin->S[i].unspentind = 0;//, printf("S->U%d ",coin->S[i].unspentind);
         //printf("%d ",coin->S[i].prevspendind);
         if ( coin->Sextras[i].prevspendind != 0 && coin->Sextras[i].prevspendind >= i )
-            err++, coin->Sextras[i].prevspendind = 0, printf("preverr.%d:%d ",coin->Sextras[i].prevspendind,i);
+            m++, coin->Sextras[i].prevspendind = 0, printf("preverr.%d:%d ",coin->Sextras[i].prevspendind,i);
     }
     printf("errs.%d in spends numspends.%d\n",err,numspends);
     if ( err != 0 )
-        getchar();
+        getchar();*/
     return(0);
+}
+
+void clearmem(void *ptr,int32_t len)
+{
+    static const uint8_t zeroes[512];
+    if ( len > sizeof(zeroes) || memcmp(ptr,zeroes,len) != 0 )
+        memset(ptr,0,len);
 }
 
 int32_t iguana_clearoverage(struct iguana_info *coin,int32_t numtxids,int32_t numunspents,int32_t numspends,int32_t numpkinds,struct iguana_Uextra *Uextras,struct iguana_pkextra *pkextras,struct iguana_account *accounts)
 {
-    int32_t i,n;
-    n = (int32_t)(coin->txids->M.allocsize / coin->txids->HDDvaluesize) - 2;
+    uint32_t i,n;
+    printf("clear txids\n");
+    n = (uint32_t)((uint64_t)coin->txids->M.allocsize / coin->txids->HDDvaluesize) - 2;
     for (i=numtxids+1; i<n; i++) // diff with next txid's firstv's give numv's
-        memset(&coin->T[i],0,sizeof(coin->T[i]));
+        clearmem(&coin->T[i],sizeof(coin->T[i]));
     
-    n = (int32_t)(coin->pkhashes->M.allocsize / coin->pkhashes->HDDvaluesize) - 2;
+    printf("clear pkinds\n");
+    n = (uint32_t)((uint64_t)coin->pkhashes->M.allocsize / coin->pkhashes->HDDvaluesize) - 2;
     for (i=numpkinds; i<n; i++)
-        memset(&coin->P[i],0,sizeof(coin->P[i]));
-    n = (int32_t)(coin->pkhashes->M2.allocsize / coin->pkhashes->valuesize2) - 2;
+        clearmem(&coin->P[i],sizeof(coin->P[i]));
+    n = (uint32_t)((uint64_t)coin->pkhashes->M2.allocsize / coin->pkhashes->valuesize2) - 2;
     for (i=numpkinds; i<n; i++)
-        memset(&accounts[i],0,sizeof(accounts[i]));
-    n = (int32_t)(coin->pkhashes->M3.allocsize / coin->pkhashes->valuesize3) - 2;
+        clearmem(&accounts[i],sizeof(accounts[i]));
+    n = (uint32_t)((uint64_t)coin->pkhashes->M3.allocsize / coin->pkhashes->valuesize3) - 2;
     for (i=numpkinds; i<n; i++)
         pkextras[i].firstspendind = 0;
     
-    n = (int32_t)(coin->unspents->M.allocsize / coin->unspents->HDDvaluesize) - 2;
+    printf("clear unspents\n");
+    n = (uint32_t)((uint64_t)coin->unspents->M.allocsize / coin->unspents->HDDvaluesize) - 2;
     for (i=numunspents; i<n; i++)
-        memset(&coin->U[i],0,sizeof(coin->U[i]));
-    n = (int32_t)(coin->unspents->M2.allocsize / coin->unspents->valuesize2) - 2;
+        clearmem(&coin->U[i],sizeof(coin->U[i]));
+    n = (uint32_t)((uint64_t)coin->unspents->M2.allocsize / coin->unspents->valuesize2) - 2;
     for (i=numunspents; i<n; i++)
-        memset(&Uextras[i],0,sizeof(Uextras[i]));
+        clearmem(&Uextras[i],sizeof(Uextras[i]));
     
-    n = (int32_t)(coin->spends->M.allocsize / coin->spends->HDDvaluesize) - 2;
+    printf("clear spends\n");
+    n = (uint32_t)((uint64_t)coin->spends->M.allocsize / coin->spends->HDDvaluesize) - 2;
     for (i=numspends; i<n; i++)
-        memset(&coin->S[i],0,sizeof(coin->S[i]));
-    n = (int32_t)(coin->spends->M2.allocsize / coin->spends->valuesize2) - 2;
+        clearmem(&coin->S[i],sizeof(coin->S[i]));
+    n = (uint32_t)((uint64_t)coin->spends->M2.allocsize / coin->spends->valuesize2) - 2;
     for (i=numspends; i<n; i++)
-        memset(&coin->Sextras[i],0,sizeof(coin->Sextras[i]));
+        clearmem(&coin->Sextras[i],sizeof(coin->Sextras[i]));
     return(0);
 }
 
