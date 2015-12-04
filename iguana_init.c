@@ -327,7 +327,7 @@ int32_t iguana_loadkvfile(struct iguana_info *coin,struct iguanakv *kv,int32_t v
     return(numitems);
 }
 
-struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *coinstr,char *subdir,char *name,int32_t keyoffset,int32_t keysize,int32_t HDDvaluesize,int32_t RAMvaluesize,int32_t inititems,int32_t (*verifyitem)(struct iguana_info *coin,void *key,void *ptr,int32_t itemind,int32_t itemsize),int32_t (*inititem)(struct iguana_info *coin,struct iguanakv *kv,void *key,void *ptr,int32_t itemind,int32_t itemsize,int32_t numitems),int32_t valuesize2,int32_t valuesize3,int32_t maxind)
+struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *coinstr,char *subdir,char *name,int32_t keyoffset,int32_t keysize,int32_t HDDvaluesize,int32_t RAMvaluesize,int32_t inititems,int32_t (*verifyitem)(struct iguana_info *coin,void *key,void *ptr,int32_t itemind,int32_t itemsize),int32_t (*inititem)(struct iguana_info *coin,struct iguanakv *kv,void *key,void *ptr,int32_t itemind,int32_t itemsize,int32_t numitems),int32_t valuesize2,int32_t valuesize3,int32_t maxind,int32_t initialnumitems)
 {
     struct iguanakv *kv; int32_t valuesize;
     if ( maxind <= 1 )
@@ -350,6 +350,8 @@ struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *c
         coin->pkhashes = kv;
     (*inititem)(coin,kv,0,0,-1,valuesize,0);
     iguana_loadkvfile(coin,kv,valuesize,verifyitem,inititem,maxind);
+    if ( initialnumitems != 0 )
+        iguana_kvensure(coin,kv,initialnumitems);
     return(kv);
 }
 
@@ -376,8 +378,8 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
     sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,coin->blocks.parsedblocks-1);
     sprintf(fname2,"DB/%s/ledger",coin->symbol);
-    sprintf(fnameold,"%s.old",fname2);
-    sprintf(fnameold2,"%s.old2",fname2);
+    sprintf(fnameold,"tmp/%s/ledger.old",fname2);
+    sprintf(fnameold2,"tmp/%s/ledger.old2",fname2);
     iguana_renamefile(fnameold,fnameold2);
     iguana_renamefile(fname2,fnameold);
     if ( (fp= fopen(fname,"wb")) != 0 )
@@ -408,10 +410,10 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
     mapname[0] = newfname[0] = 0;
     if ( (fp= fopen(fname,"rb")) == 0 )
     {
-        sprintf(fname,"DB/%s/ledger.old",coin->symbol);
+        sprintf(fname,"tmp/%s/ledger.old",coin->symbol);
         if ( (fp= fopen(fname,"rb")) == 0 )
         {
-            sprintf(fname,"DB/%s/ledger.old2",coin->symbol);
+            sprintf(fname,"tmp/%s/ledger.old2",coin->symbol);
             fp = fopen(fname,"rb");
         }
     }
@@ -706,12 +708,14 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
     }
     hwmheight = height;
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds);
-    coin->unspents = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"unspents",0,0,sizeof(struct iguana_unspent),sizeof(struct iguana_unspent),10000,iguana_verifyunspent,iguana_nullinit,sizeof(*coin->Uextras),0,dep->numunspents);
+    //four ramchains start valid.0 height.316904 txids.45082870 vouts.27183907 vins.107472009 pkhashes.44807925 3.57 minutes
+
+    coin->unspents = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"unspents",0,0,sizeof(struct iguana_unspent),sizeof(struct iguana_unspent),10000,iguana_verifyunspent,iguana_nullinit,sizeof(*coin->Uextras),0,dep->numunspents,250000000);
     if ( coin->unspents == 0 )
         printf("cant create unspents\n"), exit(1);
     coin->unspents->HDDitemsp = (void **)&coin->U, coin->U = coin->unspents->M.fileptr;
     coin->unspents->HDDitems2p = (void **)&coin->Uextras, coin->Uextras = coin->unspents->M2.fileptr;
-    printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
+    printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.,250000000);
     
     coin->spends = iguana_stateinit(coin,IGUANA_ITEMIND_DATA,coin->symbol,coin->symbol,"spends",0,0,sizeof(struct iguana_spend),sizeof(struct iguana_spend),10000,iguana_verifyspend,iguana_nullinit,sizeof(*coin->Sextras),0,dep->numspends);
     if ( coin->spends == 0 )
@@ -720,13 +724,13 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
     coin->spends->HDDitemsp = (void **)&coin->S, coin->S = coin->spends->M.fileptr;
     coin->spends->HDDitems2p = (void **)&coin->Sextras, coin->Sextras = coin->spends->M2.fileptr;
 
-    coin->txids = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPTXIDITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"txids",0,sizeof(bits256),sizeof(struct iguana_txid),sizeof(struct iguana_txid),10000,iguana_verifytxid,iguana_inittxid,0,0,dep->numtxids);
+    coin->txids = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPTXIDITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"txids",0,sizeof(bits256),sizeof(struct iguana_txid),sizeof(struct iguana_txid),10000,iguana_verifytxid,iguana_inittxid,0,0,dep->numtxids,100000000);
     if ( coin->txids == 0 )
         printf("cant create txids\n"), exit(1);
     coin->txids->HDDitemsp = (void **)&coin->T, coin->T = coin->txids->M.fileptr;
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
     
-    coin->pkhashes = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPKITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"pkhashes",0,20,sizeof(struct iguana_pkhash),sizeof(struct iguana_pkhash),10000,iguana_verifypkhash,iguana_nullinit,sizeof(*coin->accounts),sizeof(*coin->pkextras),dep->numpkinds);
+    coin->pkhashes = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPKITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"pkhashes",0,20,sizeof(struct iguana_pkhash),sizeof(struct iguana_pkhash),10000,iguana_verifypkhash,iguana_nullinit,sizeof(*coin->accounts),sizeof(*coin->pkextras),dep->numpkinds,100000);
     if ( coin->pkhashes == 0 )
         printf("cant create pkhashes\n"), exit(1);
     coin->pkhashes->HDDitemsp = (void **)&coin->P, coin->P = coin->pkhashes->M.fileptr;
@@ -831,8 +835,8 @@ struct iguana_info *iguana_startcoin(char *symbol,int32_t initialheight,int32_t 
         initialheight = IGUANA_HDRSCOUNT*10;
     coin->R.maprecvdata = ((mapflags & IGUANA_MAPRECVDATA) != 0);
     iguana_recvalloc(coin,initialheight);
-    coin->iAddrs = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPEERITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"iAddrs",0,sizeof(uint32_t),sizeof(struct iguana_iAddr),sizeof(struct iguana_iAddr),10000,iguana_verifyiAddr,iguana_initiAddr,0,0,0);
-    coin->blocks.db = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPBLOCKITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"blocks",(int32_t)((long)&space.hash2 - (long)&space),sizeof(bits256),sizeof(struct iguana_block)-sizeof(bits256),sizeof(struct iguana_block),10000,iguana_verifyblock,iguana_initblock,0,0,0);
+    coin->iAddrs = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPEERITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"iAddrs",0,sizeof(uint32_t),sizeof(struct iguana_iAddr),sizeof(struct iguana_iAddr),10000,iguana_verifyiAddr,iguana_initiAddr,0,0,0,0);
+    coin->blocks.db = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPBLOCKITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"blocks",(int32_t)((long)&space.hash2 - (long)&space),sizeof(bits256),sizeof(struct iguana_block)-sizeof(bits256),sizeof(struct iguana_block),10000,iguana_verifyblock,iguana_initblock,0,0,0,initialheight);
     coin->longestchain = 1;
     coin->blocks.hwmheight = iguana_lookahead(coin,&hash2,0);
     printf("coin->blocks.hwmheight.%d longest.%d coin->numiAddrs.%d\n",coin->blocks.hwmheight,coin->longestchain,coin->numiAddrs);
