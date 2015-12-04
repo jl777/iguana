@@ -472,7 +472,6 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     int32_t txind,pkind; uint16_t numvouts,numvins;
     pkind = block->L.numpkinds = coin->latest.dep.numpkinds;
     block->L.supply = coin->latest.dep.supply;
-    printf("Block.(h%d t%d u%d s%d p%d) vs coin.(h%d t%d u%d s%d p%d)\n",block->height,block->L.numtxids,block->L.numunspents,block->L.numspends,block->L.numpkinds,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,coin->latest.dep.numspends,coin->latest.dep.numpkinds);
     if ( block->L.numtxids != coin->latest.dep.numtxids || block->L.numunspents != coin->latest.dep.numunspents || block->L.numspends != coin->latest.dep.numspends || block->L.numpkinds != coin->latest.dep.numpkinds )
     {
         printf("Block.(h%d t%d u%d s%d p%d) vs coin.(h%d t%d u%d s%d p%d)\n",block->height,block->L.numtxids,block->L.numunspents,block->L.numspends,block->L.numpkinds,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,coin->latest.dep.numspends,coin->latest.dep.numpkinds);
@@ -488,6 +487,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     memcpy(&coin->LEDGER.snapshot.ledgerhash,&coin->latest.ledgerhash,sizeof(coin->latest.ledgerhash));
     memcpy(coin->LEDGER.snapshot.lhashes,coin->latest.lhashes,sizeof(coin->latest.lhashes));
     memcpy(coin->LEDGER.snapshot.states,coin->latest.states,sizeof(coin->latest.states));
+    printf("%08x Block.(h%d t%d u%d s%d p%d) vs (h%d t%d u%d s%d p%d)\n",(uint32_t)coin->latest.ledgerhash.txid,block->height,block->L.numtxids,block->L.numunspents,block->L.numspends,block->L.numpkinds,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,coin->latest.dep.numspends,coin->latest.dep.numpkinds);
     //for (i=0; i<IGUANA_NUMAPPENDS; i++)
     //    printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
     //printf("-> pre parse %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),coin->blocks.parsedblocks);
