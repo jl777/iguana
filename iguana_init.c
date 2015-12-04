@@ -373,7 +373,7 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     iguana_syncmap(&coin->pkhashes->M,0);
     iguana_syncmap(&coin->pkhashes->M2,0);
     iguana_syncmap(&coin->pkhashes->M3,0);
-    if ( coin->R.RSPACE.M.fileptr != 0 )
+    if ( 0 && coin->R.RSPACE.M.fileptr != 0 )
         msync(coin->R.RSPACE.M.fileptr,coin->R.RSPACE.M.allocsize,MS_ASYNC);
     printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
     sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,coin->blocks.parsedblocks-1);
