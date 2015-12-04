@@ -590,7 +590,7 @@ void iguana_coinloop(void *arg)
                             }
                             flag++;
                         }
-                    } else printf("w.%d of %d: skip processrecv\n",w,width);
+                    } // else printf("w.%d of %d: skip processrecv\n",w,width);
                 }
                 portable_mutex_unlock(&coin->blocks.mutex);
             }
