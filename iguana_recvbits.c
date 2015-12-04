@@ -347,7 +347,7 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
         if ( mem->M.fileptr != 0 && strcmp(name,"recv") == 0 )
         {
             //uint64_t allocated; int32_t n;
-            msync(mem->M.fileptr,mem->M.allocsize,MS_SYNC);
+            //msync(mem->M.fileptr,mem->M.allocsize,MS_SYNC);
             if ( coin->R.numold > 0 )
             {
                 for (i=0; i<coin->R.numold; i++)
@@ -355,10 +355,12 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
                     if ( coin->R.oldRSPACE[i].M.fileptr != 0 && coin->blocks.parsedblocks > coin->R.oldRSPACE[i].maxheight )
                     {
                         printf("PURGE.(%s) oldRSPACE[%ld] as coin->blocks.parsedblocks %d > %d coin->R.oldRSPACE[i].maxheight\n",coin->R.oldRSPACE[i].M.fname,i,coin->blocks.parsedblocks,coin->R.oldRSPACE[i].maxheight);
-                        iguana_closemap(&coin->R.oldRSPACE[i].M);
-                        coin->R.oldRSPACE[i].M.fileptr = 0;
-                        iguana_removefile(coin->R.oldRSPACE[i].M.fname,0);
                         coin->R.RSPACE.openfiles--;
+#ifdef __APPLE__
+                        iguana_closemap(&coin->R.oldRSPACE[i].M);
+                        iguana_removefile(coin->R.oldRSPACE[i].M.fname,0);
+#endif
+                        coin->R.oldRSPACE[i].M.fileptr = 0;
                     }
                 }
             }
@@ -368,8 +370,7 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
             //iguana_closemap(&mem->M);
             //allocated = iguana_validaterecv(coin,&n,coin->R.RSPACE.M.fname);
             //printf("recvbits: %s validated.%d %s %lld\n",coin->R.RSPACE.M.fname,n,mbstr(allocated),(long long)allocated);
-        }
-        else coin->TMPallocated += origsize;
+        } else coin->TMPallocated += origsize;
         memset(&mem->M,0,sizeof(mem->M));
         sprintf(fname,"tmp/%s/%s.%d",coin->symbol,name,mem->counter), iguana_compatible_path(fname);
         mem->counter++;
