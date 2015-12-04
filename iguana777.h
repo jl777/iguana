@@ -28,7 +28,7 @@
 #endif
 
 #ifdef __APPLE__
-#define IGUANA_VERIFYFLAG
+//#define IGUANA_VERIFYFLAG
 #endif
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
