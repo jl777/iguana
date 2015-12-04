@@ -787,7 +787,7 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
-    struct pollfd fds; uint8_t *buf; int32_t bufsize,flag;
+    struct pollfd fds; uint8_t *buf; int32_t bufsize,flag,timeout = IGUANA_MAXPEERS/10 + 1;
     //printf("dedicatedloop.%s\n",addr->ipaddr);
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
@@ -800,25 +800,25 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
         memset(&fds,0,sizeof(fds));
         fds.fd = addr->usock;
         fds.events |= POLLOUT;
-        if (  poll(&fds,1,1) > 0 )
+        if (  poll(&fds,1,timeout) > 0 )
             flag += iguana_pollsendQ(coin,addr);
         if ( flag == 0 )
         {
             memset(&fds,0,sizeof(fds));
             fds.fd = addr->usock;
             fds.events |= POLLIN;
-            if ( poll(&fds,1,1) > 0 )
+            if ( poll(&fds,1,timeout) > 0 )
                 flag += iguana_pollrecv(coin,addr,buf,bufsize);
             if ( flag == 0 && addr->pendblocks < IGUANA_MAXPENDING )
             {
                 memset(&fds,0,sizeof(fds));
                 fds.fd = addr->usock;
                 fds.events |= POLLOUT;
-                if ( poll(&fds,1,1) > 0 )
+                if ( poll(&fds,1,timeout) > 0 )
                     flag += iguana_poll(coin,addr);
             }
             if ( flag == 0 )
-                usleep(1000);
+                usleep(1000 + 100000*(coin->blocks.hwmheight > (long)coin->longestchain-1000));
         }
     }
     myfree(buf,bufsize);
