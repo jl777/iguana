@@ -383,7 +383,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2)
     if ( height >= coin->blocks.parsedblocks && coin->R.recvblocks[height] == 0 && GETBIT(coin->R.waitingbits,height) == 0 )
     {
         init_hexbytes_noT(hashstr,hash2.bytes,sizeof(hash2));
-        if ( height < coin->blocks.parsedblocks+IGUANA_HDRSCOUNT )
+        if ( height < coin->blocks.parsedblocks+10 )
             str = "priorityQ", Q = &coin->priorityQ;
         else str = "blocksQ", Q = &coin->blocksQ;
         queue_enqueue(str,Q,queueitem(hashstr),1);
