@@ -576,7 +576,7 @@ void iguana_coinloop(void *arg)
                     width = sqrt(coin->longestchain-coin->blocks.parsedblocks);
                     if ( width < 1 )
                         width = 1;
-                    if ( (w= iguana_updatewaiting(coin,coin->blocks.parsedblocks,width)) >= (width>>1) )
+                    //if ( (w= iguana_updatewaiting(coin,coin->blocks.parsedblocks,width)) >= (width>>1) )
                     {
                         while ( iguana_processrecv(coin) == 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
                         {
