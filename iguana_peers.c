@@ -286,7 +286,7 @@ int32_t iguana_peermetrics(struct iguana_info *coin)
 
 int32_t iguana_connectsocket(int32_t blockflag,struct iguana_peer *A,struct sockaddr *addr,socklen_t addr_len)
 {
-    int32_t flags,val = 65536*2; struct timeval timeout;
+    int32_t opt,flags,val = 65536*2; struct timeval timeout;
     if ( A->usock >= 0 )
     {
         printf("iguana_connectsocket: (%s) already has usock.%d\n",A->ipaddr,A->usock);
@@ -303,7 +303,8 @@ int32_t iguana_connectsocket(int32_t blockflag,struct iguana_peer *A,struct sock
         timeout.tv_usec = 1000;
         setsockopt(A->usock,SOL_SOCKET,SO_RCVTIMEO,(char *)&timeout,sizeof(timeout));
         setsockopt(A->usock,SOL_SOCKET,SO_SNDTIMEO,(char *)&timeout,sizeof(timeout));
-        //opt = 1;
+        opt = 1;
+        setsockopt(A->usock,SOL_SOCKET,SO_REUSEADDR,(void*)&opt,sizeof(opt));
         //retval = setsockopt(A->usock,SOL_SOCKET,SO_NOSIGPIPE,&opt,sizeof(opt));
         //printf("nosigpipe retval.%d\n",retval);
         if ( blockflag != 0 || ((flags= fcntl(A->usock,F_GETFL,0)) >= 0 && fcntl(A->usock,F_SETFL,flags|O_NONBLOCK) >= 0) )
