@@ -8,7 +8,7 @@
 
 int iguana_main(void *arg);
 
-void *iguana(char *arg)
+void *iguana(void *arg)
 {
     if ( arg == 0 )
         arg = "{\"coins\":[{\"name\":\"BTC\"}]}";
@@ -309,9 +309,9 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
     pthread_create(&iguana_thread,NULL,&iguana,iguana_filestr(&allocsize,"iguana.conf"));
     nacl_io_init_ppapi(instance,g_get_browser_interface);
     umount("/");
-    mount("", "/", "memfs", 0, "");
+    mount("", "/memfs", "memfs", 0, "");
     mount("",                                       /* source */
-          "/persistent",                            /* target */
+          "/",                            /* target */
           "html5fs",                                /* filesystemtype */
           0,                                        /* mountflags */
           "type=PERSISTENT,expected_size=34359738368"); /* data */

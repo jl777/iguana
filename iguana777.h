@@ -559,7 +559,7 @@ int32_t iguana_compare_files(char *fname,char *fname2);
 int64_t iguana_copyfile(char *fname,char *fname2,int32_t cmpflag);
 int32_t iguana_renamefile(char *fname,char *newname);
 void iguana_removefile(char *fname,int32_t scrubflag);
-void *iguana_filestr(uint64_t *allocsizep,char *fname);
+void *iguana_filestr(int64_t *allocsizep,char *fname);
 
 double milliseconds(void);
 void randombytes(unsigned char *x,long xlen);

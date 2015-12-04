@@ -485,12 +485,12 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
             gap = sqrt(gap);
         if ( gap < 1 )
             gap = 1;
-        if ( height < coin->R.numwaitingbits && coin->R.recvblocks[height] == 0 && coin->R.waitstart[height] != 0 && now > (coin->R.waitstart[height] + gap) )
+        if ( height < coin->R.numwaitingbits && coin->R.recvblocks[height] == 0 && now > (coin->R.waitstart[height] + gap) )
         {
             //printf("restart height.%d width.%d widthready.%d %s\n",height,coin->width,coin->widthready,bits256_str(iguana_blockhash(coin,height)));
             iguana_waitclear(coin,height);
             iguana_waitstart(coin,height);
-        }
+        } //else printf("%d %d %p %u\n",height,coin->R.numwaitingbits,coin->R.recvblocks[height],coin->R.waitstart[height]);
     }
     height = starti;
     for (i=0; i<max; i++,height++)
@@ -569,6 +569,7 @@ void iguana_coinloop(void *arg)
                     for (; width<(coin->longestchain-coin->blocks.parsedblocks); width<<=1)
                     {
                         w = iguana_updatewaiting(coin,coin->blocks.parsedblocks,width);
+                        printf("w%d ",w);
                         if ( width == coin->width )
                             coin->widthready = w;
                         if ( w != width )
@@ -576,6 +577,7 @@ void iguana_coinloop(void *arg)
                         if ( (rand() % 100) == 0 && width > (coin->width<<2) )
                             printf("coin->width.%d higher width.%d all there\n",coin->width,width);
                     }
+                    printf("width.%d ready.%d\n",coin->width,coin->widthready);
                     coin->lastwaiting = (uint32_t)time(NULL);
                 }
                 //printf("updatehdrs\n"), getchar();

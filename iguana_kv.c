@@ -31,7 +31,19 @@ int32_t os_supports_mappedfiles() { return(1); }
 
 int32_t portable_truncate(char *fname,long filesize) { return(truncate(fname,filesize)); }
 
-char *iguana_compatible_path(char *str) { return(str); }
+char *iguana_compatible_path(char *str)
+{
+    static char fname[1024];
+    return(str);
+    if ( strncmp(str,"/persistent/",strlen("/persistent/")) == 0 )
+        return(str);
+    if ( str[0] == '/' )
+        str++;
+    else if ( str[0] == '.' && str[1] == '/' )
+        str += 2;
+    sprintf(fname,"/persistent/%s",str);
+    return(fname);
+}
 
 void ensure_directory(char *dirname)
 {

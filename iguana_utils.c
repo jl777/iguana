@@ -791,7 +791,7 @@ double milliseconds()
 
 //void msleep(uint32_t millis) { usleep(millis * 1000); }
 
-void *iguana_loadfile(char *fname,char **bufp,uint64_t *lenp,uint64_t *allocsizep)
+void *iguana_loadfile(char *fname,char **bufp,int64_t *lenp,int64_t *allocsizep)
 {
     FILE *fp;
     int64_t  filesize,buflen = *allocsizep;
@@ -830,9 +830,9 @@ void *iguana_loadfile(char *fname,char **bufp,uint64_t *lenp,uint64_t *allocsize
     return(buf);
 }
 
-void *iguana_filestr(uint64_t *allocsizep,char *fname)
+void *iguana_filestr(int64_t *allocsizep,char *fname)
 {
-    uint64_t filesize = 0; char *buf = 0;
+    int64_t filesize = 0; char *buf = 0;
     *allocsizep = 0;
     return(iguana_loadfile(fname,&buf,&filesize,allocsizep));
 }
