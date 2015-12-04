@@ -368,7 +368,7 @@ int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,
     *txidp = bits256_doublesha256(txidstr,txstart,len);
     msg->allocsize = len;
     Tx_allocated++, Tx_allocsize += len;
-    if ( ((Tx_allocated + Tx_freed) % 100000) == 0 )
+    if ( ((Tx_allocated + Tx_freed) % 10000000) == 0 )
         printf("h.%u len.%d (%llu - %llu) %lld (%llu - %llu)\n",height,len,(long long)Tx_allocated,(long long)Tx_freed,(long long)(Tx_allocated - Tx_freed),(long long)Tx_allocsize,(long long)Tx_freesize);
     return(len);
 }
