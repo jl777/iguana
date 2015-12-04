@@ -202,6 +202,7 @@ void iguana_gotheaders(struct iguana_info *coin,struct iguana_peer *addr,struct 
         addr->pendhdrs--;
     coin->R.lasthdrtime = (uint32_t)time(NULL);
     portable_mutex_lock(&coin->blocks.mutex);
+    fprintf(stderr,"GOTHDRS ");
     iguana_processhdrs(coin,addr,blocks,n);
     portable_mutex_unlock(&coin->blocks.mutex);
 }
