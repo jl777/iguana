@@ -569,15 +569,15 @@ void iguana_coinloop(void *arg)
                 }
                 //printf("updatehdrs\n"), getchar();
                 iguana_updatehdrs(coin);
-                if ( coin->blocks.parsedblocks < coin->blocks.hwmheight )
+                if ( coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
                 {
                     //printf("processrecv\n"), getchar();
                     width = sqrt(coin->longestchain-coin->blocks.parsedblocks);
                     if ( width < 1 )
                         width = 1;
-                    if ( (w= iguana_updatewaiting(coin,coin->blocks.parsedblocks,width)) == width )
+                    if ( (w= iguana_updatewaiting(coin,coin->blocks.parsedblocks,width)) >= (width>>1) )
                     {
-                        while ( iguana_processrecv(coin) == 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight )
+                        while ( iguana_processrecv(coin) == 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
                         {
                             if ( (coin->blocks.parsedblocks > coin->longestchain-1000 && (coin->blocks.parsedblocks % 100) == 1) ||
                                 (coin->blocks.parsedblocks > coin->longestchain-10000 && (coin->blocks.parsedblocks % 1000) == 1) ||
