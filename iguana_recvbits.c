@@ -356,10 +356,10 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
                     {
                         printf("PURGE.(%s) oldRSPACE[%ld] as coin->blocks.parsedblocks %d > %d coin->R.oldRSPACE[i].maxheight\n",coin->R.oldRSPACE[i].M.fname,i,coin->blocks.parsedblocks,coin->R.oldRSPACE[i].maxheight);
                         coin->R.RSPACE.openfiles--;
-#ifdef __APPLE__
+//#ifdef __APPLE__
                         iguana_closemap(&coin->R.oldRSPACE[i].M);
                         iguana_removefile(coin->R.oldRSPACE[i].M.fname,0);
-#endif
+//#endif
                         coin->R.oldRSPACE[i].M.fileptr = 0;
                     }
                 }
