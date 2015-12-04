@@ -730,7 +730,7 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
     coin->txids->HDDitemsp = (void **)&coin->T, coin->T = coin->txids->M.fileptr;
     printf("four ramchains start valid.%d height.%d txids.%d vouts.%d vins.%d pkhashes.%d %.2f minutes\n",valid,hwmheight,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,((double)time(NULL)-coin->starttime)/60.);
     
-    coin->pkhashes = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPKITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"pkhashes",0,20,sizeof(struct iguana_pkhash),sizeof(struct iguana_pkhash),10000,iguana_verifypkhash,iguana_nullinit,sizeof(*coin->accounts),sizeof(*coin->pkextras),dep->numpkinds,100000);
+    coin->pkhashes = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPKITEMS)!=0)*IGUANA_MAPPED_ITEM,coin->symbol,coin->symbol,"pkhashes",0,20,sizeof(struct iguana_pkhash),sizeof(struct iguana_pkhash),10000,iguana_verifypkhash,iguana_nullinit,sizeof(*coin->accounts),sizeof(*coin->pkextras),dep->numpkinds,100000000);
     if ( coin->pkhashes == 0 )
         printf("cant create pkhashes\n"), exit(1);
     coin->pkhashes->HDDitemsp = (void **)&coin->P, coin->P = coin->pkhashes->M.fileptr;
