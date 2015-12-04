@@ -374,12 +374,12 @@ uint32_t iguana_syncs(struct iguana_info *coin)
         printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
     printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),coin->blocks.parsedblocks-1);
     printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
-    sprintf(fname,"DB/%s/ledger.%d",coin->symbol,coin->blocks.parsedblocks-1);
+    sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,coin->blocks.parsedblocks-1);
     sprintf(fname2,"DB/%s/ledger",coin->symbol);
-    sprintf(fnameold,"%s.old",fname);
-    sprintf(fnameold2,"%s.old2",fname);
+    sprintf(fnameold,"%s.old",fname2);
+    sprintf(fnameold2,"%s.old2",fname2);
     iguana_renamefile(fnameold,fnameold2);
-    iguana_renamefile(fname,fnameold);
+    iguana_renamefile(fname2,fnameold);
     if ( (fp= fopen(fname,"wb")) != 0 )
     {
         if ( fwrite(coin->accounts,sizeof(*coin->accounts),coin->LEDGER.snapshot.dep.numpkinds,fp) != coin->LEDGER.snapshot.dep.numpkinds )
@@ -387,15 +387,15 @@ uint32_t iguana_syncs(struct iguana_info *coin)
         if ( fwrite(&coin->LEDGER,1,sizeof(coin->LEDGER),fp) != sizeof(coin->LEDGER) )
             printf("WARNING: error saving %s\n",fname);
         fclose(fp);
-        //iguana_copyfile(fname,fname2,1);
+        iguana_copyfile(fname,fname2,1);
     }
     return((uint32_t)time(NULL));
 }
 
-// 68c3fc37f1c64d66 159e7589c5bd3942 fdc2759d3f5d5900 f278ca55263867ae 2a998a8fe79ee30b b7457471e500cc38 -> syncs adc0d3923d847f2b201e6b847825d827257c91e54a78dc52ec184b9345c56c8b ledgerhashes.100000
+// 9d1025feba33725a d69751b2f8d3f626 1f19457ce24411f1 76e12fd68b3b5b3c 2ad1a1e4b3b7014e a699f2904d073771 989c145c04a7a0d0 e888ab12de678518 -> syncs b8cf6b625de1d921695d1d2247ad68b86d047adf417c09562dc620ada993c47d ledgerhashes.140000
+// 9d1025feba33725a d69751b2f8d3f626 1f19457ce24411f1 76e12fd68b3b5b3c 2ad1a1e4b3b7014e a699f2904d073771 989c145c04a7a0d0 e888ab12de678518 -> syncs b8cf6b625de1d921695d1d2247ad68b86d047adf417c09562dc620ada993c47d ledgerhashes.140000
 
-
-// 53faf4c08ae7cd66 60af0f6074a4460a 7d695aa60788e52c 45a5c96ef55a1797 d2d5788986315066 27372b0616caacf0 -> syncs 8827b2b6d94ef189d2726f548068da3d69873b1a0a43f2dcde7501d8b26eba19 ledgerhashes.200000
+// 5499a1b7d112ff2a f5b4fe3615723d5 95c373067c4cc534 62392ce87c643e80 8b4f237bc6e1260f 4bb04e5a13d2f5bf b1200c95bc61253c 4786715cdeb8c7c7 -> syncs 26626213831f6052bf3e4664e147ea9b01dd24fe8cb2bf04a08489a2f88d1581 ledgerhashes.190000
 
 
 
