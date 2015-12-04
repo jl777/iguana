@@ -589,7 +589,7 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
 
 int32_t iguana_fixsecondary(struct iguana_info *coin,int32_t numtxids,int32_t numunspents,int32_t numspends,int32_t numpkinds,struct iguana_Uextra *Uextras,struct iguana_pkextra *pkextras,struct iguana_account *accounts)
 {
-    int32_t i,n,m,err;
+    int32_t i,m,err;
     if ( numtxids < 2 || numunspents < 2 || numspends < 2 || numpkinds < 2 )
         return(0);
     //struct iguana_Uextra { uint32_t spendind; }; // unspentind
@@ -631,6 +631,12 @@ int32_t iguana_fixsecondary(struct iguana_info *coin,int32_t numtxids,int32_t nu
     printf("errs.%d in spends numspends.%d\n",err,numspends);
     if ( err != 0 )
         getchar();
+    return(0);
+}
+
+int32_t iguana_clearoverage(struct iguana_info *coin,int32_t numtxids,int32_t numunspents,int32_t numspends,int32_t numpkinds,struct iguana_Uextra *Uextras,struct iguana_pkextra *pkextras,struct iguana_account *accounts)
+{
+    int32_t i,n;
     n = (int32_t)(coin->txids->M.allocsize / coin->txids->HDDvaluesize) - 2;
     for (i=numtxids+1; i<n; i++) // diff with next txid's firstv's give numv's
         memset(&coin->T[i],0,sizeof(coin->T[i]));
@@ -677,6 +683,8 @@ int64_t iguana_verifybalances(struct iguana_info *coin,int32_t fullverify)
         balance += coin->accounts[i].balance;
     }
     printf("iguana_verifybalances %.8f numerrs.%d\n",dstr(balance),numerrs);
+    if ( numerrs > 0 )
+        getchar();
     return(balance);
 }
 
@@ -807,6 +815,7 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
         printf("coin->blocks.parsedblocks.%d KV counts T.%d P.%d U.%d S.%d\n",coin->blocks.parsedblocks,coin->txids->numkeys,coin->pkhashes->numkeys,coin->unspents->numkeys,coin->spends->numkeys);
         printf("auto parse genesis\n"); //getchar();
     }
+    else iguana_clearoverage(coin,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds,coin->Uextras,coin->pkextras,coin->accounts);
     return(coin->blocks.parsedblocks);
 }
 

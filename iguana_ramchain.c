@@ -279,69 +279,90 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
     uint32_t prev,firstunspentind,firstspendind,unspentind; int64_t credits,debits,Udebits;
     credits = debits = Udebits = 0;
     if ( acct->lastspendind >= coin->latest.dep.numspends || acct->lastunspentind >= coin->latest.dep.numunspents )
-        return(-1);
-    else
     {
-        prev = acct->lastunspentind, firstunspentind = 0;
-        while ( prev != 0 )
+        printf("need to fix account P[%d] ",pkind);
+        prev = acct->lastunspentind;
+        if ( acct->lastunspentind >= coin->latest.dep.numunspents )
+            acct->lastunspentind = 0;
+        if ( acct->lastunspentind == 0 && prev < coin->latest.dep.numunspents )
+            acct->lastunspentind = prev;
+        while ( prev >= coin->latest.dep.numunspents )
         {
-            firstunspentind = prev;
-            if ( coin->Uextras[prev].prevunspentind >= prev )
-            {
-                printf("pkind.%d illegal coin->U[%d].prevunspentind of %d\n",pkind,prev,coin->Uextras[prev].prevunspentind);
-                return(-2);
-            }
-            if ( coin->U[prev].pkind != pkind )
-            {
-                printf("pkind.%d fatal pkind mismatch coin->U[%d].pkind %d != %d pkind\n",pkind,prev,coin->U[prev].pkind,pkind);
-                return(-3);
-            }
-            if ( coin->Uextras[prev].spendind >= coin->latest.dep.numspends )
-            {
-                printf("pkind.%d coin->Uextras[%d] %d >= %d coin->latest.dep.numspends\n",pkind,prev,coin->Uextras[prev].spendind,coin->latest.dep.numspends);
-                return(-4);
-            }
-            credits += coin->U[prev].value;
-            if ( coin->Uextras[prev].spendind != 0 )
-                Udebits += coin->U[prev].value;
+            printf("(U%d %.8f P%d S%d) ",prev,dstr(coin->U[prev].value),coin->U[prev].pkind,coin->Uextras[prev].spendind);
             prev = coin->Uextras[prev].prevunspentind;
         }
-        if ( firstunspentind != coin->P[pkind].firstunspentind )
-        {
-            printf("pkind.%d firstunspentind %u != %u coin->P[pkind].firstunspentind\n",pkind,firstunspentind,coin->P[pkind].firstunspentind );
-            return(-5);
-        }
-        prev = acct->lastspendind, firstspendind = 0;
+        printf("prevunspentinds for U%d for acct[%d]\n",acct->lastunspentind,pkind);
+        prev = acct->lastspendind;
+        if ( acct->lastspendind >= coin->latest.dep.numspends )
+            acct->lastspendind = 0;
+        if ( acct->lastspendind == 0 && prev < coin->latest.dep.numspends )
+            acct->lastspendind = prev;
         while ( prev != 0 )
         {
-            firstspendind = prev;
-            if ( (unspentind= coin->S[prev].unspentind) == 0 || unspentind >= coin->latest.dep.numunspents )
-            {
-                printf("pkind.%d S[%d] -> U%d illegal numunspents.%d\n",pkind,prev,unspentind,coin->latest.dep.numunspents);
-                return(-6);
-            }
-            if ( coin->Uextras[unspentind].spendind != prev )
-            {
-                printf("mismatch: pkind.%d coin->Uextras[%d].spendind %d != %d prev\n",pkind,prev,coin->Uextras[unspentind].spendind,prev);
-                {
-                    prev = acct->lastspendind, firstspendind = 0;
-                    while ( prev != 0 )
-                    {
-                        printf("(U%d S%d).S%d ",coin->S[prev].unspentind,coin->Sextras[prev].prevspendind,prev);
-                        prev = coin->Sextras[prev].prevspendind;
-                    }
-                    printf("prevspendinds for S%d for acct[%d]\n",acct->lastspendind,pkind);
-                }
-                return(-7);
-            }
-            debits += coin->U[unspentind].value;
+            printf("(U%d %.8f S%d).S%d ",coin->S[prev].unspentind,dstr(coin->U[coin->S[prev].unspentind].value),coin->Sextras[prev].prevspendind,prev);
             prev = coin->Sextras[prev].prevspendind;
         }
-        if ( firstspendind != coin->pkextras[pkind].firstspendind )
+        printf("prevspendinds for S%d for acct[%d]\n",acct->lastspendind,pkind);
+    }
+    prev = acct->lastunspentind, firstunspentind = 0;
+    while ( prev != 0 )
+    {
+        firstunspentind = prev;
+        if ( coin->Uextras[prev].prevunspentind >= prev )
         {
-            printf("firstspendind %u != %u coin->P[%d].firstspendind\n",firstspendind,coin->pkextras[pkind].firstspendind,pkind);
-            return(-8);
+            printf("pkind.%d illegal coin->U[%d].prevunspentind of %d\n",pkind,prev,coin->Uextras[prev].prevunspentind);
+            return(-2);
         }
+        if ( coin->U[prev].pkind != pkind )
+        {
+            printf("pkind.%d fatal pkind mismatch coin->U[%d].pkind %d != %d pkind\n",pkind,prev,coin->U[prev].pkind,pkind);
+            return(-3);
+        }
+        if ( coin->Uextras[prev].spendind >= coin->latest.dep.numspends )
+        {
+            printf("pkind.%d coin->Uextras[%d] %d >= %d coin->latest.dep.numspends\n",pkind,prev,coin->Uextras[prev].spendind,coin->latest.dep.numspends);
+            return(-4);
+        }
+        credits += coin->U[prev].value;
+        if ( coin->Uextras[prev].spendind != 0 )
+            Udebits += coin->U[prev].value;
+        prev = coin->Uextras[prev].prevunspentind;
+    }
+    if ( firstunspentind != coin->P[pkind].firstunspentind )
+    {
+        printf("pkind.%d firstunspentind %u != %u coin->P[pkind].firstunspentind\n",pkind,firstunspentind,coin->P[pkind].firstunspentind );
+        return(-5);
+    }
+    prev = acct->lastspendind, firstspendind = 0;
+    while ( prev != 0 )
+    {
+        firstspendind = prev;
+        if ( (unspentind= coin->S[prev].unspentind) == 0 || unspentind >= coin->latest.dep.numunspents )
+        {
+            printf("pkind.%d S[%d] -> U%d illegal numunspents.%d\n",pkind,prev,unspentind,coin->latest.dep.numunspents);
+            return(-6);
+        }
+        if ( coin->Uextras[unspentind].spendind != prev )
+        {
+            printf("mismatch: pkind.%d coin->Uextras[%d].spendind %d != %d prev\n",pkind,prev,coin->Uextras[unspentind].spendind,prev);
+            {
+                prev = acct->lastspendind, firstspendind = 0;
+                while ( prev != 0 )
+                {
+                    printf("(U%d S%d).S%d ",coin->S[prev].unspentind,coin->Sextras[prev].prevspendind,prev);
+                    prev = coin->Sextras[prev].prevspendind;
+                }
+                printf("prevspendinds for S%d for acct[%d]\n",acct->lastspendind,pkind);
+            }
+            return(-7);
+        }
+        debits += coin->U[unspentind].value;
+        prev = coin->Sextras[prev].prevspendind;
+    }
+    if ( firstspendind != coin->pkextras[pkind].firstspendind )
+    {
+        printf("firstspendind %u != %u coin->P[%d].firstspendind\n",firstspendind,coin->pkextras[pkind].firstspendind,pkind);
+        return(-8);
     }
     if ( debits != Udebits )
     {
