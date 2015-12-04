@@ -326,7 +326,7 @@ int64_t iguana_MEMallocated(struct iguana_info *coin)
     int64_t total = coin->TMPallocated;
     if ( Tx_allocsize > Tx_freesize )
         total += (Tx_allocsize - Tx_freesize);
-    total += coin->R.RSPACE.openfiles * IGUANA_RSPACE_SIZE;
+    total += coin->R.RSPACE.openfiles * coin->R.RSPACE.size;
     total += iguana_packetsallocated(coin);
     return(total);
 }

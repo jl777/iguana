@@ -16,26 +16,14 @@
 #ifndef iguana777_net_h
 #define iguana777_net_h
 
-//#define IGUANA_DISABLEPEERS
-#ifdef __linux__
-#define IGUANA_MAXPEERS 128
 #define IGUANA_MAPHASHTABLES 1
-#define IGUANA_MAXMEMALLOCATED (1024L * 1024 * 1024L * 32)
-#else
-#define IGUANA_MAXPEERS 128
-#define IGUANA_MAPHASHTABLES 1
-#define IGUANA_MAXMEMALLOCATED (1024L * 1024 * 1024L * 1)
-#endif
-
-#ifdef __APPLE__
-//#define IGUANA_VERIFYFLAG
-#endif
+#define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 64)
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
-#define IGUANA_MAXPENDING 1 //((512 / IGUANA_MAXPEERS) + 1)
-
+#define IGUANA_MAXPENDING 2
 #define IGUANA_MAXPACKETSIZE (2 * 1024 * 1024)
-#define IGUANA_RSPACE_SIZE (IGUANA_MAXPACKETSIZE * 128)
+#define IGUANA_RSPACE_SIZE (IGUANA_MAXPACKETSIZE * 16)
+#define IGUANA_MAXPEERS 1024
 
 #define IGUANA_PERMTHREAD 0
 #define IGUANA_CONNTHREAD 1
@@ -83,6 +71,7 @@
 #include "includes/utlist.h"
 #include "includes/uthash.h"
 #include "includes/curve25519.h"
+#include "includes/cJSON.h"
 void PostMessage(const char* format, ...);
 
 #ifdef __PNACL
@@ -188,14 +177,13 @@ struct iguana_thread
 
 struct iguana_chain
 {
-	const int32_t chain_id;
-	const char name[16];
-	const uint8_t addr_pubkey,addr_script,wipval,netmagic[4];
-	const char *genesis_hash,*genesis_hex; // hex string
-    uint16_t default_port,hastimestamp;
-    char *ramcoder_seed;
+	//const int32_t chain_id;
+    char name[32],symbol[8];
+    uint8_t pubval,scriptval,wipval,netmagic[4];
+    char *genesis_hash,*genesis_hex; // hex string
+    uint16_t portp2p,portrpc,hastimestamp;
     uint64_t rewards[512][2];
-    uint8_t genesis_hashdata[32]; bits256 rseed;
+    uint8_t genesis_hashdata[32];
 };
 
 struct iguana_msghdr { uint8_t netmagic[4]; char command[12]; uint8_t serdatalen[4],hash[4]; } __attribute__((packed));
@@ -252,7 +240,7 @@ struct iguana_peer
     struct iguana_msgaddress A;
     char ipaddr[64],lastcommand[16],coinstr[16],symbol[16];
     uint64_t pingnonce,totalsent,totalrecv; double pingtime,sendmillis,pingsum,getdatamillis;
-    uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv;
+    uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime;
     int32_t dead,usock,sleeptime,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     bits256 lastrequest,backstop;
     double recvblocks,recvtotal,hdrmillis;
@@ -385,9 +373,9 @@ struct iguana_info
 {
     char name[64],symbol[8];
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
-    int64_t mining,totalfees,TMPallocated;
-    int32_t width,widthready;
-    uint32_t longestchain,starttime,coinmask,lastsync,parsetime,numiAddrs,newhdrs,lastwaiting,firstblock;
+    int64_t mining,totalfees,TMPallocated,MAXRECVCACHE;
+    int32_t width,widthready,MAXPEERS;
+    uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,newhdrs,lastwaiting,firstblock;
     struct iguana_chain *chain;
     struct iguanakv *iAddrs,*txids,*spends,*unspents,*pkhashes;
     struct iguana_txid *T;
@@ -514,7 +502,9 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp);
 void iguana_gotheaders(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *blocks,int32_t n);
 
 // init
-struct iguana_info *iguana_startcoin(char *symbol,int32_t initialheight,int32_t mapflags);
+struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialheight,int32_t mapflags);
+void iguana_initcoin(struct iguana_info *coin);
+void iguana_coinloop(void *arg);
 
 // utils
 double PoW_from_compact(uint32_t nBits);
@@ -569,6 +559,7 @@ int32_t iguana_compare_files(char *fname,char *fname2);
 int64_t iguana_copyfile(char *fname,char *fname2,int32_t cmpflag);
 int32_t iguana_renamefile(char *fname,char *newname);
 void iguana_removefile(char *fname,int32_t scrubflag);
+void *iguana_filestr(uint64_t *allocsizep,char *fname);
 
 double milliseconds(void);
 void randombytes(unsigned char *x,long xlen);

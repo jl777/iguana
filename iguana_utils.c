@@ -790,3 +790,49 @@ double milliseconds()
 }
 
 //void msleep(uint32_t millis) { usleep(millis * 1000); }
+
+void *iguana_loadfile(char *fname,char **bufp,uint64_t *lenp,uint64_t *allocsizep)
+{
+    FILE *fp;
+    int64_t  filesize,buflen = *allocsizep;
+    char *buf = *bufp;
+    *lenp = 0;
+    PostMessage("loadfile.(%s)\n",fname);
+    if ( (fp= fopen(iguana_compatible_path(fname),"rb")) != 0 )
+    {
+        fseek(fp,0,SEEK_END);
+        filesize = ftell(fp);
+        if ( filesize == 0 )
+        {
+            fclose(fp);
+            *lenp = 0;
+            PostMessage("loadfile.(%s) no filesize\n",fname);
+            return(0);
+        }
+        if ( filesize > buflen-1 )
+        {
+            *allocsizep = filesize+1;
+            *bufp = buf = realloc(buf,(long)*allocsizep);
+        }
+        rewind(fp);
+        if ( buf == 0 )
+            printf("Null buf ???\n");
+        else
+        {
+            if ( fread(buf,1,(long)filesize,fp) != (unsigned long)filesize )
+                printf("error reading filesize.%ld\n",(long)filesize);
+            buf[filesize] = 0;
+        }
+        fclose(fp);
+        *lenp = filesize;
+    }
+    PostMessage("done loadfile.(%s) size.%lld\n",fname,(long long)*lenp);
+    return(buf);
+}
+
+void *iguana_filestr(uint64_t *allocsizep,char *fname)
+{
+    uint64_t filesize = 0; char *buf = 0;
+    *allocsizep = 0;
+    return(iguana_loadfile(fname,&buf,&filesize,allocsizep));
+}

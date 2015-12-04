@@ -6,16 +6,14 @@
 #include <unistd.h>
 #include "iguana777.h"
 
-int iguana_main(int argc,const char *argv[]);
+int iguana_main(void *arg);
 
-void *iguana(void *threads)
+void *iguana(char *arg)
 {
-    static const char *argv[2] = { "BTC" };
-    PostMessage("iguana start\n");
-
-    iguana_main(1,argv);
-    while ( 1 )
-        sleep(1000000);
+    if ( arg == 0 )
+        arg = "{\"coins\":[{\"name\":\"BTC\"}]}";
+    PostMessage("iguana start.(%s)\n",arg);
+    iguana_main(arg);
     return(0);
 }
 
@@ -299,15 +297,15 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
 {
     int nacl_io_init_ppapi(PP_Instance instance, PPB_GetInterface get_interface);
     static pthread_t g_handle_message_thread;
-    //static pthread_t g_echo_thread;
-    static pthread_t iguana_thread;//,bind_thread;
+    static pthread_t iguana_thread;
+    int64_t allocsize;
     g_instance = instance;
     // By default, nacl_io mounts / to pass through to the original NaCl
     // filesystem (which doesn't do much). Let's remount it to a memfs
     // filesystem.
     InitializeMessageQueue();
     pthread_create(&g_handle_message_thread, NULL, &HandleMessageThread, NULL);
-    pthread_create(&iguana_thread,NULL,&iguana,NULL);
+    pthread_create(&iguana_thread,NULL,&iguana,iguana_filestr(&allocsize,"iguana.conf"));
     nacl_io_init_ppapi(instance,g_get_browser_interface);
     umount("/");
     mount("", "/", "memfs", 0, "");
@@ -613,11 +611,11 @@ PSMainFunc_t PSUserMainGet()
 #else
 int main(int argc, const char * argv[])
 {
-    static pthread_t iguana_thread;
-    pthread_create(&iguana_thread,NULL,&iguana,NULL);
-    printf("finished init\n");
-    while ( 1 )
-        sleep(777);
+    char *jsonstr;
+    if ( argc < 2 )
+        jsonstr = 0;
+    else jsonstr = (char *)argv[1];
+    iguana(jsonstr);
     return 0;
 }
 #endif

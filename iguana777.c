@@ -380,14 +380,22 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2)
         printf("mismatched height.%d for %s %d\n",height,bits256_str(hash2),iguana_height(coin,hash2));
         return(0);
     }
-    if ( height >= coin->blocks.parsedblocks && coin->R.recvblocks[height] == 0 && GETBIT(coin->R.waitingbits,height) == 0 )
+    if ( height >= coin->blocks.parsedblocks && coin->R.recvblocks[height] == 0 )
     {
         init_hexbytes_noT(hashstr,hash2.bytes,sizeof(hash2));
-        if ( height < coin->blocks.parsedblocks+10 )
+        if ( height < coin->blocks.parsedblocks+coin->MAXPEERS )
+        {
             str = "priorityQ", Q = &coin->priorityQ;
-        else str = "blocksQ", Q = &coin->blocksQ;
-        queue_enqueue(str,Q,queueitem(hashstr),1);
-        iguana_setwaitstart(coin,height);
+            printf("%s height.%d parsed.%d (%d)\n",str,height,coin->blocks.parsedblocks,height < coin->blocks.parsedblocks+coin->MAXPEERS);
+        }
+        else if ( GETBIT(coin->R.waitingbits,height) == 0 )
+            str = "blocksQ", Q = &coin->blocksQ;
+        else str = "already pending", Q = 0;
+        if ( Q != 0 )
+        {
+            queue_enqueue(str,Q,queueitem(hashstr),1);
+            iguana_setwaitstart(coin,height);
+        }
         return(1);
     } else printf("iguana_queueblock skip.%d %s parsed.%d %p GETBIT.%d\n",height,bits256_str(hash2),coin->blocks.parsedblocks,coin->R.recvblocks[height],GETBIT(coin->R.waitingbits,height));
     return(0);
@@ -475,8 +483,8 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
         gap = (height - coin->blocks.parsedblocks);
         if ( gap >= 0 )
             gap = sqrt(gap);
-        if ( gap < 3 )
-            gap = 3;
+        if ( gap < 1 )
+            gap = 1;
         if ( height < coin->R.numwaitingbits && coin->R.recvblocks[height] == 0 && coin->R.waitstart[height] != 0 && now > (coin->R.waitstart[height] + gap) )
         {
             //printf("restart height.%d width.%d widthready.%d %s\n",height,coin->width,coin->widthready,bits256_str(iguana_blockhash(coin,height)));
@@ -510,15 +518,16 @@ void *iguana_kviAddriterator(struct iguana_info *coin,struct iguanakv *kv,struct
 
 void iguana_coinloop(void *arg)
 {
-    int32_t flag,i,n,w,width; struct iguana_info *coin,**coins = arg;
+    struct iguana_peer *addr; struct iguana_info *coin,**coins = arg;
+    char fname[512],tmpfname[512],oldfname[512]; FILE *fp; int32_t flag,i,n,w,width;
     n = (int32_t)(long)coins[0];
     coins++;
-    printf("begin coinloop\n");
+    printf("begin coinloop[%d]\n",n);
     coin = coins[0];
     iguana_possible_peer(coin,"127.0.0.1");
-    iguana_possible_peer(coin,"108.58.252.82");
-    iguana_possible_peer(coin,"74.207.233.193");
-    iguana_possible_peer(coin,"130.211.146.81");
+    //iguana_possible_peer(coin,"108.58.252.82");
+    //iguana_possible_peer(coin,"74.207.233.193");
+    //iguana_possible_peer(coin,"130.211.146.81");
     while ( 1 )
     {
         flag = 0;
@@ -529,11 +538,12 @@ void iguana_coinloop(void *arg)
                 portable_mutex_lock(&coin->blocks.mutex);
                 if ( time(NULL) > coin->peers.lastmetrics+60 )
                 {
-                    char fname[512]; FILE *fp; struct iguana_peer *addr;
                     iguana_peermetrics(coin);
                     coin->peers.lastmetrics = (uint32_t)time(NULL);
                     sprintf(fname,"%s_peers.txt",coin->symbol);
-                    if ( (fp= fopen("peers.txt","w")) != 0 )
+                    sprintf(oldfname,"%s_oldpeers.txt",coin->symbol);
+                    sprintf(tmpfname,"tmp/%s/peers.txt",coin->symbol);
+                    if ( (fp= fopen(tmpfname,"w")) != 0 )
                     {
                         for (i=0; i<coin->peers.numranked; i++)
                             if ( (addr= coin->peers.ranked[i]) != 0 )
@@ -545,13 +555,13 @@ void iguana_coinloop(void *arg)
                         {
                             printf("new peers.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
                             fclose(fp);
-                            iguana_renamefile(fname,"oldpeers.txt");
-                            iguana_copyfile("peers.txt",fname,1);
+                            iguana_renamefile(fname,oldfname);
+                            iguana_copyfile(tmpfname,fname,1);
                         } else fclose(fp);
                     }
                     iguana_possible_peer(coin,0);
                 }
-                if ( time(NULL) > coin->lastwaiting ) //iguana_MEMallocated(coin) < IGUANA_MAXMEMALLOCATED &&
+                if ( time(NULL) > coin->lastwaiting )
                 {
                     //printf("waiting\n"), getchar();
                     coin->width = width = sqrt(coin->longestchain-coin->blocks.parsedblocks);
@@ -572,25 +582,18 @@ void iguana_coinloop(void *arg)
                 iguana_updatehdrs(coin);
                 if ( coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
                 {
-                    //printf("processrecv\n"), getchar();
-                    width = sqrt(coin->longestchain-coin->blocks.parsedblocks);
-                    if ( width < 1 )
-                        width = 1;
-                    //if ( (w= iguana_updatewaiting(coin,coin->blocks.parsedblocks,width)) >= (width>>1) )
+                    while ( iguana_processrecv(coin) == 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
                     {
-                        while ( iguana_processrecv(coin) == 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
+                        if ( (coin->blocks.parsedblocks > coin->longestchain-1000 && (coin->blocks.parsedblocks % 100) == 1) ||
+                            (coin->blocks.parsedblocks > coin->longestchain-10000 && (coin->blocks.parsedblocks % 1000) == 1) ||
+                            (coin->blocks.parsedblocks > coin->longestchain-2000000 && (coin->blocks.parsedblocks % 10000) == 1) ||
+                            (coin->blocks.parsedblocks > coin->firstblock+100 && (coin->blocks.parsedblocks % 100000) == 1) )
                         {
-                            if ( (coin->blocks.parsedblocks > coin->longestchain-1000 && (coin->blocks.parsedblocks % 100) == 1) ||
-                                (coin->blocks.parsedblocks > coin->longestchain-10000 && (coin->blocks.parsedblocks % 1000) == 1) ||
-                                (coin->blocks.parsedblocks > coin->longestchain-2000000 && (coin->blocks.parsedblocks % 10000) == 1) ||
-                                (coin->blocks.parsedblocks > coin->firstblock+100 && (coin->blocks.parsedblocks % 100000) == 1) )
-                            {
-                                if ( 1 && coin->blocks.parsedblocks > coin->loadedLEDGER.snapshot.height+2 )
-                                    iguana_syncs(coin);
-                            }
-                            flag++;
+                            if ( 1 && coin->blocks.parsedblocks > coin->loadedLEDGER.snapshot.height+2 )
+                                iguana_syncs(coin);
                         }
-                    } // else printf("w.%d of %d: skip processrecv\n",w,width);
+                        flag++;
+                    }
                 }
                 portable_mutex_unlock(&coin->blocks.mutex);
             }
@@ -598,28 +601,4 @@ void iguana_coinloop(void *arg)
         if ( flag == 0 )
             usleep(1000);
     }
-}
-
-void iguana_main(int32_t argc,const char *symbols[])
-{
-    struct iguana_info *coins[32]; char dirname[512]; int32_t i,n,mapflags;
-    mapflags = IGUANA_MAPRECVDATA | IGUANA_MAPHASHTABLES*IGUANA_MAPTXIDITEMS | IGUANA_MAPHASHTABLES*IGUANA_MAPPKITEMS | IGUANA_MAPHASHTABLES*IGUANA_MAPBLOCKITEMS | IGUANA_MAPHASHTABLES*IGUANA_MAPPEERITEMS;
-    mycalloc(0,0,0);
-    ensure_directory("DB");
-    ensure_directory("tmp");
-    for (i=n=0; i<sizeof(coins)/sizeof(*coins); i++)
-    {
-        if ( symbols[i] == 0 || symbols[i][0] == 0 )
-            break;
-        sprintf(dirname,"DB/%s",symbols[i]);
-        ensure_directory(dirname);
-        sprintf(dirname,"tmp/%s",symbols[i]);
-        ensure_directory(dirname);
-        coins[1 + n++] = iguana_startcoin((char *)symbols[i],400000,mapflags);
-    }
-    coins[0] = (void *)((long)n);
-    //if ( blockflag == 0 )
-    //    iguana_launch("coinloop",iguana_coinloop,coins,IGUANA_PERMTHREAD);
-    //else
-        iguana_coinloop(coins);
 }

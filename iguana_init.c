@@ -37,6 +37,19 @@ void iguana_initQs(struct iguana_info *coin)
         iguana_initQ(&coin->peers.active[i].sendQ,"addrsendQ");
 }
 
+void iguana_initcoin(struct iguana_info *coin)
+{
+    int32_t i;
+    portable_mutex_init(&coin->peers.rankedmutex);
+    portable_mutex_init(&coin->blocks.mutex);
+    portable_mutex_init(&coin->R.RSPACE.mutex);
+    iguana_initQs(coin);
+    randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
+    coin->starttime = (uint32_t)time(NULL);
+    for (i=0; i<IGUANA_NUMAPPENDS; i++)
+        vupdate_sha256(coin->latest.lhashes[i].bytes,&coin->latest.states[i],0,0);
+}
+
 struct iguana_info *iguana_coin(const char *symbol)
 {
     struct iguana_info *coin; int32_t i = 0;
@@ -62,19 +75,11 @@ struct iguana_info *iguana_coin(const char *symbol)
             {
                 if ( coin->chain == 0 )
                 {
-                    portable_mutex_init(&coin->peers.rankedmutex);
-                    portable_mutex_init(&coin->blocks.mutex);
-                    portable_mutex_init(&coin->R.RSPACE.mutex);
-                    iguana_initQs(coin);
-                    randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
                     strcpy(coin->name,Hardcoded_coins[i][1]);
+                    coin->myservices = atoi(Hardcoded_coins[i][2]);
                     strcpy(coin->symbol,symbol);
                     coin->chain = iguana_chainfind(coin->name);
-                    coin->coinmask = (1 << i);
-                    coin->starttime = (uint32_t)time(NULL);
-                    coin->myservices = atoi(Hardcoded_coins[i][2]);
-                    for (i=0; i<IGUANA_NUMAPPENDS; i++)
-                        vupdate_sha256(coin->latest.lhashes[i].bytes,&coin->latest.states[i],0,0);
+                    iguana_initcoin(coin);
                 }
                 return(coin);
             }
@@ -358,12 +363,13 @@ struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *c
 
 uint32_t iguana_syncs(struct iguana_info *coin)
 {
-    FILE *fp; char fnameold[512],fnameold2[512],fname[512],fname2[512]; int32_t i;
+    FILE *fp; char fnameold[512],fnameold2[512],fname[512],fname2[512]; int32_t i,height;
     if ( (int32_t)coin->blocks.parsedblocks < 1 )
         return(0);
+    height = coin->blocks.parsedblocks - (coin->firstblock != 0);
     for (i=0; i<IGUANA_NUMAPPENDS; i++)
         printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
-    printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),coin->blocks.parsedblocks-1);
+    printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),height);
     iguana_syncmap(&coin->iAddrs->M,0);
     iguana_syncmap(&coin->blocks.db->M,0);
     iguana_syncmap(&coin->unspents->M,0);
@@ -376,8 +382,8 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     iguana_syncmap(&coin->pkhashes->M3,0);
     if ( 0 && coin->R.RSPACE.M.fileptr != 0 )
         msync(coin->R.RSPACE.M.fileptr,coin->R.RSPACE.M.allocsize,MS_ASYNC);
-    printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,coin->blocks.parsedblocks,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
-    sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,coin->blocks.parsedblocks-1);
+    printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,height,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
+    sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,height);
     sprintf(fname2,"DB/%s/ledger",coin->symbol);
     sprintf(fnameold,"tmp/%s/ledger.old",coin->symbol);
     sprintf(fnameold2,"tmp/%s/ledger.old2",coin->symbol);
@@ -396,6 +402,7 @@ uint32_t iguana_syncs(struct iguana_info *coin)
     return((uint32_t)time(NULL));
 }
 
+// 480a886f78a52d94 2c16330bdd8565f2 fbfb8ba91a6cd871 d1feb1e96190d4ff b8fef8854847e7db 8d2692bcfe41c777 ec86c8502288022f 789ebb3966bb640f -> pre parse 35ee0080a9a132e88477e8809a6e2a0696a06b8c7b13fbfde2955998346dd5c8 ledgerhashes.120000
 // 9d1025feba33725a d69751b2f8d3f626 1f19457ce24411f1 76e12fd68b3b5b3c 2ad1a1e4b3b7014e a699f2904d073771 989c145c04a7a0d0 e888ab12de678518 -> syncs b8cf6b625de1d921695d1d2247ad68b86d047adf417c09562dc620ada993c47d ledgerhashes.140000
 // 53faf4c08ae7cd66 60af0f6074a4460a 8fa0f21eb4996161 7d695aa60788e52c 45a5c96ef55a1797 7b3225a83646caec d2d5788986315066 27372b0616caacf0 -> syncs c874aa3554c69038574e7da352eb624ac539fed97bf73b605d00df0c8cec4c1b ledgerhashes.200000
 // 739df50dbbaedada b83cbd69f08d2a0f 7a8ffa182706c5b7 8215ff6c7ffb9985 4d674a6d386bd759 f829283534a1804 aeb3b0644b01e07f 7ffe4899a261ca96 -> syncs fba47203d5c1d08e5cf55fa461f4deb6d0c97dcfa364ee5b51f0896ffcbcbaa7 ledgerhashes.300000
@@ -835,12 +842,11 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
     return(coin->blocks.parsedblocks);
 }
 
-struct iguana_info *iguana_startcoin(char *symbol,int32_t initialheight,int32_t mapflags)
+struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialheight,int32_t mapflags)
 {
-    FILE *fp; char fname[512]; int32_t iter,height; bits256 hash2; struct iguana_block space; struct iguana_info *coin;
-    coin = iguana_coin(symbol);
+    FILE *fp; char fname[512],*symbol; int32_t iter,height; bits256 hash2; struct iguana_block space;
     coin->sleeptime = 10000;
-    iguana_initQs(coin);
+    symbol = coin->symbol;
     if ( initialheight < IGUANA_HDRSCOUNT*10 )
         initialheight = IGUANA_HDRSCOUNT*10;
     coin->R.maprecvdata = ((mapflags & IGUANA_MAPRECVDATA) != 0);

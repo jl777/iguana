@@ -34,7 +34,7 @@ uint8_t *iguana_decompress(struct iguana_info *coin,int32_t height,int32_t *data
     }
     else if ( hconv_bitlen(hdrlen) == hconv_bitlen(numbits) )
     {
-        if ( (checklen= ramcoder_decompress(coin->R.decompressed,sizeof(coin->R.decompressed),bits,hdrlen,coin->chain->rseed)) == origdatalen )
+        if ( (checklen= ramcoder_decompress(coin->R.decompressed,sizeof(coin->R.decompressed),bits,hdrlen,bits256_zero)) == origdatalen )
         {
             //printf("DECOMPRESSED %d to %d\n",hconv_bitlen(hdrlen),checklen);
             *datalenp = origdatalen;
@@ -194,10 +194,10 @@ int32_t iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struc
         datalen = origdatalen;
         hdrlen = (1 << 31) | (datalen << 3);
         coin->R.srcdatalen += datalen;
-        if ( 0 && (numbits= ramcoder_compress(coin->R.compressed,sizeof(coin->R.compressed),data,datalen,coin->R.histo,coin->chain->rseed)) > 0 )
+        if ( 0 && (numbits= ramcoder_compress(coin->R.compressed,sizeof(coin->R.compressed),data,datalen,coin->R.histo,bits256_zero)) > 0 )
         {
             memset(coin->R.checkbuf,0,datalen);
-            if ( (checklen= ramcoder_decompress(coin->R.checkbuf,sizeof(coin->R.checkbuf),coin->R.compressed,numbits,coin->chain->rseed)) == datalen )
+            if ( (checklen= ramcoder_decompress(coin->R.checkbuf,sizeof(coin->R.checkbuf),coin->R.compressed,numbits,bits256_zero)) == datalen )
             {
                 if ( memcmp(coin->R.checkbuf,data,datalen) == 0 )
                 {
@@ -252,11 +252,13 @@ struct iguana_peer *iguana_choosepeer(struct iguana_info *coin)
     int32_t i,j,r,iter; struct iguana_peer *addr;
     r = rand();
     portable_mutex_lock(&coin->peers.rankedmutex);
+    if ( coin->MAXPEERS == 0 )
+        coin->MAXPEERS = IGUANA_MAXPEERS;
     if ( coin->peers.numranked > 0 )
     {
         for (j=0; j<coin->peers.numranked; j++)
         {
-            i = (j + r) % IGUANA_MAXPEERS;
+            i = (j + r) % coin->MAXPEERS;
             if ( (addr= coin->peers.ranked[i]) != 0 && addr->pendblocks < IGUANA_MAXPENDING && addr->dead == 0 && addr->usock >= 0 )
             {
                 portable_mutex_unlock(&coin->peers.rankedmutex);
@@ -267,9 +269,9 @@ struct iguana_peer *iguana_choosepeer(struct iguana_info *coin)
     portable_mutex_unlock(&coin->peers.rankedmutex);
     for (iter=0; iter<2; iter++)
     {
-        for (i=0; i<IGUANA_MAXPEERS; i++)
+        for (i=0; i<coin->MAXPEERS; i++)
         {
-            addr = &coin->peers.active[(i + r) % IGUANA_MAXPEERS];
+            addr = &coin->peers.active[(i + r) % coin->MAXPEERS];
             if ( addr->dead == 0 && addr->usock >= 0 && (iter == 1 || addr->pendblocks < IGUANA_MAXPENDING) )
                 return(addr);
         }
@@ -280,7 +282,7 @@ struct iguana_peer *iguana_choosepeer(struct iguana_info *coin)
 int32_t iguana_waitstart(struct iguana_info *coin,int32_t height)
 {
     bits256 hash2;
-    if ( height < coin->R.numwaitingbits && coin->R.recvblocks != 0 && coin->R.recvblocks[height] == 0 && GETBIT(coin->R.waitingbits,height) == 0 )
+    if ( height < coin->R.numwaitingbits && coin->R.recvblocks != 0 && coin->R.recvblocks[height] == 0 )
     {
         hash2 = iguana_blockhash(coin,height);
         return(iguana_queueblock(coin,height,hash2));
@@ -354,16 +356,22 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
                 {
                     if ( coin->R.oldRSPACE[i].M.fileptr != 0 && coin->blocks.parsedblocks > coin->R.oldRSPACE[i].maxheight+IGUANA_HDRSCOUNT )
                     {
-                        printf("PURGE.(%s) oldRSPACE[%ld] as coin->blocks.parsedblocks %d > %d coin->R.oldRSPACE[i].maxheight\n",coin->R.oldRSPACE[i].M.fname,i,coin->blocks.parsedblocks,coin->R.oldRSPACE[i].maxheight);
                         coin->R.RSPACE.openfiles--;
-//#ifdef __APPLE__
                         iguana_closemap(&coin->R.oldRSPACE[i].M);
                         if ( mem->lastcounter < mem->counter )
                             mem->lastcounter = mem->counter;
-                        sprintf(fname,"tmp/%s/%s.%d",coin->symbol,name,mem->lastcounter), iguana_compatible_path(fname);
-                        iguana_renamefile(coin->R.oldRSPACE[i].M.fname,fname);
-                        mem->lastcounter++;
-//#endif
+                        if ( mem->lastcounter < mem->counter+10 )
+                        {
+                            sprintf(fname,"tmp/%s/%s.%d",coin->symbol,name,mem->lastcounter), iguana_compatible_path(fname);
+                            printf("RECYCLE.(%s) oldRSPACE[%ld] as coin->blocks.parsedblocks %d > %d coin->R.oldRSPACE[i].maxheight -> %s\n",coin->R.oldRSPACE[i].M.fname,i,coin->blocks.parsedblocks,coin->R.oldRSPACE[i].maxheight,fname);
+                            iguana_renamefile(coin->R.oldRSPACE[i].M.fname,fname);
+                            mem->lastcounter++;
+                        }
+                        else
+                        {
+                            printf("PURGE.(%s) oldRSPACE[%ld] as coin->blocks.parsedblocks %d > %d coin->R.oldRSPACE[i].maxheight\n",coin->R.oldRSPACE[i].M.fname,i,coin->blocks.parsedblocks,coin->R.oldRSPACE[i].maxheight);
+                            iguana_removefile(coin->R.oldRSPACE[i].M.fname,0);
+                        }
                         coin->R.oldRSPACE[i].M.fileptr = 0;
                     }
                 }
@@ -371,9 +379,6 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
             coin->R.oldRSPACE = myrealloc('e',coin->R.oldRSPACE,coin->R.numold * sizeof(*coin->R.oldRSPACE),(coin->R.numold+1) * sizeof(*coin->R.oldRSPACE));
             coin->R.oldRSPACE[coin->R.numold++] = coin->R.RSPACE;
             coin->R.RSPACE.openfiles++;
-            //iguana_closemap(&mem->M);
-            //allocated = iguana_validaterecv(coin,&n,coin->R.RSPACE.M.fname);
-            //printf("recvbits: %s validated.%d %s %lld\n",coin->R.RSPACE.M.fname,n,mbstr(allocated),(long long)allocated);
         } else coin->TMPallocated += origsize;
         memset(&mem->M,0,sizeof(mem->M));
         sprintf(fname,"tmp/%s/%s.%d",coin->symbol,name,mem->counter), iguana_compatible_path(fname);
@@ -381,17 +386,25 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
         if ( mem->size == 0 )
         {
             if ( strcmp(name,"recv") == 0 )
-                mem->size = IGUANA_RSPACE_SIZE;// * ((strcmp(coinstr,"BTC") == 0) ? 8 : 1);
-            else mem->size = (1024 * 1024 * 64);
+                mem->size = IGUANA_RSPACE_SIZE * ((strcmp(coin->symbol,"BTC") == 0) ? 16 : 1);
+#ifdef IGUANA_MAPHASHTABLES
+            else mem->size = (1024 * 1024 * 128);
+#else
+            else mem->size = (1024 * 1024 * 16);
+#endif
         }
+        if ( coin->R.RSPACE.size == 0 )
+            coin->R.RSPACE.size = mem->size;
         if ( mem->size > origsize )
             size = mem->size;
         else size = origsize;
+        fprintf(stderr,"filealloc.(%s) -> ",fname);
         if ( filealloc(&mem->M,fname,mem,size) == 0 )
         {
             printf("couldnt map tmpfile %s\n",fname);
             return(0);
         }
+        fprintf(stderr,"created\n");
     }
     ptr = iguana_memalloc(mem,origsize,1);
     portable_mutex_unlock(&mem->mutex);
