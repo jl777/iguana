@@ -17,7 +17,7 @@
 #define iguana777_net_h
 
 #define IGUANA_MAPHASHTABLES 1
-#define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 4)
+#define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 64)
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDING 2

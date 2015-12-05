@@ -24,16 +24,18 @@ long Total_allocated,HWM_allocated,Type_allocated[256];
 
 long myallocated()
 {
-    int32_t i; long total = 0;
+    int32_t i; long total = 0; char buf[2049];
+    buf[0] = 0;
     for (i=0; i<256; i++)
     {
         if ( Type_allocated[i] != 0 )
         {
             total += Type_allocated[i];
-            printf("(%c %ld) ",i,Type_allocated[i]);
+            sprintf(buf+strlen(buf),"(%c %ld) ",i,Type_allocated[i]);
         }
     }
-    printf("-> total %ld %s\n",total,mbstr(total));
+    sprintf(buf + strlen(buf),"-> total %ld %s",total,mbstr(total));
+    printf("%s\n",buf);
     return(total);
 }
 
