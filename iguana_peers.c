@@ -283,10 +283,10 @@ int32_t iguana_peermetrics(struct iguana_info *coin)
     myfree(sortbuf,coin->MAXPEERS * sizeof(double) * 2);
     return(coin->peers.mostreceived);
 }
-
+/*
 int32_t iguana_connectsocket(int32_t blockflag,struct iguana_peer *A,struct sockaddr *addr,socklen_t addr_len)
 {
-    int32_t opt,flags,val = 65536*2; struct timeval timeout;
+    int32_t opt,flags; struct timeval timeout; //,val = 65536*2
     if ( A->usock >= 0 )
     {
         printf("iguana_connectsocket: (%s) already has usock.%d\n",A->ipaddr,A->usock);
@@ -297,8 +297,8 @@ int32_t iguana_connectsocket(int32_t blockflag,struct iguana_peer *A,struct sock
     else A->usock = socket(AF_INET,SOCK_STREAM,IPPROTO_TCP);
     if ( A->usock >= 0 )
     {
-        setsockopt(A->usock,SOL_SOCKET,SO_SNDBUF,&val,sizeof(val));
-        setsockopt(A->usock,SOL_SOCKET,SO_RCVBUF,&val,sizeof(val));
+        //setsockopt(A->usock,SOL_SOCKET,SO_SNDBUF,&val,sizeof(val));
+        //setsockopt(A->usock,SOL_SOCKET,SO_RCVBUF,&val,sizeof(val));
         timeout.tv_sec = 0;
         timeout.tv_usec = 1000;
         setsockopt(A->usock,SOL_SOCKET,SO_RCVTIMEO,(char *)&timeout,sizeof(timeout));
@@ -395,6 +395,60 @@ int32_t iguana_connect(struct iguana_info *coin,struct iguana_peer *addrs,int32_
     }
 	freeaddrinfo(res);
     return(retval);
+}*/
+
+
+int32_t pp_bind(char *hostname,uint16_t port)
+{
+    struct sockaddr_in addr;
+    socklen_t addrlen = sizeof(addr);
+    struct hostent* hostent = gethostbyname(hostname);
+    if (hostent == NULL) {
+        PostMessage("gethostbyname() returned error: %d", errno);
+        return -1;
+    }
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    memcpy(&addr.sin_addr.s_addr, hostent->h_addr_list[0], hostent->h_length);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        printf("socket() failed: %s", strerror(errno));
+        return -1;
+    }
+    int result = bind(sock, (struct sockaddr*)&addr, addrlen);
+    if (result != 0) {
+        printf("bind() failed: %s", strerror(errno));
+        close(sock);
+        return -1;
+    }
+    return(sock);
+}
+
+int32_t pp_connect(char *hostname,uint16_t port)
+{
+    struct sockaddr_in addr;
+    socklen_t addrlen = sizeof(addr);
+    struct hostent* hostent = gethostbyname(hostname);
+    if (hostent == NULL) {
+        printf("gethostbyname() returned error: %d", errno);
+        return -1;
+    }
+    addr.sin_family = AF_INET;
+    addr.sin_port = htons(port);
+    memcpy(&addr.sin_addr.s_addr, hostent->h_addr_list[0], hostent->h_length);
+    int sock = socket(AF_INET, SOCK_STREAM, 0);
+    if (sock < 0) {
+        printf("socket() failed: %s", strerror(errno));
+        return -1;
+    }
+    int result = connect(sock, (struct sockaddr*)&addr, addrlen);
+    if (result != 0) {
+        printf("connect() failed: %s", strerror(errno));
+        close(sock);
+        return -1;
+    }
+    //send(sock, "hello", 6, 0);
+    return(sock);
 }
 
 int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *serialized,int32_t len,int32_t *sleeptimep)
@@ -564,7 +618,7 @@ void _iguana_processmsg(struct iguana_info *coin,struct iguana_peer *addr,uint8_
 void iguana_startconnection(void *arg)
 {
     void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr);
-    struct iguana_peer addrs[8],*addr = arg; struct iguana_info *coin = 0;
+    int32_t status; struct iguana_peer *addr = arg; struct iguana_info *coin = 0;
     if ( addr == 0 || (coin= iguana_coin(addr->symbol)) == 0 )
     {
         printf("iguana_startconnection nullptrs addr.%p coin.%p\n",addr,coin);
@@ -576,9 +630,15 @@ void iguana_startconnection(void *arg)
         printf("iguana_startconnection.%s mismatched coin.%p (%s) vs (%s)\n",addr->ipaddr,coin,coin->symbol,addr->coinstr);
         return;
     }
-    addr->usock = iguana_connect(coin,addrs,sizeof(addrs)/sizeof(*addrs),addr->ipaddr,coin->chain->portp2p,2);
+    addr->usock = pp_connect(addr->ipaddr,coin->chain->portp2p);
+    //addr->usock = iguana_connect(coin,addrs,sizeof(addrs)/sizeof(*addrs),addr->ipaddr,coin->chain->portp2p,2);
     if ( addr->usock < 0 || coin->peers.shuttingdown != 0 )
     {
+        status = IGUANA_PEER_KILLED;
+        printf("refused PEER STATUS.%d for %s usock.%d\n",status,addr->ipaddr,addr->usock);
+        iguana_iAkill(coin,addr,1);
+        if ( iguana_rwipbits_status(coin,1,addr->ipbits,&status) == 0 )
+            printf("error updating status.%d for %s\n",status,addr->ipaddr);
         addr->pending = 0;
         addr->ipbits = 0;
         addr->dead = 1;
@@ -586,12 +646,18 @@ void iguana_startconnection(void *arg)
     else
     {
         addr->ready = (uint32_t)time(NULL);
+        addr->ipbits = (uint32_t)calc_ipbits(addr->ipaddr);
         addr->dead = 0;
         addr->pending = 0;
         addr->height = iguana_set_iAddrheight(coin,addr->ipbits,0);
         strcpy(addr->symbol,coin->symbol);
         strcpy(addr->coinstr,coin->name);
         coin->peers.lastpeer = (uint32_t)time(NULL);
+        status = IGUANA_PEER_READY;
+        printf("CONNECTED! PEER STATUS.%d for %s usock.%d\n",status,addr->ipaddr,addr->usock);
+        iguana_iAconnected(coin,addr);
+        if ( iguana_rwipbits_status(coin,1,addr->ipbits,&status) == 0 )
+            printf("error updating status.%d for %s\n",status,addr->ipaddr);
         if ( strcmp("127.0.0.1",addr->ipaddr) == 0 )
             coin->peers.localaddr = addr;
 #ifdef IGUANA_DEDICATED_THREADS
@@ -812,6 +878,25 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
         }
     }
     return(flag);
+}
+
+void bindloop(void *args)
+{
+    int32_t sock,newsock; socklen_t clilen; struct sockaddr_in cli_addr; struct iguana_info *coin = args;
+    sock = pp_bind("127.0.0.1",coin->chain->portp2p);
+    printf("127.0.0.1 bind sock.%d\n",sock);
+    while ( 1 )
+    {
+        listen(sock,64);
+        clilen = sizeof(cli_addr);
+        newsock = accept(sock, (struct sockaddr *)&cli_addr, &clilen);
+        if ( newsock < 0 )
+        {
+            printf("ERROR on accept\n");
+            continue;
+        }
+        close(newsock);
+    }
 }
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)

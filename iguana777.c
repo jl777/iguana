@@ -565,7 +565,7 @@ void iguana_coinloop(void *arg)
                     for (; width<(coin->longestchain-coin->blocks.parsedblocks); )
                     {
                         w = iguana_updatewaiting(coin,coin->blocks.parsedblocks,width);
-                        printf("w%d ",w);
+                        //printf("w%d ",w);
                         if ( width == coin->width )
                             coin->widthready = w;
                         if ( width > coin->width*128 )
