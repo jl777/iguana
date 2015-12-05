@@ -931,7 +931,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                     addr->pendtime = 0, addr->pendblocks--;
                 if ( addr->pendblocks < IGUANA_MAXPENDING )
                 {
-                    if ( ((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size) < coin->MAXRECVCACHE )
+                    //if ( ((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size) < coin->MAXRECVCACHE )
                     {
                         memset(&fds,0,sizeof(fds));
                         fds.fd = addr->usock;
@@ -939,7 +939,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                         if ( poll(&fds,1,timeout) > 0 )
                             flag += iguana_poll(coin,addr);
                     }
-                    else printf("%s > %llu coin->IGUANA_MAXRECVCACHE\n",mbstr((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size),(long long)coin->MAXRECVCACHE);
+                    //else printf("%s > %llu coin->IGUANA_MAXRECVCACHE\n",mbstr((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size),(long long)coin->MAXRECVCACHE);
                 }
             }
             if ( flag == 0 )
