@@ -44,8 +44,8 @@ char *iguana_JSON(char *jsonstr)
 void iguana_main(void *arg)
 {
     struct iguana_chain *iguana_createchain(cJSON *json);
-    struct iguana_info **coins,*coin; char dirname[512],*jsonstr,*symbol; cJSON *array,*item,*json;
-    int32_t i,n,maxpeers,mapflags,maphash,initialheight; int64_t maxrecvcache; uint64_t services;
+    struct iguana_info **coins,*coin; char dirname[512],*jsonstr,*symbol; cJSON *array,*item,*json,*peers;
+    int32_t i,j,n,m,maxpeers,mapflags,maphash,initialheight; int64_t maxrecvcache; uint64_t services;
     if ( (jsonstr= arg) == 0 )
     {
         printf("null JSON sent to iguana_main\n");
@@ -102,6 +102,15 @@ void iguana_main(void *arg)
             printf("cant initialize chain.(%s)\n",jstr(item,0));
             coins[1 + i] = 0;
             continue;
+        }
+        if ( (peers= jarray(&m,item,"peers")) != 0 )
+        {
+            for (j=0; j<m; j++)
+            {
+                printf("%s ",jstr(jitem(peers,j),0));
+                iguana_possible_peer(coin,jstr(jitem(peers,j),0));
+            }
+            printf("addnodes.%d\n",m);
         }
     }
     coins[0] = (void *)((long)n);

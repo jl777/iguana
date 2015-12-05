@@ -658,7 +658,7 @@ int32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
         return(0);
     }
 #endif
-    //printf("possible peer.(%s)\n",ipaddr);
+    printf("possible peer.(%s)\n",ipaddr);
     for (i=0; i<coin->MAXPEERS; i++)
         if ( strcmp(ipaddr,coin->peers.active[i].ipaddr) == 0 )
         {

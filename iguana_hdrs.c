@@ -236,7 +236,8 @@ int32_t iguana_updatehdrs(struct iguana_info *coin)
         {
             hash2 = coin->blocks.hwmchain;
             height = iguana_height(coin,hash2);
-            printf("hwmchain request new header %d vs %d %u\n",coin->R.pendingtopheight,coin->R.topheight,coin->R.pendingtopstart);
+            if ( iguana_choosepeer(coin) != 0 )
+                printf("hwmchain request new header %d vs %d %u\n",coin->R.pendingtopheight,coin->R.topheight,coin->R.pendingtopstart);
         }
         coin->R.lasthdrtime = (uint32_t)time(NULL);
         if ( memcmp(bits256_zero.bytes,hash2.bytes,sizeof(hash2)) != 0 )

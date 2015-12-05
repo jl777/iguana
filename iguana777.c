@@ -377,7 +377,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2)
     queue_t *Q; char *str,hashstr[sizeof(bits256)*32 + 1];
     if ( height != iguana_height(coin,hash2) )
     {
-        printf("mismatched height.%d for %s %d\n",height,bits256_str(hash2),iguana_height(coin,hash2));
+        //printf("mismatched height.%d for %s %d\n",height,bits256_str(hash2),iguana_height(coin,hash2));
         return(0);
     }
     if ( height >= coin->blocks.parsedblocks && coin->R.recvblocks[height] == 0 )
@@ -386,7 +386,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2)
         if ( height < coin->blocks.parsedblocks+coin->MAXPEERS )
         {
             str = "priorityQ", Q = &coin->priorityQ;
-            printf("%s height.%d parsed.%d (%d)\n",str,height,coin->blocks.parsedblocks,height < coin->blocks.parsedblocks+coin->MAXPEERS);
+            //printf("%s height.%d parsed.%d (%d)\n",str,height,coin->blocks.parsedblocks,height < coin->blocks.parsedblocks+coin->MAXPEERS);
         }
         else if ( GETBIT(coin->R.waitingbits,height) == 0 )
             str = "blocksQ", Q = &coin->blocksQ;
@@ -525,9 +525,6 @@ void iguana_coinloop(void *arg)
     printf("begin coinloop[%d]\n",n);
     coin = coins[0];
     iguana_possible_peer(coin,"127.0.0.1");
-    //iguana_possible_peer(coin,"108.58.252.82");
-    //iguana_possible_peer(coin,"74.207.233.193");
-    //iguana_possible_peer(coin,"130.211.146.81");
     while ( 1 )
     {
         flag = 0;
@@ -535,7 +532,6 @@ void iguana_coinloop(void *arg)
         {
             if ( (coin= coins[i]) != 0 )
             {
-                portable_mutex_lock(&coin->blocks.mutex);
                 if ( time(NULL) > coin->peers.lastmetrics+60 )
                 {
                     iguana_peermetrics(coin);
@@ -575,13 +571,16 @@ void iguana_coinloop(void *arg)
                         if ( width > coin->width*128 )
                             break;
                         width <<= 1;
+                        if ( width >= coin->longestchain-coin->blocks.parsedblocks )
+                            width = coin->longestchain-coin->blocks.parsedblocks-1;
                         if ( (rand() % 100) == 0 && width > (coin->width<<2) )
                             printf("coin->width.%d higher width.%d all there\n",coin->width,width);
                     }
-                    printf("width.%d ready.%d\n",coin->width,coin->widthready);
+                    //printf("width.%d ready.%d\n",coin->width,coin->widthready);
                     coin->lastwaiting = (uint32_t)time(NULL);
                 }
                 //printf("updatehdrs\n"), getchar();
+                portable_mutex_lock(&coin->blocks.mutex);
                 iguana_updatehdrs(coin);
                 if ( coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
                 {

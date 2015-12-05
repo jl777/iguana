@@ -8,10 +8,15 @@
 
 int iguana_main(void *arg);
 
+
 void *iguana(void *arg)
 {
     if ( arg == 0 )
-        arg = "{\"coins\":[{\"name\":\"BTC\"}]}";
+#ifdef __linux__
+        arg = "{\"coins\":[{\"name\":\"BTC\",\"maxrecvcache\":64,\"peers\":[\"127.0.0.1\",\"107.170.13.184\",\"108.58.252.82\",\"207.182.151.130\",\"70.106.255.189\"]}]}";
+#else
+        arg = "{\"coins\":[{\"name\":\"BTC\",\"peers\":[\"127.0.0.1\",\"107.170.13.184\",\"108.58.252.82\",\"207.182.151.130\",\"70.106.255.189\"]}]}";
+#endif
     PostMessage("iguana start.(%s)\n",arg);
     iguana_main(arg);
     return(0);
