@@ -17,7 +17,7 @@ void *iguana(void *arg)
 #else
         arg = "{\"coins\":[{\"name\":\"BTC\",\"peers\":[\"127.0.0.1\",\"107.170.13.184\",\"108.58.252.82\",\"207.182.151.130\",\"70.106.255.189\"]}]}";
 #endif
-    PostMessage("iguana start.(%s)\n",arg);
+    PostMessage("iguana start.(%s)\n",(char *)arg);
     iguana_main(arg);
     return(0);
 }

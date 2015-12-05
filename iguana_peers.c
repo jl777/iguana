@@ -400,8 +400,7 @@ int32_t iguana_connect(struct iguana_info *coin,struct iguana_peer *addrs,int32_
 
 int32_t pp_bind(char *hostname,uint16_t port)
 {
-    struct sockaddr_in addr;
-    socklen_t addrlen = sizeof(addr);
+    int32_t opt; struct sockaddr_in addr; socklen_t addrlen = sizeof(addr);
     struct hostent* hostent = gethostbyname(hostname);
     if (hostent == NULL) {
         PostMessage("gethostbyname() returned error: %d", errno);
@@ -415,6 +414,8 @@ int32_t pp_bind(char *hostname,uint16_t port)
         printf("socket() failed: %s", strerror(errno));
         return -1;
     }
+    opt = 1;
+    setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(void*)&opt,sizeof(opt));
     int result = bind(sock, (struct sockaddr*)&addr, addrlen);
     if (result != 0) {
         printf("bind() failed: %s", strerror(errno));
@@ -426,8 +427,7 @@ int32_t pp_bind(char *hostname,uint16_t port)
 
 int32_t pp_connect(char *hostname,uint16_t port)
 {
-    struct sockaddr_in addr;
-    socklen_t addrlen = sizeof(addr);
+    int32_t opt; struct sockaddr_in addr; socklen_t addrlen = sizeof(addr);
     struct hostent* hostent = gethostbyname(hostname);
     if (hostent == NULL) {
         printf("gethostbyname() returned error: %d", errno);
@@ -441,6 +441,8 @@ int32_t pp_connect(char *hostname,uint16_t port)
         printf("socket() failed: %s", strerror(errno));
         return -1;
     }
+    opt = 1;
+    setsockopt(sock,SOL_SOCKET,SO_REUSEADDR,(void*)&opt,sizeof(opt));
     int result = connect(sock, (struct sockaddr*)&addr, addrlen);
     if (result != 0) {
         printf("connect() failed: %s", strerror(errno));
