@@ -78,7 +78,10 @@ struct iguana_info *iguana_coin(const char *symbol)
                     strcpy(coin->name,Hardcoded_coins[i][1]);
                     coin->myservices = atoi(Hardcoded_coins[i][2]);
                     strcpy(coin->symbol,symbol);
-                    coin->chain = iguana_chainfind(coin->name);
+                    coin->chain = iguana_chainfind(coin->symbol);
+                    if ( strcmp(symbol,"BTC") == 0 )
+                        coin->chain->unitval = 0x1d;
+                    else coin->chain->unitval = 0x1e;
                     iguana_initcoin(coin);
                 }
                 return(coin);
@@ -100,7 +103,7 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
         memset(hash2.bytes,0,sizeof(hash2));
         return(hash2);
     }
-    PoW = PoW_from_compact(msg.H.bits);
+    PoW = PoW_from_compact(msg.H.bits,coin->chain->unitval);
     printf("genesis.(%s) len.%d hash.%s\n",chain->genesis_hex,(int32_t)sizeof(msg.H),bits256_str(hash2));
     iguana_convblock(&block,&msg,hash2,0,1,1,1,PoW);
     coin->latest.dep.numtxids = block.numvouts = 1;
@@ -343,6 +346,11 @@ struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *c
         valuesize = HDDvaluesize = RAMvaluesize;
     else valuesize = HDDvaluesize;
     kv = iguana_kvinit(name,keysize,threadsafe,HDDvaluesize,RAMvaluesize,keyoffset,flags,valuesize2,valuesize3);
+    if ( kv == 0 )
+    {
+        printf("cant initialize kv.(%s)\n",name);
+        exit(-1);
+    }
     if ( (kv->incr= inititems) == 0 )
         kv->incr = IGUANA_ALLOC_INCR;
     strcpy(kv->name,name);
@@ -354,6 +362,7 @@ struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *c
         coin->txids = kv;
     else if ( strcmp("pkhashes",kv->name) == 0 )
         coin->pkhashes = kv;
+    printf("kv.%p chain.%p\n",kv,coin->chain);
     (*inititem)(coin,kv,0,0,-1,valuesize,0);
     iguana_loadkvfile(coin,kv,valuesize,verifyitem,inititem,maxind);
     if ( initialnumitems != 0 )
@@ -406,6 +415,7 @@ uint32_t iguana_syncs(struct iguana_info *coin)
 // 9d1025feba33725a d69751b2f8d3f626 1f19457ce24411f1 76e12fd68b3b5b3c 2ad1a1e4b3b7014e a699f2904d073771 989c145c04a7a0d0 e888ab12de678518 -> syncs b8cf6b625de1d921695d1d2247ad68b86d047adf417c09562dc620ada993c47d ledgerhashes.140000
 // 53faf4c08ae7cd66 60af0f6074a4460a 8fa0f21eb4996161 7d695aa60788e52c 45a5c96ef55a1797 7b3225a83646caec d2d5788986315066 27372b0616caacf0 -> syncs c874aa3554c69038574e7da352eb624ac539fed97bf73b605d00df0c8cec4c1b ledgerhashes.200000
 // 739df50dbbaedada b83cbd69f08d2a0f 7a8ffa182706c5b7 8215ff6c7ffb9985 4d674a6d386bd759 f829283534a1804 aeb3b0644b01e07f 7ffe4899a261ca96 -> syncs fba47203d5c1d08e5cf55fa461f4deb6d0c97dcfa364ee5b51f0896ffcbcbaa7 ledgerhashes.300000
+// 739df50dbbaedada b83cbd69f08d2a0f 7a8ffa182706c5b7 8215ff6c7ffb9985 4d674a6d386bd759 f829283534a1804 b5e66cbe3a2bdbea 7ffe4899a261ca96 -> syncs 6b3620ba67fad34a29dd86cd5ec9fe6afd2a81d8a5296aa33b03da74fdd20a9b ledgerhashes.300001
 
 int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
 {
@@ -878,6 +888,8 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
 #ifndef IGUANA_DEDICATED_THREADS
     coin->peers.peersloop = iguana_launch("peersloop",iguana_peersloop,coin,IGUANA_PERMTHREAD);
 #endif
+    //coin->peers.acceptloop = iguana_launch("acceptloop",iguana_acceptloop,coin,IGUANA_PERMTHREAD);
+    //coin->peers.recvloop = iguana_launch("recvloop",iguana_recvloop,coin,IGUANA_PERMTHREAD);
     printf("started.%s\n",coin->symbol);
     return(coin);
 }

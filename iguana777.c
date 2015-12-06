@@ -72,18 +72,18 @@ void iguana_gotdata(struct iguana_info *coin,struct iguana_peer *addr,uint32_t h
     }
 }
 
-double PoW_from_compact(uint32_t nBits) // NOT consensus safe, but most of the time will be correct
+double PoW_from_compact(uint32_t nBits,uint8_t unitval) // NOT consensus safe, but most of the time will be correct
 {
 	uint32_t nbytes,nbits,i,n; double PoW;
     nbytes = (nBits >> 24) & 0xFF;
     nbits = (8 * (nbytes - 3));
     PoW = nBits & 0xFFFFFF;
-    if ( nbytes > 0x1d )
+    if ( nbytes > unitval )
     {
         printf("illegal nBits.%x\n",nBits);
         return(0.);
     }
-    if ( (n= ((8* (0x1d-3)) - nbits)) != 0 ) // 0x1d00ffff is genesis nBits so we map that to 1.
+    if ( (n= ((8* (unitval-3)) - nbits)) != 0 ) // 0x1d00ffff is genesis nBits so we map that to 1.
     {
         if ( n < 64 )
             PoW /= (1LL << n);
@@ -104,7 +104,7 @@ int32_t iguana_setchainvars(struct iguana_info *coin,uint32_t *firsttxidindp,uin
     *PoWp = *firsttxidindp = *firstvoutp = *firstvinp = 0;
     if ( memcmp(coin->chain->genesis_hashdata,hash2.bytes,sizeof(hash2)) == 0 )
     {
-        PoW = PoW_from_compact(nBits);
+        PoW = PoW_from_compact(nBits,coin->chain->unitval);
         height = 0;
         firsttxidind = firstvout = firstvin = 1;
         printf("set genesis vars nBits.%x\n",nBits);
@@ -124,7 +124,7 @@ int32_t iguana_setchainvars(struct iguana_info *coin,uint32_t *firsttxidindp,uin
         else
         {
             height = prev->height + 1;
-            PoW = (PoW_from_compact(nBits) + prev->L.PoW);
+            PoW = (PoW_from_compact(nBits,coin->chain->unitval) + prev->L.PoW);
             if ( txn_count > 0 )
             {
                 if ( prev->txn_count > 0 && prev->L.numtxids > 0 )
@@ -321,11 +321,11 @@ int32_t iguana_checkblock(struct iguana_info *coin,int32_t dispflag,struct iguan
                 printf("cant find prevhash for (%s).%d\n",bits256_str(hash2),block->height);
             return(-5);
         } //else printf("block->height.%d prev height.%d %s\n",block->height,prev->height,bits256_str(prevhash));
-        if ( fabs(block->L.PoW - (prev->L.PoW + PoW_from_compact(block->bits))) > SMALLVAL )
+        if ( fabs(block->L.PoW - (prev->L.PoW + PoW_from_compact(block->bits,coin->chain->unitval))) > SMALLVAL )
         {
             if ( dispflag != 0 )
-                printf("PoW mismatch: %s %.15f != %.15f (%.15f %.15f)\n",bits256_str(hash2),block->L.PoW,(prev->L.PoW + PoW_from_compact(block->bits)),prev->L.PoW,PoW_from_compact(block->bits));
-            block->L.PoW = (prev->L.PoW + PoW_from_compact(block->bits));
+                printf("PoW mismatch: %s %.15f != %.15f (%.15f %.15f)\n",bits256_str(hash2),block->L.PoW,(prev->L.PoW + PoW_from_compact(block->bits,coin->chain->unitval)),prev->L.PoW,PoW_from_compact(block->bits,coin->chain->unitval));
+            block->L.PoW = (prev->L.PoW + PoW_from_compact(block->bits,coin->chain->unitval));
             retval = -1000;
         }
         if ( block->txn_count != 0 && block->L.numtxids != (prev->L.numtxids + prev->txn_count) && block->L.numunspents != (prev->L.numunspents + prev->numvouts) && block->L.numspends != (prev->L.numspends + prev->numvins) )
@@ -377,7 +377,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2)
     queue_t *Q; char *str,hashstr[sizeof(bits256)*32 + 1];
     if ( height != iguana_height(coin,hash2) )
     {
-        //printf("mismatched height.%d for %s %d\n",height,bits256_str(hash2),iguana_height(coin,hash2));
+        printf("mismatched height.%d for %s %d\n",height,bits256_str(hash2),iguana_height(coin,hash2));
         return(0);
     }
     if ( height >= coin->blocks.parsedblocks && coin->R.recvblocks[height] == 0 )
@@ -492,6 +492,7 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
             iguana_waitstart(coin,height);
         } //else printf("%d %d %p %u\n",height,coin->R.numwaitingbits,coin->R.recvblocks[height],coin->R.waitstart[height]);
     }
+    //printf("height.%d max.%d\n",starti,max);
     height = starti;
     for (i=0; i<max; i++,height++)
         if ( coin->R.recvblocks[height] != 0 )
@@ -555,24 +556,31 @@ void iguana_coinloop(void *arg)
                             iguana_copyfile(tmpfname,fname,1);
                         } else fclose(fp);
                     }
+                }
+                if ( time(NULL) > coin->lastpossible )
+                {
                     iguana_possible_peer(coin,0);
+                    coin->lastpossible = (uint32_t)time(NULL);
                 }
                 if ( time(NULL) > coin->lastwaiting )
                 {
                     //printf("waiting\n"), getchar();
-                    coin->width = width = sqrt(coin->longestchain-coin->blocks.parsedblocks);
+                    coin->width = width = 4*sqrt(coin->longestchain-coin->blocks.parsedblocks);
+                    if ( coin->width < 0 )
+                        width = 500;
                     coin->widthready = 0;
+                    //printf("width.%d\n",width);
                     for (; width<(coin->longestchain-coin->blocks.parsedblocks); )
                     {
                         w = iguana_updatewaiting(coin,coin->blocks.parsedblocks,width);
                         //printf("w%d ",w);
                         if ( width == coin->width )
                             coin->widthready = w;
-                        if ( width > coin->width*128 )
-                            break;
-                        width <<= 1;
+                         width <<= 1;
                         if ( width >= coin->longestchain-coin->blocks.parsedblocks )
                             width = coin->longestchain-coin->blocks.parsedblocks-1;
+                        if ( width > 50000 )
+                            break;
                         if ( (rand() % 100) == 0 && width > (coin->width<<2) )
                             printf("coin->width.%d higher width.%d all there\n",coin->width,width);
                     }
@@ -581,6 +589,8 @@ void iguana_coinloop(void *arg)
                 }
                 //printf("updatehdrs\n"), getchar();
                 portable_mutex_lock(&coin->blocks.mutex);
+                if ( coin->R.numwaitingbits < coin->longestchain+100000 )
+                    iguana_recvalloc(coin,coin->longestchain + 200000);
                 iguana_updatehdrs(coin);
                 if ( coin->blocks.parsedblocks < coin->blocks.hwmheight-3 )
                 {

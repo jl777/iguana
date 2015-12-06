@@ -183,7 +183,7 @@ struct iguana_chain
     char *genesis_hash,*genesis_hex; // hex string
     uint16_t portp2p,portrpc,hastimestamp;
     uint64_t rewards[512][2];
-    uint8_t genesis_hashdata[32];
+    uint8_t genesis_hashdata[32],unitval;
 };
 
 struct iguana_msghdr { uint8_t netmagic[4]; char command[12]; uint8_t serdatalen[4],hash[4]; } __attribute__((packed));
@@ -251,7 +251,7 @@ struct iguana_peers
 {
     bits256 lastrequest;//,waitinghash[IGUANA_BUNDLESIZE]; float waiting[IGUANA_BUNDLESIZE];
     struct iguana_peer active[IGUANA_MAXPEERS],*ranked[IGUANA_MAXPEERS],*localaddr;
-    struct iguana_thread *peersloop;
+    struct iguana_thread *peersloop,*recvloop,*acceptloop;
     portable_mutex_t rankedmutex;
     double topmetrics[IGUANA_MAXPEERS],avemetric;
     uint32_t numranked,mostreceived,shuttingdown,lastpeer,lastmetrics;
@@ -298,7 +298,7 @@ struct iguana_recv
     int64_t packetsallocated,packetsfreed; int32_t numwaiting,maprecvdata;
     uint8_t *waitingbits; struct iguana_pending **recvblocks; uint32_t numwaitingbits,*waitstart;
     queue_t hdrsQ;
-    uint32_t pendingtopstart,topheight,pendingtopheight,numcheckpoints,lasthdrtime; bits256 tophash2;
+    int32_t topheight,pendingtopheight; uint32_t pendingtopstart,numcheckpoints,lasthdrtime; bits256 tophash2;
     struct iguana_checkpoint *checkpoints;
     //bits256 *checkpoints; int32_t *checkheights;
 };
@@ -324,11 +324,15 @@ struct iguanakv
 
 struct iguana_iAddr { uint32_t ipbits,ind,lastkilled,numkilled,lastconnect,numconnects; int32_t status,height; };
 
+struct iguana_unspent0 { uint64_t value; uint32_t flags; uint8_t rmd160[20]; } __attribute__((packed));
+struct iguana_spend0 { bits256 txid; uint16_t vout; } __attribute__((packed));
+struct iguana_txid0 { bits256 txid; uint32_t firstvout,firstvin; uint16_t numvouts,numvins; struct iguana_unspent0 U[]; } __attribute__((packed));
+
 // ramchain append only structs -> canonical 32bit inds and ledgerhashes
 struct iguana_txid { bits256 txid; uint32_t firstvout,firstvin; } __attribute__((packed));
-struct iguana_unspent { uint64_t value; uint32_t pkind,txidind; } __attribute__((packed));
+struct iguana_unspent { uint64_t value; uint32_t txidind,pkind; } __attribute__((packed));
 struct iguana_spend { uint32_t unspentind; } __attribute__((packed)); // dont need nextspend
-struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind; } __attribute__((packed));
+struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind,flags; } __attribute__((packed));
 
 // one zero to non-zero write (unless reorg)
 struct iguana_pkextra { uint32_t firstspendind; } __attribute__((packed)); // pkind
@@ -375,7 +379,7 @@ struct iguana_info
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
     int64_t mining,totalfees,TMPallocated,MAXRECVCACHE;
     int32_t width,widthready,MAXPEERS;
-    uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,newhdrs,lastwaiting,firstblock;
+    uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,newhdrs,lastwaiting,firstblock,lastpossible;
     struct iguana_chain *chain;
     struct iguanakv *iAddrs,*txids,*spends,*unspents,*pkhashes;
     struct iguana_txid *T;
@@ -386,6 +390,7 @@ struct iguana_info
     struct iguana_blocks blocks;
     struct iguana_peers peers;
     struct iguana_recv R;
+    struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     queue_t blocksQ,priorityQ,possibleQ; double parsemillis;
     struct iguana_ledger LEDGER,loadedLEDGER;
 };
@@ -405,6 +410,8 @@ struct iguana_peer *iguana_choosepeer(struct iguana_info *coin);
 void iguana_initpeer(struct iguana_info *coin,struct iguana_peer *addr,uint32_t ipbits);
 void iguana_startconnection(void *arg);
 void iguana_shutdownpeers(struct iguana_info *coin,int32_t forceflag);
+void iguana_acceptloop(void *args);
+void iguana_recvloop(void *args);
 
 // serdes
 int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
@@ -507,7 +514,7 @@ void iguana_initcoin(struct iguana_info *coin);
 void iguana_coinloop(void *arg);
 
 // utils
-double PoW_from_compact(uint32_t nBits);
+double PoW_from_compact(uint32_t nBits,uint8_t unitval);
 void calc_rmd160(char *hexstr,uint8_t buf[20],uint8_t *msg,int32_t len);
 void calc_OP_HASH160(char *hexstr,uint8_t hash160[20],char *msg);
 double dxblend(double *destp,double val,double decay);

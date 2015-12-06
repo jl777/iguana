@@ -82,21 +82,21 @@ void iguana_main(void *arg)
         ensure_directory(dirname);
         sprintf(dirname,"tmp/%s",symbol);
         ensure_directory(dirname);
-        if ( (maxrecvcache= j64bits(json,"maxrecvcache")) == 0 )
+        if ( (maxrecvcache= j64bits(item,"maxrecvcache")) == 0 )
             maxrecvcache = IGUANA_MAXRECVCACHE;
         else maxrecvcache *= 1024 * 1024 * 1024L;
         mapflags = IGUANA_MAPRECVDATA | maphash*IGUANA_MAPTXIDITEMS | maphash*IGUANA_MAPPKITEMS | maphash*IGUANA_MAPBLOCKITEMS | maphash*IGUANA_MAPPEERITEMS;
-        if ( (maxpeers= juint(json,"maxpeers")) == 0 )
+        if ( (maxpeers= juint(item,"maxpeers")) == 0 )
             maxpeers = (strcmp(symbol,"BTC") == 0) ? 128 : 32;
-        if ( (initialheight= juint(json,"initialheight")) == 0 )
+        if ( (initialheight= juint(item,"initialheight")) == 0 )
             initialheight = (strcmp(symbol,"BTC") == 0) ? 400000 : 100000;
-        services = j64bits(json,"services");
+        services = j64bits(item,"services");
         printf("init.(%s) maxpeers.%d maxrecvcache.%s mapflags.%x services.%llx\n",symbol,maxpeers,mbstr(maxrecvcache),mapflags,(long long)services);
         coin = iguana_coin(symbol);
+        coins[1 + i] = iguana_startcoin(coin,initialheight,mapflags);
         coin->MAXPEERS = maxpeers;
         coin->MAXRECVCACHE = maxrecvcache;
         coin->myservices = services;
-        coins[1 + i] = iguana_startcoin(coin,initialheight,mapflags);
         if ( coin->chain == 0 && (coin->chain= iguana_createchain(item)) == 0 )
         {
             printf("cant initialize chain.(%s)\n",jstr(item,0));

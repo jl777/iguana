@@ -13,9 +13,9 @@ void *iguana(void *arg)
 {
     if ( arg == 0 )
 #ifdef __linux__
-        arg = "{\"coins\":[{\"name\":\"BTC\",\"maxrecvcache\":64,\"peers\":[\"127.0.0.1\",\"107.170.13.184\",\"108.58.252.82\",\"207.182.151.130\",\"70.106.255.189\"]}]}";
+        arg = "{\"coins\":[{\"name\":\"BTC\",\"services\":1,\"maxrecvcache\":64,\"peers\":[\"127.0.0.1\",\"107.170.13.184\",\"108.58.252.82\",\"207.182.151.130\",\"70.106.255.189\"]}]}";
 #else
-        arg = "{\"coins\":[{\"name\":\"BTC\",\"peers\":[\"127.0.0.1\",\"107.170.13.184\",\"108.58.252.82\",\"207.182.151.130\",\"70.106.255.189\"]}]}";
+        arg = "{\"coins\":[{\"name\":\"BTC\",\"initialheight\":400000,\"services\":1,\"peers\":[\"127.0.0.1\"]}]}";
 #endif
     PostMessage("iguana start.(%s)\n",(char *)arg);
     iguana_main(arg);
@@ -319,7 +319,7 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
           "/",                            /* target */
           "html5fs",                                /* filesystemtype */
           0,                                        /* mountflags */
-          "type=PERSISTENT,expected_size=34359738368"); /* data */
+          "type=PERSISTENT,expected_size=10000000000"); /* data */
     mount("",       /* source. Use relative URL */
           "/http",  /* target */
           "httpfs", /* filesystemtype */

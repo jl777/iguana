@@ -7,28 +7,41 @@ var SPNAPI = (function(SPNAPI, $, undefined) {
         var extraInfo = '';
 
         switch (agent) {
-              
-              case 'iguana':
-              extraInfo = 'Extra Info on this '+agent+' Agent';
-              break;
-              
+
+            case 'InstantDEX':
+                extraInfo = 'Extra Info on this '+agent+' Agent';
+                break;
+            case 'pangea':
+                extraInfo = 'Extra Info on this '+agent+' Agent';
+                break;
+            case 'Jumblr':
+                extraInfo = 'Extra Info on this '+agent+' Agent';
+                break;
+            case 'MGW':
+                extraInfo = 'Extra Info on this '+agent+' Agent';
+                break;
+            case 'Atomic':
+                extraInfo = 'Extra Info on this '+agent+' Agent';
+                break;
+            case 'PAX':
+                extraInfo = 'Extra Info on this '+agent+' Agent';
+                break;
+            case 'Tradebots':
+                extraInfo = 'Extra Info on this '+agent+' Agent';
+                break;
               case 'Wallet':
               extraInfo = 'Extra Info on this '+agent+' Agent';
               break;
-         }
+              case 'Jay':
+              extraInfo = 'Extra Info on this '+agent+' Agent';
+              break;
+
+        }
 
         return extraInfo;
 
 
     }
-
-    chrome.storage.sync.get("settings", function(items) {
-        if (!chrome.runtime.error) {
-            //console.log(items);
-            //document.getElementById("data").innerText = items.data;
-            SPNAPI.settings = items;
-        }
-    });
 
     SPNAPI.pageContent.Settings = function () {
 
@@ -81,7 +94,7 @@ var SPNAPI = (function(SPNAPI, $, undefined) {
         });
 
 
-        var filename = "/persistent/iguana.conf";
+        var filename = "/persistent/SuperNET.conf";
         var access = "w+";
         postCall('fopen', filename, access, function(filename_return, filehandle) {
             filehandle_map[filehandle] = filename_return;
@@ -89,6 +102,31 @@ var SPNAPI = (function(SPNAPI, $, undefined) {
 
             console.log(filehandle + " and "+filename_return);
         });
+        /*
+
+         var data = "SuperNETconfigurationsdaaaaa TES TEST TEST TEST";
+         postCall('fwrite', 0, data, function(filehandle, bytesWritten) {
+         var filename = filehandle_map[filehandle];
+         common.logMessage('Wrote ' + bytesWritten + ' bytes to file ' + filename +
+         '.');
+         });
+
+
+         var filesize = "";
+         postCall('stat', filename, function(filename, size) {
+         common.logMessage('File ' + filename + ' has size ' + size + '.');
+         filesize = size;
+
+         });
+
+
+         var filehandle = parseInt(filehandle_map, 10);
+         var numBytes = parseInt(filesize, 10);
+         postCall('fread', 0, 0, function(filehandle, data) {
+         var filename = filehandle_map[filehandle];
+         common.logMessage('Read "' + data + '" from file ' + filename + '.');
+         });
+         */
 
         $("#agent_settings").html(rows);
 
@@ -149,7 +187,7 @@ var SPNAPI = (function(SPNAPI, $, undefined) {
 
             //console.log(settings);
 
-            var filename = "/persistent/iguana.conf";
+            var filename = "/persistent/SuperNET.conf";
             var access = "w";
             postCall('fopen', filename, access, function(filename_return, filehandle) {
                 filehandle_map[filehandle] = filename_return;

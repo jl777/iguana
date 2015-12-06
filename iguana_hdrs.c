@@ -220,6 +220,10 @@ int32_t iguana_updatehdrs(struct iguana_info *coin)
         coin->R.pendingtopheight = 1;
         printf("issued initial gethdrs from %d\n",(coin->blocks.hwmheight/IGUANA_HDRSCOUNT)*IGUANA_HDRSCOUNT); //getchar();
     }
+    if ( coin->R.topheight < 0 )
+        coin->R.topheight = 0;
+    if ( coin->blocks.hwmheight < 0 )
+        coin->blocks.hwmheight = 0;
     if ( coin->R.topheight < coin->blocks.hwmheight )
         coin->R.topheight = coin->blocks.hwmheight;
     if ( coin->R.topheight == 0 || coin->R.topheight >= coin->R.pendingtopheight+IGUANA_HDRSCOUNT  || time(NULL) > (coin->R.lasthdrtime + 10) )
@@ -228,9 +232,9 @@ int32_t iguana_updatehdrs(struct iguana_info *coin)
         {
             height = (coin->R.topheight/IGUANA_HDRSCOUNT) * IGUANA_HDRSCOUNT;
             hash2 = coin->R.checkpoints[height / IGUANA_HDRSCOUNT].hash2;
+            printf("request new header %d vs %d %u %s\n",height,coin->R.topheight,coin->R.pendingtopstart,bits256_str(hash2));
             if ( memcmp(bits256_zero.bytes,hash2.bytes,sizeof(hash2)) == 0 )
                 hash2 = iguana_blockhash(coin,height);
-            printf("request new header %d vs %d %u %s\n",height,coin->R.topheight,coin->R.pendingtopstart,bits256_str(hash2));
         }
         else
         {

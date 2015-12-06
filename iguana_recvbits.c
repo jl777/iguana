@@ -109,8 +109,8 @@ int32_t iguana_processrecv(struct iguana_info *coin)
 {
     int32_t height; struct iguana_block space; struct iguana_msgtx *tx = 0;
     struct iguana_pending *ptr = 0; int32_t retval = -1;
-    if ( coin->longestchain > coin->R.numwaitingbits-10000 )
-        iguana_recvalloc(coin,coin->longestchain + 20000);
+    //if ( coin->longestchain > coin->R.numwaitingbits-10000 )
+    //    iguana_recvalloc(coin,coin->longestchain + 20000);
     height = coin->blocks.parsedblocks;
     if ( coin->R.recvblocks != 0 && height < coin->R.numwaitingbits )
     {
@@ -138,6 +138,8 @@ int32_t iguana_processrecv(struct iguana_info *coin)
         {
             coin->parsetime = (uint32_t)time(NULL);
             printf("backstop.%d %s\n",height,bits256_str(iguana_blockhash(coin,height)));
+            bits256 hash2 = iguana_blockhash(coin,height);
+            iguana_request_data(coin,coin->peers.ranked[0],&hash2,1,MSG_BLOCK,1);
             iguana_waitclear(coin,height);
             iguana_waitstart(coin,height);
             iguana_updatewaiting(coin,height+1,100);

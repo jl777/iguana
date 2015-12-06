@@ -276,7 +276,7 @@ int32_t iguana_rwvin(int32_t rwflag,uint8_t *serialized,struct iguana_msgvin *ms
     len += iguana_rwmem(rwflag,&serialized[len],msg->scriptlen,msg->script);
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->sequence),&msg->sequence);
     //int i; for (i=0; i<msg->scriptlen; i++)
-    //    printf("%02x ",msg->script[i]);
+   // printf("%02x ",msg->script[i]);
     //printf(" inscriptlen.%d, prevhash.%llx prev_vout.%d | ",msg->scriptlen,(long long)msg->prev_hash.txid,msg->prev_vout);
     return(len);
 }
@@ -331,10 +331,12 @@ int64_t iguana_MEMallocated(struct iguana_info *coin)
     return(total);
 }
 
-int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,int32_t maxsize,bits256 *txidp,int32_t height)
+int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,int32_t maxsize,bits256 *txidp,int32_t height,int32_t hastimestamp)
 {
-    int32_t i,len = 0; uint8_t *txstart = serialized; char txidstr[65];
+    int32_t i,len = 0; uint8_t *txstart = serialized; char txidstr[65]; uint32_t timestamp;
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->version),&msg->version);
+    if ( hastimestamp != 0 )
+        len += iguana_rwnum(rwflag,&serialized[len],sizeof(timestamp),&timestamp);
     len += iguana_rwvarint32(rwflag,&serialized[len],&msg->tx_in);
     //printf("version.%d ",msg->version);
     if ( msg->tx_in > 0 && msg->tx_out*100 < maxsize )
@@ -410,7 +412,7 @@ struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,int32_t *lenp,st
     tx = mycalloc('t',msg.txn_count,sizeof(*tx));
     for (i=0; i<msg.txn_count; i++)
     {
-        if ( (n= iguana_rwtx(0,&data[len],&tx[i],datalen - len,&tx[i].txid,block->height)) < 0 )
+        if ( (n= iguana_rwtx(0,&data[len],&tx[i],datalen - len,&tx[i].txid,block->height,coin->chain->hastimestamp)) < 0 )
             break;
         len += n;
     }
@@ -449,7 +451,7 @@ int32_t iguana_rwblockhash(int32_t rwflag,uint8_t *serialized,uint32_t *nVersion
     return(len);
 }
 
-/*int32_t iguana_request_data(struct iguana_info *coin,struct iguana_peer *addr,bits256 *hashes,int32_t n,uint32_t type,int32_t forceflag)
+int32_t iguana_request_data(struct iguana_info *coin,struct iguana_peer *addr,bits256 *hashes,int32_t n,uint32_t type,int32_t forceflag)
 {
     uint32_t len,i; uint8_t serialized[sizeof(struct iguana_msghdr) + (sizeof(uint32_t) + sizeof(bits256))*32 + sizeof(uint64_t)];
     if ( addr == 0 )
@@ -464,7 +466,7 @@ int32_t iguana_rwblockhash(int32_t rwflag,uint8_t *serialized,uint32_t *nVersion
     addr->getdatamillis = milliseconds();
     len = iguana_queue_send(coin,addr,serialized,"getdata",len,iguana_height(coin,hashes[n-1]),forceflag);
     return(len);
-}*/
+}
 
 void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgversion *vers)
 {
@@ -472,7 +474,7 @@ void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct 
     //printf("gotversion from %s\n",addr->ipaddr);
     if ( (vers->nServices & NODE_NETWORK) == 0 )
         printf("other node.(%s) doesnt relay\n",addr->ipaddr);
-    else if ( (vers->nServices & NODE_NETWORK) != 0 && vers->nonce != coin->instance_nonce )
+    else if ( (vers->nServices & NODE_NETWORK) != 0 )//&& vers->nonce != coin->instance_nonce )
     {
         addr->protover = (vers->nVersion < PROTOCOL_VERSION) ? vers->nVersion : PROTOCOL_VERSION;
         addr->relayflag = vers->relayflag;
@@ -481,7 +483,7 @@ void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct 
         iguana_gotdata(coin,addr,addr->height,bits256_zero);
         iguana_queue_send(coin,addr,serialized,"verack",0,0,0);
         //iguana_send_ping(coin,addr);
-    } else printf("invalid version message\n");
+    } else printf("nServices.%llx nonce.%llu invalid version message from.(%s)\n",(long long)vers->nServices,(long long)vers->nonce,addr->ipaddr);
     iguana_queue_send(coin,addr,serialized,"getaddr",0,0,0);
 }
 
@@ -624,7 +626,7 @@ void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,st
 int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
 {
     int32_t height,i,retval,srvmsg,bloom,intvectors,len= -100; uint64_t nonce,x;
-    uint32_t type,firsttxidind,firstvout,firstvin; bits256 hash2; double PoW;
+    uint32_t type,firsttxidind,firstvout,firstvin; char hashstr[65]; bits256 hash2; double PoW;
     bloom = intvectors = srvmsg = -1;
     if ( addr != 0 )
     {
@@ -714,7 +716,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 {
                     height++;
                     firsttxidind += blocks[i].txn_count;
-                    PoW += PoW_from_compact(blocks[i].bits);
+                    PoW += PoW_from_compact(blocks[i].bits,coin->chain->unitval);
                 }
             }
             //printf("GOT HEADERS n.%d len.%d\n",n,len);
@@ -728,7 +730,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
     {
         struct iguana_msgtx *tx;
         tx = mycalloc('u',1,sizeof(*tx));
-        len = iguana_rwtx(0,data,tx,datalen,&tx->txid,-1);
+        len = iguana_rwtx(0,data,tx,datalen,&tx->txid,-1,coin->chain->hastimestamp);
         if ( len == datalen && addr != 0 )
         {
             iguana_gotunconfirmedM(coin,addr,tx,datalen);
@@ -741,6 +743,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
         struct iguana_block *block; struct iguana_msgtx *tx;
         block = mycalloc('b',1,sizeof(*block));
         tx = iguana_gentxarray(coin,&len,block,data,datalen);
+        len += coin->chain->hastimestamp;
         if ( len == datalen )
         {
             if ( addr != 0 )
@@ -748,7 +751,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 if ( len == datalen )
                     addr->msgcounts.block++;
                 //addr->OV.reqrecv += datalen;
-                //printf("%s gotblock.%d datalen.%d\n",addr->ipaddr,block->height,datalen);
+                printf("%s gotblock.%d datalen.%d last.[%02x]\n",addr->ipaddr,block->height,datalen,data[len-1]);
             }
             iguana_gotblock(coin,addr,block,tx,block->txn_count,data,datalen);
         } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
@@ -817,7 +820,14 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
             }
             else if ( type == MSG_BLOCK )
             {
-                //printf("iv.%d %d of %d: block.%llx len.%d %s\n",intvectors,i,(int32_t)x,(long long)hash.txid,len,hexstr);
+                if ( blockhashes == 0 )
+                    blockhashes = mycalloc('f',(int32_t)x,sizeof(*blockhashes));
+                blockhashes[n++] = hash;
+                init_hexbytes_noT(hashstr,hash.bytes,sizeof(hash));
+                queue_enqueue("blocksQ",&coin->blocksQ,queueitem(hashstr),1);
+                if ( i == x-2 )
+                    queue_enqueue("hdrsQ",&coin->R.hdrsQ,queueitem(hashstr),1);
+                //printf("iv.%d %d of %d: block.%llx len.%d %s\n",intvectors,i,(int32_t)x,(long long)hash.txid,len,bits256_str(hash));
             }
             else if ( type == MSG_FILTERED_BLOCK )
                 printf("iv.%d %d of %d: merkle.%llx\n",intvectors,i,(int32_t)x,(long long)hash.txid);

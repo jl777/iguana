@@ -33,16 +33,7 @@ int32_t portable_truncate(char *fname,long filesize) { return(truncate(fname,fil
 
 char *iguana_compatible_path(char *str)
 {
-    static char fname[1024];
     return(str);
-    if ( strncmp(str,"/persistent/",strlen("/persistent/")) == 0 )
-        return(str);
-    if ( str[0] == '/' )
-        str++;
-    else if ( str[0] == '.' && str[1] == '/' )
-        str += 2;
-    sprintf(fname,"/persistent/%s",str);
-    return(fname);
 }
 
 void ensure_directory(char *dirname)
@@ -232,8 +223,8 @@ int32_t iguana_syncmap(struct iguana_mappedptr *mp,uint64_t len)
         if ( len == 0 )
             len = mp->allocsize;
         err = msync(mp->fileptr,len,MS_SYNC);
-        //if ( err != 0 )
-            printf("sync (%s) len %llu, err %d\n",mp->fname,(long long)len,err);
+        if ( err != 0 )
+            printf("sync (%s) len %llu, err %d errno.%d\n",mp->fname,(long long)len,err,errno);
         Sync_total += len;
         mp->dirty = 0;
     }
@@ -636,10 +627,10 @@ int32_t iguana_kvdelete(struct iguana_info *coin,struct iguanakv *kv,void *key)
     if ( kv == 0 )
         return(-1);
     iguana_kvlock(coin,kv);
-    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,ptr);
+    HASH_FIND(hh,kv->hashtables[((uint8_t *)key)[kv->keysize>>1]],key,kv->keysize,ptr);
     if ( ptr != 0 )
     {
-        HASH_DELETE(hh,kv->hashtables[*(uint8_t *)key],ptr);
+        HASH_DELETE(hh,kv->hashtables[((uint8_t *)key)[kv->keysize>>1]],ptr);
         if ( (kv->flags & IGUANA_MAPPED_ITEM) == 0 )
             myfree(ptr,iguana_itemsize(coin,kv));
         retval = 0;
@@ -663,7 +654,7 @@ void *_iguana_kvread(struct iguana_info *coin,struct iguanakv *kv,void *key,void
     }
     valuesize = iguana_valuesize(coin,kv);
     //printf("search for [%llx] keysize.%d\n",*(long long *)key,kv->keysize);
-    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,item);
+    HASH_FIND(hh,kv->hashtables[((uint8_t *)key)[kv->keysize>>1]],key,kv->keysize,item);
     if ( item != 0 )
     {
         if ( itemindp != 0 )
@@ -696,7 +687,7 @@ void *_iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,voi
         printf("kvwrite %s only supports itemind MMap access\n",kv->name);
         return(0);
     }
-    HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,item);
+    HASH_FIND(hh,kv->hashtables[((uint8_t *)key)[kv->keysize>>1]],key,kv->keysize,item);
     if ( item != 0 )
     {
         if ( 0 && itemind != item->hh.itemind && itemind != (uint32_t)-1 )
@@ -740,11 +731,11 @@ void *_iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,voi
         memcpy(itemkey,key,kv->keysize);
         //if ( strcmp(kv->name,"txids") == 0 )
         //printf("add.(%s) itemind.%d kv->numkeys.%d keysize.%d (%s) valuesize.%d:%d\n",kv->name,itemind,kv->numkeys,kv->keysize,bits256_str(*(bits256 *)key),kv->HDDvaluesize,kv->RAMvaluesize);
-        HASH_ADD_KEYPTR(hh,kv->hashtables[*(uint8_t *)itemkey],itemkey,kv->keysize,item);
+        HASH_ADD_KEYPTR(hh,kv->hashtables[((uint8_t *)itemkey)[kv->keysize>>1]],itemkey,kv->keysize,item);
         kv->M.dirty++;
-        HASH_FIND(hh,kv->hashtables[*(uint8_t *)key],key,kv->keysize,item);
+        HASH_FIND(hh,kv->hashtables[((uint8_t *)key)[kv->keysize>>1]],key,kv->keysize,item);
         if ( kv->dispflag != 0 || item == 0 || item->hh.itemind != itemind )
-            fprintf(stderr,">> %s found item.%p iguana_kvwrite numkeys.%d kv.(%p) table.%p write kep.%p key.%s size.%d, %p value.(%08x) size.%d itemind.%d:%d\n",kv->name,item,kv->numkeys,key,kv->hashtables[*(uint8_t *)itemkey],itemkey,itemkey!=0?bits256_str(*(bits256 *)itemkey):"0",kv->keysize,itemvalue,itemvalue!=0?calc_crc32(0,itemvalue,valuesize):0,valuesize,item!=0?item->hh.itemind:0,itemind);
+            fprintf(stderr,">> %s found item.%p iguana_kvwrite numkeys.%d kv.(%p) table.%p write kep.%p key.%s size.%d, %p value.(%08x) size.%d itemind.%d:%d\n",kv->name,item,kv->numkeys,key,kv->hashtables[((uint8_t *)itemkey)[kv->keysize>>1]],itemkey,itemkey!=0?bits256_str(*(bits256 *)itemkey):"0",kv->keysize,itemvalue,itemvalue!=0?calc_crc32(0,itemvalue,valuesize):0,valuesize,item!=0?item->hh.itemind:0,itemind);
         if ( item != 0 )
             return(value);
         else printf("null item after find kvwrite error\n"), getchar();
