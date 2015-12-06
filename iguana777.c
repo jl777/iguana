@@ -377,7 +377,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2)
     queue_t *Q; char *str,hashstr[sizeof(bits256)*32 + 1];
     if ( height != iguana_height(coin,hash2) )
     {
-        printf("mismatched height.%d for %s %d\n",height,bits256_str(hash2),iguana_height(coin,hash2));
+        //printf("mismatched height.%d for %s %d\n",height,bits256_str(hash2),iguana_height(coin,hash2));
         return(0);
     }
     if ( height >= coin->blocks.parsedblocks && coin->R.recvblocks[height] == 0 )
