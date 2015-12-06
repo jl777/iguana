@@ -829,10 +829,10 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
     char *hashstr = 0; bits256 hash2; int32_t threshold,height,datalen,flag = 0;
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs == 0 && (hashstr= queue_dequeue(&coin->R.hdrsQ,1)) != 0 )
     {
-        printf("get hdr.(%s)\n",hashstr);
+        //printf("get hdr.(%s)\n",hashstr);
         if ( (datalen= iguana_gethdrs(coin,serialized,strcmp(coin->name,"bitcoin") != 0 ? "getblocks" : "getheaders",hashstr)) > 0 )
         {
-            printf("send.(%s)\n",serialized+4);
+            //printf("send.(%s)\n",serialized+4);
             iguana_send(coin,addr,serialized,datalen,&addr->sleeptime);
             addr->pendhdrs++;
             flag++;
@@ -854,7 +854,7 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
             threshold = coin->blocks.parsedblocks + 100*IGUANA_HDRSCOUNT;
             decode_hex(hash2.bytes,sizeof(hash2),hashstr);
             height = iguana_height(coin,hash2);
-            printf("ht.%d dequeued.(%s) for %s\n",height,hashstr,addr->ipaddr);
+            //printf("ht.%d dequeued.(%s) for %s\n",height,hashstr,addr->ipaddr);
         }
         else threshold = 0;
     }
@@ -877,7 +877,7 @@ int32_t iguana_poll(struct iguana_info *coin,struct iguana_peer *addr)
         }
         else
         {
-            printf("request data.(%s)\n",hashstr);
+            //printf("request data.(%s)\n",hashstr);
             if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hashstr)) > 0 )
             {
                 iguana_send(coin,addr,serialized,datalen,&addr->sleeptime);
