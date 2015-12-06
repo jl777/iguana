@@ -465,7 +465,7 @@ int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *s
     if ( usock < 0 || addr->dead != 0 )
         return(-1);
     remains = len;
-    printf(" send.(%s) %d bytes to %s\n",(char *)&serialized[4],len,addr->ipaddr);// getchar();
+    //printf(" send.(%s) %d bytes to %s\n",(char *)&serialized[4],len,addr->ipaddr);// getchar();
     if ( strcmp((char *)&serialized[4],"ping") == 0 )
         addr->sendmillis = milliseconds();
     if ( len > IGUANA_MAXPACKETSIZE )
@@ -564,7 +564,7 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
     memset(&H,0,sizeof(H));
     if ( (recvlen= (int32_t)iguana_recv(usock,(uint8_t *)&H,sizeof(H))) == sizeof(H) )
     {
-        printf("%p got.(%s) recvlen.%d from %s | usock.%d ready.%u dead.%u\n",addr,H.command,recvlen,addr->ipaddr,addr->usock,addr->ready,addr->dead);
+        //printf("%p got.(%s) recvlen.%d from %s | usock.%d ready.%u dead.%u\n",addr,H.command,recvlen,addr->ipaddr,addr->usock,addr->ready,addr->dead);
         if ( coin->peers.shuttingdown != 0 || addr->dead != 0 )
             return;
         if ( (len= iguana_validatehdr(coin,&H)) >= 0 )
