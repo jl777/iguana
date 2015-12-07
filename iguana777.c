@@ -495,6 +495,7 @@ void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
     coin->R.waitingbits = myrealloc('W',coin->R.waitingbits,coin->R.waitingbits==0?0:coin->R.numwaitingbits/8+1,numitems/8+1);
     //coin->R.recvblocks = myrealloc('W',coin->R.recvblocks,coin->R.recvblocks==0?0:coin->R.numwaitingbits * sizeof(*coin->R.recvblocks),numitems * sizeof(*coin->R.recvblocks));
     coin->R.waitstart = myrealloc('W',coin->R.waitstart,coin->R.waitstart==0?0:coin->R.numwaitingbits * sizeof(*coin->R.waitstart),numitems * sizeof(*coin->R.waitstart));
+    coin->R.blockhashes = myrealloc('W',coin->R.blockhashes,coin->R.blockhashes==0?0:coin->R.numwaitingbits * sizeof(*coin->R.blockhashes),numitems * sizeof(*coin->R.blockhashes));
     numcheckpoints = (numitems / coin->chain->bundlesize) + 1;
     coin->R.checkpoints = myrealloc('h',coin->R.checkpoints,coin->R.checkpoints==0?0:coin->R.numcheckpoints * sizeof(*coin->R.checkpoints),numcheckpoints * sizeof(*coin->R.checkpoints));
     coin->R.numcheckpoints = numcheckpoints;
@@ -502,7 +503,7 @@ void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
     coin->R.numwaitingbits = numitems;
 }
 
-/*uint32_t iguana_issuereqs(struct iguana_info *coin)
+uint32_t iguana_issuereqs(struct iguana_info *coin)
 {
     int32_t width,w;
     coin->width = width = 4*sqrt(coin->longestchain-coin->blocks.parsedblocks);
@@ -523,7 +524,7 @@ void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
             printf("coin->width.%d higher width.%d all there\n",coin->width,width);
     }
     return((uint32_t)time(NULL));
-}*/
+}
 
 void iguana_helper(void *arg)
 {
@@ -541,7 +542,7 @@ void iguana_helper(void *arg)
                 if ( (checkpoint= queue_dequeue(&coin->emitQ,0)) != 0 )
                 {
                     printf("START emittxdata.%d\n",checkpoint->height);
-                    //iguana_emittxdata(coin,checkpoint), flag++;
+                    iguana_emittxdata(coin,checkpoint), flag++;
                     printf("FINISH emittxdata.%d\n",checkpoint->height);
                 }
             }
@@ -579,8 +580,8 @@ void iguana_coinloop(void *arg)
                             iguana_recvalloc(coin,coin->longestchain + 200000);
                     portable_mutex_unlock(&coin->recv_mutex);
                 }
-                //if ( now > coin->lastwaiting+3 )
-                //    coin->lastwaiting = iguana_issuereqs(coin); // updates waiting Q's and issues reqs
+                if ( now > coin->lastwaiting+3 )
+                    coin->lastwaiting = iguana_issuereqs(coin); // updates waiting Q's and issues reqs
                 {
                     portable_mutex_lock(&coin->recv_mutex);
                         flag += iguana_updatehdrs(coin); // creates block headers directly or from blockhashes

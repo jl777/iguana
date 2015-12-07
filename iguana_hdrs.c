@@ -247,7 +247,10 @@ void iguana_queuebundle(struct iguana_info *coin,struct iguana_checkpoint *check
     {
         //printf("bundle[i.%d] %d %s\n",i,checkpoint->height + 1 + i,bits256_str(checkpoint->blocks[i].hash2));
         if ( iguana_recvblock(coin,checkpoint->height + 1 + i) == 0 )
+        {
+            coin->R.blockhashes[checkpoint->height + 1 + i] = checkpoint->blocks[i].hash2;
             iguana_queueblock(coin,checkpoint->height + 1 + i,checkpoint->blocks[i].hash2,0);
+        }
     }
 }
 
@@ -613,6 +616,33 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_checkpoint *checkp
         checkpoint->blocks = 0;
     }
     checkpoint->emitfinish = (uint32_t)time(NULL);
+}
+
+int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max)
+{
+    int32_t i,height,gap,n = 0; uint32_t now;
+    now = (uint32_t)time(NULL);
+    height = starti;
+    for (i=0; i<max; i++,height++)
+    {
+        gap = (height - coin->blocks.parsedblocks);
+        if ( gap >= 0 )
+            gap = sqrt(gap);
+        if ( gap < 1 )
+            gap = 1;
+        if ( height < coin->R.numwaitingbits && iguana_recvblock(coin,height) == 0 && now > (coin->R.waitstart[height] + gap) )
+        {
+            //printf("restart height.%d width.%d widthready.%d %s\n",height,coin->width,coin->widthready,bits256_str(iguana_blockhash(coin,height)));
+            iguana_waitclear(coin,height);
+            iguana_waitstart(coin,height,coin->R.blockhashes[height],1);
+        } //else printf("%d %d %p %u\n",height,coin->R.numwaitingbits,coin->R.recvblocks[height],coin->R.waitstart[height]);
+    }
+    //printf("height.%d max.%d\n",starti,max);
+    height = starti;
+    for (i=0; i<max; i++,height++)
+        if ( iguana_recvblock(coin,height) != 0 )
+            n++;
+    return(n);
 }
 
 int32_t iguana_updatehdrs(struct iguana_info *coin)

@@ -20,8 +20,8 @@
 #define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 64)
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
-#define IGUANA_MAXPENDING 4
-#define IGUANA_INITIALBUNDLES 16
+#define IGUANA_MAXPENDING 8
+#define IGUANA_INITIALBUNDLES 8
 #define IGUANA_MAXPACKETSIZE (2 * 1024 * 1024)
 #define IGUANA_RSPACE_SIZE (IGUANA_MAXPACKETSIZE * 16)
 #define IGUANA_MAXPEERS 1024
@@ -365,7 +365,8 @@ struct iguana_recv
     int64_t packetsallocated,packetsfreed; int32_t numwaiting,maprecvdata;
     uint8_t *waitingbits; uint32_t numwaitingbits,*waitstart; //struct iguana_pending **recvblocks; 
     int32_t topheight,pendingtopheight;
-    uint32_t pendingtopstart,numcheckpoints,lasthdrtime,startedbundles,finishedbundles; bits256 tophash2;
+    uint32_t pendingtopstart,numcheckpoints,lasthdrtime,startedbundles,finishedbundles;
+    bits256 tophash2,*blockhashes;
     int32_t prevmaxrecvbundles,maxrecvbundles,faster,slower; double avetime;
     struct iguana_checkpoint *checkpoints;
 };
