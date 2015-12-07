@@ -506,22 +506,28 @@ void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
 uint32_t iguana_issuereqs(struct iguana_info *coin)
 {
     int32_t width,w;
-    coin->width = width = 4*sqrt(coin->longestchain-coin->blocks.parsedblocks);
+    coin->width = width = 4*sqrt(coin->longestchain - coin->blocks.recvblocks);
     if ( coin->width < 0 )
         width = 500;
     coin->widthready = 0;
     //printf("width.%d\n",width);
-    while ( width < (coin->longestchain - coin->blocks.parsedblocks) )
+    while ( iguana_recvblock(coin,coin->blocks.recvblocks) != 0 )
     {
-        w = iguana_updatewaiting(coin,coin->blocks.parsedblocks,width);
+        coin->blocks.recvblocks++;
+        printf("RECV.%d\n",coin->blocks.recvblocks);
+    }
+    while ( width < (coin->longestchain - coin->blocks.recvblocks) )
+    {
+        w = iguana_updatewaiting(coin,coin->blocks.recvblocks,width);
         //printf("w%d ",w);
         if ( width == coin->width )
             coin->widthready = w;
+        else break;
         width <<= 1;
-        if ( width >= coin->longestchain-coin->blocks.parsedblocks )
-            width = coin->longestchain-coin->blocks.parsedblocks-1;
+        if ( width >= coin->longestchain-coin->blocks.recvblocks )
+            width = coin->longestchain-coin->blocks.recvblocks-1;
         if ( (rand() % 100) == 0 && width > (coin->width<<2) )
-            printf("coin->width.%d higher width.%d all there\n",coin->width,width);
+            printf("coin->width.%d higher width.%d all there, w.%d\n",coin->width,width,w);
     }
     return((uint32_t)time(NULL));
 }
@@ -581,13 +587,16 @@ void iguana_coinloop(void *arg)
                     portable_mutex_unlock(&coin->recv_mutex);
                 }
                 if ( now > coin->lastwaiting+3 )
+                {
                     coin->lastwaiting = iguana_issuereqs(coin); // updates waiting Q's and issues reqs
+                    coin->lastwaiting = now;
+                }
                 {
                     portable_mutex_lock(&coin->recv_mutex);
                         flag += iguana_updatehdrs(coin); // creates block headers directly or from blockhashes
                     portable_mutex_unlock(&coin->recv_mutex);
                 }
-                if ( 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight-coin->chain->minconfirms )
+                if ( 0 && coin->blocks.recvblocks < coin->blocks.hwmheight-coin->chain->minconfirms )
                 {
                     portable_mutex_lock(&coin->ramchain_mutex);
                         if ( iguana_updateramchain(coin) != 0 )

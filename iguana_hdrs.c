@@ -212,10 +212,10 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2,
     if ( memcmp(hash2.bytes,bits256_zero.bytes,sizeof(hash2)) == 0 )
     {
         printf("null hash2?? height.%d\n",height);
-        getchar();
+        //getchar();
         return(0);
     }
-    if ( height < 0 || (height >= coin->blocks.parsedblocks && GETBIT(coin->R.waitingbits,height) == 0) )
+    if ( height < 0 || (height >= coin->blocks.recvblocks && GETBIT(coin->R.waitingbits,height) == 0) )
     {
         if ( priority != 0 )
             str = "priorityQ", Q = &coin->priorityQ;
@@ -228,14 +228,14 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2,
             req->hash2 = hash2;
             req->height = height;
             if ( 1 && (height % 100) == 0 )
-                printf("%s height.%d %s parsed.%d maxpeer.%d\n",str,height,bits256_str(hash2),coin->blocks.parsedblocks,coin->MAXPEERS);
+                printf("%s height.%d %s recv.%d maxpeer.%d\n",str,height,bits256_str(hash2),coin->blocks.recvblocks,coin->MAXPEERS);
             if ( height >= 0 )
                 req->checkpointi = (height / coin->chain->bundlesize);
             else req->checkpointi = -1;
             queue_enqueue(str,Q,&req->DL,0);
         }
         return(1);
-    } else printf("iguana_queueblock skip.%d %s parsed.%d %p GETBIT.%d\n",height,bits256_str(hash2),coin->blocks.parsedblocks,iguana_recvblock(coin,height),GETBIT(coin->R.waitingbits,height));
+    } else printf("iguana_queueblock skip.%d %s recvblocks.%d %p GETBIT.%d\n",height,bits256_str(hash2),coin->blocks.recvblocks,iguana_recvblock(coin,height),GETBIT(coin->R.waitingbits,height));
     return(0);
 }
 
@@ -249,7 +249,7 @@ void iguana_queuebundle(struct iguana_info *coin,struct iguana_checkpoint *check
         if ( iguana_recvblock(coin,checkpoint->height + 1 + i) == 0 )
         {
             coin->R.blockhashes[checkpoint->height + 1 + i] = checkpoint->blocks[i].hash2;
-            iguana_queueblock(coin,checkpoint->height + 1 + i,checkpoint->blocks[i].hash2,0);
+            //iguana_queueblock(coin,checkpoint->height + 1 + i,checkpoint->blocks[i].hash2,0);
         }
     }
 }
@@ -275,14 +275,14 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
     {
         if ( (req= queue_dequeue(&coin->priorityQ,0)) != 0 )
         {
-            threshold = coin->blocks.parsedblocks + coin->chain->bundlesize;
+            threshold = coin->blocks.recvblocks + coin->chain->bundlesize;
             hash2 = req->hash2;
             checkpoint = iguana_checkpointheight(coin,&height,hash2,bits256_zero,0);
             //printf("dequeued priorityQ.(%s) height.%d vs %d width %d/%d %p\n",bits256_str(hash2),req->height,height,coin->widthready,coin->width,checkpoint);
         }
         else if ( (req= queue_dequeue(&coin->blocksQ,0)) != 0 )
         {
-            threshold = coin->blocks.parsedblocks + 100*coin->chain->bundlesize;
+            threshold = coin->blocks.recvblocks + 100*coin->chain->bundlesize;
             hash2 = req->hash2;
             checkpoint = iguana_checkpointheight(coin,&height,hash2,bits256_zero,0);
             if ( height != req->height || checkpoint == 0 )
@@ -342,7 +342,7 @@ int32_t iguana_waitclear(struct iguana_info *coin,int32_t height)
 {
     if ( height < coin->R.numwaitingbits )
     {
-        //printf("%d waitclear.%d parsed.%d\n",coin->R.numwaiting,height,coin->blocks.parsedblocks);
+        //printf("%d waitclear.%d parsed.%d\n",coin->R.numwaiting,height,coin->blocks.recvblocks);
         if ( coin->R.numwaiting > 0 )
             coin->R.numwaiting--;
         coin->R.waitstart[height] = 0;
@@ -397,7 +397,7 @@ void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bi
 
 void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx,uint8_t *data,int32_t datalen)
 {
-    int32_t h,i,dir,height; char hashstr[65]; uint32_t now; bits256 prevhash2;
+    int32_t h,i,height; char hashstr[65]; uint32_t now; bits256 prevhash2;
     struct iguana_blockreq *req; struct iguana_checkpoint *checkpoint;
     iguana_gotdata(coin,addr,block->height,block->hash2);
     now = (uint32_t)time(NULL);
@@ -443,6 +443,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                                     if ( coin->R.checkpoints[height / coin->chain->bundlesize].num == 0 )
                                     {
                                         init_hexbytes_noT(hashstr,req->blockhashes[i].bytes,sizeof(req->blockhashes[i]));
+                                        iguana_addcheckpoint(coin,height,req->blockhashes[i]);
                                         queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(hashstr),1);
                                     }
                                 }
@@ -473,13 +474,14 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     if ( iguana_recvblockptr(coin,height) == &checkpoint->txdata[h] )
                     {
                         checkpoint->txdata[h] = txarray, checkpoint->numtxs[h] = numtx;
+                        printf("GOT.%d | received.%d\n",height,coin->blocks.recvblocks);
                         txarray = 0;
                         if ( ++checkpoint->numvalid == checkpoint->num )
                         {
                             checkpoint->recvfinish = now;
                             checkpoint->lastduration = (checkpoint->recvfinish - checkpoint->recvstart);
                             dxblend(&coin->R.avetime,checkpoint->lastduration,.9);
-                            if ( checkpoint->lastduration < coin->R.avetime )
+                            /*if ( checkpoint->lastduration < coin->R.avetime )
                                 coin->R.faster++;
                             else coin->R.slower++;
                             if ( coin->R.faster > 3*coin->R.slower || coin->R.slower > 3*coin->R.faster )
@@ -496,7 +498,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                                 coin->R.prevmaxrecvbundles = coin->R.maxrecvbundles;
                                 coin->R.maxrecvbundles += dir;
                                 coin->R.slower = coin->R.faster = 0;
-                            }
+                            }*/
                             coin->R.finishedbundles++;
                             printf("submit emit.%d height.%d\n",checkpoint->checkpointi,checkpoint->height);
                             queue_enqueue("emitQ",&coin->emitQ,&checkpoint->DL,0);
@@ -512,7 +514,8 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                             }
                         }
                     } else printf("recvblockptr error? height.%d %p %p h.%d\n",height,iguana_recvblockptr(coin,height),&checkpoint->txdata[h],h);
-                } else printf("interloper! already have txs[%d] for checkpointi.%d\n",h,checkpoint!=0?checkpoint->height:-1);
+                } else if ( (rand() % 1000) == 0 )
+                    printf("interloper! already have txs[%d] for checkpointi.%d\n",h,checkpoint!=0?checkpoint->height:-1);
                 portable_mutex_unlock(&checkpoint->mutex);
             } else printf("height.%d outside range of checkpointi.%d %d\n",height,checkpoint!=0?checkpoint->height:-1,checkpoint!=0?checkpoint->height:-1);
         }
@@ -625,16 +628,16 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
     height = starti;
     for (i=0; i<max; i++,height++)
     {
-        gap = (height - coin->blocks.parsedblocks);
+        gap = (height - coin->blocks.recvblocks);
         if ( gap >= 0 )
             gap = sqrt(gap);
-        if ( gap < 1 )
-            gap = 1;
-        if ( height < coin->R.numwaitingbits && iguana_recvblock(coin,height) == 0 && now > (coin->R.waitstart[height] + gap) )
+        if ( gap < 13 )
+            gap = 13;
+        if ( height < coin->R.numwaitingbits && iguana_recvblock(coin,height) == 0 && now > (coin->R.waitstart[height] + gap) && memcmp(bits256_zero.bytes,coin->R.blockhashes[height].bytes,sizeof(bits256)) != 0 )
         {
-            //printf("restart height.%d width.%d widthready.%d %s\n",height,coin->width,coin->widthready,bits256_str(iguana_blockhash(coin,height)));
+            //printf("restart height.%d width.%d widthready.%d %s\n",height,coin->width,coin->widthready,bits256_str(coin->R.blockhashes[height]));
             iguana_waitclear(coin,height);
-            iguana_waitstart(coin,height,coin->R.blockhashes[height],1);
+            iguana_waitstart(coin,height,coin->R.blockhashes[height],0);
         } //else printf("%d %d %p %u\n",height,coin->R.numwaitingbits,coin->R.recvblocks[height],coin->R.waitstart[height]);
     }
     //printf("height.%d max.%d\n",starti,max);
@@ -677,7 +680,7 @@ int32_t iguana_updatehdrs(struct iguana_info *coin)
                     height = checkpoint->height+j+1;
                     if ( iguana_recvblock(coin,height) != 0 )
                         m++;
-                    else if ( coin->R.waitstart[height] > 0 )
+                    /*else if ( coin->R.waitstart[height] > 0 )
                     {
                         duration = (now - coin->R.waitstart[height]);
                         if ( duration > 60 || (duration > 10 && checkpoint->numvalid > 13 && duration > 3.*checkpoint->aveduration) )
@@ -695,7 +698,7 @@ int32_t iguana_updatehdrs(struct iguana_info *coin)
                         iguana_waitclear(coin,height);
                         iguana_waitstart(coin,height,checkpoint->blocks[j].hash2,1);
                         checkpoint->firstblocktime = now;
-                    }
+                    }*/
                 }
                 if ( now > checkpoint->lastdisp+15 )
                 {

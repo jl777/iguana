@@ -21,7 +21,7 @@
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDING 8
-#define IGUANA_INITIALBUNDLES 8
+#define IGUANA_INITIALBUNDLES 24
 #define IGUANA_MAXPACKETSIZE (2 * 1024 * 1024)
 #define IGUANA_RSPACE_SIZE (IGUANA_MAXPACKETSIZE * 16)
 #define IGUANA_MAXPEERS 1024
@@ -381,7 +381,7 @@ struct iguana_blocks
     char coin[8];
 	bits256 hwmchain;
 	struct iguanakv *db;
-    int32_t hwmheight,maxblocks,rawblocks,initblocks,parsedblocks;
+    int32_t hwmheight,maxblocks,rawblocks,initblocks,parsedblocks,recvblocks;
     double hwmPoW;
 };
 
