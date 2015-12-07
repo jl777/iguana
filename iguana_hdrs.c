@@ -212,6 +212,13 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2,
     if ( memcmp(hash2.bytes,bits256_zero.bytes,sizeof(hash2)) == 0 )
     {
         printf("null hash2?? height.%d\n",height);
+        if ( (height % coin->chain->bundlesize) == 1 )
+        {
+            char hashstr[65];
+            init_hexbytes_noT(hashstr,coin->R.checkpoints[height / coin->chain->bundlesize].prevhash2.bytes,sizeof(bits256));
+            printf("new hdrsQ.%d %s\n",height,hashstr);
+            queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(hashstr),1);
+        }
         //getchar();
         return(0);
     }
