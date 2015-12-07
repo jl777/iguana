@@ -539,7 +539,11 @@ void iguana_helper(void *arg)
             if ( (coin= coins[i]) != 0 && coin->firstblock != 0 )
             {
                 if ( (checkpoint= queue_dequeue(&coin->emitQ,0)) != 0 )
+                {
+                    printf("START emittxdata.%d\n",checkpoint->height);
                     iguana_emittxdata(coin,checkpoint), flag++;
+                    printf("FINISH emittxdata.%d\n",checkpoint->height);
+                }
             }
         }
         if ( flag == 0 )

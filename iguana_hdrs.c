@@ -396,7 +396,6 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
 {
     int32_t h,i,dir,height; char hashstr[65]; uint32_t now; bits256 prevhash2;
     struct iguana_blockreq *req; struct iguana_checkpoint *checkpoint;
-    portable_mutex_lock(&coin->peers_mutex);
     iguana_gotdata(coin,addr,block->height,block->hash2);
     now = (uint32_t)time(NULL);
     checkpoint = iguana_checkpointheight(coin,&height,block->hash2,block->prev_block,1);
@@ -459,7 +458,6 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
             if ( checkpoint == 0 )
             {
                 printf("cant find checkpoint.(%s)\n",bits256_str(block->hash2));
-                portable_mutex_unlock(&coin->peers_mutex);
                 return;
             }
             if ( height > checkpoint->height && height <= checkpoint->height+checkpoint->num )
@@ -561,7 +559,6 @@ void iguana_gotheadersM(struct iguana_info *coin,struct iguana_peer *addr,struct
         }
         portable_mutex_unlock(&checkpoint->mutex);
     } else printf("ERROR iguana_gotheaders got checkpoint.(%s) n.%d that cant be found?\n",bits256_str(blocks[0].prev_block),n);
-    portable_mutex_unlock(&coin->peers_mutex);
 }
 
 int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_checkpoint *checkpoint)
