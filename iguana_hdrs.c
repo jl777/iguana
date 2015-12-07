@@ -614,9 +614,9 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_checkpoint *checkp
             printf("%s: error writing offsets len.%ld != %d\n",checkpoint->fname,len,checkpoint->num+1);
         fclose(fp), fp = 0;
         //iguana_maptxdata(coin,checkpoint);
-        if ( checkpoint->blocks != 0 )
-            myfree(checkpoint->blocks,checkpoint->num * sizeof(*checkpoint->blocks));
-        checkpoint->blocks = 0;
+        //if ( checkpoint->blocks != 0 )
+        //    myfree(checkpoint->blocks,checkpoint->num * sizeof(*checkpoint->blocks));
+        //checkpoint->blocks = 0;
     }
     checkpoint->emitfinish = (uint32_t)time(NULL);
 }
