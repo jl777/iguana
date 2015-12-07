@@ -965,8 +965,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                     else printf("%s > %llu coin->IGUANA_MAXRECVCACHE\n",mbstr((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size),(long long)coin->MAXRECVCACHE);
                 }
             }
-            //if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
-            usleep(100);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
+            if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
+                usleep(1000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
     }
     while ( (req= queue_dequeue(&addr->pendingQ,0)) != 0 )
