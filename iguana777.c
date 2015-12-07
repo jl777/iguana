@@ -540,11 +540,9 @@ void iguana_helper(void *arg)
             {
                 if ( (checkpoint= queue_dequeue(&coin->emitQ,0)) != 0 )
                 {
-                    portable_mutex_lock(&coin->ramchain_mutex);
                     printf("START emittxdata.%d\n",checkpoint->height);
-                    iguana_emittxdata(coin,checkpoint), flag++;
+                    //iguana_emittxdata(coin,checkpoint), flag++;
                     printf("FINISH emittxdata.%d\n",checkpoint->height);
-                    portable_mutex_unlock(&coin->ramchain_mutex);
                 }
             }
         }
