@@ -215,7 +215,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2,
         //getchar();
         return(0);
     }
-    if ( height < 0 || (GETBIT(coin->R.waitingbits,height) == 0 && height >= coin->blocks.recvblocks && iguana_recvblock(coin,height) == 0) )
+    if ( height < 0 || (height >= coin->blocks.recvblocks && iguana_recvblock(coin,height) == 0) )
     {
         if ( priority != 0 )
             str = "priorityQ", Q = &coin->priorityQ;
@@ -475,7 +475,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     {
                         checkpoint->txdata[h] = txarray, checkpoint->numtxs[h] = numtx;
                         coin->blocks.numblocks++;
-                        if ( (rand() % 100) == 0 )
+                        //if ( (rand() % 100) == 0 )
                             printf("GOT.%d | received.%d total.%d | %.2f minutes\n",height,coin->blocks.recvblocks,coin->blocks.numblocks,(double)(now - coin->starttime)/60.);
                         txarray = 0;
                         if ( ++checkpoint->numvalid == checkpoint->num )
