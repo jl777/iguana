@@ -514,7 +514,7 @@ uint32_t iguana_issuereqs(struct iguana_info *coin)
     while ( iguana_recvblock(coin,coin->blocks.recvblocks) != 0 )
     {
         coin->blocks.recvblocks++;
-        printf("RECV.%d\n",coin->blocks.recvblocks);
+        //printf("RECV.%d\n",coin->blocks.recvblocks);
     }
     while ( width < (coin->longestchain - coin->blocks.recvblocks) )
     {
@@ -548,7 +548,7 @@ void iguana_helper(void *arg)
                 if ( (checkpoint= queue_dequeue(&coin->emitQ,0)) != 0 )
                 {
                     printf("START emittxdata.%d\n",checkpoint->height);
-                    iguana_emittxdata(coin,checkpoint), flag++;
+                    //iguana_emittxdata(coin,checkpoint), flag++;
                     printf("FINISH emittxdata.%d\n",checkpoint->height);
                 }
             }
