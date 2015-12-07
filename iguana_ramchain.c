@@ -562,7 +562,7 @@ int32_t iguana_emittx(struct iguana_info *coin,struct iguana_checkpoint *checkpo
                 (*outputp) += tx->vouts[i].value;
             } else printf("error writing txi.%d vout.%d\n",txi,i);
         }
-        for (i=0; i<tx->tx_in; i++)
+        for (i=0; i<rawtx.numvins; i++)
         {
             vin = &tx->vins[i];
             if ( bits256_nonz(vin->prev_hash) == 0 )
