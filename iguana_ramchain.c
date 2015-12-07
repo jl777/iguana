@@ -539,7 +539,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
 }
 
 struct iguana_rawtx { bits256 txid; uint16_t numvouts,numvins; uint8_t rmd160[20]; };
-int32_t iguana_emittx(struct iguana_info *coin,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
+int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
 {
     int32_t blocknum,i; int64_t reward; uint16_t s; struct iguana_rawtx rawtx; uint8_t rmd160[20],buf[64];
     struct iguana_msgvin *vin;
@@ -549,14 +549,14 @@ int32_t iguana_emittx(struct iguana_info *coin,struct iguana_checkpoint *checkpo
     rawtx.numvouts = tx->tx_out, rawtx.numvins = tx->tx_in;
     if ( (blocknum == 91842 || blocknum == 91880) && txi == 0 && strcmp(coin->name,"bitcoin") == 0 )
         rawtx.txid.ulongs[0] ^= blocknum;
-    if ( fwrite(&rawtx,1,sizeof(rawtx),checkpoint->fp) == sizeof(rawtx) )
+    if ( fwrite(&rawtx,1,sizeof(rawtx),fp) == sizeof(rawtx) )
     {
         for (i=0; i<rawtx.numvouts; i++)
         {
             iguana_calcrmd160(coin,rmd160,tx->vouts[i].pk_script,tx->vouts[i].pk_scriptlen,rawtx.txid);
             memcpy(buf,&tx->vouts[i].value,sizeof(tx->vouts[i].value));
             memcpy(&buf[sizeof(tx->vouts[i].value)],rmd160,sizeof(rmd160));
-            if ( fwrite(buf,1,sizeof(rmd160)+sizeof(tx->vouts[i].value),checkpoint->fp) == sizeof(rmd160)+sizeof(tx->vouts[i].value) )
+            if ( fwrite(buf,1,sizeof(rmd160)+sizeof(tx->vouts[i].value),fp) == sizeof(rmd160)+sizeof(tx->vouts[i].value) )
             {
                 (*numvoutsp)++;
                 (*outputp) += tx->vouts[i].value;
@@ -579,7 +579,7 @@ int32_t iguana_emittx(struct iguana_info *coin,struct iguana_checkpoint *checkpo
             s = vin->prev_vout;
             memcpy(&buf[sizeof(vin->prev_hash)],&s,sizeof(s));
             //printf("do spend.%s\n",bits256_str(vin->prev_hash));
-            if ( fwrite(buf,1,sizeof(bits256)+sizeof(s),checkpoint->fp) == sizeof(bits256)+sizeof(s) )
+            if ( fwrite(buf,1,sizeof(bits256)+sizeof(s),fp) == sizeof(bits256)+sizeof(s) )
                 (*numvinsp)++;
             else printf("error writing txi.%d vin.%d\n",txi,i);
         }
@@ -589,24 +589,24 @@ int32_t iguana_emittx(struct iguana_info *coin,struct iguana_checkpoint *checkpo
     return(-1);
 }
 
-void iguana_emittxarray(struct iguana_info *coin,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
+void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
 {
     uint32_t i,numvouts,numvins; int64_t credits; long fpos,endpos;
-    if ( checkpoint->fp != 0 && block != 0 )
+    if ( fp != 0 && block != 0 )
     {
-        fpos = ftell(checkpoint->fp);
+        fpos = ftell(fp);
         credits = numvouts = numvins = 0;
         for (i=0; i<numtx; i++)
-            iguana_emittx(coin,checkpoint,block,&txarray[i],i,&numvouts,&numvins,&credits);
-        endpos = ftell(checkpoint->fp);
-        fseek(checkpoint->fp,fpos,SEEK_SET);
+            iguana_emittx(coin,fp,checkpoint,block,&txarray[i],i,&numvouts,&numvins,&credits);
+        endpos = ftell(fp);
+        fseek(fp,fpos,SEEK_SET);
         block->L.supply = credits;
         block->txn_count = numtx;
         block->numvouts = numvouts, block->numvins = numvins;
         block->L.numtxids = numtx, block->L.numunspents = numvouts, block->L.numspends = numvins;
-        if ( fwrite(block,1,sizeof(*block),checkpoint->fp) != sizeof(*block) )
+        if ( fwrite(block,1,sizeof(*block),fp) != sizeof(*block) )
             printf("iguana_emittxarray: error writing block.%d\n",block->height);
-        fseek(checkpoint->fp,endpos,SEEK_SET);
+        fseek(fp,endpos,SEEK_SET);
     }
 }
 

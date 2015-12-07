@@ -612,7 +612,7 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_checkpoint *checkp
             {
                 if ( (txarray= checkpoint->txdata[i]) != 0 && (numtx= checkpoint->numtxs[i]) > 0 )
                 {
-                    iguana_emittxarray(coin,checkpoint,&checkpoint->blocks[i],txarray,numtx);
+                    iguana_emittxarray(coin,fp,checkpoint,&checkpoint->blocks[i],txarray,numtx);
                     iguana_freetx(txarray,numtx);
                 }
             } else printf("emittxdata: error with recvblockptr[%d]\n",checkpoint->height + 1 + i);

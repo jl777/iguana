@@ -347,7 +347,7 @@ struct iguana_blockreq { struct queueitem DL; bits256 hash2,*blockhashes; int32_
 struct iguana_checkpoint
 {
     struct queueitem DL; portable_mutex_t mutex;
-    FILE *fp; char fname[512]; struct iguana_mappedptr M;
+    char fname[512]; struct iguana_mappedptr M;
     void *txdata[_IGUANA_HDRSCOUNT]; int32_t numtxs[_IGUANA_HDRSCOUNT];
     struct iguana_counts presnapshot,postsnapshot;
     int32_t checkpointi,height,num,hasheaders,numvalid,lastduration;
@@ -479,7 +479,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
 uint32_t iguana_txidind(struct iguana_info *coin,uint32_t *firstvoutp,uint32_t *firstvinp,bits256 txid);
 bits256 iguana_txidstr(struct iguana_info *coin,uint32_t *firstvoutp,uint32_t *firstvinp,char *txidstr,uint32_t txidind);
 int32_t iguana_updateramchain(struct iguana_info *coin);
-void iguana_emittxarray(struct iguana_info *coin,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx);
+void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx);
 
 // ...M() funcs pass in allocated mem
 void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *txids,int32_t n);
