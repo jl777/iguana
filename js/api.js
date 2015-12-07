@@ -39,8 +39,16 @@ var SPNAPI = (function(SPNAPI, $, undefined) {
 
     SPNAPI.submitRequest = function(e) {
 
+//code added in order to be able to receive input from <input> or <textarea> fields
+//original code: var request = $(".json_submit_url").html();
+//CODE CHANGED START
+if ($(".json_submit_url").html()) {
         var request = $(".json_submit_url").html();
-
+}
+else if ($("#json_submit_url").val()) {
+	var request = $("#json_submit_url").val();
+}
+//CODE CHANGED STOP
         postCall('iguana', request, function(jsonstr)
         {
             $(".debuglogdebuglog").append(jsonstr);
