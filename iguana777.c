@@ -510,6 +510,7 @@ uint32_t iguana_issuereqs(struct iguana_info *coin)
     if ( coin->width < 0 )
         width = 500;
     coin->widthready = 0;
+    coin->width = 5000;
     //printf("width.%d\n",width);
     while ( iguana_recvblock(coin,coin->blocks.recvblocks) != 0 )
     {
@@ -522,7 +523,8 @@ uint32_t iguana_issuereqs(struct iguana_info *coin)
         //printf("w%d ",w);
         if ( width == coin->width )
             coin->widthready = w;
-        else break;
+        //else
+            break;
         width <<= 1;
         if ( width >= coin->longestchain-coin->blocks.recvblocks )
             width = coin->longestchain-coin->blocks.recvblocks-1;

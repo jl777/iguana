@@ -471,10 +471,12 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 if ( checkpoint->numvalid < checkpoint->num && checkpoint->txdata[h] == 0 )
                 {
                     checkpoint->blocks[h] = *block;
-                    if ( iguana_recvblockptr(coin,height) == &checkpoint->txdata[h] )
+                    if ( iguana_recvblockptr(coin,height) == &checkpoint->txdata[h] && checkpoint->txdata[h] == 0 )
                     {
                         checkpoint->txdata[h] = txarray, checkpoint->numtxs[h] = numtx;
-                        printf("GOT.%d | received.%d\n",height,coin->blocks.recvblocks);
+                        coin->blocks.numblocks++;
+                        if ( (rand() % 100) == 0 )
+                            printf("GOT.%d | received.%d total.%d\n",height,coin->blocks.recvblocks,coin->blocks.numblocks);
                         txarray = 0;
                         if ( ++checkpoint->numvalid == checkpoint->num )
                         {
@@ -700,7 +702,7 @@ int32_t iguana_updatehdrs(struct iguana_info *coin)
                         checkpoint->firstblocktime = now;
                     }*/
                 }
-                if ( now > checkpoint->lastdisp+15 )
+                if ( 0 && now > checkpoint->lastdisp+15 )
                 {
                     printf("bundle.%d (%d %d) elapsed.%d (%d - %d) %d | %.2f minutes\n",checkpoint->checkpointi,checkpoint->height,m,(int32_t)(now - checkpoint->recvstart),coin->R.startedbundles,coin->R.finishedbundles,coin->R.maxrecvbundles,(double)(now - coin->starttime)/60.);
                     checkpoint->lastdisp = now;

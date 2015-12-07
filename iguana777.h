@@ -381,7 +381,7 @@ struct iguana_blocks
     char coin[8];
 	bits256 hwmchain;
 	struct iguanakv *db;
-    int32_t hwmheight,maxblocks,rawblocks,initblocks,parsedblocks,recvblocks;
+    int32_t hwmheight,maxblocks,rawblocks,initblocks,parsedblocks,recvblocks,numblocks;
     double hwmPoW;
 };
 
