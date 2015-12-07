@@ -582,7 +582,7 @@ void iguana_coinloop(void *arg)
                         flag += iguana_updatehdrs(coin); // creates block headers directly or from blockhashes
                     portable_mutex_unlock(&coin->recv_mutex);
                 }
-                if ( coin->blocks.parsedblocks < coin->blocks.hwmheight-coin->chain->minconfirms )
+                if ( 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight-coin->chain->minconfirms )
                 {
                     portable_mutex_lock(&coin->ramchain_mutex);
                         if ( iguana_updateramchain(coin) != 0 )
