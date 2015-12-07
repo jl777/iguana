@@ -215,7 +215,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2,
         //getchar();
         return(0);
     }
-    if ( height < 0 || (height >= coin->blocks.recvblocks && iguana_recvblock(coin,height) == 0) )
+    if ( height < 0 || (GETBIT(coin->R.waitingbits,height) == 0 && height >= coin->blocks.recvblocks && iguana_recvblock(coin,height) == 0) )
     {
         if ( priority != 0 )
             str = "priorityQ", Q = &coin->priorityQ;
@@ -227,7 +227,7 @@ int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2,
             req = mycalloc('r',1,sizeof(*req));
             req->hash2 = hash2;
             req->height = height;
-            if ( 1 && (height % 100) == 0 )
+            if ( 0 && (height % 100) == 0 )
                 printf("%s height.%d %s recv.%d maxpeer.%d\n",str,height,bits256_str(hash2),coin->blocks.recvblocks,coin->MAXPEERS);
             if ( height >= 0 )
                 req->checkpointi = (height / coin->chain->bundlesize);
