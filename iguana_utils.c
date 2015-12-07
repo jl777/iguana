@@ -107,7 +107,7 @@ void _myfree(uint8_t type,uint32_t origallocsize,void *origptr,uint32_t allocsiz
     else
     {
         printf("myfree size error %d vs %d at %p\n",allocsize,origallocsize,origptr);
-        getchar();
+        //getchar();
     }
     portable_mutex_unlock(&MEMmutex);
 }
