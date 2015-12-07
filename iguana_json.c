@@ -172,7 +172,7 @@ void iguana_main(void *arg)
     if ( (IGUANA_NUMHELPERS= juint(json,"numhelpers")) == 0 )
     {
 #ifdef __linux__
-        IGUANA_NUMHELPERS = 8;
+        IGUANA_NUMHELPERS = 1;
 #else
         IGUANA_NUMHELPERS = 1;
 #endif

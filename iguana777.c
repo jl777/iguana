@@ -589,13 +589,10 @@ void iguana_coinloop(void *arg)
                     portable_mutex_unlock(&coin->recv_mutex);
                 }
                 if ( now > coin->lastwaiting )
-                {
                     coin->lastwaiting = iguana_issuereqs(coin); // updates waiting Q's and issues reqs
-                    coin->lastwaiting = now;
-                }
                 {
                     portable_mutex_lock(&coin->recv_mutex);
-                        flag += iguana_updatehdrs(coin); // creates block headers directly or from blockhashes
+                        iguana_updatehdrs(coin); // creates block headers directly or from blockhashes
                     portable_mutex_unlock(&coin->recv_mutex);
                 }
                 if ( 0 && coin->blocks.recvblocks < coin->blocks.hwmheight-coin->chain->minconfirms )
