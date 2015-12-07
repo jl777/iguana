@@ -586,7 +586,7 @@ void iguana_coinloop(void *arg)
                             iguana_recvalloc(coin,coin->longestchain + 200000);
                     portable_mutex_unlock(&coin->recv_mutex);
                 }
-                if ( now > coin->lastwaiting+60 )
+                if ( now > coin->lastwaiting+10 )
                 {
                     coin->lastwaiting = iguana_issuereqs(coin); // updates waiting Q's and issues reqs
                     coin->lastwaiting = now;

@@ -664,14 +664,14 @@ int32_t iguana_updatehdrs(struct iguana_info *coin)
         {
             if ( checkpoint->recvstart == 0 )
             {
-                /*if ( (coin->R.startedbundles - coin->R.finishedbundles) < coin->R.maxrecvbundles )
+                if ( (coin->R.startedbundles - coin->R.finishedbundles) < coin->R.maxrecvbundles )
                 {
                     iguana_queuebundle(coin,checkpoint);
                     checkpoint->recvstart = now;
                     coin->R.startedbundles++;
                     printf("startbundle.%d (%d - %d)\n",checkpoint->height,coin->R.startedbundles,coin->R.finishedbundles);
                     flag++;
-                }*/
+                }
             }
             else if ( checkpoint->recvfinish == 0 )
             {
