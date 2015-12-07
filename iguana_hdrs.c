@@ -588,17 +588,17 @@ int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_checkpoint *chec
 
 void iguana_emittxdata(struct iguana_info *coin,struct iguana_checkpoint *checkpoint)
 {
-    int32_t i,numtx; uint32_t offsets[_IGUANA_HDRSCOUNT+1]; long len; struct iguana_msgtx *txarray;
+    FILE *fp; int32_t i,numtx; uint32_t offsets[_IGUANA_HDRSCOUNT+1]; long len; struct iguana_msgtx *txarray;
     checkpoint->emitstart = (uint32_t)time(NULL);
     sprintf(checkpoint->fname,"tmp/%s/txdata.%d",coin->symbol,checkpoint->height);
-    if ( (checkpoint->fp= fopen(checkpoint->fname,"wb")) != 0 )
+    if ( (fp= fopen(checkpoint->fname,"wb")) != 0 )
     {
         memset(offsets,0,sizeof(offsets));
-        if ( (len= fwrite(offsets,sizeof(*offsets),checkpoint->num+1,checkpoint->fp)) != checkpoint->num+1 )
+        if ( (len= fwrite(offsets,sizeof(*offsets),checkpoint->num+1,fp)) != checkpoint->num+1 )
             printf("%s: error writing blank offsets len.%ld != %d\n",checkpoint->fname,len,checkpoint->num+1);
         for (i=0; i<checkpoint->num; i++)
         {
-            offsets[i] = (uint32_t)ftell(checkpoint->fp);
+            offsets[i] = (uint32_t)ftell(fp);
             if ( iguana_recvblockptr(coin,checkpoint->height + 1 + i) == &checkpoint->txdata[i] )
             {
                 if ( (txarray= checkpoint->txdata[i]) != 0 && (numtx= checkpoint->numtxs[i]) > 0 )
@@ -608,12 +608,12 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_checkpoint *checkp
                 }
             } else printf("emittxdata: error with recvblockptr[%d]\n",checkpoint->height + 1 + i);
         }
-        offsets[i] = (uint32_t)ftell(checkpoint->fp);
-        rewind(checkpoint->fp);
-        if ( (len= fwrite(offsets,sizeof(*offsets),checkpoint->num+1,checkpoint->fp)) != checkpoint->num+1 )
+        offsets[i] = (uint32_t)ftell(fp);
+        rewind(fp);
+        if ( (len= fwrite(offsets,sizeof(*offsets),checkpoint->num+1,fp)) != checkpoint->num+1 )
             printf("%s: error writing offsets len.%ld != %d\n",checkpoint->fname,len,checkpoint->num+1);
-        fclose(checkpoint->fp), checkpoint->fp = 0;
-        iguana_maptxdata(coin,checkpoint);
+        fclose(fp), fp = 0;
+        //iguana_maptxdata(coin,checkpoint);
         if ( checkpoint->blocks != 0 )
             myfree(checkpoint->blocks,checkpoint->num * sizeof(*checkpoint->blocks));
         checkpoint->blocks = 0;
