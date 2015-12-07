@@ -29,23 +29,34 @@ void iguana_initQ(queue_t *Q,char *name)
 void iguana_initQs(struct iguana_info *coin)
 {
     int32_t i;
-    iguana_initQ(&coin->R.hdrsQ,"hdrsQ");
+    iguana_initQ(&coin->hdrsQ,"hdrsQ");
     iguana_initQ(&coin->blocksQ,"blocksQ");
     iguana_initQ(&coin->priorityQ,"priorityQ");
     iguana_initQ(&coin->possibleQ,"possibleQ");
+    iguana_initQ(&coin->emitQ,"emitQ");
+    iguana_initQ(&coin->jsonQ,"jsonQ");
     for (i=0; i<IGUANA_MAXPEERS; i++)
+    {
         iguana_initQ(&coin->peers.active[i].sendQ,"addrsendQ");
+        iguana_initQ(&coin->peers.active[i].pendingQ,"pendingQ");
+        //iguana_initQ(&coin->peers.active[i].pendblocksQ[0],"pendblocksQ");
+        //iguana_initQ(&coin->peers.active[i].pendblocksQ[1],"pendblocksQ");
+    }
 }
 
 void iguana_initcoin(struct iguana_info *coin)
 {
     int32_t i;
-    portable_mutex_init(&coin->peers.rankedmutex);
-    portable_mutex_init(&coin->blocks.mutex);
+    portable_mutex_init(&coin->peers_mutex);
+    portable_mutex_init(&coin->hdrs_mutex);
+    portable_mutex_init(&coin->recv_mutex);
+    portable_mutex_init(&coin->txdata_mutex);
+    portable_mutex_init(&coin->ramchain_mutex);
     portable_mutex_init(&coin->R.RSPACE.mutex);
     iguana_initQs(coin);
     randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
     coin->starttime = (uint32_t)time(NULL);
+    coin->R.maxrecvbundles = IGUANA_INITIALBUNDLES;
     for (i=0; i<IGUANA_NUMAPPENDS; i++)
         vupdate_sha256(coin->latest.lhashes[i].bytes,&coin->latest.states[i],0,0);
 }
@@ -79,9 +90,6 @@ struct iguana_info *iguana_coin(const char *symbol)
                     coin->myservices = atoi(Hardcoded_coins[i][2]);
                     strcpy(coin->symbol,symbol);
                     coin->chain = iguana_chainfind(coin->symbol);
-                    if ( strcmp(symbol,"BTC") == 0 )
-                        coin->chain->unitval = 0x1d;
-                    else coin->chain->unitval = 0x1e;
                     iguana_initcoin(coin);
                 }
                 return(coin);
@@ -372,42 +380,51 @@ struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *c
 
 uint32_t iguana_syncs(struct iguana_info *coin)
 {
-    FILE *fp; char fnameold[512],fnameold2[512],fname[512],fname2[512]; int32_t i,height;
-    if ( (int32_t)coin->blocks.parsedblocks < 1 )
-        return(0);
-    height = coin->blocks.parsedblocks - (coin->firstblock != 0);
-    for (i=0; i<IGUANA_NUMAPPENDS; i++)
-        printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
-    printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),height);
-    iguana_syncmap(&coin->iAddrs->M,0);
-    iguana_syncmap(&coin->blocks.db->M,0);
-    iguana_syncmap(&coin->unspents->M,0);
-    iguana_syncmap(&coin->unspents->M2,0);
-    iguana_syncmap(&coin->spends->M,0);
-    iguana_syncmap(&coin->spends->M2,0);
-    iguana_syncmap(&coin->txids->M,0);
-    iguana_syncmap(&coin->pkhashes->M,0);
-    iguana_syncmap(&coin->pkhashes->M2,0);
-    iguana_syncmap(&coin->pkhashes->M3,0);
-    if ( 0 && coin->R.RSPACE.M.fileptr != 0 )
-        msync(coin->R.RSPACE.M.fileptr,coin->R.RSPACE.M.allocsize,MS_ASYNC);
-    printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,height,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
-    sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,height);
-    sprintf(fname2,"DB/%s/ledger",coin->symbol);
-    sprintf(fnameold,"tmp/%s/ledger.old",coin->symbol);
-    sprintf(fnameold2,"tmp/%s/ledger.old2",coin->symbol);
-    iguana_renamefile(fnameold,fnameold2);
-    iguana_renamefile(fname2,fnameold);
-    if ( (fp= fopen(fname,"wb")) != 0 )
+    FILE *fp; char fnameold[512],fnameold2[512],fname[512],fname2[512]; int32_t i,height,flag = 0;
+    if ( (coin->blocks.parsedblocks > coin->longestchain-1000 && (coin->blocks.parsedblocks % 100) == 1) ||
+        (coin->blocks.parsedblocks > coin->longestchain-10000 && (coin->blocks.parsedblocks % 1000) == 1) ||
+        (coin->blocks.parsedblocks > coin->longestchain-2000000 && (coin->blocks.parsedblocks % 10000) == 1) ||
+        (coin->blocks.parsedblocks > coin->firstblock+100 && (coin->blocks.parsedblocks % 100000) == 1) )
     {
-        if ( fwrite(coin->accounts,sizeof(*coin->accounts),coin->LEDGER.snapshot.dep.numpkinds,fp) != coin->LEDGER.snapshot.dep.numpkinds )
-            printf("WARNING: error saving %s accounts[%d]\n",fname,coin->LEDGER.snapshot.dep.numpkinds);
-        if ( fwrite(&coin->LEDGER,1,sizeof(coin->LEDGER),fp) != sizeof(coin->LEDGER) )
-            printf("WARNING: error saving %s\n",fname);
-        fclose(fp);
-        iguana_copyfile(fname,fname2,1);
+        if ( coin->blocks.parsedblocks > coin->loadedLEDGER.snapshot.height+2 )
+            flag = 1;
     }
-    printf("backups created\n");
+    if ( flag != 0 )
+    {
+        height = coin->blocks.parsedblocks - (coin->firstblock != 0);
+        for (i=0; i<IGUANA_NUMAPPENDS; i++)
+            printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
+        printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),height);
+        iguana_syncmap(&coin->iAddrs->M,0);
+        iguana_syncmap(&coin->blocks.db->M,0);
+        iguana_syncmap(&coin->unspents->M,0);
+        iguana_syncmap(&coin->unspents->M2,0);
+        iguana_syncmap(&coin->spends->M,0);
+        iguana_syncmap(&coin->spends->M2,0);
+        iguana_syncmap(&coin->txids->M,0);
+        iguana_syncmap(&coin->pkhashes->M,0);
+        iguana_syncmap(&coin->pkhashes->M2,0);
+        iguana_syncmap(&coin->pkhashes->M3,0);
+        if ( 0 && coin->R.RSPACE.M.fileptr != 0 )
+            msync(coin->R.RSPACE.M.fileptr,coin->R.RSPACE.M.allocsize,MS_ASYNC);
+        printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,height,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
+        sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,height);
+        sprintf(fname2,"DB/%s/ledger",coin->symbol);
+        sprintf(fnameold,"tmp/%s/ledger.old",coin->symbol);
+        sprintf(fnameold2,"tmp/%s/ledger.old2",coin->symbol);
+        iguana_renamefile(fnameold,fnameold2);
+        iguana_renamefile(fname2,fnameold);
+        if ( (fp= fopen(fname,"wb")) != 0 )
+        {
+            if ( fwrite(coin->accounts,sizeof(*coin->accounts),coin->LEDGER.snapshot.dep.numpkinds,fp) != coin->LEDGER.snapshot.dep.numpkinds )
+                printf("WARNING: error saving %s accounts[%d]\n",fname,coin->LEDGER.snapshot.dep.numpkinds);
+            if ( fwrite(&coin->LEDGER,1,sizeof(coin->LEDGER),fp) != sizeof(coin->LEDGER) )
+                printf("WARNING: error saving %s\n",fname);
+            fclose(fp);
+            iguana_copyfile(fname,fname2,1);
+        }
+        printf("backups created\n");
+    }
     return((uint32_t)time(NULL));
 }
 
@@ -857,8 +874,8 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
     FILE *fp; char fname[512],*symbol; int32_t iter,height; bits256 hash2; struct iguana_block space;
     coin->sleeptime = 10000;
     symbol = coin->symbol;
-    if ( initialheight < IGUANA_HDRSCOUNT*10 )
-        initialheight = IGUANA_HDRSCOUNT*10;
+    if ( initialheight < coin->chain->bundlesize*10 )
+        initialheight = coin->chain->bundlesize*10;
     coin->R.maprecvdata = ((mapflags & IGUANA_MAPRECVDATA) != 0);
     iguana_recvalloc(coin,initialheight);
     coin->iAddrs = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPEERITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"iAddrs",0,sizeof(uint32_t),sizeof(struct iguana_iAddr),sizeof(struct iguana_iAddr),10000,iguana_verifyiAddr,iguana_initiAddr,0,0,0,0,1);
@@ -873,7 +890,7 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
     }
     iguana_audit(coin);
     iguana_syncs(coin);
-    coin->firstblock = coin->blocks.parsedblocks;
+    coin->firstblock = coin->blocks.parsedblocks + 1;
     for (iter=0; iter<2; iter++)
     {
         sprintf(fname,"%s_%s.txt",coin->symbol,(iter == 0) ? "peers" : "hdrs");

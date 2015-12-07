@@ -4,24 +4,29 @@
 # found in the LICENSE file.
 
 import argparse
-import BaseHTTPServer
 import logging
 import multiprocessing
 import os
-import SimpleHTTPServer  # pylint: disable=W0611
 import socket
 import sys
 import time
-import urlparse
 
 if sys.version_info < (2, 7, 0):
   sys.stderr.write("python 2.7 or later is required run this script\n")
   sys.exit(1)
 
+try:
+  # Python 3+
+  from http.server import HTTPServer, SimpleHTTPRequestHandler
+  from urllib.parse import urlparse, parse_qs, urlsplit
+except ImportError:
+  # Python 2.7
+  from urlparse import urlparse, urlsplit, parse_qs
+  from BaseHTTPServer import HTTPServer
+  from SimpleHTTPServer import SimpleHTTPRequestHandler
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 NACL_SDK_ROOT = os.path.dirname(SCRIPT_DIR)
-
 
 # We only run from the examples directory so that not too much is exposed
 # via this HTTP server.  Everything in the directory is served, so there should
@@ -41,9 +46,9 @@ def SanityCheckDirectory(dirname):
   sys.exit(1)
 
 
-class HTTPServer(BaseHTTPServer.HTTPServer):
+class SuperNetHTTPServer(HTTPServer):
   def __init__(self, *args, **kwargs):
-    BaseHTTPServer.HTTPServer.__init__(self, *args)
+    HTTPServer.__init__(self, *args)
     self.running = True
     self.result = 0
 
@@ -52,7 +57,7 @@ class HTTPServer(BaseHTTPServer.HTTPServer):
     self.result = result
 
 
-class HTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
+class SuperNetHTTPRequestHandler(SimpleHTTPRequestHandler):
   def _SendNothingAndDie(self, result=0):
     self.send_response(200, 'OK')
     self.send_header('Content-type', 'text/html')
@@ -62,14 +67,14 @@ class HTTPRequestHandler(SimpleHTTPServer.SimpleHTTPRequestHandler):
 
   def do_GET(self):
     # Browsing to ?quit=1 will kill the server cleanly.
-    _, _, _, query, _ = urlparse.urlsplit(self.path)
+    _, _, _, query, _ = urlsplit(self.path)
     if query:
-      params = urlparse.parse_qs(query)
+      params = parse_qs(query)
       if '1' in params.get('quit', []):
         self._SendNothingAndDie()
         return
 
-    return SimpleHTTPServer.SimpleHTTPRequestHandler.do_GET(self)
+    return SimpleHTTPRequestHandler.do_GET(self)
 
 
 class LocalHTTPServer(object):
@@ -125,13 +130,14 @@ class LocalHTTPServer(object):
         time.sleep(0)
     except KeyboardInterrupt:
       pass
-    finally:
+    finally:	  
       self.Shutdown()
     return child_result
 
   def Shutdown(self):
     """Send a message to the child HTTP server process and wait for it to
         finish."""
+    print("Shutting down server")
     self.conn.send(False)
     self.process.join()
 
@@ -162,9 +168,9 @@ def _HTTPServerProcess(conn, dirname, port, server_kwargs):
   """
   try:
     os.chdir(dirname)
-    httpd = HTTPServer(('', port), HTTPRequestHandler, **server_kwargs)
+    httpd = SuperNetHTTPServer(('', port), SuperNetHTTPRequestHandler, **server_kwargs)
   except socket.error as e:
-    sys.stderr.write('Error creating HTTPServer: %s\n' % e)
+    sys.stderr.write('Error creating SuperNetHTTPServer: %s\n' % e)
     sys.exit(1)
 
   try:
@@ -212,7 +218,7 @@ def main(args):
 
   # Serve until the client tells us to stop. When it does, it will give us an
   # errorcode.
-  print 'Serving %s on %s...' % (options.serve_dir, server.GetURL(''))
+  print(('Serving {0} on {1}...'.format(options.serve_dir, server.GetURL(''))))
   return server.ServeForever()
 
 if __name__ == '__main__':

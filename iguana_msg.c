@@ -626,7 +626,7 @@ void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,st
 int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
 {
     int32_t height,i,retval,srvmsg,bloom,intvectors,len= -100; uint64_t nonce,x;
-    uint32_t type,firsttxidind,firstvout,firstvin; char hashstr[65]; bits256 hash2; double PoW;
+    uint32_t type,firsttxidind,firstvout,firstvin; bits256 hash2; double PoW;
     bloom = intvectors = srvmsg = -1;
     if ( addr != 0 )
     {
@@ -720,8 +720,8 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 }
             }
             //printf("GOT HEADERS n.%d len.%d\n",n,len);
-            iguana_gotheaders(coin,addr,blocks,n);
-            myfree(blocks,sizeof(*blocks) * n);
+            iguana_gotheadersM(coin,addr,blocks,n);
+            //myfree(blocks,sizeof(*blocks) * n);
             if ( len == datalen && addr != 0 )
                 addr->msgcounts.headers++;
         } else printf("got unexpected n.%d for headers\n",n);
@@ -751,13 +751,13 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 if ( len == datalen )
                     addr->msgcounts.block++;
                 //addr->OV.reqrecv += datalen;
-                printf("%s gotblock.%d datalen.%d last.[%02x]\n",addr->ipaddr,block->height,datalen,data[len-1]);
+                //printf("%s gotblock.%d datalen.%d last.[%02x]\n",addr->ipaddr,block->height,datalen,data[len-1]);
             }
-            iguana_gotblock(coin,addr,block,tx,block->txn_count,data,datalen);
+            iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen);
         } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
-        if ( tx != 0 )
-            iguana_freetx(tx,block->txn_count);
-        myfree(block,sizeof(*block));
+        //if ( tx != 0 )
+        //    iguana_freetx(tx,block->txn_count);
+        //myfree(block,sizeof(*block));
     }
     else if ( strcmp(H->command,"reject") == 0 )
     {
@@ -823,10 +823,10 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 if ( blockhashes == 0 )
                     blockhashes = mycalloc('f',(int32_t)x,sizeof(*blockhashes));
                 blockhashes[n++] = hash;
-                init_hexbytes_noT(hashstr,hash.bytes,sizeof(hash));
-                queue_enqueue("blocksQ",&coin->blocksQ,queueitem(hashstr),1);
-                if ( i == x-2 )
-                    queue_enqueue("hdrsQ",&coin->R.hdrsQ,queueitem(hashstr),1);
+                //init_hexbytes_noT(hashstr,hash.bytes,sizeof(hash));
+                //queue_enqueue("blocksQ",&coin->blocksQ,queueitem(hashstr),1);
+                //if ( i == x-2 )
+                //    queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(hashstr),1);
                 //printf("iv.%d %d of %d: block.%llx len.%d %s\n",intvectors,i,(int32_t)x,(long long)hash.txid,len,bits256_str(hash));
             }
             else if ( type == MSG_FILTERED_BLOCK )

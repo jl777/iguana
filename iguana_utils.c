@@ -214,7 +214,7 @@ void *queue_dequeue(queue_t *queue,int32_t offsetflag)
     else return(item);
 }
 
-void *queue_delete(queue_t *queue,struct queueitem *copy,int32_t copysize)
+void *queue_delete(queue_t *queue,struct queueitem *copy,int32_t copysize,int32_t freeitem)
 {
     struct queueitem *item = 0;
     lock_queue(queue);
@@ -222,13 +222,16 @@ void *queue_delete(queue_t *queue,struct queueitem *copy,int32_t copysize)
     {
         DL_FOREACH(queue->list,item)
         {
-            if ( memcmp((void *)((long)item + sizeof(struct queueitem)),(void *)((long)item + sizeof(struct queueitem)),copysize) == 0 )
+            if ( item == copy || memcmp((void *)((long)item + sizeof(struct queueitem)),(void *)((long)item + sizeof(struct queueitem)),copysize) == 0 )
             {
                 DL_DELETE(queue->list,item);
+                portable_mutex_unlock(&queue->mutex);
+                printf("name.(%s) deleted item.%p list.%p\n",queue->name,item,queue->list);
+                if ( freeitem != 0 )
+                    myfree(item,copysize);
                 return(item);
             }
         }
-        //printf("name.(%s) dequeue.%p list.%p\n",queue->name,item,queue->list);
     }
 	portable_mutex_unlock(&queue->mutex);
     return(0);

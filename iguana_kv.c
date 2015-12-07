@@ -359,6 +359,86 @@ void *iguana_mappedptr(void **ptrp,struct iguana_mappedptr *mp,uint64_t allocsiz
     return(mp->fileptr);
 }
 
+int64_t iguana_packetsallocated(struct iguana_info *coin) { return(coin->R.packetsallocated - coin->R.packetsfreed); };
+
+void *filealloc(struct iguana_mappedptr *M,char *fname,struct iguana_memspace *mem,long size)
+{
+    //printf("mem->used %ld size.%ld | size.%ld\n",mem->used,size,mem->size);
+    //printf("filemalloc.(%s) new space.%ld %s\n",fname,mem->size,mbstr(size));
+    memset(M,0,sizeof(*M));
+    mem->size = size;
+    if ( iguana_mappedptr(0,M,mem->size,1,fname) == 0 )
+    {
+        printf("couldnt create mapped file.(%s)\n",fname);
+        exit(-1);
+    }
+    mem->ptr = M->fileptr;
+    mem->used = 0;
+    return(M->fileptr);
+}
+
+void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
+{
+    void *ptr = 0;
+    if ( (mem->used + size) > mem->size )
+    {
+        printf("alloc: (mem->used %ld + %ld size) %ld > %ld mem->size\n",mem->used,size,(mem->used + size),mem->size);
+        while ( 1 )
+            sleep(1);
+    }
+    ptr = (void *)((uint64_t)mem->ptr + (uint64_t)mem->used);
+    mem->used += size;
+    if ( size*clearflag != 0 )
+        memset(ptr,0,size);
+    if ( mem->alignflag != 0 && (mem->used & 0xf) != 0 )
+        mem->used += 0x10 - (mem->used & 0xf);
+    //printf(">>>>>>>>> USED alloc %ld used %ld alloc.%ld\n",size,mem->used,mem->size);
+    return(ptr);
+}
+
+void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace *mem,long origsize)
+{
+    char fname[1024]; void *ptr; long size;
+#ifdef __PNACL
+    return(mycalloc('T',1,origsize));
+#endif
+    portable_mutex_lock(&mem->mutex);
+    if ( origsize != 0 && (mem->M.fileptr == 0 || (mem->used + origsize) > mem->size) )
+    {
+        coin->TMPallocated += origsize;
+        memset(&mem->M,0,sizeof(mem->M));
+        sprintf(fname,"tmp/%s/%s.%d",coin->symbol,name,mem->counter), iguana_compatible_path(fname);
+        mem->counter++;
+        if ( mem->size == 0 )
+        {
+            //if ( strcmp(name,"recv") == 0 )
+            //    mem->size = IGUANA_RSPACE_SIZE * ((strcmp(coin->symbol,"BTC") == 0) ? 16 : 1);
+            // else
+#ifdef IGUANA_MAPHASHTABLES
+            mem->size = (1024 * 1024 * 128);
+#else
+            mem->size = (1024 * 1024 * 16);
+#endif
+        }
+        if ( coin->R.RSPACE.size == 0 )
+            coin->R.RSPACE.size = mem->size;
+        if ( mem->size > origsize )
+            size = mem->size;
+        else size = origsize;
+        fprintf(stderr,"filealloc.(%s) -> ",fname);
+        if ( filealloc(&mem->M,fname,mem,size) == 0 )
+        {
+            printf("couldnt map tmpfile %s\n",fname);
+            return(0);
+        }
+        fprintf(stderr,"created\n");
+    }
+    ptr = iguana_memalloc(mem,origsize,1);
+    portable_mutex_unlock(&mem->mutex);
+    return(ptr);
+}
+
+
 void *iguana_kvfixiterator(struct iguana_info *coin,struct iguanakv *kv,struct iguana_kvitem *item,uint64_t args,void *key,void *value,int32_t valuesize)
 {
     int64_t offset = (int64_t)args;

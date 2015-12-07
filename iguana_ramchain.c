@@ -460,17 +460,6 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
     return(-1);
 }
 
-int32_t iguana_avail(struct iguana_info *coin,int32_t height,int32_t n)
-{
-    int32_t i,nonz = 0;
-    if ( coin->R.recvblocks == 0 || coin->R.numwaitingbits < height+n )
-        return(0);
-    for (i=0; i<n; i++)
-        if ( coin->R.recvblocks[height+i] != 0 )
-            nonz++;
-    return(nonz);
-}
-
 int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,struct iguana_msgtx *tx,int32_t numtx)
 {
     int32_t txind,pkind,i; uint16_t numvouts,numvins;
@@ -504,8 +493,8 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     coin->LEDGER.snapshot.credits = coin->latest.credits;
     coin->LEDGER.snapshot.debits = coin->latest.debits;
     coin->LEDGER.snapshot.height = block->height;
-    if ( coin->blocks.parsedblocks > 0 && (coin->blocks.parsedblocks % IGUANA_HDRSCOUNT) == 0 )
-        coin->R.checkpoints[coin->blocks.parsedblocks / IGUANA_HDRSCOUNT].snapshot = coin->LEDGER.snapshot;
+    if ( coin->blocks.parsedblocks > 0 && (coin->blocks.parsedblocks % coin->chain->bundlesize) == 0 )
+        coin->R.checkpoints[coin->blocks.parsedblocks / coin->chain->bundlesize].presnapshot = coin->LEDGER.snapshot;
     for (txind=block->numvouts=block->numvins=0; txind<block->txn_count; txind++)
     {
         //printf("block.%d txind.%d numvouts.%d numvins.%d block->(%d %d) U%d coin.%d\n",block->height,txind,numvouts,numvins,block->numvouts,block->numvins,block->L.numunspents,coin->latest.dep.numunspents);
@@ -546,5 +535,82 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
         printf("restore lhashes, special alignement case\n");
     } //else printf("loaded.%d vs parsed.%d\n",coin->loadedLEDGER.snapshot.height,coin->blocks.parsedblocks);
     coin->blocks.parsedblocks++;
+    return(0);
+}
+
+struct iguana_rawtx { bits256 txid; uint16_t numvouts,numvins; uint8_t rmd160[20]; };
+int32_t iguana_emittx(struct iguana_info *coin,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
+{
+    int32_t blocknum,i; int64_t reward; uint16_t s; struct iguana_rawtx rawtx; uint8_t rmd160[20],buf[64];
+    struct iguana_msgvin *vin;
+    blocknum = block->height;
+    memset(&rawtx,0,sizeof(rawtx));
+    rawtx.txid = tx->txid;
+    rawtx.numvouts = tx->tx_out, rawtx.numvins = tx->tx_in;
+    if ( (blocknum == 91842 || blocknum == 91880) && txi == 0 && strcmp(coin->name,"bitcoin") == 0 )
+        rawtx.txid.ulongs[0] ^= blocknum;
+    if ( fwrite(&rawtx,1,sizeof(rawtx),checkpoint->fp) == sizeof(rawtx) )
+    {
+        for (i=0; i<rawtx.numvouts; i++)
+        {
+            iguana_calcrmd160(coin,rmd160,tx->vouts[i].pk_script,tx->vouts[i].pk_scriptlen,rawtx.txid);
+            memcpy(buf,&tx->vouts[i].value,sizeof(tx->vouts[i].value));
+            memcpy(&buf[sizeof(tx->vouts[i].value)],rmd160,sizeof(rmd160));
+            if ( fwrite(buf,1,sizeof(rmd160)+sizeof(tx->vouts[i].value),checkpoint->fp) == sizeof(rmd160)+sizeof(tx->vouts[i].value) )
+            {
+                (*numvoutsp)++;
+                (*outputp) += tx->vouts[i].value;
+            } else printf("error writing txi.%d vout.%d\n",txi,i);
+        }
+        for (i=0; i<tx->tx_in; i++)
+        {
+            vin = &tx->vins[i];
+            if ( bits256_nonz(vin->prev_hash) == 0 )
+            {
+                if ( i == 0 && (int32_t)vin->prev_vout < 0 )
+                {
+                    reward = iguana_miningreward(coin,blocknum);
+                    //printf("reward %.8f\n",dstr(reward));
+                    (*outputp) += reward;
+                } else printf("unexpected prevout.%d\n",vin->prev_vout), getchar();
+                continue;
+            }
+            memcpy(buf,vin->prev_hash.bytes,sizeof(vin->prev_hash));
+            s = vin->prev_vout;
+            memcpy(&buf[sizeof(vin->prev_hash)],&s,sizeof(s));
+            //printf("do spend.%s\n",bits256_str(vin->prev_hash));
+            if ( fwrite(buf,1,sizeof(bits256)+sizeof(s),checkpoint->fp) == sizeof(bits256)+sizeof(s) )
+                (*numvinsp)++;
+            else printf("error writing txi.%d vin.%d\n",txi,i);
+        }
+        return(0);
+    }
+    else printf("error writing txi.%d blocknum.%d\n",txi,blocknum);
+    return(-1);
+}
+
+void iguana_emittxarray(struct iguana_info *coin,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
+{
+    uint32_t i,numvouts,numvins; int64_t credits; long fpos,endpos;
+    if ( checkpoint->fp != 0 && block != 0 )
+    {
+        fpos = ftell(checkpoint->fp);
+        credits = numvouts = numvins = 0;
+        for (i=0; i<numtx; i++)
+            iguana_emittx(coin,checkpoint,block,&txarray[i],i,&numvouts,&numvins,&credits);
+        endpos = ftell(checkpoint->fp);
+        fseek(checkpoint->fp,fpos,SEEK_SET);
+        block->L.supply = credits;
+        block->txn_count = numtx;
+        block->numvouts = numvouts, block->numvins = numvins;
+        block->L.numtxids = numtx, block->L.numunspents = numvouts, block->L.numspends = numvins;
+        if ( fwrite(block,1,sizeof(*block),checkpoint->fp) != sizeof(*block) )
+            printf("iguana_emittxarray: error writing block.%d\n",block->height);
+        fseek(checkpoint->fp,endpos,SEEK_SET);
+    }
+}
+
+int32_t iguana_updateramchain(struct iguana_info *coin)
+{
     return(0);
 }
