@@ -629,7 +629,7 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
     now = (uint32_t)time(NULL);
     height = starti;
     iguana_waitclear(coin,height);
-    iguana_waitstart(coin,height,coin->R.blockhashes[height],0);
+    iguana_waitstart(coin,height,coin->R.blockhashes[height],1);
     for (i=0; i<max; i++,height++)
     {
         gap = (height - coin->blocks.recvblocks);
