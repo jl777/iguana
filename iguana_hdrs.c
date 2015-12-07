@@ -628,6 +628,8 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
     int32_t i,height,gap,n = 0; uint32_t now;
     now = (uint32_t)time(NULL);
     height = starti;
+    iguana_waitclear(coin,height);
+    iguana_waitstart(coin,height,coin->R.blockhashes[height],0);
     for (i=0; i<max; i++,height++)
     {
         gap = (height - coin->blocks.recvblocks);
@@ -652,7 +654,7 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
 
 int32_t iguana_updatehdrs(struct iguana_info *coin)
 {
-    int32_t i,j,m,height,run,duration,flag = 0; uint32_t now; struct iguana_checkpoint *checkpoint;
+    int32_t i,j,m,height,run,flag = 0; uint32_t now; struct iguana_checkpoint *checkpoint;
     if ( iguana_needhdrs(coin) == 0 )
         return(flag);
     now = (uint32_t)time(NULL);
