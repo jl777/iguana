@@ -966,7 +966,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                 }
             }
             //if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
-            usleep(1000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
+            usleep(100);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
     }
     while ( (req= queue_dequeue(&addr->pendingQ,0)) != 0 )
