@@ -170,6 +170,68 @@
 						</div>
 					</div>
 				</div>
+
+                <!-- eyedea page is for creating front-end markup -->
+                <div id="eyedea_page" class="page">
+                    <div class="row" style="margin-bottom:15px;">
+                        <div class="col-xs-4 col-sm-3 col-md-2">
+                            <div class="api-navpills">
+
+                            </div>
+                        </div>
+
+                        <div class="col-xs-8 col-sm-9 col-md-10">
+
+                            <div class="panel-group">
+                                <div class="panel panel-default api-call-All">
+                                    <div class="panel-heading">
+                                        <h4 class="panel-title api-panel-title">
+                                            Json posting form
+                                        </h4>
+                                    </div> <!-- panel-heading -->
+                                    <div class="panel-body">
+                                        <div class="row">
+                                            <div class="col-xs-9 col-sm-10 col-md-8">
+                                                <div class="panel panel-default">
+                                                    <div class="panel-body">
+                                                        <div class="form-group">
+                                                            <textarea name="json_to_submit" id="json_src" cols="30" rows="5" class="result form-control" placeholder='Paste json here'></textarea>
+                                                        </div>
+                                                        <div class="form-group">
+                                                            <button class="btn btn-primary submit_api_request" id='submit_primary'>Submit</button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-xs-6 col-md-4 col-lg-4">
+                                                <div class="panel-body">
+                                                    <h5 class='uri-link'>Response</h5>
+                                                    <pre class="hljs json result">
+                                                        JSON response
+                                                    </pre>
+                                                    <button class="btn btn-default clear-response">Clear response</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <hr>
+                                        
+                                        <h3>Submitted JSON history</h3>
+                                        <div class="row">
+                                            <div class="col-md-12">
+                                                <table class="table" id='submit_history'>
+
+                                                </table>
+                                                
+                                            </div>
+                                        </div>
+                                        
+                                    </div> <!-- panel-body -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div> 
+
 				<div id="Settings_page" class="page">
 					<div class="panel panel-default">
 						<div class="panel-heading">
@@ -218,7 +280,9 @@
 				<div id="listener"></div>
 			</div>
 		</div>
-		<script type="text/javascript" src="js/util.js"></script> <script type="text/javascript" src="common.js"></script> <script type="text/javascript" src="example.js"></script>
+		<script type="text/javascript" src="js/util.js"></script> <script type="text/javascript" src="common.js"></script>
+        <script src='js/form.js'></script>
+        <script type="text/javascript" src="example.js"></script>
 		<script src="js/bootstrap.js" type="text/javascript"></script> <script src="js/api.js" type="text/javascript" charset="utf-8"></script>
 		<script src="js/methods.js" type="text/javascript" charset="utf-8"></script> <script src="js/sites.js" type="text/javascript" charset="utf-8"></script>
 		<script src="js/settings.js" type="text/javascript" charset="utf-8"></script>
