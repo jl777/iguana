@@ -30,33 +30,30 @@ void iguana_initQs(struct iguana_info *coin)
 {
     int32_t i;
     iguana_initQ(&coin->hdrsQ,"hdrsQ");
+    iguana_initQ(&coin->bundlesQ,"bundlesQ");
     iguana_initQ(&coin->blocksQ,"blocksQ");
     iguana_initQ(&coin->priorityQ,"priorityQ");
     iguana_initQ(&coin->possibleQ,"possibleQ");
     iguana_initQ(&coin->emitQ,"emitQ");
     iguana_initQ(&coin->jsonQ,"jsonQ");
     for (i=0; i<IGUANA_MAXPEERS; i++)
-    {
         iguana_initQ(&coin->peers.active[i].sendQ,"addrsendQ");
-        iguana_initQ(&coin->peers.active[i].pendingQ,"pendingQ");
-        //iguana_initQ(&coin->peers.active[i].pendblocksQ[0],"pendblocksQ");
-        //iguana_initQ(&coin->peers.active[i].pendblocksQ[1],"pendblocksQ");
-    }
 }
 
 void iguana_initcoin(struct iguana_info *coin)
 {
     int32_t i;
     portable_mutex_init(&coin->peers_mutex);
-    portable_mutex_init(&coin->hdrs_mutex);
-    portable_mutex_init(&coin->recv_mutex);
-    portable_mutex_init(&coin->txdata_mutex);
-    portable_mutex_init(&coin->ramchain_mutex);
+    portable_mutex_init(&coin->bundles_mutex);
+    //portable_mutex_init(&coin->recv_mutex);
+    //portable_mutex_init(&coin->txdata_mutex);
+    //portable_mutex_init(&coin->ramchain_mutex);
     portable_mutex_init(&coin->R.RSPACE.mutex);
     iguana_initQs(coin);
     randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
     coin->starttime = (uint32_t)time(NULL);
-    coin->R.maxrecvbundles = IGUANA_INITIALBUNDLES;
+    //coin->R.maxrecvbundles = IGUANA_INITIALBUNDLES;
+    coin->bundleswidth = IGUANA_INITIALBUNDLES;
     for (i=0; i<IGUANA_NUMAPPENDS; i++)
         vupdate_sha256(coin->latest.lhashes[i].bytes,&coin->latest.states[i],0,0);
 }
@@ -115,7 +112,9 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
     printf("genesis.(%s) len.%d hash.%s\n",chain->genesis_hex,(int32_t)sizeof(msg.H),bits256_str(hash2));
     iguana_convblock(&block,&msg,hash2,0,1,1,1,PoW);
     coin->latest.dep.numtxids = block.numvouts = 1;
-    iguana_addblock(coin,hash2,&block);
+    iguana_gotdata(coin,0,0,hash2,0,0);
+    iguana_bundleset(coin,0,hash2);
+    iguana_chainextend(coin,hash2,&block);
     if ( coin->blocks.hwmheight != 0 || fabs(coin->blocks.hwmPoW - PoW) > SMALLVAL || memcmp(coin->blocks.hwmchain.bytes,hash2.bytes,sizeof(hash2)) != 0 )
     {
         printf("%s genesis values mismatch\n",coin->name);
@@ -436,8 +435,8 @@ uint32_t iguana_syncs(struct iguana_info *coin)
 
 int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
 {
-    FILE *fp; char fname[512],mapname[512],newfname[512]; struct iguana_block *block,space;
-    struct iguana_prevdep *dep; int32_t i,valid = 0;
+    FILE *fp; char fname[512],mapname[512],newfname[512]; struct iguana_block *block;
+    struct iguana_prevdep *dep; int32_t height,i,valid = 0;
     dep = &coin->latest.dep;
     sprintf(fname,"DB/%s/ledger",coin->symbol);
     mapname[0] = newfname[0] = 0;
@@ -457,7 +456,7 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
         fseek(fp,-sizeof(coin->LEDGER),SEEK_END);
         if ( fread(&coin->LEDGER,1,sizeof(coin->LEDGER),fp) != sizeof(coin->LEDGER) )
             printf("WARNING: error loading %s\n",fname);
-        if ( (block= iguana_block(coin,&space,coin->LEDGER.snapshot.height)) != 0 )
+        if ( (block= iguana_block(coin,coin->LEDGER.snapshot.height)) != 0 )
         {
             if ( memcmp(block->hash2.bytes,coin->LEDGER.snapshot.blockhash.bytes,sizeof(block->hash2)) == 0 )
             {
@@ -485,21 +484,26 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
     dep->numpkinds = dep->numtxids = dep->numunspents = dep->numspends = 1;
     while ( hwmheight > 0 )
     {
-        if ( (block= iguana_block(coin,&space,hwmheight)) != 0 )
+        if ( (block= iguana_block(coin,hwmheight)) != 0 )
         {
             iguana_setdependencies(coin,block);
             //printf("block.%d: T.%d (%d %d) U.%d S.%d A.%d\n",hwmheight,dep->numtxids,block->numvouts,block->numvins,dep->numunspents,dep->numspends,dep->numpkhashes);
             if ( block->L.numtxids != 0 && block->L.numunspents != 0 && block->L.numspends != 0 && block->numvouts != 0 && block->txn_count != 0 && block->L.numpkinds != 0 )
             {
-                dep->numtxids = block->L.numtxids + 0*block->txn_count;
-                dep->numunspents = block->L.numunspents + 0*block->numvouts;
-                dep->numspends = block->L.numspends + 0*block->numvins;
-                dep->numpkinds = block->L.numpkinds;
-                if ( valid++ > 25 )
+                 if ( valid++ > 25 )
                     break;
             }
         } else printf("missing block.%d\n",hwmheight);
         hwmheight--;
+    }
+    for (height=0; height<=hwmheight; height++)
+    {
+        if ( iguana_setdependencies(coin,iguana_block(coin,height)) < 0 )
+            break;
+        dep->numtxids = block->L.numtxids + 0*block->txn_count;
+        dep->numunspents = block->L.numunspents + 0*block->numvouts;
+        dep->numspends = block->L.numspends + 0*block->numvins;
+        dep->numpkinds = block->L.numpkinds;
     }
     return(hwmheight);
 }
@@ -507,7 +511,7 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
 int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t *creditsp,uint64_t *debitsp,int32_t height,struct iguana_block *block,int32_t hwmheight)
 {
     uint32_t i,n,m,u,txidind,unspentind,spendind,pkind,checkind,numvins,numvouts,txind,firstvout,firstvin,nextfirstvout,nextfirstvin;
-    struct iguana_txid T,nextT; uint64_t credits,debits,nets; struct iguana_block *nextblock,space;
+    struct iguana_txid T,nextT; uint64_t credits,debits,nets; struct iguana_block *nextblock;
     credits = debits = nets = *creditsp = *debitsp = *netp = numvouts = numvins = 0;
     if ( block->height == height )
     {
@@ -591,7 +595,7 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
                 block->numvins = numvins;
                 block->numvouts = numvouts;
                 iguana_kvwrite(coin,coin->blocks.db,0,block,(uint32_t *)&block->height);
-                m = iguana_fixblocks(coin,height,hwmheight);
+                m = 0;//iguana_fixblocks(coin,height,hwmheight);
                 printf("autocorrected.%d\n",m);
                 exit(1);
             }
@@ -602,7 +606,7 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
             }
         }
         *creditsp = credits, *debitsp = debits, *netp = nets;
-        if ( (nextblock= iguana_block(coin,&space,height+1)) != 0 )
+        if ( (nextblock= iguana_block(coin,height+1)) != 0 )
         {
             if ( 0 && block->L.supply+credits-debits != nextblock->L.supply )
             {
@@ -738,7 +742,7 @@ int64_t iguana_verifybalances(struct iguana_info *coin,int32_t fullverify)
 
 int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t mapflags,int32_t fullverify)
 {
-    struct iguana_prevdep *dep; struct iguana_block *block,space,lastblock; double lastdisp = 0.;
+    struct iguana_prevdep *dep; struct iguana_block *block,lastblock; double lastdisp = 0.;
     // init sequence is very tricky. must be done in the right order and make sure to only use data
     // that has already been initialized. and at the end all the required fields need to be correct
     struct iguana_msghdr H; uint8_t buf[1024]; int32_t len,height,valid=0,flag=0;
@@ -801,7 +805,7 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
             fprintf(stderr,"%.0f%% ",100. * lastdisp);
             lastdisp = ((double)height / hwmheight);
         }
-        if ( (block= iguana_block(coin,&space,height)) == 0 )
+        if ( (block= iguana_block(coin,height)) == 0 )
         {
             printf("error getting height.%d\n",height);
             break;
@@ -871,7 +875,7 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
 
 struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialheight,int32_t mapflags)
 {
-    FILE *fp; char fname[512],*symbol; int32_t iter,height; bits256 hash2; struct iguana_block space;
+    FILE *fp; char fname[512],*symbol; int32_t iter,height; struct iguana_block space;
     coin->sleeptime = 10000;
     symbol = coin->symbol;
     if ( initialheight < coin->chain->bundlesize*10 )
@@ -881,14 +885,14 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
     coin->iAddrs = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPEERITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"iAddrs",0,sizeof(uint32_t),sizeof(struct iguana_iAddr),sizeof(struct iguana_iAddr),10000,iguana_verifyiAddr,iguana_initiAddr,0,0,0,0,1);
     coin->blocks.db = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPBLOCKITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"blocks",(int32_t)((long)&space.hash2 - (long)&space),sizeof(bits256),sizeof(struct iguana_block)-sizeof(bits256),sizeof(struct iguana_block),10000,iguana_verifyblock,iguana_initblock,0,0,0,initialheight,1);
     coin->longestchain = 1;
-    coin->blocks.hwmheight = iguana_lookahead(coin,&hash2,0);
+    coin->blocks.hwmheight = 1;//iguana_lookahead(coin,&hash2,0);
     printf("coin->blocks.hwmheight.%d longest.%d coin->numiAddrs.%d\n",coin->blocks.hwmheight,coin->longestchain,coin->numiAddrs);
     if ( (height= iguana_initramchain(coin,coin->blocks.hwmheight,mapflags,1)) < 0 )
     {
         printf("iguana_startcoin: unrecoverable failure in truncating ramchain table.%x\n",-height);
         exit(1);
     }
-    iguana_audit(coin);
+    //iguana_audit(coin);
     iguana_syncs(coin);
     coin->firstblock = coin->blocks.parsedblocks + 1;
     for (iter=0; iter<2; iter++)

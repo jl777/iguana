@@ -387,7 +387,7 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
 int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *totalfeesp,uint16_t *numvoutsp,uint16_t *numvinsp,int32_t blocknum,int32_t txind,struct iguana_msgtx *tx,uint32_t txidind,uint32_t firstvout,uint32_t firstvin)
 {
     uint32_t t,spendtxidind,spentind,unspentind,spendind; int64_t inputs,outputs; uint64_t spentvalue,reward;
-    int32_t i,numvins=0,numvouts=0; struct iguana_block *block=0,space; struct iguana_msgvin *vin;
+    int32_t i,numvins=0,numvouts=0; struct iguana_block *block=0; struct iguana_msgvin *vin;
     *numvinsp = *numvoutsp = 0;
     unspentind = firstvout;
     spendind = firstvin;
@@ -398,7 +398,7 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
         return(-1);
     }
     inputs = outputs = 0;
-    if ( blocknum >= 0 && (block= iguana_block(coin,&space,blocknum)) != 0 && txidind > 0 && unspentind > 0 && spendind > 0 )
+    if ( blocknum >= 0 && (block= iguana_block(coin,blocknum)) != 0 && txidind > 0 && unspentind > 0 && spendind > 0 )
     {
         if ( (blocknum == 91842 || blocknum == 91880) && txind == 0 && strcmp(coin->name,"bitcoin") == 0 )
             tx->txid.ulongs[0] ^= blocknum;
@@ -493,8 +493,8 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     coin->LEDGER.snapshot.credits = coin->latest.credits;
     coin->LEDGER.snapshot.debits = coin->latest.debits;
     coin->LEDGER.snapshot.height = block->height;
-    if ( coin->blocks.parsedblocks > 0 && (coin->blocks.parsedblocks % coin->chain->bundlesize) == 0 )
-        coin->R.checkpoints[coin->blocks.parsedblocks / coin->chain->bundlesize].presnapshot = coin->LEDGER.snapshot;
+    //if ( coin->blocks.parsedblocks > 0 && (coin->blocks.parsedblocks % coin->chain->bundlesize) == 0 )
+    //    coin->R.bundles[coin->blocks.parsedblocks / coin->chain->bundlesize].presnapshot = coin->LEDGER.snapshot;
     for (txind=block->numvouts=block->numvins=0; txind<block->txn_count; txind++)
     {
         //printf("block.%d txind.%d numvouts.%d numvins.%d block->(%d %d) U%d coin.%d\n",block->height,txind,numvouts,numvins,block->numvouts,block->numvins,block->L.numunspents,coin->latest.dep.numunspents);
@@ -539,7 +539,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
 }
 
 struct iguana_rawtx { bits256 txid; uint16_t numvouts,numvins; uint8_t rmd160[20]; };
-int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
+int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bundle,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
 {
     int32_t blocknum,i; int64_t reward; uint16_t s; struct iguana_rawtx rawtx; uint8_t rmd160[20],buf[64];
     struct iguana_msgvin *vin;
@@ -589,7 +589,7 @@ int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_checkpoint
     return(-1);
 }
 
-void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_checkpoint *checkpoint,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
+void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bundle,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
 {
     uint32_t i,numvouts,numvins; int64_t credits; long fpos,endpos;
     if ( fp != 0 && block != 0 )
@@ -597,7 +597,7 @@ void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_checkpoi
         fpos = ftell(fp);
         credits = numvouts = numvins = 0;
         for (i=0; i<numtx; i++)
-            iguana_emittx(coin,fp,checkpoint,block,&txarray[i],i,&numvouts,&numvins,&credits);
+            iguana_emittx(coin,fp,bundle,block,&txarray[i],i,&numvouts,&numvins,&credits);
         endpos = ftell(fp);
         fseek(fp,fpos,SEEK_SET);
         block->L.supply = credits;

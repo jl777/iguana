@@ -125,13 +125,14 @@ void free_queueitem(void *itemdata)
     _myfree(item->type,item->allocsize,item,item->allocsize);
 }
 
-void *myrealloc(uint8_t type,void *oldptr,int32_t oldsize,int32_t newsize)
+void *myrealloc(uint8_t type,void *oldptr,long oldsize,long newsize)
 {
     void *newptr;
     newptr = mycalloc(type,1,newsize);
+    //printf("newptr.%p type.%c oldsize.%ld newsize.%ld\n",newptr,type,oldsize,newsize);
     if ( oldptr != 0 )
     {
-        memcpy(newptr,oldptr,oldsize);
+        memcpy(newptr,oldptr,oldsize < newsize ? oldsize : newsize);
         myfree(oldptr,oldsize);
     }
     return(newptr);

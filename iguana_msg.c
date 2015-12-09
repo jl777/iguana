@@ -368,6 +368,7 @@ int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,
     }
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->lock_time),&msg->lock_time);
     *txidp = bits256_doublesha256(txidstr,txstart,len);
+    //printf("txid.(%s) len.%d\n",bits256_str(*txidp),len);
     msg->allocsize = len;
     Tx_allocated++, Tx_allocsize += len;
     if ( ((Tx_allocated + Tx_freed) % 10000000) == 0 )
@@ -399,7 +400,7 @@ void iguana_freetx(struct iguana_msgtx *tx,int32_t n)
     myfree(origtx,sizeof(*origtx) * n);
 }
 
-struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,int32_t *lenp,struct iguana_block *block,uint8_t *data,int32_t datalen)
+struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,int32_t *lenp,struct iguana_block *block,uint8_t *data,int32_t datalen,uint8_t extra[256])
 {
     struct iguana_msgtx *tx; bits256 hash2; struct iguana_msgblock msg; int32_t i,n,len;
     memset(&msg,0,sizeof(msg));
@@ -415,6 +416,12 @@ struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,int32_t *lenp,st
         if ( (n= iguana_rwtx(0,&data[len],&tx[i],datalen - len,&tx[i].txid,block->height,coin->chain->hastimestamp)) < 0 )
             break;
         len += n;
+    }
+    if ( coin->chain->hastimestamp != 0 && len != datalen && data[len] == (datalen - len - 1) )
+    {
+        //printf("\n>>>>>>>>>>> len.%d vs datalen.%d [%d]\n",len,datalen,data[len]);
+        memcpy(extra,&data[len],datalen-len);
+        len += (datalen-len);
     }
     *lenp = len;
     return(tx);
@@ -451,7 +458,7 @@ int32_t iguana_rwblockhash(int32_t rwflag,uint8_t *serialized,uint32_t *nVersion
     return(len);
 }
 
-int32_t iguana_request_data(struct iguana_info *coin,struct iguana_peer *addr,bits256 *hashes,int32_t n,uint32_t type,int32_t forceflag)
+/*int32_t iguana_request_data(struct iguana_info *coin,struct iguana_peer *addr,bits256 *hashes,int32_t n,uint32_t type,int32_t forceflag)
 {
     uint32_t len,i; uint8_t serialized[sizeof(struct iguana_msghdr) + (sizeof(uint32_t) + sizeof(bits256))*32 + sizeof(uint64_t)];
     if ( addr == 0 )
@@ -466,7 +473,7 @@ int32_t iguana_request_data(struct iguana_info *coin,struct iguana_peer *addr,bi
     addr->getdatamillis = milliseconds();
     len = iguana_queue_send(coin,addr,serialized,"getdata",len,iguana_height(coin,hashes[n-1]),forceflag);
     return(len);
-}
+}*/
 
 void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgversion *vers)
 {
@@ -480,10 +487,12 @@ void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct 
         addr->relayflag = vers->relayflag;
         addr->height = vers->nStartingHeight;
         addr->relayflag = 1;
-        iguana_gotdata(coin,addr,addr->height,bits256_zero);
+        iguana_gotdata(coin,addr,addr->height,bits256_zero,0,0);
         iguana_queue_send(coin,addr,serialized,"verack",0,0,0);
         //iguana_send_ping(coin,addr);
     } else printf("nServices.%llx nonce.%llu invalid version message from.(%s)\n",(long long)vers->nServices,(long long)vers->nonce,addr->ipaddr);
+    if ( vers->nStartingHeight > coin->longestchain )
+        coin->longestchain = vers->nStartingHeight;
     iguana_queue_send(coin,addr,serialized,"getaddr",0,0,0);
 }
 
@@ -606,21 +615,95 @@ int32_t iguana_send_hashes(struct iguana_info *coin,char *command,struct iguana_
 
 void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *txids,int32_t n)
 {
-    int32_t i;
-    //portable_mutex_lock(&coin->blocks.mutex);
-    for (i=0; i<n; i++)
-        printf("%s ",bits256_str(txids[i]));
+    struct iguana_bundlereq *req;
     printf("got %d txids from %s\n",n,addr->ipaddr);
-    myfree(txids,n * sizeof(*txids));
-    //portable_mutex_unlock(&coin->blocks.mutex);
+    req = mycalloc('r',1,sizeof(*req));
+    req->type = 'T';
+    req->addr = addr, req->hashes = txids, req->n = n;
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
 void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,int32_t datalen)
 {
-    //portable_mutex_lock(&coin->blocks.mutex);
+    struct iguana_bundlereq *req;
     printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(tx->txid));
-    iguana_freetx(tx,1);
-    //portable_mutex_unlock(&coin->blocks.mutex);
+    req = mycalloc('r',1,sizeof(*req));
+    req->type = 'U';
+    req->addr = addr, req->txarray = tx, req->n = 1;
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx,uint8_t *data,int32_t datalen,uint8_t extra[256])
+{
+    struct iguana_bundlereq *req; int32_t i;
+    if ( 0 )
+    {
+        for (i=0; i<extra[0]; i++)
+            if ( extra[i] != 0 )
+                break;
+        if ( i != extra[0] )
+        {
+            for (i=0; i<extra[0]; i++)
+                printf("%02x ",extra[i]);
+            printf("extra\n");
+        }
+    }
+    if ( addr != 0 )
+    {
+        if ( addr->pendblocks > 0 )
+            addr->pendblocks--;
+        addr->lastblockrecv = (uint32_t)time(NULL);
+        addr->recvblocks += 1.;
+        addr->recvtotal += datalen;
+    }
+    coin->recvcount++;
+    coin->recvtime = (uint32_t)time(NULL);
+    req = mycalloc('r',1,sizeof(*req));
+    req->type = 'B';
+    req->addr = addr, req->blocks = block, req->txarray = txarray, req->n = numtx;
+    //printf("bundlesQ <- %p numtx[%d]\n",req,numtx);
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_gotheadersM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *blocks,int32_t n)
+{
+    struct iguana_bundlereq *req;
+    if ( addr != 0 )
+    {
+        addr->lastrequest = bits256_zero;
+        addr->recvhdrs++;
+        if ( addr->pendhdrs > 0 )
+            addr->pendhdrs--;
+        printf("%s blocks[%d] ht.%d gotheaders pend.%d %.0f\n",addr->ipaddr,n,blocks[0].height,addr->pendhdrs,milliseconds());
+    }
+    if ( n >= coin->chain->bundlesize )
+        coin->hdrscount++;
+    coin->R.lasthdrtime = (uint32_t)time(NULL);
+    req = mycalloc('r',1,sizeof(*req));
+    req->type = 'H';
+    req->addr = addr, req->blocks = blocks, req->n = n;
+    //printf("bundlesQ <- %p headers[%d]\n",req,n);
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *blockhashes,int32_t n)
+{
+    struct iguana_bundlereq *req;
+    if ( addr != 0 )
+    {
+        addr->lastrequest = bits256_zero;
+        addr->recvhdrs++;
+        if ( addr->pendhdrs > 0 )
+            addr->pendhdrs--;
+    }
+    if ( n >= coin->chain->bundlesize )
+        coin->hdrscount++;
+    coin->R.lasthdrtime = (uint32_t)time(NULL);
+    req = mycalloc('r',1,sizeof(*req));
+    req->type = 'S';
+    req->addr = addr, req->hashes = blockhashes, req->n = n;
+    //printf("bundlesQ <- %p blockhashes[%d] %s\n",req,n,bits256_str(blockhashes[0]));
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
 int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
@@ -740,10 +823,10 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
     }
     else if ( strcmp(H->command,"block") == 0 )
     {
-        struct iguana_block *block; struct iguana_msgtx *tx;
+        struct iguana_block *block; struct iguana_msgtx *tx; uint8_t extra[256];
         block = mycalloc('b',1,sizeof(*block));
-        tx = iguana_gentxarray(coin,&len,block,data,datalen);
-        len += coin->chain->hastimestamp;
+        memset(extra,0,sizeof(extra));
+        tx = iguana_gentxarray(coin,&len,block,data,datalen,extra);
         if ( len == datalen )
         {
             if ( addr != 0 )
@@ -753,7 +836,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 //addr->OV.reqrecv += datalen;
                 //printf("%s gotblock.%d datalen.%d last.[%02x]\n",addr->ipaddr,block->height,datalen,data[len-1]);
             }
-            iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen);
+            iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen,extra);
         } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
         //if ( tx != 0 )
         //    iguana_freetx(tx,block->txn_count);
@@ -815,6 +898,9 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
             len += iguana_rwbignum(0,&data[len],sizeof(bits256),hash.bytes);
             if ( type == MSG_TX )
             {
+                if ( txids == 0 )
+                    txids = mycalloc('t',(int32_t)x,sizeof(*txids));
+                txids[m++] = hash;
                 if ( (rand() % 1000) == 0 && i == x-1 )
                     printf("%s iv.%c %d of %d: tx.%llx len.%d\n",addr->ipaddr,intvectors,i,(int32_t)x,(long long)hash.txid,len);
             }
@@ -836,17 +922,25 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
         if ( intvectors == 'I' )
         {
             if ( n > 0 )
-                iguana_gotblockhashesM(coin,addr,blockhashes,n);
+            {
+                if ( n != x )
+                {
+                    //printf("n.%d != x.%d -> realloc blockhashes\n",n,(int32_t)x);
+                    blockhashes = myrealloc('f',blockhashes,(int32_t)(x*sizeof(*blockhashes)),n*sizeof(*blockhashes));
+                } // else printf("n.%d == x.%d\n",n,(int32_t)x);
+                iguana_gotblockhashesM(coin,addr,blockhashes,n), blockhashes = 0;
+            }
             if ( m > 0 )
-                iguana_gottxidsM(coin,addr,txids,m);
+            {
+                if ( m != x )
+                    txids = myrealloc('t',txids,(int32_t)(x*sizeof(*txids)),m*sizeof(*txids));
+                iguana_gottxidsM(coin,addr,txids,m), txids = 0;
+            }
         }
-        else
-        {
-            if ( txids != 0 )
-                myfree(txids,sizeof(*txids) * x);
-            if ( blockhashes != 0 )
-                myfree(blockhashes,sizeof(*blockhashes) * x);
-        }
+        if ( txids != 0 )
+            myfree(txids,sizeof(*txids) * x);
+        if ( blockhashes != 0 )
+            myfree(blockhashes,sizeof(*blockhashes) * x);
         //printf("intvectors.%c datalen.%d\n",intvectors,datalen);
     }
     if ( len != datalen && len != datalen-1 )
@@ -855,7 +949,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
         //for (i=0; i<len; i++)
         //    printf("%02x",data[i]);
         if ( strcmp(H->command,"addr") != 0 )
-            printf("%s.%s len mismatch %d != %d\n",addr->ipaddr,H->command,len,datalen);
+            printf("%s.%s len mismatch %d != %d\n",addr!=0?addr->ipaddr:"local",H->command,len,datalen);
     }
     else if ( len == datalen-1 )
     {
