@@ -409,7 +409,7 @@ struct iguana_info
     char name[64],symbol[8];
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
     int64_t mining,totalfees,TMPallocated,MAXRECVCACHE;
-    int32_t width,widthready,MAXPEERS,minconfirms;
+    int32_t width,widthready,MAXPEERS;
     uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,newhdrs,lastwaiting,firstblock,lastpossible;
     struct iguana_chain *chain;
     struct iguanakv *iAddrs,*txids,*spends,*unspents,*pkhashes;
@@ -427,6 +427,7 @@ struct iguana_info
     struct iguana_blocks blocks; uint8_t *bundleready;
     struct iguana_blockhashes pendings[1024];
     int32_t numpendings,zcount,recvcount,hdrscount,bundleswidth,bcount,pcount; uint32_t recvtime;
+    int32_t initialheight,mapflags,minconfirms; void *launched,*started;
     struct iguana_ledger LEDGER,loadedLEDGER;
 };
 
@@ -545,6 +546,7 @@ void *iguana_mappedptr(void **ptrp,struct iguana_mappedptr *mp,uint64_t allocsiz
 //int32_t iguana_setwaitstart(struct iguana_info *coin,int32_t height);
 void iguana_recvalloc(struct iguana_info *coin,int32_t numitems);
 //int32_t iguana_checkblock(struct iguana_info *coin,int32_t dispflag,struct iguana_block *block,bits256 hash2);
+void iguana_coins(void *arg);
 
 // hdrs
 int32_t iguana_updatehdrs(struct iguana_info *coin);
