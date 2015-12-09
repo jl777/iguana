@@ -21,7 +21,7 @@
 #define IGUANA_MAXBUNDLES (5000000 / 500)
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
-#define IGUANA_MAXPENDING 32
+#define IGUANA_MAXPENDING 1
 #define IGUANA_INITIALBUNDLES 64
 #define IGUANA_MAXPACKETSIZE (2 * 1024 * 1024)
 #define IGUANA_RSPACE_SIZE (IGUANA_MAXPACKETSIZE * 16)
@@ -333,20 +333,19 @@ struct iguana_Sextra { uint32_t prevspendind; } __attribute__((packed)); // spen
 // dynamic
 struct iguana_account { uint64_t balance; uint32_t lastunspentind,lastspendind; } __attribute__((packed)); // pkind
 
-struct iguana_blockreq { struct queueitem DL; bits256 hash2,*blockhashes; int32_t n,height; };
 
-struct iguana_bundle
+/*struct iguana_bundle
 {
     struct queueitem DL; portable_mutex_t mutex;
-    char fname[512]; struct iguana_mappedptr M; struct iguana_peer *workers[10];
+    char fname[512]; struct iguana_mappedptr M;
     void *txdata[_IGUANA_HDRSCOUNT]; int32_t numtxs[_IGUANA_HDRSCOUNT];
     struct iguana_counts presnapshot,postsnapshot;
-    int32_t bundlei,height,num,hasheaders,numvalid,lastduration,havehashes;
-    uint32_t starttime,recvstart,recvfinish,emitstart,emitfinish,lastdisp,firstblocktime;
+    int32_t bundlei,height,num,hasheaders,numvalid,havehashes;
+    uint32_t starttime,emitstart,emitfinish,lastdisp;
     bits256 prevhash2,firsthash2,lasthash2;
-    double durationsum,aveduration;
-    struct iguana_block *blocks;
-};
+    //double durationsum,aveduration;
+    //struct iguana_block *blocks;
+};*/
 
 // iguana blocks
 struct iguana_block
@@ -355,11 +354,12 @@ struct iguana_block
     struct iguana_prevdep L;
     int32_t height; uint32_t timestamp,nonce,bits;
     uint16_t txn_count,numvouts,numvins; uint8_t version,valid:1,matches:7;
-    UT_hash_handle hh; struct iguana_bundle *bundle;
+    void *txdata;
+    UT_hash_handle hh;
     bits256 hash2;                  // hash2 MUST be last, it is the prev_block for next item
 } __attribute__((packed));
 
-struct iguana_recv
+/*struct iguana_recv
 {
     //uint8_t compressed[IGUANA_MAXPACKETSIZE],decompressed[IGUANA_MAXPACKETSIZE],checkbuf[IGUANA_MAXPACKETSIZE];
     long srcdatalen,compressedtotal; //uint64_t histo[0x100];
@@ -375,16 +375,23 @@ struct iguana_recv
 struct iguana_pending
 {
     int32_t next,numtx,datalen,origdatalen; struct iguana_block block; uint32_t allocsize,ipbits; uint8_t data[];
-};
+};*/
 
-struct iguana_bundlereq { struct queueitem DL; struct iguana_peer *addr; struct iguana_block *blocks; bits256 *hashes; struct iguana_msgtx *txarray; int32_t n,type; };
+struct iguana_bundlereq
+{
+    struct queueitem DL; struct iguana_info *coin; struct iguana_peer *addr;
+    struct iguana_block *blocks; bits256 *hashes;
+    int32_t allocsize,n,type;
+    uint8_t serialized[];
+};
 
 struct iguana_blocks
 {
     char coin[8];
 	bits256 hwmchain;
 	struct iguanakv *db;
-    struct iguana_block **ptrs;
+    struct iguana_block *hash,**ptrs; int32_t maxbits;
+    //struct iguana_block **ptrs;
     int32_t hwmheight,maxblocks,initblocks,hashblocks,issuedblocks,recvblocks,emitblocks,parsedblocks;
     double hwmPoW;
 };
@@ -411,14 +418,13 @@ struct iguana_info
     struct iguana_spend *S; struct iguana_Sextra *Sextras;
     struct iguana_pkhash *P; struct iguana_account *accounts; struct iguana_pkextra *pkextras;
     struct iguana_counts latest;
-    struct iguana_blocks blocks;
     struct iguana_peers peers;
-    struct iguana_recv R;
-    struct iguana_bundle *B[IGUANA_MAXBUNDLES];
+    //struct iguana_recv R;
+    //struct iguana_bundle *B[IGUANA_MAXBUNDLES];
     struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,emitQ,jsonQ; double parsemillis;
-    portable_mutex_t peers_mutex,bundles_mutex,blocks_mutex;
-    struct iguana_block *blockshash; double hdrmillis;
+    portable_mutex_t peers_mutex,blocks_mutex;
+    struct iguana_blocks blocks; uint8_t *bundleready;
     struct iguana_blockhashes pendings[1024];
     int32_t numpendings,zcount,recvcount,hdrscount,bundleswidth,bcount,pcount; uint32_t recvtime;
     struct iguana_ledger LEDGER,loadedLEDGER;
@@ -442,6 +448,7 @@ void iguana_shutdownpeers(struct iguana_info *coin,int32_t forceflag);
 void iguana_acceptloop(void *args);
 void iguana_recvloop(void *args);
 int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *serialized,int32_t len,int32_t *sleeptimep);
+uint32_t iguana_updatemetrics(struct iguana_info *coin);
 
 // serdes
 int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
@@ -489,12 +496,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
 uint32_t iguana_txidind(struct iguana_info *coin,uint32_t *firstvoutp,uint32_t *firstvinp,bits256 txid);
 bits256 iguana_txidstr(struct iguana_info *coin,uint32_t *firstvoutp,uint32_t *firstvinp,char *txidstr,uint32_t txidind);
 int32_t iguana_updateramchain(struct iguana_info *coin);
-void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bundle,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx);
-
-// ...M() funcs pass in allocated mem
-void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *txids,int32_t n);
-void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *hashes,int32_t n);
-void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,int32_t datalen);
+//void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bundle,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx);
 
 // blockchain
 int32_t iguana_needhdrs(struct iguana_info *coin);
@@ -515,7 +517,7 @@ int32_t iguana_havehash(struct iguana_info *coin,int32_t height);
 
 #define iguana_block(coin,height) (height >= 0 ? coin->blocks.ptrs[height] : 0) // invariant ptr
 #define iguana_blockfind(coin,hash2) iguana_blockhashset(coin,-1,hash2,0)
-struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height,bits256 hash2,struct iguana_bundle *bp);
+struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t createflag);
 int32_t iguana_blockheight(struct iguana_info *coin,bits256 hash2);
 
 
@@ -533,17 +535,16 @@ int32_t iguana_recvinit(struct iguana_info *coin,int32_t initialheight);
 int32_t ramcoder_decompress(uint8_t *data,int32_t maxlen,uint8_t *bits,uint32_t numbits,bits256 seed);
 int32_t ramcoder_compress(uint8_t *bits,int32_t maxlen,uint8_t *data,int32_t datalen,uint64_t *histo,bits256 seed);
 int32_t hconv_bitlen(uint32_t bitlen);
-//int32_t iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *block,struct iguana_msgtx *tx,int32_t numtx,uint8_t *data,int32_t origdatalen);
-void *iguana_recvblock(struct iguana_info *coin,int32_t height);
+void *iguana_blockptr(struct iguana_info *coin,int32_t height);
 void *iguana_mappedptr(void **ptrp,struct iguana_mappedptr *mp,uint64_t allocsize,int32_t rwflag,char *fname);
-void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace *mem,long origsize);
-int64_t iguana_packetsallocated(struct iguana_info *coin);
-int32_t iguana_processrecv(struct iguana_info *coin);
-int32_t iguana_waitstart(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t priority);
-int32_t iguana_waitclear(struct iguana_info *coin,int32_t height);
-int32_t iguana_setwaitstart(struct iguana_info *coin,int32_t height);
+//void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace *mem,long origsize);
+//int64_t iguana_packetsallocated(struct iguana_info *coin);
+//int32_t iguana_processrecv(struct iguana_info *coin);
+//int32_t iguana_waitstart(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t priority);
+//int32_t iguana_waitclear(struct iguana_info *coin,int32_t height);
+//int32_t iguana_setwaitstart(struct iguana_info *coin,int32_t height);
 void iguana_recvalloc(struct iguana_info *coin,int32_t numitems);
-int32_t iguana_checkblock(struct iguana_info *coin,int32_t dispflag,struct iguana_block *block,bits256 hash2);
+//int32_t iguana_checkblock(struct iguana_info *coin,int32_t dispflag,struct iguana_block *block,bits256 hash2);
 
 // hdrs
 int32_t iguana_updatehdrs(struct iguana_info *coin);
@@ -555,6 +556,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr);
 int32_t iguana_avail(struct iguana_info *coin,int32_t height,int32_t n);
 int32_t iguana_updatebundles(struct iguana_info *coin);
 int32_t iguana_bundleset(struct iguana_info *coin,int32_t height,bits256 hash2);
+//void **iguana_recvblockptrp(struct iguana_info *coin,int32_t *blockip,int32_t height);
 
 // init
 struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialheight,int32_t mapflags);
@@ -624,5 +626,7 @@ void *iguana_filestr(int64_t *allocsizep,char *fname);
 
 double milliseconds(void);
 void randombytes(unsigned char *x,long xlen);
+int32_t is_hexstr(char *str);
+void iguana_initQ(queue_t *Q,char *name);
 
 #endif

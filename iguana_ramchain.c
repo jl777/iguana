@@ -525,7 +525,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     iguana_kvwrite(coin,coin->blocks.db,0,block,(uint32_t *)&block->height);
     if ( (coin->blocks.parsedblocks > coin->longestchain-100000 && (coin->blocks.parsedblocks % 100) == 0) || (coin->blocks.parsedblocks > coin->longestchain-1000 && (coin->blocks.parsedblocks % 10) == 0) || coin->blocks.parsedblocks > coin->longestchain-100 || (coin->blocks.parsedblocks % 100) == 0 )
     {
-        printf("PARSED.%d T.%d U.%d+%d S.%d+%d P.%d hwm.%d longest.%d | %.8f - %.8f %.8f [%.8f] M %.8f F %.8f | %.02f minutes %.2f%% %.2f%% %.2f%% avail compR %.3f\n",coin->blocks.parsedblocks,coin->latest.dep.numtxids,block->L.numunspents,block->numvouts,block->L.numspends,block->numvins,block->L.numpkinds,coin->blocks.hwmheight,coin->longestchain,dstr(coin->latest.credits),dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),(dstr(coin->latest.credits)-dstr(coin->latest.debits))/coin->blocks.parsedblocks,dstr(coin->mining),dstr(coin->totalfees),((double)time(NULL)-coin->starttime)/60.,(double)iguana_avail(coin,coin->blocks.parsedblocks+1,1000)/10.,(double)iguana_avail(coin,coin->blocks.parsedblocks+1,25000)/250.,100.*(double)iguana_avail(coin,coin->blocks.parsedblocks+1,coin->longestchain-coin->blocks.parsedblocks-1)/(coin->longestchain-coin->blocks.parsedblocks),(double)coin->R.srcdatalen/coin->R.compressedtotal);
+        printf("PARSED.%d T.%d U.%d+%d S.%d+%d P.%d hwm.%d longest.%d | %.8f - %.8f %.8f [%.8f] M %.8f F %.8f | %.02f minutes %.2f%% %.2f%% %.2f%% avail\n",coin->blocks.parsedblocks,coin->latest.dep.numtxids,block->L.numunspents,block->numvouts,block->L.numspends,block->numvins,block->L.numpkinds,coin->blocks.hwmheight,coin->longestchain,dstr(coin->latest.credits),dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),(dstr(coin->latest.credits)-dstr(coin->latest.debits))/coin->blocks.parsedblocks,dstr(coin->mining),dstr(coin->totalfees),((double)time(NULL)-coin->starttime)/60.,(double)iguana_avail(coin,coin->blocks.parsedblocks+1,1000)/10.,(double)iguana_avail(coin,coin->blocks.parsedblocks+1,25000)/250.,100.*(double)iguana_avail(coin,coin->blocks.parsedblocks+1,coin->longestchain-coin->blocks.parsedblocks-1)/(coin->longestchain-coin->blocks.parsedblocks));
         myallocated();
     }
     if ( 0 && coin->loadedLEDGER.snapshot.height == coin->blocks.parsedblocks )
@@ -538,17 +538,23 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     return(0);
 }
 
+int32_t iguana_updateramchain(struct iguana_info *coin)
+{
+    return(0);
+}
+
 struct iguana_rawtx { bits256 txid; uint16_t numvouts,numvins; uint8_t rmd160[20]; };
-int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bundle,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
+int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bp,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
 {
     int32_t blocknum,i; int64_t reward; uint16_t s; struct iguana_rawtx rawtx; uint8_t rmd160[20],buf[64];
     struct iguana_msgvin *vin;
-    blocknum = block->height;
+    blocknum = block->hh.itemind;
     memset(&rawtx,0,sizeof(rawtx));
     rawtx.txid = tx->txid;
     rawtx.numvouts = tx->tx_out, rawtx.numvins = tx->tx_in;
     if ( (blocknum == 91842 || blocknum == 91880) && txi == 0 && strcmp(coin->name,"bitcoin") == 0 )
         rawtx.txid.ulongs[0] ^= blocknum;
+    printf("%d: tx.%p %p[numvouts.%d] %p[numvins.%d]\n",block->hh.itemind,tx,tx->vouts,tx->tx_out,tx->vins,tx->tx_in);
     if ( fwrite(&rawtx,1,sizeof(rawtx),fp) == sizeof(rawtx) )
     {
         for (i=0; i<rawtx.numvouts; i++)
@@ -589,15 +595,16 @@ int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bu
     return(-1);
 }
 
-void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bundle,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
+void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bp,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
 {
     uint32_t i,numvouts,numvins; int64_t credits; long fpos,endpos;
     if ( fp != 0 && block != 0 )
     {
+        //printf("%d/%d: txarray.%p, numtx.%d bp.%p\n",block->hh.itemind,block->hh.itemind,txarray,numtx,bp);
         fpos = ftell(fp);
         credits = numvouts = numvins = 0;
         for (i=0; i<numtx; i++)
-            iguana_emittx(coin,fp,bundle,block,&txarray[i],i,&numvouts,&numvins,&credits);
+            iguana_emittx(coin,fp,bp,block,&txarray[i],i,&numvouts,&numvins,&credits);
         endpos = ftell(fp);
         fseek(fp,fpos,SEEK_SET);
         block->L.supply = credits;
@@ -609,8 +616,61 @@ void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *
         fseek(fp,endpos,SEEK_SET);
     }
 }
-
-int32_t iguana_updateramchain(struct iguana_info *coin)
+/*
+int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_bundle *bp)
 {
-    return(0);
+    void *fileptr; int32_t i,height,blocki; uint32_t *offsets;
+    if ( (fileptr= iguana_mappedptr(0,&bp->M,0,0,bp->fname)) != 0 )
+    {
+        offsets = fileptr;
+        for (i=0; i<bp->num; i++)
+        {
+            height = bp->height + 1 + i;
+            if ( iguana_recvblockptr(coin,&blocki,height) == &bp->txdata[i] )
+                bp->txdata[i] = (void *)((long)fileptr + offsets[i]);
+            else printf("iguana_recvblockptr(coin,%d) %p != %p &bp->txdata[%d]\n",height,iguana_recvblockptr(coin,&blocki,height),&bp->txdata[i],i);
+        }
+        return(bp->num);
+    }
+    printf("error mapping (%s)\n",bp->fname);
+    return(-1);
 }
+
+void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *bp)
+{
+    FILE *fp; int32_t i,height,numtx,blocki; uint32_t offsets[_IGUANA_HDRSCOUNT+1];
+    long len; struct iguana_msgtx *txarray;
+    bp->emitstart = (uint32_t)time(NULL);
+    sprintf(bp->fname,"tmp/%s/txdata.%d",coin->symbol,bp->height);
+    if ( (fp= fopen(bp->fname,"wb")) != 0 )
+    {
+        memset(offsets,0,sizeof(offsets));
+        if ( (len= fwrite(offsets,sizeof(*offsets),bp->num+1,fp)) != bp->num+1 )
+            printf("%s: error writing blank offsets len.%ld != %d\n",bp->fname,len,bp->num+1);
+        for (i=0; i<bp->num; i++)
+        {
+            offsets[i] = (uint32_t)ftell(fp);
+            height = (bp->height + 1 + i);
+            if ( iguana_recvblockptr(coin,&blocki,height) == &bp->txdata[i] )
+            {
+                if ( (txarray= bp->txdata[i]) != 0 && (numtx= bp->numtxs[i]) > 0 )
+                {
+                    int32_t j; struct iguana_msgtx *tx;
+                    tx = bp->txdata[i];
+                    for (j=0; j<bp->numtxs[i]; j++,tx++)
+                        printf("(%p[%d] %p[%d]) ",tx->vouts,tx->tx_out,tx->vins,tx->tx_in);
+                    printf("emit.%d txarray.%p[%d]\n",i,bp->txdata[i],bp->numtxs[i]);
+                    iguana_emittxarray(coin,fp,bp,iguana_block(coin,height),txarray,numtx);
+                    iguana_freetx(txarray,numtx);
+                } else printf("emittxdata: unexpected missing txarray[%d]\n",i);
+            } else printf("emittxdata: error with recvblockptr[%d]\n",bp->height + 1 + i);
+        }
+        offsets[i] = (uint32_t)ftell(fp);
+        rewind(fp);
+        if ( (len= fwrite(offsets,sizeof(*offsets),bp->num+1,fp)) != bp->num+1 )
+            printf("%s: error writing offsets len.%ld != %d\n",bp->fname,len,bp->num+1);
+        fclose(fp), fp = 0;
+        iguana_maptxdata(coin,bp);
+    }
+    bp->emitfinish = (uint32_t)time(NULL);
+}*/

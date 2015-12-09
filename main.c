@@ -13,10 +13,10 @@ void *iguana(void *arg)
 {
     if ( arg == 0 )
 #ifdef __linux__
-        arg = "{\"coins\":[{\"name\":\"BTCD\",\"maxpeers\":128,\"initialheight\":400000,\"services\":1,\"peers\":[\"127.0.0.1\"]}]}";
+        arg = 0;//"{\"coins\":[{\"name\":\"BTCD\",\"maxpeers\":128,\"initialheight\":400000,\"services\":1,\"peers\":[\"127.0.0.1\"]}]}";
         //arg = "{\"coins\":[{\"name\":\"BTCD\",\"services\":1,\"maxrecvcache\":64,\"peers\":[\"127.0.0.1\",\"107.170.13.184\",\"108.58.252.82\",\"207.182.151.130\",\"70.106.255.189\"]}]}";
 #else
-        arg = "{\"coins\":[{\"name\":\"BTCD\",\"maxpeers\":128,\"initialheight\":400000,\"services\":1,\"peers\":[\"127.0.0.1\"]}]}";
+        arg = 0;//"{\"coins\":[{\"name\":\"BTCD\",\"maxpeers\":128,\"initialheight\":400000,\"services\":1,\"peers\":[\"127.0.0.1\"]}]}";
 #endif
     PostMessage("iguana start.(%s)\n",(char *)arg);
     iguana_main(arg);

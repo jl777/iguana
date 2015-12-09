@@ -326,8 +326,8 @@ int64_t iguana_MEMallocated(struct iguana_info *coin)
     int64_t total = coin->TMPallocated;
     if ( Tx_allocsize > Tx_freesize )
         total += (Tx_allocsize - Tx_freesize);
-    total += coin->R.RSPACE.openfiles * coin->R.RSPACE.size;
-    total += iguana_packetsallocated(coin);
+    //total += coin->R.RSPACE.openfiles * coin->R.RSPACE.size;
+    //total += iguana_packetsallocated(coin);
     return(total);
 }
 
@@ -613,23 +613,35 @@ int32_t iguana_send_hashes(struct iguana_info *coin,char *command,struct iguana_
     return(retval);
 }
 
+struct iguana_bundlereq *iguana_bundlereq(struct iguana_info *coin,struct iguana_peer *addr,int32_t type,int32_t datalen)
+{
+    struct iguana_bundlereq *req; int32_t allocsize;
+    allocsize = (uint32_t)sizeof(*req) + datalen;
+    req = mycalloc(type,1,allocsize);
+    req->allocsize = allocsize;
+    req->addr = addr;
+    req->coin = coin;
+    req->type = type;
+    return(req);
+}
+
 void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *txids,int32_t n)
 {
     struct iguana_bundlereq *req;
     printf("got %d txids from %s\n",n,addr->ipaddr);
-    req = mycalloc('r',1,sizeof(*req));
-    req->type = 'T';
-    req->addr = addr, req->hashes = txids, req->n = n;
+    req = iguana_bundlereq(coin,addr,'T',0);
+    req->hashes = txids, req->n = n;
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
-void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,int32_t datalen)
+void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,uint8_t *data,int32_t datalen)
 {
     struct iguana_bundlereq *req;
     printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(tx->txid));
-    req = mycalloc('r',1,sizeof(*req));
-    req->type = 'U';
-    req->addr = addr, req->txarray = tx, req->n = 1;
+    req = iguana_bundlereq(coin,addr,'U',datalen);
+    req->n = datalen;
+    memcpy(req->serialized,data,datalen);
+    iguana_freetx(tx,1);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
@@ -658,10 +670,11 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     }
     coin->recvcount++;
     coin->recvtime = (uint32_t)time(NULL);
-    req = mycalloc('r',1,sizeof(*req));
-    req->type = 'B';
-    req->addr = addr, req->blocks = block, req->txarray = txarray, req->n = numtx;
-    //printf("bundlesQ <- %p numtx[%d]\n",req,numtx);
+    req = iguana_bundlereq(coin,addr,'B',datalen);
+    req->blocks = block, req->n = datalen;
+    memcpy(req->serialized,data,datalen);
+    printf("test emit txarray\n");
+    iguana_freetx(txarray,numtx);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
@@ -678,11 +691,9 @@ void iguana_gotheadersM(struct iguana_info *coin,struct iguana_peer *addr,struct
     }
     if ( n >= coin->chain->bundlesize )
         coin->hdrscount++;
-    coin->R.lasthdrtime = (uint32_t)time(NULL);
-    req = mycalloc('r',1,sizeof(*req));
-    req->type = 'H';
-    req->addr = addr, req->blocks = blocks, req->n = n;
-    //printf("bundlesQ <- %p headers[%d]\n",req,n);
+    //coin->R.lasthdrtime = (uint32_t)time(NULL);
+    req = iguana_bundlereq(coin,addr,'H',0);
+    req->blocks = blocks, req->n = n;
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
@@ -698,11 +709,9 @@ void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bi
     }
     if ( n >= coin->chain->bundlesize )
         coin->hdrscount++;
-    coin->R.lasthdrtime = (uint32_t)time(NULL);
-    req = mycalloc('r',1,sizeof(*req));
-    req->type = 'S';
-    req->addr = addr, req->hashes = blockhashes, req->n = n;
-    //printf("bundlesQ <- %p blockhashes[%d] %s\n",req,n,bits256_str(blockhashes[0]));
+    //coin->R.lasthdrtime = (uint32_t)time(NULL);
+    req = iguana_bundlereq(coin,addr,'S',0);
+    req->hashes = blockhashes, req->n = n;
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
@@ -816,7 +825,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
         len = iguana_rwtx(0,data,tx,datalen,&tx->txid,-1,coin->chain->hastimestamp);
         if ( len == datalen && addr != 0 )
         {
-            iguana_gotunconfirmedM(coin,addr,tx,datalen);
+            iguana_gotunconfirmedM(coin,addr,tx,data,datalen);
             printf("tx datalen.%d\n",datalen);
             addr->msgcounts.tx++;
         }

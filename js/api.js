@@ -42,11 +42,11 @@ var SPNAPI = (function(SPNAPI, $, undefined) {
 //CODE CHANGED START
         // val() will not work with multiple textareas with same class
         // when there will be one tab for talking with api - this if-else can be deleted
-        if ($(".json_submit_url").val()) {
-                var request = $(".json_submit_url").val();
+        if ($("#json_submit_url").val()) {
+                var request = $("#json_submit_url").val();
         }
-        else if ($("#json_src").val()) {
-        	var request = $("#json_src").val();
+        else if ($(".json_src").val()) {
+        	var request = $(".json_src").val();
         }
        
 //CODE CHANGED STOP
