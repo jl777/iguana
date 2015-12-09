@@ -711,13 +711,14 @@ int32_t iguana_updatebundles(struct iguana_info *coin) // single threaded
     if ( queue_size(&coin->blocksQ) == 0 )
     {
         coin->bcount++;
-        if ( coin->bcount > 1 || time(NULL) > coin->recvtime )
+        if ( coin->bcount > 10 || time(NULL) > coin->recvtime+3 )
         {
             for (height=coin->blocks.recvblocks+1; height<coin->blocks.issuedblocks; height++)
             {
                 if ( iguana_recvblock(coin,coin->blocks.recvblocks) == 0 )
                 {
-                    printf("RETRY BLOCK.%d\n",height);
+                    if ( (height % 100) == 0 )
+                        printf("RETRY BLOCK.%d\n",height);
                     flag += (iguana_queueblock(coin,height,iguana_blockhash(coin,&valid,height),0) > 0);
                 }
             }
