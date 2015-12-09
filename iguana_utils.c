@@ -107,7 +107,7 @@ void _myfree(uint8_t type,uint32_t origallocsize,void *origptr,uint32_t allocsiz
     else
     {
         printf("myfree size error %d vs %d at %p\n",allocsize,origallocsize,origptr);
-        //getchar();
+        getchar();
     }
     portable_mutex_unlock(&MEMmutex);
 }
@@ -522,6 +522,8 @@ int32_t _unhex(char c)
         return(c - '0');
     else if ( c >= 'a' && c <= 'f' )
         return(c - 'a' + 10);
+    else if ( c >= 'A' && c <= 'F' )
+        return(c - 'A' + 10);
     return(-1);
 }
 

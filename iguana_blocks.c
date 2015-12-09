@@ -27,7 +27,7 @@ static int32_t _sort_by_itemind(struct iguana_block *a, struct iguana_block *b)
 int32_t _iguana_verifysort(struct iguana_info *coin)
 {
     int32_t height,prevheight = -1,i = 0,run = 0; struct iguana_block *block,*tmp;
-    HASH_ITER(hh,coin->blockshash,block,tmp)
+    HASH_ITER(hh,coin->blocks.hash,block,tmp)
     {
         if ( (height= block->hh.itemind) < 0 )
             printf("sortblocks error i.%d height.%d?\n",i,height), getchar();
@@ -45,7 +45,7 @@ int32_t iguana_blocksort(struct iguana_info *coin)
 {
     int32_t hashblocks;
     portable_mutex_lock(&coin->blocks_mutex);
-    HASH_SORT(coin->blockshash,_sort_by_itemind);
+    HASH_SORT(coin->blocks.hash,_sort_by_itemind);
     hashblocks = _iguana_verifysort(coin);
     portable_mutex_unlock(&coin->blocks_mutex);
     return(hashblocks);
@@ -72,11 +72,16 @@ int32_t _iguana_blocklink(struct iguana_info *coin,struct iguana_block *block)
     return(n);
 }
 
-struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height,bits256 hash2,struct iguana_bundle *bp)
+struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t createflag)
 {
     struct iguana_block *block; int32_t i;
+    if ( height > coin->blocks.maxbits )
+    {
+        printf("illegal height.%d when max.%d\n",height,coin->blocks.maxbits);
+        return(0);
+    }
     portable_mutex_lock(&coin->blocks_mutex);
-    HASH_FIND(hh,coin->blockshash,hash2.bytes,sizeof(hash2),block);
+    HASH_FIND(hh,coin->blocks.hash,hash2.bytes,sizeof(hash2),block);
     if ( block != 0 )
     {
         //printf("found.%s -> %d %p bundle.%p vs %p inputht.%d\n",bits256_str(hash2),block->hh.itemind,block,block->bundle,bp,height);
@@ -88,17 +93,6 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
                 if ( height >= 0 && block->matches == 0 )
                     block->hh.itemind = height, block->matches = 1;
                 else block = 0;
-            }
-            else if ( block->bundle == 0 && bp != 0 )
-            {
-                //printf("set.%s bp <- %p\n",bits256_str(hash2),bp);
-                block->bundle = bp;
-            }
-            else if ( block->bundle != 0 && bp != 0 && block->bundle != bp )
-            {
-                printf("warning: override %s bundle.%p[%d] with %p[%d]\n",bits256_str(hash2),block->bundle,block->bundle->bundlei,bp,bp->bundlei);
-                block->bundle = bp;
-                getchar();
             }
             if ( block != 0 )
             {
@@ -123,6 +117,7 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
         else
         {
             printf("collision with (%s) itemind.%d vs %d | matches.%d\n",bits256_str(hash2),block->hh.itemind,height,block->matches);
+            block->matches >>= 1;
             if ( block->matches < 3 )
             {
                 block->matches = 0;
@@ -136,18 +131,19 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
         portable_mutex_unlock(&coin->blocks_mutex);
         return(block);
     }
-    if ( height >= 0 )
+    if ( createflag > 0 )
     {
         block = mycalloc('y',1,sizeof(*block));
         block->hash2 = hash2;
         block->hh.itemind = height, block->height = -1;
         block->matches = 1;
-        coin->blocks.ptrs[height] = block;
-        HASH_ADD(hh,coin->blockshash,hash2,sizeof(hash2),block);
+        if ( height >= 0 )
+            coin->blocks.ptrs[height] = block;
+        HASH_ADD(hh,coin->blocks.hash,hash2,sizeof(hash2),block);
         _iguana_blocklink(coin,block);
         {
             struct iguana_block *tmp;
-            HASH_FIND(hh,coin->blockshash,hash2.bytes,sizeof(hash2),tmp);
+            HASH_FIND(hh,coin->blocks.hash,hash2.bytes,sizeof(hash2),tmp);
             if ( tmp != block )
                 printf("%s height.%d search error %p != %p\n",bits256_str(hash2),height,block,tmp);
             //else printf("added.(%s) height.%d %p\n",bits256_str(hash2),height,block);

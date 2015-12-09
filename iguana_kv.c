@@ -359,7 +359,7 @@ void *iguana_mappedptr(void **ptrp,struct iguana_mappedptr *mp,uint64_t allocsiz
     return(mp->fileptr);
 }
 
-int64_t iguana_packetsallocated(struct iguana_info *coin) { return(coin->R.packetsallocated - coin->R.packetsfreed); };
+//int64_t iguana_packetsallocated(struct iguana_info *coin) { return(coin->R.packetsallocated - coin->R.packetsfreed); };
 
 void *filealloc(struct iguana_mappedptr *M,char *fname,struct iguana_memspace *mem,long size)
 {
@@ -420,8 +420,8 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
             mem->size = (1024 * 1024 * 16);
 #endif
         }
-        if ( coin->R.RSPACE.size == 0 )
-            coin->R.RSPACE.size = mem->size;
+        //if ( coin->R.RSPACE.size == 0 )
+        //    coin->R.RSPACE.size = mem->size;
         if ( mem->size > origsize )
             size = mem->size;
         else size = origsize;
