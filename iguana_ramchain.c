@@ -398,7 +398,7 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
         return(-1);
     }
     inputs = outputs = 0;
-    if ( blocknum >= 0 && (block= iguana_block(coin,blocknum)) != 0 && txidind > 0 && unspentind > 0 && spendind > 0 )
+    if ( blocknum >= 0 && (block= iguana_blockptr(coin,blocknum)) != 0 && txidind > 0 && unspentind > 0 && spendind > 0 )
     {
         if ( (blocknum == 91842 || blocknum == 91880) && txind == 0 && strcmp(coin->name,"bitcoin") == 0 )
             tx->txid.ulongs[0] ^= blocknum;
@@ -544,7 +544,8 @@ int32_t iguana_updateramchain(struct iguana_info *coin)
 }
 
 struct iguana_rawtx { bits256 txid; uint16_t numvouts,numvins; uint8_t rmd160[20]; };
-int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bp,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
+
+int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
 {
     int32_t blocknum,i; int64_t reward; uint16_t s; struct iguana_rawtx rawtx; uint8_t rmd160[20],buf[64];
     struct iguana_msgvin *vin;
@@ -595,7 +596,7 @@ int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bp
     return(-1);
 }
 
-void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *bp,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
+void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx)
 {
     uint32_t i,numvouts,numvins; int64_t credits; long fpos,endpos;
     if ( fp != 0 && block != 0 )
@@ -604,7 +605,7 @@ void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *
         fpos = ftell(fp);
         credits = numvouts = numvins = 0;
         for (i=0; i<numtx; i++)
-            iguana_emittx(coin,fp,bp,block,&txarray[i],i,&numvouts,&numvins,&credits);
+            iguana_emittx(coin,fp,block,&txarray[i],i,&numvouts,&numvins,&credits);
         endpos = ftell(fp);
         fseek(fp,fpos,SEEK_SET);
         block->L.supply = credits;
@@ -616,61 +617,77 @@ void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_bundle *
         fseek(fp,endpos,SEEK_SET);
     }
 }
-/*
-int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_bundle *bp)
+
+int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,int32_t bundleheight,int32_t num,char *fname)
 {
-    void *fileptr; int32_t i,height,blocki; uint32_t *offsets;
-    if ( (fileptr= iguana_mappedptr(0,&bp->M,0,0,bp->fname)) != 0 )
+    void *fileptr; int32_t i,height; uint32_t *offsets; struct iguana_block *block;
+    if ( (fileptr= iguana_mappedptr(0,M,0,0,fname)) != 0 )
     {
         offsets = fileptr;
-        for (i=0; i<bp->num; i++)
+        for (i=0; i<num; i++)
         {
-            height = bp->height + 1 + i;
-            if ( iguana_recvblockptr(coin,&blocki,height) == &bp->txdata[i] )
-                bp->txdata[i] = (void *)((long)fileptr + offsets[i]);
-            else printf("iguana_recvblockptr(coin,%d) %p != %p &bp->txdata[%d]\n",height,iguana_recvblockptr(coin,&blocki,height),&bp->txdata[i],i);
+            height = bundleheight + i;
+            if ( (block= iguana_blockptr(coin,height)) != 0 )
+            {
+                if ( block->txdata != 0 )
+                {
+                    if ( block->mapped == 0 )
+                        myfree(block->txdata,((struct iguana_bundlereq *)block->txdata)->allocsize);
+                }
+                block->txdata = (void *)((long)fileptr + offsets[i]);
+                block->mapped = 1;
+            } else printf("iguana_maptxdata cant find block[%d]\n",height);
         }
-        return(bp->num);
+        return(num);
     }
-    printf("error mapping (%s)\n",bp->fname);
+    printf("error mapping (%s)\n",fname);
     return(-1);
 }
 
-void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *bp)
+void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundlereq *emitreq)
 {
-    FILE *fp; int32_t i,height,numtx,blocki; uint32_t offsets[_IGUANA_HDRSCOUNT+1];
-    long len; struct iguana_msgtx *txarray;
-    bp->emitstart = (uint32_t)time(NULL);
-    sprintf(bp->fname,"tmp/%s/txdata.%d",coin->symbol,bp->height);
-    if ( (fp= fopen(bp->fname,"wb")) != 0 )
+    FILE *fp; char fname[512]; uint8_t extra[256]; uint32_t offsets[_IGUANA_HDRSCOUNT+1];
+    struct iguana_msgtx *txarray,*tx; struct iguana_bundlereq *req; struct iguana_mappedptr M;
+    int32_t i,j,bundleheight,len2,height,numtx,n; long len; struct iguana_block *block;
+    sprintf(fname,"tmp/%s/txdata.%d",coin->symbol,emitreq->bundleheight);
+    if ( (fp= fopen(fname,"wb")) != 0 )
     {
+        bundleheight = emitreq->bundleheight;
+        for (i=n=0; i<coin->chain->bundlesize; i++,n++)
+            if ( (block= iguana_blockptr(coin,bundleheight+i)) == 0 || block->txdata == 0 || block->mapped != 0 )
+                break;
+        if ( n != coin->chain->bundlesize )
+            printf("iguana_emittxdata: WARNING n.%d != bundlesize.%d\n",n,coin->chain->bundlesize);
         memset(offsets,0,sizeof(offsets));
-        if ( (len= fwrite(offsets,sizeof(*offsets),bp->num+1,fp)) != bp->num+1 )
-            printf("%s: error writing blank offsets len.%ld != %d\n",bp->fname,len,bp->num+1);
-        for (i=0; i<bp->num; i++)
+        if ( (len= fwrite(offsets,sizeof(*offsets),n+1,fp)) != n+1 )
+            printf("%s: error writing blank offsets len.%ld != %d\n",fname,len,n+1);
+        for (i=0; i<n; i++)
         {
             offsets[i] = (uint32_t)ftell(fp);
-            height = (bp->height + 1 + i);
-            if ( iguana_recvblockptr(coin,&blocki,height) == &bp->txdata[i] )
+            height = (bundleheight + i);
+            if ( (block= iguana_blockptr(coin,height)) != 0 )
             {
-                if ( (txarray= bp->txdata[i]) != 0 && (numtx= bp->numtxs[i]) > 0 )
+                if ( (req= block->txdata) != 0 && (numtx= block->txn_count) > 0 )
                 {
-                    int32_t j; struct iguana_msgtx *tx;
-                    tx = bp->txdata[i];
-                    for (j=0; j<bp->numtxs[i]; j++,tx++)
-                        printf("(%p[%d] %p[%d]) ",tx->vouts,tx->tx_out,tx->vins,tx->tx_in);
-                    printf("emit.%d txarray.%p[%d]\n",i,bp->txdata[i],bp->numtxs[i]);
-                    iguana_emittxarray(coin,fp,bp,iguana_block(coin,height),txarray,numtx);
-                    iguana_freetx(txarray,numtx);
+                    if ( (txarray= iguana_gentxarray(coin,&len2,block,req->serialized,block->datalen,extra)) != 0 )
+                    {
+                        tx = txarray;
+                        for (j=0; j<numtx; j++,tx++)
+                            printf("(%p[%d] %p[%d]) ",tx->vouts,tx->tx_out,tx->vins,tx->tx_in);
+                        printf("emit.%d txarray.%p[%d]\n",i,txarray,numtx);
+                        iguana_emittxarray(coin,fp,block,txarray,numtx);
+                        iguana_freetx(txarray,numtx);
+                    }
                 } else printf("emittxdata: unexpected missing txarray[%d]\n",i);
-            } else printf("emittxdata: error with recvblockptr[%d]\n",bp->height + 1 + i);
+            } else printf("emittxdata: error with recvblockptr[%d]\n",bundleheight + 1 + i);
         }
         offsets[i] = (uint32_t)ftell(fp);
         rewind(fp);
-        if ( (len= fwrite(offsets,sizeof(*offsets),bp->num+1,fp)) != bp->num+1 )
-            printf("%s: error writing offsets len.%ld != %d\n",bp->fname,len,bp->num+1);
+        if ( (len= fwrite(offsets,sizeof(*offsets),n+1,fp)) != n+1 )
+            printf("%s: error writing offsets len.%ld != %d\n",fname,len,n+1);
         fclose(fp), fp = 0;
-        iguana_maptxdata(coin,bp);
+        memset(&M,0,sizeof(M));
+        if ( iguana_maptxdata(coin,&M,bundleheight,n,fname) != n )
+            printf("emit error mapping n.%d height.%d\n",n,bundleheight);
     }
-    bp->emitfinish = (uint32_t)time(NULL);
-}*/
+}

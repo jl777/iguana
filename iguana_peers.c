@@ -197,136 +197,6 @@ void iguana_shutdownpeers(struct iguana_info *coin,int32_t forceflag)
 #endif
 }
 
-static int _decreasing_double(const void *a,const void *b)
-{
-#define double_a (*(double *)a)
-#define double_b (*(double *)b)
-	if ( double_b > double_a )
-		return(1);
-	else if ( double_b < double_a )
-		return(-1);
-	return(0);
-#undef double_a
-#undef double_b
-}
-
-static int32_t revsortds(double *buf,uint32_t num,int32_t size)
-{
-	qsort(buf,num,size,_decreasing_double);
-	return(0);
-}
-
-double iguana_metric(struct iguana_peer *addr,uint32_t now,double decay)
-{
-    int32_t duration; double metric = addr->recvblocks * addr->recvtotal;
-    addr->recvblocks *= decay;
-    addr->recvtotal *= decay;
-    if ( now >= addr->ready && addr->ready != 0 )
-        duration = (now - addr->ready + 1);
-    else duration = 1;
-    if ( metric < SMALLVAL && duration > 300 )
-        metric = 0.001;
-    else metric /= duration;
-    return(metric);
-}
-
-int32_t iguana_peermetrics(struct iguana_info *coin)
-{
-    int32_t i,ind,n; double *sortbuf,sum; uint32_t now; struct iguana_peer *addr,*slowest = 0;
-    //printf("peermetrics\n");
-    sortbuf = mycalloc('M',coin->MAXPEERS,sizeof(double)*2);
-    coin->peers.mostreceived = 0;
-    now = (uint32_t)time(NULL);
-    for (i=n=0; i<coin->MAXPEERS; i++)
-    {
-        addr = &coin->peers.active[i];
-        if ( addr->usock < 0 || addr->dead != 0 || addr->ready == 0 )
-            continue;
-        if ( addr->recvblocks > coin->peers.mostreceived )
-            coin->peers.mostreceived = addr->recvblocks;
-        //printf("[%.0f %.0f] ",addr->recvblocks,addr->recvtotal);
-        sortbuf[n*2 + 0] = iguana_metric(addr,now,1.);
-        sortbuf[n*2 + 1] = i;
-        n++;
-    }
-    if ( n > 0 )
-    {
-        revsortds(sortbuf,n,sizeof(double)*2);
-        portable_mutex_lock(&coin->peers_mutex);
-        for (sum=i=0; i<n; i++)
-        {
-            if ( i < coin->MAXPEERS )
-            {
-                coin->peers.topmetrics[i] = sortbuf[i*2];
-                ind = (int32_t)sortbuf[i*2 +1];
-                coin->peers.ranked[i] = &coin->peers.active[ind];
-                if ( sortbuf[i*2] > SMALLVAL && (double)i/n > .8 )
-                    slowest = coin->peers.ranked[i];
-                //printf("(%.5f %s) ",sortbuf[i*2],coin->peers.ranked[i]->ipaddr);
-                coin->peers.ranked[i]->rank = i + 1;
-                sum += coin->peers.topmetrics[i];
-            }
-        }
-        coin->peers.numranked = n;
-        portable_mutex_unlock(&coin->peers_mutex);
-        //printf("NUMRANKED.%d\n",n);
-        if ( i > 0 )
-        {
-            coin->peers.avemetric = (sum / i);
-            if ( i >= (coin->MAXPEERS - (coin->MAXPEERS<<3)) && slowest != 0 )
-            {
-                printf("prune slowest peer.(%s) numranked.%d\n",slowest->ipaddr,n);
-                slowest->dead = 1;
-            }
-        }
-    }
-    myfree(sortbuf,coin->MAXPEERS * sizeof(double) * 2);
-    return(coin->peers.mostreceived);
-}
-
-void *iguana_kviAddriterator(struct iguana_info *coin,struct iguanakv *kv,struct iguana_kvitem *item,uint64_t args,void *key,void *value,int32_t valuesize)
-{
-    char ipaddr[64]; int32_t i; FILE *fp = (FILE *)args; struct iguana_peer *addr; struct iguana_iAddr *iA = value;
-    if ( fp != 0 && iA != 0 && iA->numconnects > 0 && iA->lastconnect > time(NULL)-IGUANA_RECENTPEER )
-    {
-        for (i=0; i<coin->peers.numranked; i++)
-            if ( (addr= coin->peers.ranked[i]) != 0 && addr->ipbits == iA->ipbits )
-                break;
-        if ( i == coin->peers.numranked )
-        {
-            expand_ipbits(ipaddr,iA->ipbits);
-            fprintf(fp,"%s\n",ipaddr);
-        }
-    }
-    return(0);
-}
-
-uint32_t iguana_updatemetrics(struct iguana_info *coin)
-{
-    char fname[512],tmpfname[512],oldfname[512]; int32_t i; struct iguana_peer *addr; FILE *fp;
-    iguana_peermetrics(coin);
-    sprintf(fname,"%s_peers.txt",coin->symbol);
-    sprintf(oldfname,"%s_oldpeers.txt",coin->symbol);
-    sprintf(tmpfname,"tmp/%s/peers.txt",coin->symbol);
-    if ( (fp= fopen(tmpfname,"w")) != 0 )
-    {
-        for (i=0; i<coin->peers.numranked; i++)
-            if ( (addr= coin->peers.ranked[i]) != 0 )
-                fprintf(fp,"%s\n",addr->ipaddr);
-        portable_mutex_lock(&coin->peers_mutex);
-        iguana_kviterate(coin,coin->iAddrs,(uint64_t)(long)fp,iguana_kviAddriterator);
-        portable_mutex_unlock(&coin->peers_mutex);
-        if ( ftell(fp) > iguana_filesize(fname) )
-        {
-            printf("new peers.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
-            fclose(fp);
-            iguana_renamefile(fname,oldfname);
-            iguana_copyfile(tmpfname,fname,1);
-        } else fclose(fp);
-    }
-    return((uint32_t)time(NULL));
-}
-
 struct iguana_peer *iguana_choosepeer(struct iguana_info *coin)
 {
     int32_t i,j,r,iter; struct iguana_peer *addr;
@@ -423,7 +293,7 @@ int32_t pp_connect(char *hostname,uint16_t port)
     return(sock);
 }
 
-int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *serialized,int32_t len,int32_t *sleeptimep)
+int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *serialized,int32_t len)
 {
     int32_t numsent,remains,usock;
     if ( addr == 0 )
@@ -439,17 +309,13 @@ int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *s
         printf("sending too big! %d\n",len);
     while ( remains > 0 )
     {
-        if ( *sleeptimep < 10 )
-            *sleeptimep = 10;
-        else if ( *sleeptimep > 1000000 )
-            *sleeptimep = 1000000;
         if ( coin->peers.shuttingdown != 0 )
             return(-1);
         if ( (numsent= (int32_t)send(usock,serialized,remains,MSG_NOSIGNAL)) < 0 )
         {
             if ( errno != EAGAIN && errno != EWOULDBLOCK )
             {
-                printf("%s: sleeptime.%d %s numsent.%d vs remains.%d len.%d errno.%d (%s) usock.%d\n",serialized+4,*sleeptimep,addr->ipaddr,numsent,remains,len,errno,strerror(errno),addr->usock);
+                printf("%s: %s numsent.%d vs remains.%d len.%d errno.%d (%s) usock.%d\n",serialized+4,addr->ipaddr,numsent,remains,len,errno,strerror(errno),addr->usock);
                 printf("bad errno.%d %s zombify.%p\n",errno,strerror(errno),&addr->dead);
                 addr->dead = (uint32_t)time(NULL);
                 return(-errno);
@@ -457,7 +323,6 @@ int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *s
         }
         else if ( remains > 0 )
         {
-            *sleeptimep *= .9;
             remains -= numsent;
             serialized += numsent;
             if ( remains > 0 )
@@ -482,7 +347,7 @@ int32_t iguana_queue_send(struct iguana_info *coin,struct iguana_peer *addr,uint
     if ( strcmp("getaddr",cmd) == 0 && time(NULL) < addr->lastgotaddr+300 )
         return(0);
     if ( strcmp("version",cmd) == 0 )
-        return(iguana_send(coin,addr,serialized,datalen,&addr->sleeptime));
+        return(iguana_send(coin,addr,serialized,datalen));
     packet = mycalloc('S',1,sizeof(struct iguana_packet) + datalen);
     packet->datalen = datalen;
     packet->addr = addr;
@@ -670,7 +535,7 @@ void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,stru
         portable_mutex_unlock(&coin->peers_mutex);
         if ( addr != 0 )
         {
-            printf("status.%d addr.%p possible peer.(%s) (%s).%x %u threads %d %d %d %d\n",iA->status,addr,ipaddr,addr->ipaddr,addr->ipbits,addr->pending,iguana_numthreads(0),iguana_numthreads(1),iguana_numthreads(2),iguana_numthreads(3));
+            //printf("status.%d addr.%p possible peer.(%s) (%s).%x %u threads %d %d %d %d\n",iA->status,addr,ipaddr,addr->ipaddr,addr->ipbits,addr->pending,iguana_numthreads(0),iguana_numthreads(1),iguana_numthreads(2),iguana_numthreads(3));
             iA->status = IGUANA_PEER_CONNECTING;
             if ( iguana_rwiAddrind(coin,1,iA,item->hh.itemind) > 0 )
             {
@@ -688,7 +553,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
     struct iguana_iAddr iA; struct iguana_kvitem item;
     if ( ipaddr != 0 )
     {
-        //printf("Q possible peer.(%s)\n",ipaddr);
+        printf("Q possible peer.(%s)\n",ipaddr);
         queue_enqueue("possibleQ",&coin->possibleQ,queueitem(ipaddr),1);
         return((uint32_t)time(NULL));
     }
@@ -701,7 +566,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
         return((uint32_t)time(NULL));
     }
 #endif
-    //printf("possible peer.(%s)\n",ipaddr);
+    printf("possible peer.(%s)\n",ipaddr);
     for (i=0; i<coin->MAXPEERS; i++)
         if ( strcmp(ipaddr,coin->peers.active[i].ipaddr) == 0 )
         {
@@ -763,7 +628,7 @@ int32_t iguana_pollsendQ(struct iguana_info *coin,struct iguana_peer *addr)
         else
         {
 //#ifdef IGUANA_DEDICATED_THREADS
-            iguana_send(coin,addr,packet->serialized,packet->datalen,&addr->sleeptime);
+            iguana_send(coin,addr,packet->serialized,packet->datalen);
             //if ( packet->getdatablock > 0 )
             //    iguana_setwaitstart(coin,packet->getdatablock);
             myfree(packet,sizeof(*packet) + packet->datalen);
@@ -845,6 +710,89 @@ void iguana_recvloop(void *arg)
             }
         } else printf("numsocks.%d nothing to receive\n",coin->numsocks);
     }
+}
+
+struct iguana_blockreq { struct queueitem DL; bits256 hash2,*blockhashes; int32_t n,height; };
+int32_t iguana_queueblock(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t priority)
+{
+    queue_t *Q; char *str; struct iguana_blockreq *req;
+    if ( bits256_nonz(hash2) == 0 )
+    {
+        printf("cant queue zerohash height.%d\n",height), getchar();
+        return(-1);
+    }
+    if ( height < 0 || (height >= coin->blocks.recvblocks && iguana_blockptr(coin,height) == 0) )
+    {
+        if ( priority != 0 )
+            str = "priorityQ", Q = &coin->priorityQ;
+        else //if ( GETBIT(coin->R.waitingbits,height) == 0 )
+            str = "blocksQ", Q = &coin->blocksQ;
+        //else str = "already pending", Q = 0;
+        if ( Q != 0 )
+        {
+            req = mycalloc('r',1,sizeof(*req));
+            req->hash2 = hash2;
+            req->height = height;
+            if ( (height % 1000) == 0 )
+                printf("%s %d %s recv.%d numranked.%d\n",str,height,bits256_str(hash2),coin->blocks.recvblocks,coin->peers.numranked);
+            queue_enqueue(str,Q,&req->DL,0);
+            return(1);
+        }
+    }
+    //printf("iguana_queueblock skip.%d %s recvblocks.%d %p GETBIT.%d\n",height,bits256_str(hash2),coin->blocks.recvblocks,iguana_recvblock(coin,height),GETBIT(coin->R.waitingbits,height));
+    return(0);
+}
+
+int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
+{
+    uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
+    char *hashstr=0,hexstr[65]; bits256 hash2; int32_t height=-1,datalen,flag = 0;
+    struct iguana_blockreq *req=0;
+    if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs == 0 && (hashstr= queue_dequeue(&coin->hdrsQ,1)) != 0 )
+    {
+        if ( (datalen= iguana_gethdrs(coin,serialized,coin->chain->gethdrsmsg,hashstr)) > 0 )
+        {
+            decode_hex(hash2.bytes,sizeof(hash2),hashstr);
+            printf("%s request hdr.(%s) %d pend.%d\n",addr->ipaddr,hashstr,iguana_itemheight(coin,hash2),addr->pendhdrs);
+            iguana_send(coin,addr,serialized,datalen);
+            addr->pendhdrs++;
+            flag++;
+        } else printf("datalen.%d from gethdrs\n",datalen);
+        free_queueitem(hashstr);
+        hashstr = 0;
+    }
+    if ( ((req= queue_dequeue(&coin->priorityQ,0)) != 0 || (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
+    {
+        hash2 = req->hash2;
+        height = iguana_itemheight(coin,hash2);
+        if ( height != req->height )
+        {
+            printf("blocksQ ht.%d vs %d dequeued.(%s) for %s\n",req->height,height,bits256_str(hash2),addr->ipaddr);
+            myfree(req,sizeof(*req));
+            return(0);
+        }
+        if ( height >= 0 && (height < coin->blocks.recvblocks || iguana_blockptr(coin,height) != 0) )
+        {
+            printf("skip.%d vs recvblocks.%d %p\n",height,coin->blocks.recvblocks,iguana_blockptr(coin,height));
+            myfree(req,sizeof(*req));
+        }
+        else
+        {
+            init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
+            if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
+            {
+                //printf("%s %s REQ BLOCK.%d\n",addr->ipaddr,hexstr,iguana_blockheight(coin,hash2));
+                iguana_send(coin,addr,serialized,datalen);
+                //if ( height >= 0 )
+                //    iguana_setwaitstart(coin,height);
+                addr->pendblocks++;
+                addr->pendtime = (uint32_t)time(NULL);
+                flag++;
+                myfree(req,sizeof(*req));
+            } else printf("error constructing request %s.%d\n",hexstr,height);
+        }
+    }
+    return(flag);
 }
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
