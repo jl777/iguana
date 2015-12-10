@@ -338,7 +338,7 @@ struct iguana_block
     bits256 prev_block,merkle_root; // prev_block MUST be first
     struct iguana_prevdep L;
     int32_t height; uint32_t timestamp,nonce,bits,datalen;
-    uint16_t txn_count,numvouts,numvins; uint8_t version:7,mapped:1,valid:1,matches:7;
+    uint16_t txn_count,numvouts,numvins; uint8_t version:6,mainchain:1,mapped:1,valid:1,matches:7;
     void *txdata;
     UT_hash_handle hh;
     bits256 hash2;                  // hash2 MUST be last, it is the prev_block for next item
@@ -482,10 +482,10 @@ int32_t iguana_havehash(struct iguana_info *coin,int32_t height);
 int32_t iguana_bundleready(struct iguana_info *coin,int32_t height);
 void *iguana_havetxdata(struct iguana_info *coin,int32_t height);
 
-//#define iguana_block(coin,height) (height >= 0 ? coin->blocks.ptrs[height] : 0) // invariant ptr
+#define iguana_block(coin,height) (height >= 0 ? coin->blocks.ptrs[height] : 0) // invariant ptr
 #define iguana_blockfind(coin,hash2) iguana_blockhashset(coin,-1,hash2,0)
 struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t createflag);
-int32_t iguana_itemheight(struct iguana_info *coin,bits256 hash2); // totally unconfirmed
+int32_t iguana_hash2height(struct iguana_info *coin,bits256 hash2);
 int32_t iguana_blockheight(struct iguana_info *coin,struct iguana_block *block); // partially confirmed
 int32_t iguana_chainheight(struct iguana_info *coin,struct iguana_block *block); // in the blockchain
 

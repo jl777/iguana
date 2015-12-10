@@ -74,65 +74,16 @@ int32_t _iguana_blocklink(struct iguana_info *coin,struct iguana_block *block)
 
 struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t createflag)
 {
-    struct iguana_block *block; int32_t i;
+    struct iguana_block *block; 
     if ( height > coin->blocks.maxbits )
     {
         printf("illegal height.%d when max.%d\n",height,coin->blocks.maxbits);
         return(0);
     }
     portable_mutex_lock(&coin->blocks_mutex);
-    HASH_FIND(hh,coin->blocks.hash,hash2.bytes,sizeof(hash2),block);
+    HASH_FIND(hh,coin->blocks.hash,&hash2,sizeof(hash2),block);
     if ( block != 0 )
     {
-        if ( height >= 0 )
-            coin->blocks.ptrs[height] = block;
-        printf("found.%s -> %d %p inputht.%d\n",bits256_str(hash2),block->hh.itemind,block,height);
-        if ( height < 0 || block->hh.itemind == height )
-        {
-            if ( (int32_t)block->hh.itemind < 0 )
-            {
-                printf("found.%s -> %d %p set height.%d matches.%d\n",bits256_str(hash2),block->hh.itemind,block,height,block->matches);
-                if ( height >= 0 && block->matches == 0 )
-                    block->hh.itemind = height, block->matches = 1;
-                else block = 0;
-            }
-            if ( block != 0 )
-            {
-                if ( block->matches < 100 )
-                    block->matches++;
-                _iguana_blocklink(coin,block);
-            }
-        }
-        else if ( block->matches == 0 && block->hh.itemind == (uint32_t)-1 )
-        {
-            if ( height >= 0 )
-            {
-                printf("set %s.itemind <- %d\n",bits256_str(hash2),height);
-                block->hh.itemind = height;
-                block->matches = 1;
-            }
-            else
-            {
-                printf("matches.%d itemind.%d when height.%d\n",block->matches,block->hh.itemind,height);
-                block = 0;
-            }
-        }
-        else
-        {
-            printf("collision with (%s) itemind.%d vs %d | matches.%d\n",bits256_str(hash2),block->hh.itemind,height,block->matches); getchar();
-            if ( block->matches < 100 )
-            {
-                block->matches >>= 1;
-                if ( block->matches == 0 )
-                {
-                    block->hh.itemind = -1;
-                    for (i=0; i<10; i++)
-                        iguana_queueblock(coin,-1,block->hash2,1);
-                    block = 0;
-                    coin->blocks.recvblocks = 0;
-                }
-            }
-        }
         portable_mutex_unlock(&coin->blocks_mutex);
         return(block);
     }
@@ -141,17 +92,17 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
         block = mycalloc('y',1,sizeof(*block));
         block->hash2 = hash2;
         block->hh.itemind = height, block->height = -1;
+        block->hh.next = block->hh.prev = 0;
         block->matches = createflag;
-        if ( height >= 0 )
+        if ( height >= 0 && createflag == 100 )
             coin->blocks.ptrs[height] = block;
         HASH_ADD(hh,coin->blocks.hash,hash2,sizeof(hash2),block);
-        _iguana_blocklink(coin,block);
         {
             struct iguana_block *tmp;
-            HASH_FIND(hh,coin->blocks.hash,hash2.bytes,sizeof(hash2),tmp);
+            HASH_FIND(hh,coin->blocks.hash,&hash2,sizeof(hash2),tmp);
             if ( tmp != block )
                 printf("%s height.%d search error %p != %p\n",bits256_str(hash2),height,block,tmp);
-            else printf("added.(%s) height.%d %p\n",bits256_str(hash2),height,block);
+            // else printf("added.(%s) height.%d %p\n",bits256_str(hash2),height,block);
         }
     }
     portable_mutex_unlock(&coin->blocks_mutex);
@@ -179,7 +130,7 @@ bits256 iguana_blockhash(struct iguana_info *coin,int32_t *validp,int32_t height
                 }
             }
         }
-        else printf("iguana_blockhash: height mismatch %u != %u\n",height,block->height);
+        else printf("iguana_blockhash: height mismatch %d != %d\n",height,block->hh.itemind);
     }
     return(hash2);
 }
@@ -196,40 +147,51 @@ bits256 iguana_blockhash(struct iguana_info *coin,int32_t *validp,int32_t height
     }
 }*/
 
-int32_t iguana_itemheight(struct iguana_info *coin,bits256 hash2)
+int32_t iguana_hash2height(struct iguana_info *coin,bits256 hash2)
 {
     struct iguana_block *block;
     if ( (block= iguana_blockfind(coin,hash2)) != 0 )
-        return(block->hh.itemind);
+    {
+        if ( block->height >= 0 )
+            return(block->height);
+        else return(block->hh.itemind);
+    }
     else return(-1);
 }
 
 int32_t iguana_blockheight(struct iguana_info *coin,struct iguana_block *block)
 {
-    int32_t height;
-    if ( (height= iguana_itemheight(coin,block->hash2)) < 0 )
+    struct iguana_block *prev; int32_t height;
+    if ( (height= iguana_hash2height(coin,block->hash2)) < 0 )
     {
-        if ( (height= iguana_itemheight(coin,block->prev_block)) < 0 )
+        if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
         {
-            iguana_blockhashset(coin,-1,block->hash2,1);
-            iguana_blockhashset(coin,-1,block->prev_block,1);
+            if ( prev->height >= 0 )
+                return(prev->height+1);
+            else if ( (int32_t)prev->hh.itemind >= 0 )
+                return(prev->hh.itemind + 1);
         }
-        else
-        {
-            height++;
-            iguana_blockhashset(coin,height,block->hash2,1);
-        }
-    } else iguana_blockhashset(coin,height,block->hash2,1); // increments matches
-    return(height);
+    }
+    return(-1);
+}
+
+int32_t iguana_chainheight(struct iguana_info *coin,struct iguana_block *block)
+{
+    if ( block->mainchain != 0 && block->height >= 0 )
+        return(block->height);
+    return(-1);
 }
 
 void *iguana_blockptr(struct iguana_info *coin,int32_t height)
 {
     struct iguana_block *block;
     if ( height < 0 || height >= coin->blocks.maxbits )
+    {
+        //printf("iguana_blockptr height.%d vs maxbits.%d\n",height,coin->blocks.maxbits);
         return(0);
+    }
     if ( (block= coin->blocks.ptrs[height]) != 0 )
-        return(block->txdata);
+        return(block);
     else return(0);
 }
 

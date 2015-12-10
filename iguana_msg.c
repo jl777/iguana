@@ -674,7 +674,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     req->blocks = block, req->n = datalen;
     memcpy(req->serialized,data,datalen);
     memcpy(&req->block,block,sizeof(*block));
-    printf("test emit txarray\n");
+    //printf("test emit txarray\n");
     iguana_freetx(txarray,numtx);
     myfree(block,sizeof(*block));
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
@@ -714,6 +714,7 @@ void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bi
     //coin->R.lasthdrtime = (uint32_t)time(NULL);
     req = iguana_bundlereq(coin,addr,'S',0);
     req->hashes = blockhashes, req->n = n;
+    //printf("bundlesQ blockhashes.%p[%d]\n",blockhashes,n);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 

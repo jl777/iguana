@@ -347,8 +347,8 @@ void iguana_issuejsonstrM(void *arg)
         return;
     }
     printf("%s\n",retjsonstr);
-    myfree(retjsonstr,strlen(retjsonstr)+1);
-    myfree(jsonstr,strlen(jsonstr)+1);
+    free(retjsonstr);//,strlen(retjsonstr)+1);
+    free(jsonstr);//,strlen(jsonstr)+1);
 }
 
 void iguana_helper(void *arg)
@@ -409,7 +409,7 @@ void iguana_main(void *arg)
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTCD\"}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTCD\",\"active\":1}");
 #endif
     }
     while ( 1 )
