@@ -15,6 +15,7 @@
 
 #include "iguana777.h"
 
+int32_t iguana_launchcoin(char *symbol,cJSON *json);
 
 struct iguana_jsonitem { struct queueitem DL; uint32_t expired,allocsize; char **retjsonstrp; char jsonstr[]; };
 
@@ -60,13 +61,141 @@ struct iguana_info *iguana_coin(const char *symbol)
     return(0);
 }
 
+cJSON *iguana_peerjson(struct iguana_info *coin,struct iguana_peer *addr)
+{
+    cJSON *array,*json = cJSON_CreateObject();
+    jaddstr(json,"ipaddr",addr->ipaddr);
+    jaddnum(json,"protover",addr->protover);
+    jaddnum(json,"relay",addr->relayflag);
+    jaddnum(json,"height",addr->height);
+    jaddnum(json,"rank",addr->rank);
+    jaddnum(json,"usock",addr->usock);
+    if ( addr->dead != 0 )
+        jaddnum(json,"dead",addr->dead);
+    jaddnum(json,"ready",addr->ready);
+    array = cJSON_CreateObject();
+    jaddnum(array,"version",addr->msgcounts.version);
+    jaddnum(array,"verack",addr->msgcounts.verack);
+    jaddnum(array,"getaddr",addr->msgcounts.getaddr);
+    jaddnum(array,"addr",addr->msgcounts.addr);
+    jaddnum(array,"inv",addr->msgcounts.inv);
+    jaddnum(array,"getdata",addr->msgcounts.getdata);
+    jaddnum(array,"notfound",addr->msgcounts.notfound);
+    jaddnum(array,"getblocks",addr->msgcounts.getblocks);
+    jaddnum(array,"getheaders",addr->msgcounts.getheaders);
+    jaddnum(array,"headers",addr->msgcounts.headers);
+    jaddnum(array,"tx",addr->msgcounts.tx);
+    jaddnum(array,"block",addr->msgcounts.block);
+    jaddnum(array,"mempool",addr->msgcounts.mempool);
+    jaddnum(array,"ping",addr->msgcounts.ping);
+    jaddnum(array,"pong",addr->msgcounts.pong);
+    jaddnum(array,"reject",addr->msgcounts.reject);
+    jaddnum(array,"filterload",addr->msgcounts.filterload);
+    jaddnum(array,"filteradd",addr->msgcounts.filteradd);
+    jaddnum(array,"filterclear",addr->msgcounts.filterclear);
+    jaddnum(array,"merkleblock",addr->msgcounts.merkleblock);
+    jaddnum(array,"alert",addr->msgcounts.alert);
+    jadd(json,"msgcounts",array);
+    return(json);
+}
+
+cJSON *iguana_peersjson(struct iguana_info *coin)
+{
+    cJSON *retjson,*array; int32_t i; struct iguana_peer *addr;
+    retjson = cJSON_CreateObject();
+    array = cJSON_CreateArray();
+    for (i=0; i<coin->MAXPEERS; i++)
+    {
+        addr = &coin->peers.active[i];
+        if ( addr->usock >= 0 && addr->ipbits != 0 && addr->ipaddr[0] != 0 )
+            jaddi(array,iguana_peerjson(coin,addr));
+    }
+    jadd(retjson,"peers",array);
+    jaddnum(retjson,"maxpeers",coin->MAXPEERS);
+    jaddstr(retjson,"coin",coin->symbol);
+    return(retjson);
+}
+
 char *iguana_genericjson(char *method,cJSON *json)
 {
+    cJSON *retjson,*array; int32_t i;
+    if ( strcmp(method,"peers") == 0 )
+    {
+        retjson = cJSON_CreateObject();
+        array = cJSON_CreateArray();
+        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+        {
+            if ( Coins[i].symbol[0] != 0 )
+                jaddi(array,iguana_peersjson(&Coins[i]));
+        }
+        jadd(retjson,"allpeers",array);
+        return(jprint(retjson,1));
+    }
     return(clonestr("{\"result\":\"stub processed generic json\"}"));
 }
 
 char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
 {
+    int32_t i,max,retval; struct iguana_peer *addr; char *ipaddr; cJSON *retjson = 0;
+    if ( strcmp(method,"peers") == 0 )
+        return(jprint(iguana_peersjson(coin),1));
+    else if ( strcmp(method,"addnode") == 0 )
+    {
+        if ( (ipaddr= jstr(json,"ipaddr")) != 0 )
+        {
+            iguana_possible_peer(coin,ipaddr);
+            return(clonestr("{\"result\":\"addnode submitted\"}"));
+        } else return(clonestr("{\"error\":\"addnode needs ipaddr\"}"));
+    }
+    else if ( strcmp(method,"nodestatus") == 0 )
+    {
+        if ( (ipaddr= jstr(json,"ipaddr")) != 0 )
+        {
+            for (i=0; i<coin->MAXPEERS; i++)
+            {
+                addr = &coin->peers.active[i];
+                if ( strcmp(addr->ipaddr,ipaddr) == 0 )
+                    return(jprint(iguana_peerjson(coin,addr),1));
+            }
+            return(clonestr("{\"result\":\"nodestatus couldnt find ipaddr\"}"));
+        } else return(clonestr("{\"error\":\"nodestatus needs ipaddr\"}"));
+    }
+    else if ( strcmp(method,"maxpeers") == 0 )
+    {
+        retjson = cJSON_CreateObject();
+        if ( (max= juint(json,"max")) <= 0 )
+            max = 1;
+        else if ( max > IGUANA_MAXPEERS )
+            max = IGUANA_MAXPEERS;
+        if ( max > coin->MAXPEERS )
+        {
+            for (i=max; i<coin->MAXPEERS; i++)
+                if ( (addr= coin->peers.ranked[i]) != 0 )
+                    addr->dead = 1;
+        }
+        coin->MAXPEERS = max;
+        jaddnum(retjson,"maxpeers",coin->MAXPEERS);
+        jaddstr(retjson,"coin",coin->symbol);
+        return(jprint(retjson,1));
+    }
+    else if ( strcmp(method,"startcoin") == 0 )
+    {
+        coin->active = 1;
+        return(clonestr("{\"result\":\"coin started\"}"));
+    }
+    else if ( strcmp(method,"pausecoin") == 0 )
+    {
+        coin->active = 1;
+        return(clonestr("{\"result\":\"coin paused\"}"));
+    }
+    else if ( strcmp(method,"addcoin") == 0 )
+    {
+        if ( (retval= iguana_launchcoin(coin->symbol,json)) > 0 )
+            return(clonestr("{\"result\":\"coin added\"}"));
+        else if ( retval == 0 )
+            return(clonestr("{\"result\":\"coin already there\"}"));
+        else return(clonestr("{\"error\":\"error adding coin\"}"));
+    }
     return(clonestr("{\"result\":\"stub processed iguana json\"}"));
 }
 
@@ -80,6 +209,7 @@ char *iguana_jsonstr(struct iguana_info *coin,char *jsonstr)
         else retjsonstr = clonestr("{\"error\":\"no method in JSON\"}");
         free_json(json);
     } else retjsonstr = clonestr("{\"error\":\"cant parse JSON\"}");
+    printf("iguana_jsonstr.(%s)\n",retjsonstr);
     return(retjsonstr);
 }
 
@@ -136,6 +266,7 @@ char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag
             usleep(100);
             if ( (retjsonstr= *ptr->retjsonstrp) != 0 )
             {
+                printf("blocking retjsonstr.(%s)\n",retjsonstr);
                 queue_delete(&finishedQ,&ptr->DL,allocsize,1);
                 return(retjsonstr);
             }
@@ -149,12 +280,12 @@ char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag
 
 char *iguana_JSON(char *jsonstr)
 {
-    int32_t iguana_launchcoin(char *symbol,cJSON *json);
     cJSON *json,*retjson; uint64_t tag; uint32_t timeout; int32_t retval;
     struct iguana_info *coin; char *method,*retjsonstr,*symbol,*retstr = 0;
+    printf("iguana_JSON.(%s)\n",jsonstr);
     if ( (json= cJSON_Parse(jsonstr)) != 0 )
     {
-        if ( (method= jstr(json,"method")) != 0 && strcmp(method,"launch") == 0 )
+        if ( (method= jstr(json,"method")) != 0 && strcmp(method,"addcoin") == 0 )
         {
             if ( (retval= iguana_launchcoin(jstr(json,"coin"),json)) > 0 )
                 return(clonestr("{\"result\":\"launched coin\"}"));
@@ -164,14 +295,20 @@ char *iguana_JSON(char *jsonstr)
         if ( (tag= j64bits(json,"tag")) == 0 )
             randombytes((uint8_t *)&tag,sizeof(tag));
         if ( (symbol= jstr(json,"coin")) != 0 )
-            coin = iguana_coin(symbol);
+        {
+            if ( (coin= iguana_coin(symbol)) != 0 && coin->launched == 0 )
+                iguana_launchcoin(symbol,json);
+        }
         else coin = 0;
         if ( (timeout= juint(json,"timeout")) == 0 )
             timeout = IGUANA_JSONTIMEOUT;
         if ( (retjsonstr= iguana_blockingjsonstr(coin,jsonstr,tag,timeout)) != 0 )
         {
             if ( (retjson= cJSON_Parse(retjsonstr)) == 0 )
+            {
+                printf("retjsonstr.(%s)\n",retjsonstr);
                 retjson = cJSON_Parse("{\"error\":\"cant parse retjsonstr\"}");
+            }
             jdelete(retjson,"tag");
             jadd64bits(retjson,"tag",tag);
             retstr = jprint(retjson,1);
@@ -204,21 +341,21 @@ void iguana_issuejsonstrM(void *arg)
 
 void iguana_helper(void *arg)
 {
-    int32_t flag; void *ptr; queue_t *Q = arg;
+    int32_t flag; struct iguana_bundlereq *req; queue_t *Q = arg;
     printf("start helper\n");
     while ( 1 )
     {
         flag = 0;
-        if ( (ptr= queue_dequeue(Q,0)) != 0 )
+        if ( (req= queue_dequeue(Q,0)) != 0 )
         {
             printf("START emittxdata\n");
-            //iguana_emittxdata(bp->coin,bp);
+            iguana_emittxdata(req->coin,req);
             flag++;
             printf("FINISH emittxdata\n");
         }
+        if ( flag == 0 )
+            sleep(1);
     }
-    if ( flag == 0 )
-        sleep(1);
 }
 
 void iguana_main(void *arg)
@@ -256,10 +393,12 @@ void iguana_main(void *arg)
         iguana_launch("helpers",iguana_helper,&helperQ,IGUANA_HELPERTHREAD);
     if ( coinargs != 0 )
         iguana_launch("iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
-    else if ( 0 )
+    else
     {
-        sleep(5);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"launch\",\"coin\":\"BTCD\"}");
+#ifdef __APPLE__
+        sleep(1);
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTCD\"}");
+#endif
     }
     while ( 1 )
     {

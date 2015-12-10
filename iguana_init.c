@@ -71,7 +71,7 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
     printf("genesis.(%s) len.%d hash.%s\n",chain->genesis_hex,(int32_t)sizeof(msg.H),bits256_str(hash2));
     iguana_convblock(&block,&msg,hash2,0,1,1,1,PoW);
     coin->latest.dep.numtxids = block.numvouts = 1;
-    iguana_gotdata(coin,0,0,hash2,0,0);
+    iguana_gotdata(coin,0,0,hash2);
     iguana_blockhashset(coin,0,hash2,1);
     iguana_chainextend(coin,hash2,&block);
     if ( coin->blocks.hwmheight != 0 || fabs(coin->blocks.hwmPoW - PoW) > SMALLVAL || memcmp(coin->blocks.hwmchain.bytes,hash2.bytes,sizeof(hash2)) != 0 )
@@ -413,7 +413,7 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
         fseek(fp,-sizeof(coin->LEDGER),SEEK_END);
         if ( fread(&coin->LEDGER,1,sizeof(coin->LEDGER),fp) != sizeof(coin->LEDGER) )
             printf("WARNING: error loading %s\n",fname);
-        if ( (block= iguana_block(coin,coin->LEDGER.snapshot.height)) != 0 )
+        if ( (block= iguana_blockptr(coin,coin->LEDGER.snapshot.height)) != 0 )
         {
             if ( memcmp(block->hash2.bytes,coin->LEDGER.snapshot.blockhash.bytes,sizeof(block->hash2)) == 0 )
             {
@@ -441,7 +441,7 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
     dep->numpkinds = dep->numtxids = dep->numunspents = dep->numspends = 1;
     while ( hwmheight > 0 )
     {
-        if ( (block= iguana_block(coin,hwmheight)) != 0 )
+        if ( (block= iguana_blockptr(coin,hwmheight)) != 0 )
         {
             iguana_setdependencies(coin,block);
             //printf("block.%d: T.%d (%d %d) U.%d S.%d A.%d\n",hwmheight,dep->numtxids,block->numvouts,block->numvins,dep->numunspents,dep->numspends,dep->numpkhashes);
@@ -455,7 +455,7 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
     }
     for (height=0; height<=hwmheight; height++)
     {
-        if ( iguana_setdependencies(coin,iguana_block(coin,height)) < 0 )
+        if ( iguana_setdependencies(coin,iguana_blockptr(coin,height)) < 0 )
             break;
         dep->numtxids = block->L.numtxids + 0*block->txn_count;
         dep->numunspents = block->L.numunspents + 0*block->numvouts;
@@ -563,7 +563,7 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
             }
         }
         *creditsp = credits, *debitsp = debits, *netp = nets;
-        if ( (nextblock= iguana_block(coin,height+1)) != 0 )
+        if ( (nextblock= iguana_blockptr(coin,height+1)) != 0 )
         {
             if ( 0 && block->L.supply+credits-debits != nextblock->L.supply )
             {
@@ -762,7 +762,7 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
             fprintf(stderr,"%.0f%% ",100. * lastdisp);
             lastdisp = ((double)height / hwmheight);
         }
-        if ( (block= iguana_block(coin,height)) == 0 )
+        if ( (block= iguana_blockptr(coin,height)) == 0 )
         {
             printf("error getting height.%d\n",height);
             break;
