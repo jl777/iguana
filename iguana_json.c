@@ -119,6 +119,18 @@ cJSON *iguana_peersjson(struct iguana_info *coin)
 char *iguana_genericjson(char *method,cJSON *json)
 {
     cJSON *retjson,*array; int32_t i;
+    if ( strcmp(method,"list") == 0 )
+    {
+        retjson = cJSON_CreateObject();
+        array = cJSON_CreateArray();
+        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+        {
+            if ( Coins[i].symbol[0] != 0 )
+                jaddistr(array,Coins[i].symbol);
+        }
+        jadd(retjson,"coins",array);
+        return(jprint(retjson,1));
+    }
     if ( strcmp(method,"peers") == 0 )
     {
         retjson = cJSON_CreateObject();
