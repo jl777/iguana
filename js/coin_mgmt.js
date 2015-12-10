@@ -9,7 +9,7 @@ coinManagement.Coin = function(_id, _symbol, _description, _statusId) {
 	this.Description = _description;
 	this.StatusId = _statusId;
 
-	//coinManagement.log('Coin Mgmt : Coin constructed');
+	//coinManagement.log(Coin constructed');
 };
 
 coinManagement.CoinStatus = function(_id, _name) {
@@ -39,18 +39,16 @@ coinManagement.Post = function(coin) {
 
 	var objCoin = {};
 
-	// KCL : Keep Code Left pattern
-
 	// Check if JSON is valid
 	if (coin === null || coin === undefined || coin.length > 0) {
-		console.log('Coin Mgmt : Can not add coin, invalid record');
+		coinManagement.log('Can not add coin, invalid record');
 		return false;
 	}
 
 	// Check if the JSON could be casted onto coin object
 	if (false) {
-		Console.log('Coin Mgmt : Invalid JSON');
-		console.log(coin);
+		Console.log('Invalid JSON');
+		coinManagement.log(coin);
 		return false;
 	}
 
@@ -69,12 +67,9 @@ coinManagement.Post = function(coin) {
 coinManagement.Get = function() {
 
 	if (localStorage.getItem('coinMgmt_savedCoins') != null && localStorage.getItem('coinMgmt_savedCoins') != undefined) {
-		var items = JSON.parse(localStorage.getItem('coinMgmt_savedCoins'));
-		items.forEach(function(element) {
-			// TODO : Insert Coin
-			console.log('Coin Mgmt : Coin saved to localstorage', element);
-		}, this);
-
+		coinManagement.coins = JSON.parse(localStorage.getItem('coinMgmt_savedCoins'));
+		coinManagement.log(coinManagement.coins.length + ' records found in localStorage');
+		coinManagement.RenderGrid();
 		return;
 	}
 
@@ -90,8 +85,16 @@ coinManagement.Get = function() {
 	var temp = JSON.stringify(coinManagement.coins);
 	localStorage.setItem('coinMgmt_savedCoins', temp);
 
-	coinManagement.log(temp);
-	localStorage.removeItem('coinMgmt_savedCoins');
+	//coinManagement.log(temp);
+	//localStorage.removeItem('coinMgmt_savedCoins');
+};
+
+coinManagement.GetById = function(id) {
+	for (var index = 0; index < coinManagement.coins.length; index++) {
+		if (coinManagement.coins[index].Id == id) {
+			return coinManagement.coins[index];
+		}
+	}
 };
 
 coinManagement.RenderGrid = function() {
@@ -119,7 +122,7 @@ coinManagement.objToHtml = function(objCoin) {
 	if (objCoin == null || objCoin == undefined) {
 		return '';
 	}
-	return '<tr><td>' + objCoin.Symbol + '</td><td>' + objCoin.Description + '</td><td>' + coinManagement.GetStatusNameHtml(objCoin.StatusId) + '</td></tr>';
+	return '<tr><td>' + objCoin.Symbol + '</td><td>' + objCoin.Description + '</td><td>' + coinManagement.GetStatusNameHtml(objCoin.StatusId) + '</td><td>' + coinManagement.getActionButton(objCoin.Id) + '</td></tr>';
 };
 
 
@@ -127,35 +130,35 @@ coinManagement.log = function(message) {
 	if (coinManagement.loggingEnabled == false) {
 		return;
 	}
-	console.log(message);
+	console.log('Coin Mgmt:', message);
 };
 
 coinManagement.GetStatusNameHtml = function(id) {
 	var result = coinManagement.GetStatusName(id);
-	
+
 	switch (id) {
 		case 1:
 			return '<span class="label label-info">' + result + '</span>';
 			break;
-	
+
 		case 2:
 			return '<span class="label label-primary">' + result + '</span>';
 			break;
-			
+
 		case 3:
 			return '<span class="label label-success">' + result + '</span>';
 			break;
-			
+
 		case 4:
 			return '<span class="label label-danger">' + result + '</span>';
 			break;
-	
+
 		default:
-			coinManagement.log('Coin Mgmt : Invalid Status ID : ' + id);
+			coinManagement.log('Invalid Status ID : ' + id);
 			return '<span class="label label-default">#Invalid</span>';
 			break;
 	}
-	
+
 };
 
 coinManagement.GetStatusName = function(id) {
@@ -167,10 +170,28 @@ coinManagement.GetStatusName = function(id) {
 };
 
 
+coinManagement.getActionButton = function(id) {
+	// return '<button class="btn btn-default coinMgmtActionButton" data-id=' + id + ' onclick=\'alert(\"test\");\'>Button</button>';
+	return '<button class="btn btn-default coinMgmtActionButton" data-id=' + id + '>Button</button>';
+};
+
+
 /// --------------
 /// Event Handlers
 /// --------------
 $('#Coins_refresh').click(function() {
 	coinManagement.Get();
 	coinManagement.RenderGrid();
+
+	var e = document.getElementsByClassName('coinMgmtActionButton');
+	for (var index = 0; index < e.length; index++) {
+		e[index].setAttribute('onclick', 'actionButtonClick(' + e[index].getAttribute('data-id') + ');');
+	}
+
 });
+
+var actionButtonClick = function(id) {
+	coinManagement.log('Coin ID : ' + id);
+	var temp = coinManagement.GetById(id);
+	coinManagement.log(temp);
+};
