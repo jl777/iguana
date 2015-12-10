@@ -61,11 +61,6 @@ struct iguana_info *iguana_coin(const char *symbol)
     return(0);
 }
 
-char *iguana_genericjson(char *method,cJSON *json)
-{
-    return(clonestr("{\"result\":\"stub processed generic json\"}"));
-}
-
 cJSON *iguana_peerjson(struct iguana_info *coin,struct iguana_peer *addr)
 {
     cJSON *array,*json = cJSON_CreateObject();
@@ -104,24 +99,46 @@ cJSON *iguana_peerjson(struct iguana_info *coin,struct iguana_peer *addr)
     return(json);
 }
 
-char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
+cJSON *iguana_peersjson(struct iguana_info *coin)
 {
-    int32_t i,max,retval; struct iguana_peer *addr; char *ipaddr; cJSON *array,*retjson = 0;
+    cJSON *retjson,*array; int32_t i; struct iguana_peer *addr;
+    retjson = cJSON_CreateObject();
+    array = cJSON_CreateArray();
+    for (i=0; i<coin->MAXPEERS; i++)
+    {
+        addr = &coin->peers.active[i];
+        if ( addr->usock >= 0 && addr->ipbits != 0 && addr->ipaddr[0] != 0 )
+            jaddi(array,iguana_peerjson(coin,addr));
+    }
+    jadd(retjson,"peers",array);
+    jaddnum(retjson,"maxpeers",coin->MAXPEERS);
+    jaddstr(retjson,"coin",coin->symbol);
+    return(retjson);
+}
+
+char *iguana_genericjson(char *method,cJSON *json)
+{
+    cJSON *retjson,*array; int32_t i;
     if ( strcmp(method,"peers") == 0 )
     {
         retjson = cJSON_CreateObject();
         array = cJSON_CreateArray();
-        for (i=0; i<coin->MAXPEERS; i++)
+        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
         {
-            addr = &coin->peers.active[i];
-            if ( addr->usock >= 0 && addr->ipbits != 0 && addr->ipaddr[0] != 0 )
-                jaddi(array,iguana_peerjson(coin,addr));
+            if ( Coins[i].symbol[0] != 0 )
+                jaddi(array,iguana_peersjson(&Coins[i]));
         }
-        jadd(retjson,"peers",array);
-        jaddnum(retjson,"maxpeers",coin->MAXPEERS);
-        jaddstr(retjson,"coin",coin->symbol);
+        jadd(retjson,"allpeers",array);
         return(jprint(retjson,1));
     }
+    return(clonestr("{\"result\":\"stub processed generic json\"}"));
+}
+
+char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
+{
+    int32_t i,max,retval; struct iguana_peer *addr; char *ipaddr; cJSON *retjson = 0;
+    if ( strcmp(method,"peers") == 0 )
+        return(jprint(iguana_peersjson(coin),1));
     else if ( strcmp(method,"addnode") == 0 )
     {
         if ( (ipaddr= jstr(json,"ipaddr")) != 0 )
@@ -268,7 +285,7 @@ char *iguana_JSON(char *jsonstr)
     printf("iguana_JSON.(%s)\n",jsonstr);
     if ( (json= cJSON_Parse(jsonstr)) != 0 )
     {
-        if ( (method= jstr(json,"method")) != 0 && strcmp(method,"launch") == 0 )
+        if ( (method= jstr(json,"method")) != 0 && strcmp(method,"addcoin") == 0 )
         {
             if ( (retval= iguana_launchcoin(jstr(json,"coin"),json)) > 0 )
                 return(clonestr("{\"result\":\"launched coin\"}"));
@@ -380,7 +397,7 @@ void iguana_main(void *arg)
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"launch\",\"coin\":\"BTCD\"}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTCD\"}");
 #endif
     }
     while ( 1 )
