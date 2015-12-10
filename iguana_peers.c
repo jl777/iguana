@@ -553,7 +553,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
     struct iguana_iAddr iA; struct iguana_kvitem item;
     if ( ipaddr != 0 )
     {
-        printf("Q possible peer.(%s)\n",ipaddr);
+        //printf("Q possible peer.(%s)\n",ipaddr);
         queue_enqueue("possibleQ",&coin->possibleQ,queueitem(ipaddr),1);
         return((uint32_t)time(NULL));
     }
@@ -566,7 +566,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
         return((uint32_t)time(NULL));
     }
 #endif
-    printf("possible peer.(%s)\n",ipaddr);
+    //printf("possible peer.(%s)\n",ipaddr);
     for (i=0; i<coin->MAXPEERS; i++)
         if ( strcmp(ipaddr,coin->peers.active[i].ipaddr) == 0 )
         {
@@ -753,7 +753,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         if ( (datalen= iguana_gethdrs(coin,serialized,coin->chain->gethdrsmsg,hashstr)) > 0 )
         {
             decode_hex(hash2.bytes,sizeof(hash2),hashstr);
-            printf("%s request hdr.(%s) %d pend.%d\n",addr->ipaddr,hashstr,iguana_itemheight(coin,hash2),addr->pendhdrs);
+            //printf("%s request hdr.(%s) %d pend.%d\n",addr->ipaddr,hashstr,iguana_itemheight(coin,hash2),addr->pendhdrs);
             iguana_send(coin,addr,serialized,datalen);
             addr->pendhdrs++;
             flag++;
@@ -764,8 +764,8 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
     if ( ((req= queue_dequeue(&coin->priorityQ,0)) != 0 || (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
     {
         hash2 = req->hash2;
-        height = iguana_itemheight(coin,hash2);
-        if ( height != req->height )
+        height = iguana_hash2height(coin,hash2);
+        if ( req->height >= 0 && height != req->height )
         {
             printf("blocksQ ht.%d vs %d dequeued.(%s) for %s\n",req->height,height,bits256_str(hash2),addr->ipaddr);
             myfree(req,sizeof(*req));
@@ -844,7 +844,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                 }
             }
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
-                usleep(1000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
+                usleep(20000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
     }
     iguana_iAkill(coin,addr,addr->dead != 0);
