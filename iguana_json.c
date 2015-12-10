@@ -15,6 +15,7 @@
 
 #include "iguana777.h"
 
+int32_t iguana_launchcoin(char *symbol,cJSON *json);
 
 struct iguana_jsonitem { struct queueitem DL; uint32_t expired,allocsize; char **retjsonstrp; char jsonstr[]; };
 
@@ -68,7 +69,7 @@ char *iguana_genericjson(char *method,cJSON *json)
 cJSON *iguana_peerjson(struct iguana_info *coin,struct iguana_peer *addr)
 {
     cJSON *array,*json = cJSON_CreateObject();
-    jaddstr(json,"ip",addr->ipaddr);
+    jaddstr(json,"ipaddr",addr->ipaddr);
     jaddnum(json,"protover",addr->protover);
     jaddnum(json,"relay",addr->relayflag);
     jaddnum(json,"height",addr->height);
@@ -105,7 +106,7 @@ cJSON *iguana_peerjson(struct iguana_info *coin,struct iguana_peer *addr)
 
 char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
 {
-    int32_t i,max; struct iguana_peer *addr; char *ipaddr; cJSON *array,*retjson = 0;
+    int32_t i,max,retval; struct iguana_peer *addr; char *ipaddr; cJSON *array,*retjson = 0;
     if ( strcmp(method,"peers") == 0 )
     {
         retjson = cJSON_CreateObject();
@@ -159,6 +160,24 @@ char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
         jaddnum(retjson,"maxpeers",coin->MAXPEERS);
         jaddstr(retjson,"coin",coin->symbol);
         return(jprint(retjson,1));
+    }
+    else if ( strcmp(method,"startcoin") == 0 )
+    {
+        coin->active = 1;
+        return(clonestr("{\"result\":\"coin started\"}"));
+    }
+    else if ( strcmp(method,"pausecoin") == 0 )
+    {
+        coin->active = 1;
+        return(clonestr("{\"result\":\"coin paused\"}"));
+    }
+    else if ( strcmp(method,"addcoin") == 0 )
+    {
+        if ( (retval= iguana_launchcoin(coin->symbol,json)) > 0 )
+            return(clonestr("{\"result\":\"coin added\"}"));
+        else if ( retval == 0 )
+            return(clonestr("{\"result\":\"coin already there\"}"));
+        else return(clonestr("{\"error\":\"error adding coin\"}"));
     }
     return(clonestr("{\"result\":\"stub processed iguana json\"}"));
 }
@@ -244,7 +263,6 @@ char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag
 
 char *iguana_JSON(char *jsonstr)
 {
-    int32_t iguana_launchcoin(char *symbol,cJSON *json);
     cJSON *json,*retjson; uint64_t tag; uint32_t timeout; int32_t retval;
     struct iguana_info *coin; char *method,*retjsonstr,*symbol,*retstr = 0;
     printf("iguana_JSON.(%s)\n",jsonstr);
