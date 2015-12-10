@@ -336,7 +336,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 }
             }
             if ( i == 0 )
-                height = height;
+                height0 = height;
             height -= i;
             if ( m > 0 )
             {
