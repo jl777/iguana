@@ -259,29 +259,29 @@
 													
 													
 													<!--Modal starts-->
-													<div class="modal fade" id="CoinEditModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel">
+													<div class="modal fade" id="CoinEditModal" tabindex="-1" role="dialog" aria-labelledby="editCoinHeader">
 														<div class="modal-dialog" role="document">
 															<div class="modal-content">
 																<div class="modal-header">
 																	<button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
-																	<h4 class="modal-title" id="myModalLabel">Edit Coin</h4>
+																	<h4 class="modal-title" id="editCoinHeader">Edit Coin</h4>
 																</div>
 																<div class="modal-body">
 																	<div id="coinEditFormContainer">
-																		<form class="form-horizontal" name="frmCoinEdit">
-																			<div class="form-group">
+																		<form class="form-horizontal" id="frmCoinEdit" name="frmCoinEdit">
+																			<div id="txtSymbolGroup" class="form-group">
 																				<label for="txtSymbol" class="control-label col-xs-2 col-md-2">Symbol</label>
 																				<div class="col-xs-10 col-md-10">
 																					<input type="text" id="txtSymbol" name="txtSymbol" class="form-control input-sm"/>
 																				</div>
 																			</div>
-																			<div class="form-group">
+																			<div id="txtDescriptionGroup" class="form-group">
 																				<label for="txtDescription" class="control-label col-xs-2 col-md-2">Description</label>
 																				<div class="col-xs-10 col-md-10">
 																					<input type="text" id="txtDescription" name="txtDescription" class="form-control input-sm"/>
 																				</div>
 																			</div>
-																			<div class="form-group">
+																			<div id="ddStatusGroup" class="form-group">
 																				<label for="ddStatus" class="control-label col-xs-2 col-md-2">Status</label>
 																				<div class="col-xs-10 col-md-10">
 																				<select type="text" id="ddStatus" name="ddStatus" class="form-control input-sm"></select>
@@ -292,7 +292,8 @@
 															</div>
 															<div class="modal-footer">
 																<button type="button" class="btn btn-default" data-dismiss="modal">Nevermind</button>
-																<button type="button" class="btn btn-primary">Save</button>
+																<button id="btnSaveCoinForm" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+																<!-- <button id="btnSaveCoinForm" type="button" class="btn btn-primary">Save</button> -->
 															</div>
 														</div>
 													</div>
