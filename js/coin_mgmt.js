@@ -190,6 +190,10 @@ $('#Coins_refresh').click(function() {
 
 });
 
+$('#Coins_add').click(function () {
+	
+});
+
 var actionButtonClick = function(id) {
 	coinManagement.log('Coin ID : ' + id);
 	var temp = coinManagement.GetById(id);
