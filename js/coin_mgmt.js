@@ -190,12 +190,22 @@ $('#Coins_refresh').click(function() {
 
 });
 
-$('#Coins_add').click(function () {
-	
-});
+// $('#Coins_add').click(function() {
+
+// });
 
 var actionButtonClick = function(id) {
 	coinManagement.log('Coin ID : ' + id);
 	var temp = coinManagement.GetById(id);
 	coinManagement.log(temp);
 };
+
+$(function(){
+	var select = document.getElementById('ddStatus');
+	for (var i = 0; i < coinManagement.CoinStatuses.length; i++) {
+		var option = document.createElement('option');
+		option.value = coinManagement.CoinStatuses[i].Id
+		option.textContent = coinManagement.CoinStatuses[i].Name;
+		select.appendChild(option);
+	};
+});
