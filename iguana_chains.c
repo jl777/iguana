@@ -186,13 +186,6 @@ struct iguana_chain *iguana_createchain(cJSON *json)
     return(chain);
 }
 
-int32_t iguana_chainheight(struct iguana_info *coin,struct iguana_block *block)
-{
-    if ( iguana_blockfind(coin,block->hash2) == block )
-        return(block->height);
-    else return(-1);
-}
-
 double PoW_from_compact(uint32_t nBits,uint8_t unitval) // NOT consensus safe, but most of the time will be correct
 {
 	uint32_t nbytes,nbits,i,n; double PoW;

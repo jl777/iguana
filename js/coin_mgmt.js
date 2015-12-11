@@ -34,37 +34,34 @@ coinManagement.CoinStatuses = [
 /// Coin Management JS API Methods
 /// ------------------------------
 
-// Inserts a new coin
-coinManagement.Post = function(coin) {
+coinManagement.log = function(message) {
+	if (coinManagement.loggingEnabled == false) {
+		return;
+	}
+	console.log('Coin Mgmt:', message);
+};
 
-	var objCoin = {};
+// Inserts a new coin
+coinManagement.Post = function(objCoin) {
 
 	// Check if JSON is valid
-	if (coin === null || coin === undefined || coin.length > 0) {
+	if (objCoin === null || objCoin === undefined) {
 		coinManagement.log('Can not add coin, invalid record');
 		return false;
 	}
 
-	// Check if the JSON could be casted onto coin object
-	if (false) {
-		Console.log('Invalid JSON');
-		coinManagement.log(coin);
-		return false;
-	}
-
-	// Object oriented javascript : create a new instance of class 'Coin'
-	objCoin = {};
-
 	coinManagement.coins.push(objCoin);
 
-	// poor man's templating
-	var htmlCoin = coinManagement.objToHtml(objCoin);
-	$('#Coins_table tbody').append(htmlCoin);
+	// Update Local Storage
+	updateLocalStorage();
 
 	return true;
 };
 
 coinManagement.Get = function() {
+
+	// Clear Local Storage
+	//localStorage.removeItem('coinMgmt_savedCoins');
 
 	if (localStorage.getItem('coinMgmt_savedCoins') != null && localStorage.getItem('coinMgmt_savedCoins') != undefined) {
 		coinManagement.coins = JSON.parse(localStorage.getItem('coinMgmt_savedCoins'));
@@ -73,7 +70,7 @@ coinManagement.Get = function() {
 		return;
 	}
 
-	// Test Data
+	// Test Data - call API here
 	coinManagement.coins = [];
 	coinManagement.coins = [
 		new coinManagement.Coin(1, 'Sym1', 'Desc1', 1),
@@ -82,11 +79,8 @@ coinManagement.Get = function() {
 		new coinManagement.Coin(4, 'Sym4', 'Desc4', 4)
 	];
 
-	var temp = JSON.stringify(coinManagement.coins);
-	localStorage.setItem('coinMgmt_savedCoins', temp);
+	updateLocalStorage();
 
-	//coinManagement.log(temp);
-	//localStorage.removeItem('coinMgmt_savedCoins');
 };
 
 coinManagement.GetById = function(id) {
@@ -97,59 +91,136 @@ coinManagement.GetById = function(id) {
 	}
 };
 
+coinManagement.GetCoinIndex = function(id) {
+	for (var index = 0; index < coinManagement.coins.length; index++) {
+		if (coinManagement.coins[index].Id == id) {
+			return index;
+		}
+	}
+};
+
 coinManagement.RenderGrid = function() {
 	var coinsTableBody = document.getElementById('Coins_table').getElementsByTagName('tbody')[0];
 	coinsTableBody.innerHTML = '';
 	coinManagement.coins.forEach(function(element) {
-		var htmlCoin = coinManagement.objToHtml(element);
+		var htmlCoin = objToHtml(element);
 		coinsTableBody.innerHTML += htmlCoin;
 	});
 }
+
+coinManagement.Delete = function (id) {
+
+	coinManagement.log('Deleting Coin ID : ' + id);
+	var index = coinManagement.GetCoinIndex(id);
+	coinManagement.coins.splice(index,1);
+
+	var temp = JSON.stringify(coinManagement.coins);
+	localStorage.setItem('coinMgmt_savedCoins', temp);
+
+	loadData();
+}
+
+
+
+/// --------------
+/// Event Handlers
+/// --------------
+$('#Coins_refresh').click(function() {
+	loadData();
+});
+
+// $('#Coins_add').click(function() {
+
+// });
+
+
+$('#btnSaveCoinForm').click(function(event) {
+
+	var saveButton = document.getElementById('btnSaveCoinForm');
+	saveButton.removeAttribute('data-dismiss');
+
+	if (coinEditFormIsValid() == false) {
+		return;
+	}
+
+	var txt_symbol = document.getElementById('txtSymbol').value;
+	var txt_description = document.getElementById('txtDescription').value;
+	var dd_Status = document.getElementById('ddStatus').value;
+
+	// save data
+
+	// KNOWN ISSUE : I AM AWARE THAT HARD CODING THE COIN ID TO 5 WOULD CAUSE PROBLEMS IN SOME SCENARIOS BUT THIS IS FOR TEMPORARY TESTING, THE API SHOULD RETURN THE ACTUAL COIN ID WHEN SAVED / OTHERWISE THE ID'S NEEDS TO BE TRACKED LOCALLY.
+
+	var objNewCoin = new coinManagement.Coin(5, txt_symbol, txt_description, dd_Status);
+	coinManagement.log('New Coin');
+	coinManagement.log(objNewCoin);
+	coinManagement.Post(objNewCoin);
+
+	// reset form
+	coinEditFormReset();
+	saveButton.setAttribute('data-dismiss', 'modal');
+	loadData();
+});
+
+$(function() {
+	var select = document.getElementById('ddStatus');
+	for (var i = 0; i < coinManagement.CoinStatuses.length; i++) {
+		var option = document.createElement('option');
+		option.value = coinManagement.CoinStatuses[i].Id
+		option.textContent = coinManagement.CoinStatuses[i].Name;
+		select.appendChild(option);
+	};
+	loadData();
+});
+
+
 
 /// ----------------------------------
 /// Helper methods for Coin Management
 /// ----------------------------------
 
-coinManagement.jsonToObj = function(jsonString) {
+var updateLocalStorage = function() {
+	var temp = JSON.stringify(coinManagement.coins);
+	localStorage.setItem('coinMgmt_savedCoins', temp);
+	return true;
+};
+
+var jsonToObj = function(jsonString) {
 	return {};
 };
 
-coinManagement.objToJson = function(objCoin) {
+var objToJson = function(objCoin) {
 	return '';
 };
 
-coinManagement.objToHtml = function(objCoin) {
+var objToHtml = function(objCoin) {
 	if (objCoin == null || objCoin == undefined) {
 		return '';
 	}
-	return '<tr><td>' + objCoin.Symbol + '</td><td>' + objCoin.Description + '</td><td>' + coinManagement.GetStatusNameHtml(objCoin.StatusId) + '</td><td>' + coinManagement.getActionButton(objCoin.Id) + '</td></tr>';
+	return '<tr><td>' + objCoin.Symbol + '</td><td>' + objCoin.Description + '</td><td>' + GetStatusNameHtml(objCoin.StatusId) + '</td><td>' + getActionButton(objCoin.Id) + '</td></tr>';
 };
 
-
-coinManagement.log = function(message) {
-	if (coinManagement.loggingEnabled == false) {
-		return;
-	}
-	console.log('Coin Mgmt:', message);
-};
-
-coinManagement.GetStatusNameHtml = function(id) {
-	var result = coinManagement.GetStatusName(id);
+var GetStatusNameHtml = function(id) {
+	var result = GetStatusName(id);
 
 	switch (id) {
 		case 1:
+		case '1':
 			return '<span class="label label-info">' + result + '</span>';
 			break;
 
 		case 2:
+		case '2':
 			return '<span class="label label-primary">' + result + '</span>';
 			break;
 
 		case 3:
+		case '3':
 			return '<span class="label label-success">' + result + '</span>';
 			break;
 
 		case 4:
+		case '4':
 			return '<span class="label label-danger">' + result + '</span>';
 			break;
 
@@ -161,7 +232,7 @@ coinManagement.GetStatusNameHtml = function(id) {
 
 };
 
-coinManagement.GetStatusName = function(id) {
+var GetStatusName = function(id) {
 	for (var index = 0; index < coinManagement.CoinStatuses.length; index++) {
 		if (coinManagement.CoinStatuses[index].Id == id) {
 			return coinManagement.CoinStatuses[index].Name;
@@ -169,17 +240,13 @@ coinManagement.GetStatusName = function(id) {
 	}
 };
 
-
-coinManagement.getActionButton = function(id) {
+var getActionButton = function(id) {
 	// return '<button class="btn btn-default coinMgmtActionButton" data-id=' + id + ' onclick=\'alert(\"test\");\'>Button</button>';
-	return '<button class="btn btn-default coinMgmtActionButton" data-id=' + id + '>Button</button>';
+	return '<button class="btn btn-default coinMgmtActionButton" data-id=' + id + '>Delete</button>';
 };
 
 
-/// --------------
-/// Event Handlers
-/// --------------
-$('#Coins_refresh').click(function() {
+var loadData = function() {
 	coinManagement.Get();
 	coinManagement.RenderGrid();
 
@@ -187,11 +254,48 @@ $('#Coins_refresh').click(function() {
 	for (var index = 0; index < e.length; index++) {
 		e[index].setAttribute('onclick', 'actionButtonClick(' + e[index].getAttribute('data-id') + ');');
 	}
-
-});
+};
 
 var actionButtonClick = function(id) {
-	coinManagement.log('Coin ID : ' + id);
-	var temp = coinManagement.GetById(id);
-	coinManagement.log(temp);
+	coinManagement.Delete(id);
 };
+
+var coinEditFormReset = function() {
+	document.getElementById('txtSymbol').value = '';
+	document.getElementById('txtDescription').value = '';
+	document.getElementById('ddStatus').value = 1;
+}
+
+var coinEditFormIsValid = function() {
+
+	var txt_symbol = document.getElementById('txtSymbol').value;
+	var txt_description = document.getElementById('txtDescription').value;
+	var dd_Status = document.getElementById('ddStatus').value;
+
+	var symbol_group = document.getElementById('txtSymbolGroup');
+	var description_group = document.getElementById('txtDescriptionGroup');
+	var status_group = document.getElementById('ddStatusGroup');
+
+	symbol_group.removeAttribute('class');
+	symbol_group.setAttribute('class', 'form-group');
+
+	description_group.removeAttribute('class');
+	description_group.setAttribute('class', 'form-group');
+
+	status_group.removeAttribute('class');
+	status_group.setAttribute('class', 'form-group');
+
+	if (txt_symbol == null || txt_symbol == undefined || txt_symbol.length == 0) {
+		symbol_group.removeAttribute('class');
+		symbol_group.setAttribute('class', 'has-error form-group');
+		return false;
+	} else if (txt_description == null || txt_description == undefined || txt_description.length == 0) {
+		description_group.removeAttribute('class');
+		description_group.setAttribute('class', 'has-error form-group');
+		return false;
+	} else if (dd_Status == null || dd_Status == undefined || dd_Status.length == 0) {
+		status_group.removeAttribute('class');
+		status_group.setAttribute('class', 'has-error form-group');
+		return false;
+	}
+}

@@ -41,7 +41,7 @@ void iguana_initcoin(struct iguana_info *coin)
 {
     int32_t i;
     portable_mutex_init(&coin->peers_mutex);
-    //portable_mutex_init(&coin->bundles_mutex);
+    portable_mutex_init(&coin->blocks_mutex);
     //portable_mutex_init(&coin->recv_mutex);
     //portable_mutex_init(&coin->txdata_mutex);
     //portable_mutex_init(&coin->ramchain_mutex);
