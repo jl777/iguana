@@ -181,7 +181,12 @@ $(function() {
 
 var updateLocalStorage = function() {
 	var temp = JSON.stringify(coinManagement.coins);
-	localStorage.setItem('coinMgmt_savedCoins', temp);
+	//localStorage.setItem('coinMgmt_savedCoins', temp);
+	chrome.storage.sync.set({'coinMgmt_savedCoins': temp}, function () {
+		alert('Local storage udated');
+		coinManagement.log('Local storage udated');
+		message('Local storage udated');
+	});
 	return true;
 };
 
