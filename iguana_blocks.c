@@ -1202,7 +1202,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     if ( qsize == 0 )
         coin->bcount++;
     else coin->bcount = 0;
-    maxwaiting = (coin->MAXBUNDLES * coin->chain->bundlesize);
+    maxwaiting = 1000000;//(coin->MAXBUNDLES * coin->chain->bundlesize);
     numwaiting = 0;
     numbundles = 0;
     prevbp = nextbp = 0;
@@ -1229,8 +1229,9 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             if ( bp->emitfinish == 0 )
             {
                 iguana_bundlecheck(coin,bp,numbundles == 0 || i == lastbundle);
-                if ( numbundles++ >= coin->MAXBUNDLES && i != lastbundle )
-                    continue;
+                numbundles++;
+                //if ( numbundles++ >= coin->MAXBUNDLES && i != lastbundle )
+                //    continue;
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
                     if ( iguana_bundletxdata(coin,bp,bundlei) != 0 )
