@@ -1156,7 +1156,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 }
                 n++;
             }
-            else if ( priorityflag != 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
+            else if ( priorityflag != 0 && qsize == 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
             {
                 if ( (rand() % 1000) == 0 )
                     printf("priorityQ submit threshold %.3f [%d].%d\n",threshold,bp->hdrsi,i);
@@ -1257,7 +1257,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             nextbp = (i < coin->bundlescount-1) ? coin->bundles[i+1] : 0;
             if ( bp->emitfinish == 0 )
             {
-                iguana_bundlecheck(coin,bp,numactive < coin->MAXPENDING/2 || i == coin->closestbundle || i == lastbundle);
+                iguana_bundlecheck(coin,bp,numactive == 0 || i == coin->closestbundle || i == lastbundle);
                 if ( bp->numrecv > closest && bp->numrecv < coin->chain->bundlesize )
                 {
                     closest = bp->numrecv;
@@ -1265,9 +1265,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                 }
                 if ( bp->numrecv > 3 )
                     numactive++;
-                if ( i != lastbundle && i != coin->closestbundle && numwaiting >= maxwaiting && numactive > coin->MAXBUNDLES )
-                    continue;
-                    for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
+                for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
                     if ( iguana_bundletxdata(coin,bp,bundlei) != 0 )
                     {
