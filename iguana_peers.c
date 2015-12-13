@@ -755,7 +755,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                     fds.fd = addr->usock;
                     fds.events |= POLLOUT;
                     if ( poll(&fds,1,timeout) > 0 )
-                        flag++, iguana_pollQs(coin,addr);
+                        flag += iguana_pollQs(coin,addr);
                 }
                 //else printf("%s > %llu coin->IGUANA_MAXRECVCACHE\n",mbstr((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size),(long long)coin->MAXRECVCACHE);
             }
