@@ -321,7 +321,7 @@ void iguana_coinloop(void *arg)
             }// bp block needs mutex
         }
         if ( flag == 0 )
-            usleep(10000);
+            usleep(100);
     }
 }
 
