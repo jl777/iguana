@@ -620,24 +620,34 @@ void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_block *b
 
 int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,struct iguana_bundle *bp,char *fname)
 {
-    void *fileptr; int32_t i; uint32_t *offsets; struct iguana_block *block;
-    if ( (fileptr= iguana_mappedptr(0,M,0,0,fname)) != 0 )
+    void *fileptr = 0; int32_t i; uint32_t *offsets; struct iguana_block *block;
+    if ( 1 || (fileptr= iguana_mappedptr(0,M,0,0,fname)) != 0 )
     {
         offsets = fileptr;
-        for (i=0; i<bp->n&&i<coin->chain->bundlesize; i++)
+        for (i=0; i<bp->n; i++)
         {
             if ( (block= bp->blocks[i]) != 0 )
             {
                 if ( block->txdata != 0 )
                 {
                     if ( block->mapped == 0 )
+                    {
+                        printf("[%d].%d free txdata.%d\n",bp->hdrsi,i,((struct iguana_bundlereq *)block->txdata)->allocsize);
                         myfree(block->txdata,((struct iguana_bundlereq *)block->txdata)->allocsize);
+                        block->txdata = 0;
+                        block->mapped = 0;
+                    }
                 }
-                block->txdata = (void *)((long)fileptr + offsets[i]);
-                block->mapped = 1;
-            } else printf("iguana_maptxdata cant find block[%d]\n",i);
+                if ( i < coin->chain->bundlesize )
+                {
+                    block->txdata = "test";//(void *)((long)fileptr + offsets[i]);
+                    block->mapped = 1;
+                }
+            }
+            else if ( i < coin->chain->bundlesize )
+                printf("iguana_maptxdata cant find block[%d]\n",i);
         }
-        return(i);
+        return(i < coin->chain->bundlesize ? i : coin->chain->bundlesize);
     }
     printf("error mapping (%s)\n",fname);
     return(-1);
@@ -692,11 +702,11 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
         memset(&M,0,sizeof(M));
         if ( iguana_maptxdata(coin,&M,emitbp,fname) != n )
             printf("emit error mapping n.%d height.%d\n",n,bundleheight);
-        else if ( 0 )
+        else
         {
-            if ( emitbp->blockhashes != 0 )
-                myfree(emitbp->blockhashes,sizeof(*emitbp->blockhashes) * emitbp->n);
-            emitbp->blockhashes = 0;
+            //if ( emitbp->blockhashes != 0 )
+            //    myfree(emitbp->blockhashes,sizeof(*emitbp->blockhashes) * emitbp->n);
+            //emitbp->blockhashes = 0;
         }
     }
 }

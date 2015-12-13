@@ -520,7 +520,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
             init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
             if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
             {
-                if ( queue_size(&coin->priorityQ) > 0 )
+                if ( 0 && queue_size(&coin->priorityQ) > 0 )
                     printf("%s %s BLOCK.%d:%d bit.%d qsizes.(p%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
                 iguana_send(coin,addr,serialized,datalen);
                 addr->pendblocks++;
@@ -1112,13 +1112,18 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 
 int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int32_t priorityflag)
 {
-    int32_t i,qsize,n = 0; struct iguana_block *block; bits256 hash2;
+    int32_t i,qsize,n = 0; struct iguana_block *block; bits256 hash2; double threshold;
     //printf("bp.%p bundlecheck.%d emit.%d\n",bp,bp->hdrsi,bp->emitfinish);
     if ( bp != 0 && bp->emitfinish == 0 )
     {
         qsize = queue_size(&coin->priorityQ);
-        if ( bp->numrecv > coin->chain->bundlesize*.9 )
+        if ( bp->numrecv > coin->chain->bundlesize*.98 )
+        {
             priorityflag = 1;
+            if ( bp->numrecv > coin->chain->bundlesize-3 )
+                threshold = bp->avetime;
+            else threshold = bp->avetime * 2;
+        } else threshold = bp->avetime * 5;
         for (i=0; i<coin->chain->bundlesize; i++)
         {
             hash2 = iguana_bundleihash2(coin,bp,i);
@@ -1135,8 +1140,9 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 }
                 n++;
             }
-            else if ( priorityflag != 0 && (bp->issued[i] == 0 || (qsize == 0 && coin->pcount > 1 && milliseconds() > (bp->issued[i] + bp->avetime*.5))) )
+            else if ( priorityflag != 0 && qsize == 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
             {
+                printf("priorityQ submit threshold %.3f [%d].%d\n",threshold,bp->hdrsi,i);
                 CLEARBIT(bp->recv,i);
                 bp->issued[i] = milliseconds();
                 iguana_blockQ(coin,bp,i,hash2,1);
@@ -1219,7 +1225,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     if ( lastbundle != coin->lastbundle )
         coin->lastbundletime = (uint32_t)time(NULL);
     coin->lastbundle = lastbundle;
-    if ( time(NULL) < coin->lastbundletime+10 )
+    if ( time(NULL) < coin->lastbundletime+15 )
         lastbundle = -1;
     n = 0;
     for (i=0; i<coin->bundlescount; i++)
@@ -1231,7 +1237,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             nextbp = (i < coin->bundlescount-1) ? coin->bundles[i+1] : 0;
             if ( bp->emitfinish == 0 )
             {
-                iguana_bundlecheck(coin,bp,i == lastbundle);
+                iguana_bundlecheck(coin,bp,0*(i == lastbundle));
                 numbundles++;
                 if ( numbundles >= coin->MAXBUNDLES && i != lastbundle )
                     continue;
