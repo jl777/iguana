@@ -209,7 +209,7 @@ struct iguana_peer *iguana_choosepeer(struct iguana_info *coin)
         for (j=0; j<coin->peers.numranked; j++)
         {
             i = (j + r) % coin->MAXPEERS;
-            if ( (addr= coin->peers.ranked[i]) != 0 && addr->pendblocks < IGUANA_MAXPENDING && addr->dead == 0 && addr->usock >= 0 )
+            if ( (addr= coin->peers.ranked[i]) != 0 && addr->pendblocks < coin->MAXPENDING && addr->dead == 0 && addr->usock >= 0 )
             {
                 portable_mutex_unlock(&coin->peers_mutex);
                 return(addr);
@@ -222,7 +222,7 @@ struct iguana_peer *iguana_choosepeer(struct iguana_info *coin)
         for (i=0; i<coin->MAXPEERS; i++)
         {
             addr = &coin->peers.active[(i + r) % coin->MAXPEERS];
-            if ( addr->dead == 0 && addr->usock >= 0 && (iter == 1 || addr->pendblocks < IGUANA_MAXPENDING) )
+            if ( addr->dead == 0 && addr->usock >= 0 && (iter == 1 || addr->pendblocks < coin->MAXPENDING) )
                 return(addr);
         }
     }
@@ -749,7 +749,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                         addr->pendhdrs--;
                     addr->pendtime = 0;
                 }
-                if ( addr->pendblocks < IGUANA_MAXPENDING )
+                if ( addr->pendblocks < coin->MAXPENDING )
                 {
                     //if ( ((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size) < coin->MAXRECVCACHE )
                     {

@@ -1193,7 +1193,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     if ( qsize == 0 )
         coin->bcount++;
     else coin->bcount = 0;
-    remains = (IGUANA_PENDINGBUNDLES * coin->chain->bundlesize);
+    remains = (coin->MAXBUNDLES * coin->chain->bundlesize);
     n = 1;
     numbundles = 0;
     prevbp = nextbp = 0;
@@ -1217,7 +1217,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         continue;
                     }
                     hash2 = iguana_bundleihash2(coin,bp,bundlei);
-                    if ( numbundles <= IGUANA_PENDINGBUNDLES && bits256_nonz(hash2) > 0 )
+                    if ( numbundles <= coin->MAXBUNDLES && bits256_nonz(hash2) > 0 )
                     {
                         //printf("hdrsi.%d qsize.%d bcount.%d check bundlei.%d bit.%d %.3f lag %.3f ave %.3f\n",bp->hdrsi,qsize,coin->bcount,bundlei,GETBIT(bp->recv,bundlei),bp->issued[bundlei],milliseconds() - bp->issued[bundlei],bp->avetime);
                         if ( GETBIT(bp->recv,bundlei) == 0 )
@@ -1237,7 +1237,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             } else m = coin->chain->bundlesize;
         }
         prevbp = bp;
-        if ( dispflag != 0 && numbundles <= IGUANA_PENDINGBUNDLES )
+        if ( dispflag != 0 && numbundles <= coin->MAXBUNDLES )
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
     if ( dispflag != 0 )
@@ -1257,7 +1257,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( time(NULL) > bp->issuetime+7 )//&& coin->numpendings < IGUANA_PENDINGBUNDLES )
+                    if ( time(NULL) > bp->issuetime+7 )//&& coin->numpendings < coin->MAXBUNDLES )
                     {
                         if ( bp->issuetime == 0 )
                             coin->numpendings++;

@@ -325,18 +325,20 @@ void iguana_coinloop(void *arg)
     }
 }
 
-void iguana_coinargs(char *symbol,int64_t *maxrecvcachep,int32_t *minconfirmsp,int32_t *maxpeersp,int32_t *initialheightp,uint64_t *servicesp,cJSON *json)
+void iguana_coinargs(char *symbol,int64_t *maxrecvcachep,int32_t *minconfirmsp,int32_t *maxpeersp,int32_t *initialheightp,uint64_t *servicesp,int32_t *maxpendingp,int32_t *maxbundlesp,cJSON *json)
 {
     if ( (*maxrecvcachep= j64bits(json,"maxrecvcache")) != 0 )
         *maxrecvcachep *= 1024 * 1024 * 1024L;
     *minconfirmsp = juint(json,"minconfirms");
     *maxpeersp= juint(json,"maxpeers");
+    *maxpendingp= juint(json,"maxpending");
+    *maxbundlesp= juint(json,"maxbundles");
     if ( (*initialheightp= juint(json,"initialheight")) == 0 )
         *initialheightp = (strcmp(symbol,"BTC") == 0) ? 400000 : 100000;
     *servicesp = j64bits(json,"services");
 }
 
-struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,int64_t maxrecvcache,uint64_t services,int32_t initialheight,int32_t maphash,int32_t minconfirms,cJSON *json)
+struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,int64_t maxrecvcache,uint64_t services,int32_t initialheight,int32_t maphash,int32_t minconfirms,int32_t maxpending,int32_t maxbundles,cJSON *json)
 {
     struct iguana_chain *iguana_createchain(cJSON *json);
     struct iguana_info *coin; int32_t j,m,mapflags; char dirname[512]; cJSON *peers;
@@ -347,6 +349,10 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
         coin->MAXPEERS = (strcmp(symbol,"BTC") == 0) ? 128 : 32;
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
+    if ( (coin->MAXPENDING= maxpending) <= 0 )
+        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? 1 : 16;
+    if ( (coin->MAXBUNDLES= maxbundles) <= 0 )
+        coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? 16 : 512;
     coin->myservices = services;
     sprintf(dirname,"DB/%s",symbol);
     ensure_directory(dirname);
@@ -376,8 +382,8 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
 
 int32_t iguana_launchcoin(char *symbol,cJSON *json)
 {
-    int32_t maxpeers,maphash,initialheight,minconfirms; int64_t maxrecvcache; uint64_t services;
-    struct iguana_info **coins,*coin;
+    int32_t maxpeers,maphash,initialheight,minconfirms,maxpending,maxbundles;
+    int64_t maxrecvcache; uint64_t services; struct iguana_info **coins,*coin;
     if ( symbol == 0 )
         return(-1);
     if ( (coin= iguana_coin(symbol)) == 0 )
@@ -387,9 +393,9 @@ int32_t iguana_launchcoin(char *symbol,cJSON *json)
         if ( juint(json,"GBavail") < 8 )
             maphash = IGUANA_MAPHASHTABLES;
         else maphash = 0;
-        iguana_coinargs(symbol,&maxrecvcache,&minconfirms,&maxpeers,&initialheight,&services,json);
+        iguana_coinargs(symbol,&maxrecvcache,&minconfirms,&maxpeers,&initialheight,&services,&maxpending,&maxbundles,json);
         coins = mycalloc('A',1+1,sizeof(*coins));
-        if ( (coin= iguana_setcoin(coin->symbol,coins,maxpeers,maxrecvcache,services,initialheight,maphash,minconfirms,json)) != 0 )
+        if ( (coin= iguana_setcoin(coin->symbol,coins,maxpeers,maxrecvcache,services,initialheight,maphash,minconfirms,maxpending,maxbundles,json)) != 0 )
         {
             coins[0] = (void *)((long)1);
             coins[1] = coin;
@@ -409,7 +415,8 @@ int32_t iguana_launchcoin(char *symbol,cJSON *json)
 void iguana_coins(void *arg)
 {
     struct iguana_info **coins,*coin; char *jsonstr,*symbol; cJSON *array,*item,*json;
-    int32_t i,n,maxpeers,maphash,initialheight,minconfirms; int64_t maxrecvcache; uint64_t services;
+    int32_t i,n,maxpeers,maphash,initialheight,minconfirms,maxpending,maxbundles;
+    int64_t maxrecvcache; uint64_t services;
     if ( (jsonstr= arg) != 0 && (json= cJSON_Parse(jsonstr)) != 0 )
     {
         if ( (array= jarray(&n,json,"coins")) == 0 )
@@ -417,7 +424,7 @@ void iguana_coins(void *arg)
             if ( (symbol= jstr(json,"coin")) != 0 && strncmp(symbol,"BTC",3) == 0 )
             {
                 coins = mycalloc('A',1+1,sizeof(*coins));
-                coins[1] = iguana_setcoin(symbol,coins,0,0,0,0,0,0,json);
+                coins[1] = iguana_setcoin(symbol,coins,0,0,0,0,0,0,0,0,json);
                 coins[0] = (void *)((long)1);
                 iguana_coinloop(coins);
             } else printf("no coins[] array in JSON.(%s) only BTCD and BTC can be quicklaunched\n",jsonstr);
@@ -437,9 +444,9 @@ void iguana_coins(void *arg)
                 printf("skip strange coin.(%s)\n",symbol);
                 continue;
             }
-            iguana_coinargs(symbol,&maxrecvcache,&minconfirms,&maxpeers,&initialheight,&services,item);
+            iguana_coinargs(symbol,&maxrecvcache,&minconfirms,&maxpeers,&initialheight,&services,&maxpending,&maxbundles,item);
             printf("init.(%s) maxpeers.%d maxrecvcache.%s maphash.%x services.%llx\n",symbol,maxpeers,mbstr(maxrecvcache),maphash,(long long)services);
-            coins[1 + i] = coin = iguana_setcoin(symbol,coins,maxpeers,maxrecvcache,services,initialheight,maphash,minconfirms,item);
+            coins[1 + i] = coin = iguana_setcoin(symbol,coins,maxpeers,maxrecvcache,services,initialheight,maphash,minconfirms,maxpending,maxbundles,item);
             printf("MAXRECVCACHE.%s\n",mbstr(coin->MAXRECVCACHE));
         }
         coins[0] = (void *)((long)n);
