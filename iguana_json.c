@@ -424,6 +424,8 @@ void iguana_main(void *arg)
         iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTC\",\"active\":1}");
 #endif
     }
+    if ( arg != 0 )
+        iguana_JSON(arg);
     while ( 1 )
     {
         flag = 0;
