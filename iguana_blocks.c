@@ -1224,7 +1224,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         {
                             if ( bp->issued[bundlei] == 0 || (((qsize == 0 && coin->bcount > 100) || numbundles == 1) && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
                             {
-                                if ( 1 && bp->issued[bundlei] > SMALLVAL )
+                                if ( (rand() % 1000) == 0 && bp->issued[bundlei] > SMALLVAL )
                                     printf("issue.%d:%d of %d %s lag %f ave %f\n",bp->hdrsi,bundlei,bp->n,bits256_str(hash2),milliseconds() - bp->issued[bundlei],bp->avetime);
                                 bp->issued[bundlei] = milliseconds();
                                 remains--;
