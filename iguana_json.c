@@ -256,6 +256,7 @@ int32_t iguana_processjsonQ(struct iguana_info *coin) // reentrant, can be calle
     }
     if ( (ptr= queue_dequeue(&coin->jsonQ,0)) != 0 )
     {
+        printf("process.(%s)\n",ptr->jsonstr);
         if ( (*ptr->retjsonstrp= iguana_jsonstr(coin,ptr->jsonstr)) == 0 )
             *ptr->retjsonstrp = clonestr("{\"error\":\"null return from iguana_jsonstr\"}");
         queue_enqueue("finishedQ",&finishedQ,&ptr->DL,0);
