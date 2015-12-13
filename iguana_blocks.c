@@ -1263,7 +1263,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                     closest = bp->numrecv;
                     closestbundle = i;
                 }
-                if ( bp->numrecv > 3 )
+                if ( bp->numrecv > 3 || numactive == 0 )
                     numactive++;
                 if ( numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
                     continue;
