@@ -360,7 +360,7 @@ void iguana_issuejsonstrM(void *arg)
 void iguana_main(void *arg)
 {
     extern queue_t helperQ;
-    int32_t i,len,flag; cJSON *json; uint8_t secretbuf[512]; char *coinargs,*secret,*jsonstr = arg;
+    int32_t i,len,flag,*nump; cJSON *json; uint8_t secretbuf[512]; char *coinargs,*secret,*jsonstr = arg;
     //  portable_OS_init()?
     mycalloc(0,0,0);
     iguana_initQ(&helperQ,"helperQ");
@@ -390,7 +390,11 @@ void iguana_main(void *arg)
 #endif
     }
     for (i=0; i<IGUANA_NUMHELPERS; i++)
-        iguana_launch("helpers",iguana_helper,&helperQ,IGUANA_HELPERTHREAD);
+    {
+        nump = malloc(sizeof(int32_t));
+        (*nump) = i;
+        iguana_launch("helpers",iguana_helper,nump,IGUANA_HELPERTHREAD);
+    }
     if ( coinargs != 0 )
         iguana_launch("iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
     else

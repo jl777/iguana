@@ -7,7 +7,7 @@
 #include "iguana777.h"
 
 int iguana_main(void *arg);
-int IGUANA_NUMHELPERS = 1;
+int IGUANA_NUMHELPERS = 4;
 
 void *iguana(void *arg)
 {
