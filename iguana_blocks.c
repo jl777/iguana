@@ -1257,7 +1257,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             nextbp = (i < coin->bundlescount-1) ? coin->bundles[i+1] : 0;
             if ( bp->emitfinish == 0 )
             {
-                iguana_bundlecheck(coin,bp,numactive == 0 || i == coin->closestbundle || i == lastbundle);
+                iguana_bundlecheck(coin,bp,numactive < coin->MAXPENDING/2 || i == coin->closestbundle || i == lastbundle);
                 if ( bp->numrecv > closest && bp->numrecv < coin->chain->bundlesize )
                 {
                     closest = bp->numrecv;
