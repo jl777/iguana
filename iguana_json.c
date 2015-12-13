@@ -73,6 +73,11 @@ cJSON *iguana_peerjson(struct iguana_info *coin,struct iguana_peer *addr)
     if ( addr->dead != 0 )
         jaddnum(json,"dead",addr->dead);
     jaddnum(json,"ready",addr->ready);
+    jaddnum(json,"recvblocks",addr->recvblocks);
+    jaddnum(json,"recvtotal",addr->recvtotal);
+    jaddnum(json,"lastcontact",addr->lastcontact);
+    if ( addr->numpings > 0 )
+        jaddnum(json,"aveping",addr->pingsum/addr->numpings);
     array = cJSON_CreateObject();
     jaddnum(array,"version",addr->msgcounts.version);
     jaddnum(array,"verack",addr->msgcounts.verack);
@@ -353,21 +358,27 @@ void iguana_issuejsonstrM(void *arg)
 
 void iguana_helper(void *arg)
 {
-    int32_t flag; struct iguana_bundlereq *req; queue_t *Q = arg;
+    int32_t flag; struct iguana_bundle *bp; queue_t *Q = arg;
     printf("start helper\n");
     while ( 1 )
     {
         flag = 0;
-        if ( (req= queue_dequeue(Q,0)) != 0 )
+        if ( (bp= queue_dequeue(Q,0)) != 0 )
         {
-            printf("START emittxdata\n");
-            iguana_emittxdata(req->coin,req);
+            //printf("START emittxdata\n");
+            iguana_emittxdata(bp->coin,bp);
             flag++;
-            printf("FINISH emittxdata\n");
+            //printf("FINISH emittxdata\n");
         }
         if ( flag == 0 )
             sleep(1);
     }
+}
+
+void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
+{
+    bp->coin = coin;
+    queue_enqueue("emitQ",&helperQ,&bp->DL,0);
 }
 
 void iguana_main(void *arg)
@@ -398,7 +409,7 @@ void iguana_main(void *arg)
 #ifdef __linux__
         IGUANA_NUMHELPERS = 8;
 #else
-        IGUANA_NUMHELPERS = 1;
+        IGUANA_NUMHELPERS = 4;
 #endif
     }
     for (i=0; i<IGUANA_NUMHELPERS; i++)
@@ -409,7 +420,7 @@ void iguana_main(void *arg)
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTCD\",\"active\":1}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTC\",\"active\":1}");
 #endif
     }
     while ( 1 )

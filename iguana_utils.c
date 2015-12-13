@@ -45,8 +45,8 @@ void update_allocstats(uint8_t type,long allocsize)
     Type_allocated[type] += allocsize;
     if ( Total_allocated > HWM_allocated )
     {
-        HWM_allocated = Total_allocated * 1.1;
-        printf("HWM allocated %ld %s\n",HWM_allocated,mbstr(HWM_allocated));
+        printf("HWM allocated %ld %s\n",Total_allocated,mbstr(Total_allocated));
+        HWM_allocated = Total_allocated * 1.5;
     }
 }
 
@@ -792,9 +792,11 @@ void randombytes(unsigned char *x,long xlen)
 
 double milliseconds()
 {
-    struct timeval tv;
+    struct timeval tv; double millis;
     gettimeofday(&tv,NULL);
-    return((double)tv.tv_sec * 1000. + (double)tv.tv_usec / 1000.);
+    millis = ((double)tv.tv_sec * 1000. + (double)tv.tv_usec / 1000.);
+    //printf("tv_sec.%ld usec.%d %f\n",tv.tv_sec,tv.tv_usec,millis);
+    return(millis);
 }
 
 //void msleep(uint32_t millis) { usleep(millis * 1000); }

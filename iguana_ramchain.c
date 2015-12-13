@@ -555,7 +555,7 @@ int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_block *blo
     rawtx.numvouts = tx->tx_out, rawtx.numvins = tx->tx_in;
     if ( (blocknum == 91842 || blocknum == 91880) && txi == 0 && strcmp(coin->name,"bitcoin") == 0 )
         rawtx.txid.ulongs[0] ^= blocknum;
-    printf("%d: tx.%p %p[numvouts.%d] %p[numvins.%d]\n",block->hh.itemind,tx,tx->vouts,tx->tx_out,tx->vins,tx->tx_in);
+    //printf("%d: tx.%p %p[numvouts.%d] %p[numvins.%d]\n",block->hh.itemind,tx,tx->vouts,tx->tx_out,tx->vins,tx->tx_in);
     if ( fwrite(&rawtx,1,sizeof(rawtx),fp) == sizeof(rawtx) )
     {
         for (i=0; i<rawtx.numvouts; i++)
@@ -618,16 +618,15 @@ void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_block *b
     }
 }
 
-int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,int32_t bundleheight,int32_t num,char *fname)
+int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,struct iguana_bundle *bp,char *fname)
 {
-    void *fileptr; int32_t i,height; uint32_t *offsets; struct iguana_block *block;
+    void *fileptr; int32_t i; uint32_t *offsets; struct iguana_block *block;
     if ( (fileptr= iguana_mappedptr(0,M,0,0,fname)) != 0 )
     {
         offsets = fileptr;
-        for (i=0; i<num; i++)
+        for (i=0; i<bp->n&&i<coin->chain->bundlesize; i++)
         {
-            height = bundleheight + i;
-            if ( (block= iguana_blockptr(coin,height)) != 0 )
+            if ( (block= bp->blocks[i]) != 0 )
             {
                 if ( block->txdata != 0 )
                 {
@@ -636,28 +635,30 @@ int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,int
                 }
                 block->txdata = (void *)((long)fileptr + offsets[i]);
                 block->mapped = 1;
-            } else printf("iguana_maptxdata cant find block[%d]\n",height);
+            } else printf("iguana_maptxdata cant find block[%d]\n",i);
         }
-        return(num);
+        return(i);
     }
     printf("error mapping (%s)\n",fname);
     return(-1);
 }
 
-void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundlereq *emitreq)
+void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
 {
     FILE *fp; char fname[512]; uint8_t extra[256]; uint32_t offsets[_IGUANA_HDRSCOUNT+1];
     struct iguana_msgtx *txarray,*tx; struct iguana_bundlereq *req; struct iguana_mappedptr M;
     int32_t i,j,bundleheight,len2,height,numtx,n; long len; struct iguana_block *block;
-    sprintf(fname,"tmp/%s/txdata.%d",coin->symbol,emitreq->bundleheight);
+    if ( emitbp == 0 )
+        return;
+    sprintf(fname,"tmp/%s/txdata.%d",coin->symbol,emitbp->bundleheight);
     if ( (fp= fopen(fname,"wb")) != 0 )
     {
-        bundleheight = emitreq->bundleheight;
-        for (i=n=0; i<coin->chain->bundlesize; i++,n++)
-            if ( (block= iguana_blockptr(coin,bundleheight+i)) == 0 || block->txdata == 0 || block->mapped != 0 )
-                break;
-        if ( n != coin->chain->bundlesize )
-            printf("iguana_emittxdata: WARNING n.%d != bundlesize.%d\n",n,coin->chain->bundlesize);
+        bundleheight = emitbp->bundleheight;
+        for (i=n=0; i<emitbp->n&&i<coin->chain->bundlesize; i++)
+            if ( (block= emitbp->blocks[i]) != 0 && block->txdata != 0 && block->mapped == 0 )
+                n++;
+        if ( n != emitbp->n && n != coin->chain->bundlesize )
+            printf("iguana_emittxdata: WARNING n.%d != bundlesize.%d bundlesize.%d\n",n,emitbp->n,coin->chain->bundlesize);
         memset(offsets,0,sizeof(offsets));
         if ( (len= fwrite(offsets,sizeof(*offsets),n+1,fp)) != n+1 )
             printf("%s: error writing blank offsets len.%ld != %d\n",fname,len,n+1);
@@ -665,11 +666,13 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundlereq *emitreq
         {
             offsets[i] = (uint32_t)ftell(fp);
             height = (bundleheight + i);
-            if ( (block= iguana_blockptr(coin,height)) != 0 )
+            if ( (block= emitbp->blocks[i]) != 0 )
             {
                 if ( (req= block->txdata) != 0 && (numtx= block->txn_count) > 0 )
                 {
-                    if ( (txarray= iguana_gentxarray(coin,&len2,block,req->serialized,block->datalen,extra)) != 0 )
+                    if ( fwrite(req->serialized,1,req->n,fp) != req->n )
+                        printf("error writing serialized data.%d\n",req->n);
+                    if ( 0 && (txarray= iguana_gentxarray(coin,&len2,block,req->serialized,req->n,extra)) != 0 )
                     {
                         tx = txarray;
                         for (j=0; j<numtx; j++,tx++)
@@ -679,7 +682,7 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundlereq *emitreq
                         iguana_freetx(txarray,numtx);
                     }
                 } else printf("emittxdata: unexpected missing txarray[%d]\n",i);
-            } else printf("emittxdata: error with recvblockptr[%d]\n",bundleheight + 1 + i);
+            } else printf("emittxdata: error with recvblockptr[%d]\n",emitbp->bundleheight + i);
         }
         offsets[i] = (uint32_t)ftell(fp);
         rewind(fp);
@@ -687,7 +690,13 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundlereq *emitreq
             printf("%s: error writing offsets len.%ld != %d\n",fname,len,n+1);
         fclose(fp), fp = 0;
         memset(&M,0,sizeof(M));
-        if ( iguana_maptxdata(coin,&M,bundleheight,n,fname) != n )
+        if ( iguana_maptxdata(coin,&M,emitbp,fname) != n )
             printf("emit error mapping n.%d height.%d\n",n,bundleheight);
+        else if ( 0 )
+        {
+            if ( emitbp->blockhashes != 0 )
+                myfree(emitbp->blockhashes,sizeof(*emitbp->blockhashes) * emitbp->n);
+            emitbp->blockhashes = 0;
+        }
     }
 }

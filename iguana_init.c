@@ -31,7 +31,7 @@ void iguana_initQs(struct iguana_info *coin)
     iguana_initQ(&coin->blocksQ,"blocksQ");
     iguana_initQ(&coin->priorityQ,"priorityQ");
     iguana_initQ(&coin->possibleQ,"possibleQ");
-    iguana_initQ(&coin->emitQ,"emitQ");
+    //iguana_initQ(&coin->emitQ,"emitQ");
     iguana_initQ(&coin->jsonQ,"jsonQ");
     for (i=0; i<IGUANA_MAXPEERS; i++)
         iguana_initQ(&coin->peers.active[i].sendQ,"addrsendQ");
@@ -49,15 +49,16 @@ void iguana_initcoin(struct iguana_info *coin)
     iguana_initQs(coin);
     randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
     coin->starttime = (uint32_t)time(NULL);
+    coin->avetime = 1 * 1000;
     //coin->R.maxrecvbundles = IGUANA_INITIALBUNDLES;
-    coin->bundleswidth = IGUANA_INITIALBUNDLES;
+    coin->bundleswidth = IGUANA_PENDINGBUNDLES;
     for (i=0; i<IGUANA_NUMAPPENDS; i++)
         vupdate_sha256(coin->latest.lhashes[i].bytes,&coin->latest.states[i],0,0);
 }
 
 bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
 {
-    struct iguana_block block; struct iguana_msgblock msg; bits256 hash2; uint8_t buf[1024]; double PoW;
+    struct iguana_block block,*ptr; struct iguana_msgblock msg; bits256 hash2; uint8_t buf[1024]; double PoW;
     decode_hex(buf,(int32_t)strlen(chain->genesis_hex)/2,(char *)chain->genesis_hex);
     hash2 = bits256_doublesha256(0,buf,sizeof(struct iguana_msgblockhdr));
     iguana_rwblock(0,&hash2,buf,&msg);
@@ -72,7 +73,8 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
     iguana_convblock(&block,&msg,hash2,0,1,1,1,PoW);
     coin->latest.dep.numtxids = block.numvouts = 1;
     iguana_gotdata(coin,0,0,hash2);
-    iguana_blockhashset(coin,0,hash2,1);
+    if ( (ptr= iguana_blockhashset(coin,0,hash2,100)) != 0 )
+        ptr->mainchain = 1, ptr->height = 0, coin->blocks.recvblocks = coin->blocks.issuedblocks = 1;
     iguana_chainextend(coin,hash2,&block);
     if ( coin->blocks.hwmheight != 0 || fabs(coin->blocks.hwmPoW - PoW) > SMALLVAL || memcmp(coin->blocks.hwmchain.bytes,hash2.bytes,sizeof(hash2)) != 0 )
     {
@@ -840,17 +842,21 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
     //coin->R.maprecvdata = ((mapflags & IGUANA_MAPRECVDATA) != 0);
     iguana_recvalloc(coin,initialheight);
     coin->iAddrs = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPEERITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"iAddrs",0,sizeof(uint32_t),sizeof(struct iguana_iAddr),sizeof(struct iguana_iAddr),10000,iguana_verifyiAddr,iguana_initiAddr,0,0,0,0,1);
-    coin->blocks.db = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPBLOCKITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"blocks",(int32_t)((long)&space.hash2 - (long)&space),sizeof(bits256),sizeof(struct iguana_block)-sizeof(bits256),sizeof(struct iguana_block),10000,iguana_verifyblock,iguana_initblock,0,0,0,initialheight,1);
+    
     coin->longestchain = 1;
     coin->blocks.hwmheight = 1;//iguana_lookahead(coin,&hash2,0);
-    printf("coin->blocks.hwmheight.%d longest.%d coin->numiAddrs.%d\n",coin->blocks.hwmheight,coin->longestchain,coin->numiAddrs);
-    if ( (height= iguana_initramchain(coin,coin->blocks.hwmheight,mapflags,1)) < 0 )
+    if ( 0 )
     {
-        printf("iguana_startcoin: unrecoverable failure in truncating ramchain table.%x\n",-height);
-        exit(1);
+        coin->blocks.db = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPBLOCKITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"blocks",(int32_t)((long)&space.hash2 - (long)&space),sizeof(bits256),sizeof(struct iguana_block)-sizeof(bits256),sizeof(struct iguana_block),10000,iguana_verifyblock,iguana_initblock,0,0,0,initialheight,1);
+        printf("coin->blocks.hwmheight.%d longest.%d coin->numiAddrs.%d\n",coin->blocks.hwmheight,coin->longestchain,coin->numiAddrs);
+        if ( (height= iguana_initramchain(coin,coin->blocks.hwmheight,mapflags,1)) < 0 )
+        {
+            printf("iguana_startcoin: unrecoverable failure in truncating ramchain table.%x\n",-height);
+            exit(1);
+        }
+        //iguana_audit(coin);
+        iguana_syncs(coin);
     }
-    //iguana_audit(coin);
-    iguana_syncs(coin);
     coin->firstblock = coin->blocks.parsedblocks + 1;
     for (iter=0; iter<2; iter++)
     {
