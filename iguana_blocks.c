@@ -865,6 +865,10 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 for (i=bundlei; i<bp->n&&j<bp->n&&i<coin->chain->bundlesize; i++,j++)
                     iguana_bundleblockadd(coin,bp,i,blockhashes[j]);
             }
+            iguana_blockQ(coin,bp,1,blockhashes[1],0);
+            if ( bp->n < coin->chain->bundlesize )
+                iguana_blockQ(coin,bp,bp->n-1,blockhashes[bp->n-1],0);
+            else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],0);
         }
         else
         {
@@ -962,6 +966,11 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
                     for (i=1; i<n; i++)
                         if ( (block= iguana_blockfind(coin,blockhashes[i])) != 0 )
                             iguana_copyblock(coin,block,&blocks[i-1]);
+                    iguana_blockQ(coin,bp,0,bp->bundlehash2,0);
+                    iguana_blockQ(coin,bp,1,blockhashes[1],0);
+                    if ( bp->n < coin->chain->bundlesize )
+                        iguana_blockQ(coin,bp,n-1,blockhashes[n-1],0);
+                    else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],0);
                     break;
                 }
                 else
@@ -1005,6 +1014,8 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 dxblend(&bp->avetime,duration,.9);
                 dxblend(&coin->avetime,bp->avetime,.9);
             }
+            if ( bundlei == 1 )
+                iguana_blockQ(coin,bp,0,block->prev_block,0);
             if ( (txdata= block->txdata) == 0 )
             {
                 if ( bundlei >= 0 && bundlei < bp->n && bundlei < coin->chain->bundlesize )
@@ -1208,7 +1219,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
 int32_t iguana_issueloop(struct iguana_info *coin)
 {
     static uint32_t lastdisp;
-    int32_t i,closest,closestbundle,bundlei,qsize,m,numwaiting,maxwaiting,numbundles,lastbundle,n,dispflag = 0,flag = 0;
+    int32_t i,closest,closestbundle,bundlei,qsize,m,numactive,numwaiting,maxwaiting,numbundles,lastbundle,n,dispflag = 0,flag = 0;
     struct iguana_bundle *bp,*prevbp,*nextbp; bits256 hash2;
     if ( time(NULL) > lastdisp+13 )
     {
@@ -1221,7 +1232,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     else coin->bcount = 0;
     maxwaiting = (coin->MAXBUNDLES * coin->chain->bundlesize);
     numwaiting = 0;
-    numbundles = 0;
+    numactive = 0;
     prevbp = nextbp = 0;
     lastbundle = -1;
     for (i=coin->bundlescount-1; i>=0; i--)
@@ -1252,9 +1263,8 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                     closest = bp->numrecv;
                     closestbundle = i;
                 }
-                numbundles++;
-                if ( numbundles >= coin->MAXBUNDLES && i != lastbundle && i != coin->closestbundle )
-                    continue;
+                if ( bp->numrecv > 3 )
+                    numactive++;
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
                     if ( iguana_bundletxdata(coin,bp,bundlei) != 0 )
@@ -1264,7 +1274,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         continue;
                     }
                     hash2 = iguana_bundleihash2(coin,bp,bundlei);
-                    if ( (i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting) && bits256_nonz(hash2) > 0 )
+                    if ( bits256_nonz(hash2) > 0 )
                     {
                         //printf("hdrsi.%d qsize.%d bcount.%d check bundlei.%d bit.%d %.3f lag %.3f ave %.3f\n",bp->hdrsi,qsize,coin->bcount,bundlei,GETBIT(bp->recv,bundlei),bp->issued[bundlei],milliseconds() - bp->issued[bundlei],bp->avetime);
                         if ( GETBIT(bp->recv,bundlei) == 0 )
@@ -1273,11 +1283,14 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                                 numwaiting++;
                             if ( bp->issued[bundlei] == 0 || (((qsize == 0 && coin->bcount > 100) || numbundles == 1) && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
                             {
-                                if ( (rand() % 1000) == 0 && bp->issued[bundlei] > SMALLVAL )
-                                    printf("issue.%d:%d of %d %s lag %f ave %f\n",bp->hdrsi,bundlei,bp->n,bits256_str(hash2),milliseconds() - bp->issued[bundlei],bp->avetime);
-                                bp->issued[bundlei] = milliseconds();
-                                n++;
-                                flag += (iguana_blockQ(coin,bp,bundlei,hash2,0) > 0);
+                                if ( i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting || numactive <= coin->MAXBUNDLES )
+                                {
+                                    if ( (rand() % 1000) == 0 && bp->issued[bundlei] > SMALLVAL )
+                                        printf("issue.%d:%d of %d %s lag %f ave %f\n",bp->hdrsi,bundlei,bp->n,bits256_str(hash2),milliseconds() - bp->issued[bundlei],bp->avetime);
+                                    bp->issued[bundlei] = milliseconds();
+                                    n++;
+                                    flag += (iguana_blockQ(coin,bp,bundlei,hash2,0) > 0);
+                                }
                             }
                         }
                     } //lse printf("skip.%d %s\n",numbundles,bits256_str(hash2));
@@ -1285,7 +1298,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             } else m = coin->chain->bundlesize;
         }
         prevbp = bp;
-        if ( dispflag != 0 && bp != 0 && bp->numrecv != 0 )
+        if ( dispflag != 0 && bp != 0 && bp->numrecv > 3 && bp->emitfinish == 0 )
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
     coin->closestbundle = closestbundle;
@@ -1364,7 +1377,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                             }
                         }
                     }
-                    if ( flag != 0 )
+                    if ( flag > 3 )
                     {
                         estsize += bp->estsize;
                         numactive++;
