@@ -1,7 +1,7 @@
 var SPNAPI = (function(SPNAPI, $, undefined) {
 
     SPNAPI.methods = {};
-    SPNAPI.pages = ["Settings", "eyedea", "iguana","Debug","Wallet"];
+    SPNAPI.pages = ["Settings", "eyedea", "iguana","Debug","Wallet", "Coins"];
     SPNAPI.pageContent = {};
     SPNAPI.page = "welcome";
     $(document).ready(function() {
