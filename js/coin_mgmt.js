@@ -63,12 +63,7 @@ coinManagement.Get = function() {
 	// Clear Local Storage
 	//localStorage.removeItem('coinMgmt_savedCoins');
 
-	if (localStorage.getItem('coinMgmt_savedCoins') != null && localStorage.getItem('coinMgmt_savedCoins') != undefined) {
-		coinManagement.coins = JSON.parse(localStorage.getItem('coinMgmt_savedCoins'));
-		coinManagement.log(coinManagement.coins.length + ' records found in localStorage');
-		coinManagement.RenderGrid();
-		return;
-	}
+	getCoinsFromLocalStorage();
 
 	// Test Data - call API here
 	coinManagement.coins = [];
@@ -108,11 +103,11 @@ coinManagement.RenderGrid = function() {
 	});
 }
 
-coinManagement.Delete = function (id) {
+coinManagement.Delete = function(id) {
 
 	coinManagement.log('Deleting Coin ID : ' + id);
 	var index = coinManagement.GetCoinIndex(id);
-	coinManagement.coins.splice(index,1);
+	coinManagement.coins.splice(index, 1);
 
 	var temp = JSON.stringify(coinManagement.coins);
 	localStorage.setItem('coinMgmt_savedCoins', temp);
@@ -179,14 +174,46 @@ $(function() {
 /// Helper methods for Coin Management
 /// ----------------------------------
 
+var getCoinsFromLocalStorage = function() {
+	if (chrome.storage != null && chrome.storage != undefined) {
+		chrome.storage.sync.get('coinMgmt_savedCoins', function(localData) {
+			if (!chrome.runtime.error) {
+				coinManagement.log('getting data from chrome local storage');
+				coinManagement.log(savedCoins);
+				coinManagement.coins = localData.coinMgmt_savedCoins;
+				coinManagement.RenderGrid();
+				return true;
+			}
+		});
+	} else {
+		coinManagement.log('#Err : getting from chrome local storage');
+		coinManagement.log('getting data from localStorage');
+		if (localStorage.getItem('coinMgmt_savedCoins') != null && localStorage.getItem('coinMgmt_savedCoins') != undefined) {
+			coinManagement.coins = JSON.parse(localStorage.getItem('coinMgmt_savedCoins'));
+			coinManagement.log(coinManagement.coins.length + ' records found in localStorage');
+			coinManagement.RenderGrid();
+			return true;
+		}
+	}
+}
+
 var updateLocalStorage = function() {
 	var temp = JSON.stringify(coinManagement.coins);
-	//localStorage.setItem('coinMgmt_savedCoins', temp);
-	chrome.storage.sync.set({'coinMgmt_savedCoins': temp}, function () {
-		alert('Local storage udated');
-		coinManagement.log('Local storage udated');
-		message('Local storage udated');
-	});
+	if (chrome.storage != null && chrome.storage != undefined) {
+		chrome.storage.sync.set({
+			'coinMgmt_savedCoins': temp
+		}, function() {
+			if (!chrome.runtime.error) {
+				alert('chrome local storage udated');
+				coinManagement.log('chrome local storage udated');
+				message('Local storage udate+d');
+			}
+		});
+	} else {
+		coinManagement.log('#Err : updating chrome local storage');
+		coinManagement.log('saving data in localStorage');
+		localStorage.setItem('coinMgmt_savedCoins', temp);
+	}
 	return true;
 };
 
