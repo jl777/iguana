@@ -1126,7 +1126,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
             else if ( priorityflag != 0 && (bp->issued[i] == 0 || (queue_size(&coin->priorityQ) == 0 && coin->pcount > 1 && milliseconds() > (bp->issued[i] + bp->avetime))) )
             {
                 CLEARBIT(bp->recv,i);
-                bp->issued[i] = 0.;
+                bp->issued[i] = milliseconds();
                 iguana_blockQ(coin,bp,i,hash2,1);
                 bp->blocks[i] = 0;
             }
@@ -1207,7 +1207,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             nextbp = (i < coin->bundlescount-1) ? coin->bundles[i+1] : 0;
             if ( bp->emitfinish == 0 )
             {
-                iguana_bundlecheck(coin,bp,numbundles == 0);
+                iguana_bundlecheck(coin,bp,numbundles < 8);
                 numbundles++;
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
