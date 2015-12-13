@@ -1271,7 +1271,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             } else m = coin->chain->bundlesize;
         }
         prevbp = bp;
-        if ( dispflag != 0 && (numbundles <= coin->MAXBUNDLES || i == lastbundle) )
+        if ( dispflag != 0 && bp != 0 && bp->numrecv != 0 )//(numbundles <= coin->MAXBUNDLES || i == lastbundle) )
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
     if ( dispflag != 0 )
