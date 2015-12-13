@@ -1212,6 +1212,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
         {
             lastbundle2 = lastbundle;
             lastbundle = i;
+            if ( lastbundle >= 0 && lastbundle2 >= 0 )
             break;
         }
     if ( lastbundle != coin->lastbundle )
@@ -1267,7 +1268,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
     if ( dispflag != 0 )
-        printf(" PENDINGBUNDLES lastbundle.%d\n",lastbundle);
+        printf(" PENDINGBUNDLES lastbundle.%d/%d\n",lastbundle,lastbundle2);
     return(flag);
 }
 
