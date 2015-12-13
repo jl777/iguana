@@ -1265,7 +1265,9 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                 }
                 if ( bp->numrecv > 3 )
                     numactive++;
-                for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
+                if ( i != lastbundle && i != coin->closestbundle && numwaiting >= maxwaiting && numactive > coin->MAXBUNDLES )
+                    continue;
+                    for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
                     if ( iguana_bundletxdata(coin,bp,bundlei) != 0 )
                     {
