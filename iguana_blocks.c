@@ -1370,10 +1370,12 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                             numhashes++;
                             if ( bp->issued[bundlei] > SMALLVAL )
                             {
-                                flag++;
                                 numissued++;
                                 if ( GETBIT(bp->recv,bundlei) != 0 )
+                                {
+                                    flag++;
                                     numrecv++;
+                                }
                             }
                         }
                     }
