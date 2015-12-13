@@ -1182,7 +1182,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
 int32_t iguana_issueloop(struct iguana_info *coin)
 {
     static uint32_t lastdisp;
-    int32_t i,bundlei,qsize,m,numbundles,remains,n,dispflag = 0,flag = 0;
+    int32_t i,bundlei,qsize,m,numwaiting,maxwaiting,numbundles,n,dispflag = 0,flag = 0;
     struct iguana_bundle *bp,*prevbp,*nextbp; bits256 hash2;
     if ( time(NULL) > lastdisp+13 )
     {
@@ -1193,8 +1193,9 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     if ( qsize == 0 )
         coin->bcount++;
     else coin->bcount = 0;
-    remains = (coin->MAXBUNDLES * coin->chain->bundlesize);
+    maxwaiting = (coin->MAXBUNDLES * coin->chain->bundlesize);
     n = 1;
+    numwaiting = 0;
     numbundles = 0;
     prevbp = nextbp = 0;
     for (i=0; i<coin->bundlescount; i++)
@@ -1217,21 +1218,22 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         continue;
                     }
                     hash2 = iguana_bundleihash2(coin,bp,bundlei);
-                    if ( numbundles <= coin->MAXBUNDLES && bits256_nonz(hash2) > 0 )
+                    if ( (numbundles <= coin->MAXBUNDLES || numwaiting < maxwaiting) && bits256_nonz(hash2) > 0 )
                     {
                         //printf("hdrsi.%d qsize.%d bcount.%d check bundlei.%d bit.%d %.3f lag %.3f ave %.3f\n",bp->hdrsi,qsize,coin->bcount,bundlei,GETBIT(bp->recv,bundlei),bp->issued[bundlei],milliseconds() - bp->issued[bundlei],bp->avetime);
                         if ( GETBIT(bp->recv,bundlei) == 0 )
                         {
+                            if ( bp->issued[bundlei] > SMALLVAL )
+                                numwaiting++;
                             if ( bp->issued[bundlei] == 0 || (((qsize == 0 && coin->bcount > 100) || numbundles == 1) && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
                             {
                                 if ( (rand() % 1000) == 0 && bp->issued[bundlei] > SMALLVAL )
                                     printf("issue.%d:%d of %d %s lag %f ave %f\n",bp->hdrsi,bundlei,bp->n,bits256_str(hash2),milliseconds() - bp->issued[bundlei],bp->avetime);
                                 bp->issued[bundlei] = milliseconds();
-                                remains--;
                                 n++;
                                 flag += (iguana_blockQ(coin,bp,bundlei,hash2,0) > 0);
                             }
-                        } else remains--;
+                        }
                     } //lse printf("skip.%d %s\n",numbundles,bits256_str(hash2));
                 }
             } else m = coin->chain->bundlesize;
