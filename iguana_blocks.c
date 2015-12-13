@@ -1007,13 +1007,14 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
             }
             if ( (txdata= block->txdata) == 0 )
             {
-                req->datalen = datalen;
-                block->txdata = req;
                 if ( bundlei >= 0 && bundlei < bp->n && bundlei < coin->chain->bundlesize )
                 {
                     bp->blocks[bundlei] = block;
                     bp->numrecv++;
                 }
+                req->datalen = datalen;
+                block->txdata = req;
+                printf("store txdata[%d].%d <- %p\n",bp->hdrsi,bundlei,req);
                 req = 0;
             }
             else

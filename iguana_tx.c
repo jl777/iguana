@@ -15,6 +15,7 @@
 
 #include "iguana777.h"
 
+queue_t txQ;
 uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
 
 int64_t iguana_MEMallocated(struct iguana_info *coin)
@@ -342,7 +343,7 @@ int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,str
                 {
                     if ( block->mapped == 0 )
                     {
-                        printf("[%d].%d free txdata.%d\n",bp->hdrsi,i,((struct iguana_bundlereq *)block->txdata)->allocsize);
+                        printf("[%d].%d free txdata.%d %p\n",bp->hdrsi,i,((struct iguana_bundlereq *)block->txdata)->allocsize,block->txdata);
                         myfree(block->txdata,((struct iguana_bundlereq *)block->txdata)->allocsize);
                         block->txdata = 0;
                         block->mapped = 0;
@@ -410,8 +411,8 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
             printf("%s: error writing offsets len.%ld != %d\n",fname,len,n+1);
         fclose(fp), fp = 0;
         memset(&M,0,sizeof(M));
-        //if ( iguana_maptxdata(coin,&M,emitbp,fname) != n )
-        //    printf("emit error mapping n.%d height.%d\n",n,bundleheight);
+        if ( iguana_maptxdata(coin,&M,emitbp,fname) != n )
+            printf("emit error mapping n.%d height.%d\n",n,bundleheight);
         //else
         {
             //if ( emitbp->blockhashes != 0 )
