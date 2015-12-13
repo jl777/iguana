@@ -749,21 +749,18 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                         addr->pendhdrs--;
                     addr->pendtime = 0;
                 }
-                if ( addr->pendblocks < coin->MAXPENDING )
+                //if ( ((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size) < coin->MAXRECVCACHE )
                 {
-                    //if ( ((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size) < coin->MAXRECVCACHE )
-                    {
-                        memset(&fds,0,sizeof(fds));
-                        fds.fd = addr->usock;
-                        fds.events |= POLLOUT;
-                        if ( poll(&fds,1,timeout) > 0 )
-                            flag += iguana_pollQs(coin,addr);
-                    }
-                    //else printf("%s > %llu coin->IGUANA_MAXRECVCACHE\n",mbstr((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size),(long long)coin->MAXRECVCACHE);
+                    memset(&fds,0,sizeof(fds));
+                    fds.fd = addr->usock;
+                    fds.events |= POLLOUT;
+                    if ( poll(&fds,1,timeout) > 0 )
+                        flag++, iguana_pollQs(coin,addr);
                 }
+                //else printf("%s > %llu coin->IGUANA_MAXRECVCACHE\n",mbstr((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size),(long long)coin->MAXRECVCACHE);
             }
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
-                usleep(100);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
+                usleep(10000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
     }
     iguana_iAkill(coin,addr,addr->dead != 0);

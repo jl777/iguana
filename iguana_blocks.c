@@ -481,7 +481,8 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
 int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
-    char *hashstr=0,hexstr[65]; bits256 hash2; int32_t height=-1,datalen,flag = 0; struct iguana_blockreq *req=0;
+    char *hashstr=0,hexstr[65]; bits256 hash2; int32_t limit,height=-1,datalen,flag = 0;
+    struct iguana_blockreq *req=0;
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
     {
         //printf("%s check hdrsQ\n",addr->ipaddr);
@@ -494,12 +495,18 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                 iguana_send(coin,addr,serialized,datalen);
                 addr->pendhdrs++;
                 flag++;
+                free_queueitem(hashstr);
+                return(flag);
             } else printf("datalen.%d from gethdrs\n",datalen);
             free_queueitem(hashstr);
             hashstr = 0;
         }
     }
-    if ( ((req= queue_dequeue(&coin->priorityQ,0)) != 0 || (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
+    if ( (limit= addr->recvblocks) < 1 )
+        limit = 1;
+    else if ( limit > coin->MAXPENDING )
+        limit = coin->MAXPENDING;
+    while ( (req= queue_dequeue(&coin->priorityQ,0)) != 0 || (addr->pendblocks < limit && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
     {
         hash2 = req->hash2;
         height = req->height;
@@ -521,6 +528,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                     req->bp->issued[req->bundlei] = milliseconds();
                 flag++;
                 myfree(req,sizeof(*req));
+                return(flag);
             } else printf("error constructing request %s.%d\n",hexstr,height);
         }
     }
