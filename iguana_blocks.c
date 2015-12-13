@@ -1156,7 +1156,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 }
                 n++;
             }
-            else if ( priorityflag != 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
+            else if ( priorityflag != 0 && qsize == 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
             {
                 if ( (rand() % 1000) == 0 )
                     printf("priorityQ submit threshold %.3f [%d].%d\n",threshold,bp->hdrsi,i);
