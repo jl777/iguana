@@ -1010,6 +1010,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 if ( bundlei >= 0 && bundlei < bp->n && bundlei < coin->chain->bundlesize )
                 {
                     bp->blocks[bundlei] = block;
+                    block->datalen = req->datalen;
                     bp->numrecv++;
                 }
                 req->datalen = datalen;
@@ -1115,7 +1116,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 
 int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int32_t priorityflag)
 {
-    int32_t i,qsize,n = 0; struct iguana_block *block; bits256 hash2; double threshold;
+    int32_t i,qsize,n = 0; struct iguana_block *block; bits256 hash2; double threshold; uint64_t datasize =0;
     //printf("bp.%p bundlecheck.%d emit.%d\n",bp,bp->hdrsi,bp->emitfinish);
     if ( bp != 0 && bp->emitfinish == 0 )
     {
@@ -1136,6 +1137,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 block = bp->blocks[i] = iguana_blockfind(coin,hash2);
             if ( block != 0 && block->txdata != 0 )
             {
+                datasize += block->datalen;
                 if ( bits256_nonz(block->bundlehash2) == 0 )
                 {
                     iguana_hash2set(coin,"bundlecheck",&block->bundlehash2,bp->bundlehash2);
@@ -1154,6 +1156,8 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
             }
         }
         bp->numrecv = n;
+        bp->datasize = datasize;
+        bp->estsize = (datasize * n) / coin->chain->bundlesize;
         if ( n == coin->chain->bundlesize )
         {
             //printf("check %d blocks in hdrs.%d\n",n,bp->hdrsi);
@@ -1327,9 +1331,9 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
 
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
-    int32_t i,j,bundlei,numbundles,numdone,numrecv,numhashes,numissued,numemit;
-    struct iguana_bundle *bp; bits256 hash2;
-    numbundles = numdone = numrecv = numhashes = numissued = numemit = 0;
+    int32_t i,j,bundlei,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,flag;
+    struct iguana_bundle *bp; bits256 hash2; int64_t estsize = 0;
+    numbundles = numdone = numrecv = numhashes = numissued = numemit = numactive = 0;
     for (i=0; i<coin->bundlescount; i++)
     {
         if ( (bp= coin->bundles[i]) != 0 )
@@ -1343,7 +1347,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     numdone++, numhashes += (bp->n + 1), numissued += (bp->n + 1), numrecv += (bp->n + 1);
                 else
                 {
-                    for (j=0; j<bp->n; j++)
+                    flag = 0;
+                    for (j=0; j<bp->n&&j<coin->chain->bundlesize; j++)
                     {
                         bundlei = j;
                         hash2 = iguana_bundleihash2(coin,bp,bundlei);
@@ -1352,17 +1357,26 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                             numhashes++;
                             if ( bp->issued[bundlei] > SMALLVAL )
                             {
+                                flag++;
                                 numissued++;
                                 if ( GETBIT(bp->recv,bundlei) != 0 )
                                     numrecv++;
                             }
                         }
                     }
+                    if ( flag != 0 )
+                    {
+                        estsize += bp->estsize;
+                        numactive++;
+                    }
                 }
             }
         }
     }
-    sprintf(str,"N[%d] done.%d pend.%d g.%d h.%d i.%d r.%d E.%d long.%d",coin->bundlescount,numdone,coin->numpendings,numbundles,numhashes,numissued,numrecv,numemit,coin->longestchain);
+    sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,numrecv,numemit,coin->numemitted,coin->longestchain,coin->MAXBUNDLES,mbstr(estsize));
+    if ( numactive >= coin->MAXBUNDLES && estsize < coin->MAXRECVCACHE*.5 )
+        coin->MAXBUNDLES++;
+    coin->estsize = estsize;
 }
 
 int32_t iguana_updatecounts(struct iguana_info *coin)

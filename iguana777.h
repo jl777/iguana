@@ -374,6 +374,7 @@ struct iguana_bundle
     struct iguana_block block;
     uint32_t issuetime,emitfinish; struct iguana_block **blocks;
     int32_t bundleheight,numgot,numissued,numrecv,hdrsi,n;
+    uint64_t datasize,estsize;
     bits256 bundlehash2,firstblockhash2,prevbundlehash2,nextbundlehash2,*blockhashes;
     uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1];
     double avetime,issued[];
@@ -392,8 +393,8 @@ struct iguana_info
     char name[64],symbol[8];
     struct iguana_peers peers;
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
-    int64_t mining,totalfees,TMPallocated,MAXRECVCACHE;
-    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle;
+    int64_t mining,totalfees,TMPallocated,MAXRECVCACHE,estsize;
+    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle,numemitted;
     uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,firstblock,lastpossible,bundlescount;
     struct iguana_chain *chain;
     struct iguanakv *iAddrs,*txids,*spends,*unspents,*pkhashes;

@@ -461,6 +461,12 @@ void iguana_helper(void *arg)
             {
                 fflush(fp);
                 iguana_emittxdata(bp->coin,bp);
+                if ( bp->coin != 0 )
+                {
+                    if ( bp->coin->estsize > bp->coin->MAXRECVCACHE*.9 && bp->coin->MAXBUNDLES > 4 )
+                        bp->coin->MAXBUNDLES--;
+                    bp->coin->numemitted++;
+                }
             }
             else
             {
