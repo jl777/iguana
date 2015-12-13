@@ -350,9 +350,9 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
-        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? 1 : 16;
+        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING;
     if ( (coin->MAXBUNDLES= maxbundles) <= 0 )
-        coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? 16 : 512;
+        coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*4;
     coin->myservices = services;
     sprintf(dirname,"DB/%s",symbol);
     ensure_directory(dirname);
