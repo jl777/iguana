@@ -474,7 +474,7 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
             queue_enqueue(str,Q,&req->DL,0);
             return(1);
         } else printf("null Q\n");
-    } else printf("queueblock skip priority.%d bundlei.%d\n",bundlei,priority);
+    } //else printf("queueblock skip priority.%d bundlei.%d\n",bundlei,priority);
     return(0);
 }
 
@@ -1219,7 +1219,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
 int32_t iguana_issueloop(struct iguana_info *coin)
 {
     static uint32_t lastdisp;
-    int32_t i,closest,closestbundle,bundlei,qsize,m,numactive,numwaiting,maxwaiting,numbundles,lastbundle,n,dispflag = 0,flag = 0;
+    int32_t i,closest,closestbundle,bundlei,qsize,m,numactive,numwaiting,maxwaiting,lastbundle,n,dispflag = 0,flag = 0;
     struct iguana_bundle *bp,*prevbp,*nextbp; bits256 hash2;
     if ( time(NULL) > lastdisp+13 )
     {
@@ -1281,7 +1281,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         {
                             if ( bp->issued[bundlei] > SMALLVAL )
                                 numwaiting++;
-                            if ( bp->issued[bundlei] == 0 || (((qsize == 0 && coin->bcount > 100) || numbundles == 1) && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
+                            if ( bp->issued[bundlei] == 0 || (qsize == 0 && coin->bcount > 100 && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
                             {
                                 if ( i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting || numactive <= coin->MAXBUNDLES )
                                 {
@@ -1387,8 +1387,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
         }
     }
     sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,numrecv,numemit,coin->numemitted,coin->longestchain,coin->MAXBUNDLES,mbstr(estsize));
-    if ( numactive >= coin->MAXBUNDLES && estsize < coin->MAXRECVCACHE*.5 )
-        coin->MAXBUNDLES++;
+    coin->activebundles = numactive;
     coin->estsize = estsize;
 }
 

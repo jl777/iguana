@@ -465,6 +465,8 @@ void iguana_helper(void *arg)
                 {
                     if ( bp->coin->estsize > bp->coin->MAXRECVCACHE*.9 && bp->coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
                         bp->coin->MAXBUNDLES--;
+                    else if ( bp->coin->activebundles >= bp->coin->MAXBUNDLES && bp->coin->estsize < bp->coin->MAXRECVCACHE*.5 )
+                        bp->coin->MAXBUNDLES++;
                     bp->coin->numemitted++;
                 }
             }
