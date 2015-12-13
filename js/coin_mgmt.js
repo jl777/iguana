@@ -55,6 +55,9 @@ coinManagement.Post = function(objCoin) {
 	// Update Local Storage
 	updateLocalStorage();
 
+	// update UI
+	loadData();
+
 	return true;
 };
 
@@ -65,17 +68,20 @@ coinManagement.Get = function() {
 
 	getCoinsFromLocalStorage();
 
-	// Test Data - call API here
-	coinManagement.coins = [];
-	coinManagement.coins = [
-		new coinManagement.Coin(1, 'Sym1', 'Desc1', 1),
-		new coinManagement.Coin(2, 'Sym2', 'Desc2', 2),
-		new coinManagement.Coin(3, 'Sym3', 'Desc3', 3),
-		new coinManagement.Coin(4, 'Sym4', 'Desc4', 4)
-	];
+	
+	if(coinManagement.coins.length == 0)
+	{
+		// Test Data - call API here
+		coinManagement.coins = [
+			new coinManagement.Coin(1, 'USD', 'US Dollar', 1),
+			new coinManagement.Coin(2, 'EUR', 'EURO', 2),
+			new coinManagement.Coin(3, 'GBP', 'British Pound', 3),
+			new coinManagement.Coin(4, 'INR', 'Indian Rupee', 4),
+			new coinManagement.Coin(5, 'YEN', 'Japanese Yen', 3)
+		];
 
-	updateLocalStorage();
-
+		updateLocalStorage();
+	}
 };
 
 coinManagement.GetById = function(id) {
@@ -146,7 +152,7 @@ $('#btnSaveCoinForm').click(function(event) {
 
 	// KNOWN ISSUE : I AM AWARE THAT HARD CODING THE COIN ID TO 5 WOULD CAUSE PROBLEMS IN SOME SCENARIOS BUT THIS IS FOR TEMPORARY TESTING, THE API SHOULD RETURN THE ACTUAL COIN ID WHEN SAVED / OTHERWISE THE ID'S NEEDS TO BE TRACKED LOCALLY.
 
-	var objNewCoin = new coinManagement.Coin(5, txt_symbol, txt_description, dd_Status);
+	var objNewCoin = new coinManagement.Coin(6, txt_symbol, txt_description, dd_Status);
 	coinManagement.log('New Coin');
 	coinManagement.log(objNewCoin);
 	coinManagement.Post(objNewCoin);
@@ -154,7 +160,6 @@ $('#btnSaveCoinForm').click(function(event) {
 	// reset form
 	coinEditFormReset();
 	saveButton.setAttribute('data-dismiss', 'modal');
-	loadData();
 });
 
 $(function() {
@@ -175,14 +180,16 @@ $(function() {
 /// ----------------------------------
 
 var getCoinsFromLocalStorage = function() {
-	if (chrome.storage != null && chrome.storage != undefined) {
+
+	// reset in memory array
+	coinManagement.coins = [];
+
+	if (chrome != null && chrome != undefined && chrome.storage != null && chrome.storage != undefined) {
 		chrome.storage.sync.get('coinMgmt_savedCoins', function(localData) {
 			if (!chrome.runtime.error) {
 				coinManagement.log('getting data from chrome local storage');
-				coinManagement.log(savedCoins);
+				coinManagement.log(localData);
 				coinManagement.coins = localData.coinMgmt_savedCoins;
-				coinManagement.RenderGrid();
-				return true;
 			}
 		});
 	} else {
@@ -191,8 +198,6 @@ var getCoinsFromLocalStorage = function() {
 		if (localStorage.getItem('coinMgmt_savedCoins') != null && localStorage.getItem('coinMgmt_savedCoins') != undefined) {
 			coinManagement.coins = JSON.parse(localStorage.getItem('coinMgmt_savedCoins'));
 			coinManagement.log(coinManagement.coins.length + ' records found in localStorage');
-			coinManagement.RenderGrid();
-			return true;
 		}
 	}
 }
@@ -206,7 +211,6 @@ var updateLocalStorage = function() {
 			if (!chrome.runtime.error) {
 				alert('chrome local storage udated');
 				coinManagement.log('chrome local storage udated');
-				message('Local storage udate+d');
 			}
 		});
 	} else {
@@ -217,13 +221,6 @@ var updateLocalStorage = function() {
 	return true;
 };
 
-var jsonToObj = function(jsonString) {
-	return {};
-};
-
-var objToJson = function(objCoin) {
-	return '';
-};
 
 var objToHtml = function(objCoin) {
 	if (objCoin == null || objCoin == undefined) {
@@ -277,7 +274,7 @@ var getActionButton = function(id) {
 	return '<button class="btn btn-default coinMgmtActionButton" data-id=' + id + '>Delete</button>';
 };
 
-
+// This function loads and refreshes data in the UI grid
 var loadData = function() {
 	coinManagement.Get();
 	coinManagement.RenderGrid();
