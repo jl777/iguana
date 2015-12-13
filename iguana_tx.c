@@ -15,7 +15,7 @@
 
 #include "iguana777.h"
 
-queue_t txQ;
+queue_t helperQ;
 uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
 
 int64_t iguana_MEMallocated(struct iguana_info *coin)
@@ -214,7 +214,6 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     }
     coin->recvcount++;
     coin->recvtime = (uint32_t)time(NULL);
-datalen = 16;
     req = iguana_bundlereq(coin,addr,'B',datalen);
     req->blocks = block, req->n = datalen;
     memcpy(req->serialized,data,datalen);
@@ -391,7 +390,7 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
             {
                 if ( (req= block->txdata) != 0 && (numtx= block->txn_count) > 0 )
                 {
-                    if ( fwrite(req->serialized,1,req->n,fp) != req->n )
+                    if ( 0 && fwrite(req->serialized,1,req->n,fp) != req->n )
                         printf("error writing serialized data.%d\n",req->n);
                     if ( 0 && (txarray= iguana_gentxarray(coin,&len2,block,req->serialized,req->n,extra)) != 0 )
                     {
@@ -411,13 +410,58 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
             printf("%s: error writing offsets len.%ld != %d\n",fname,len,n+1);
         fclose(fp), fp = 0;
         memset(&M,0,sizeof(M));
-        if ( iguana_maptxdata(coin,&M,emitbp,fname) != n )
-            printf("emit error mapping n.%d height.%d\n",n,bundleheight);
+        //if ( iguana_maptxdata(coin,&M,emitbp,fname) != n )
+        //    printf("emit error mapping n.%d height.%d\n",n,bundleheight);
         //else
         {
             //if ( emitbp->blockhashes != 0 )
             //    myfree(emitbp->blockhashes,sizeof(*emitbp->blockhashes) * emitbp->n);
             //emitbp->blockhashes = 0;
         }
+    }
+}
+
+void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
+{
+    bp->coin = coin;
+    bp->type = 'E';
+    queue_enqueue("emitQ",&helperQ,&bp->DL,0);
+}
+
+void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req)
+{
+    req->coin = coin;
+    req->type = 'Q';
+    queue_enqueue("txdataQ",&helperQ,&req->DL,0);
+}
+
+void iguana_helper(void *arg)
+{
+    int32_t flag; struct iguana_bundle *bp; struct iguana_bundlereq *req; queue_t *Q = arg;
+    printf("start helper\n");
+    while ( 1 )
+    {
+        flag = 0;
+        if ( (bp= queue_dequeue(Q,0)) != 0 )
+        {
+            if ( bp->type == 'Q' )
+            {
+                req = (struct iguana_bundlereq *)bp;
+                //printf("START save tmp txdata %p [%d].%d datalen.%d\n",req->argbp,req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
+                myfree(req,req->allocsize);
+            }
+            else if ( bp->type == 'E' )
+            {
+                iguana_emittxdata(bp->coin,bp);
+            }
+            else
+            {
+                printf("iguana_helper: unsupported type.%c %d %p\n",bp->type,bp->type,bp);
+            }
+            flag++;
+            //printf("FINISH emittxdata\n");
+        }
+        if ( flag == 0 )
+            sleep(1);
     }
 }

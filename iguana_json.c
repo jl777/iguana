@@ -19,7 +19,7 @@ int32_t iguana_launchcoin(char *symbol,cJSON *json);
 
 struct iguana_jsonitem { struct queueitem DL; uint32_t expired,allocsize; char **retjsonstrp; char jsonstr[]; };
 
-queue_t finishedQ,helperQ;
+queue_t finishedQ;
 static struct iguana_info Coins[64];
 const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "BitcoinDark", "129" } };
 
@@ -357,33 +357,9 @@ void iguana_issuejsonstrM(void *arg)
     free(jsonstr);//,strlen(jsonstr)+1);
 }
 
-void iguana_helper(void *arg)
-{
-    int32_t flag; struct iguana_bundle *bp; queue_t *Q = arg;
-    printf("start helper\n");
-    while ( 1 )
-    {
-        flag = 0;
-        if ( (bp= queue_dequeue(Q,0)) != 0 )
-        {
-            //printf("START emittxdata\n");
-            iguana_emittxdata(bp->coin,bp);
-            flag++;
-            //printf("FINISH emittxdata\n");
-        }
-        if ( flag == 0 )
-            sleep(1);
-    }
-}
-
-void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
-{
-    bp->coin = coin;
-    queue_enqueue("emitQ",&helperQ,&bp->DL,0);
-}
-
 void iguana_main(void *arg)
 {
+    extern queue_t helperQ;
     int32_t i,len,flag; cJSON *json; uint8_t secretbuf[512]; char *coinargs,*secret,*jsonstr = arg;
     //  portable_OS_init()?
     mycalloc(0,0,0);

@@ -370,8 +370,9 @@ struct iguana_ledger
 
 struct iguana_bundle
 {
-    struct queueitem DL; struct iguana_block block;
-    uint32_t issuetime,emitfinish; struct iguana_info *coin; struct iguana_block **blocks;
+    struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei; // must be identical to iguana_bundlereq
+    struct iguana_block block;
+    uint32_t issuetime,emitfinish; struct iguana_block **blocks;
     int32_t bundleheight,numgot,numissued,numrecv,hdrsi,n;
     bits256 bundlehash2,firstblockhash2,prevbundlehash2,nextbundlehash2,*blockhashes;
     uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1];
@@ -380,9 +381,9 @@ struct iguana_bundle
 
 struct iguana_bundlereq
 {
-    struct queueitem DL; struct iguana_info *coin; struct iguana_peer *addr;
-    struct iguana_block *blocks; bits256 *hashes;
-    int32_t allocsize,datalen,n,numtx,type;
+    struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei; // must be identical to iguana_bundle
+    struct iguana_peer *addr; struct iguana_block *blocks; bits256 *hashes; struct iguana_bundle *argbp;
+    int32_t allocsize,datalen,n,numtx;
     uint8_t serialized[];
 };
 
@@ -627,5 +628,7 @@ void randombytes(unsigned char *x,long xlen);
 int32_t is_hexstr(char *str);
 void iguana_initQ(queue_t *Q,char *name);
 void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp);
+void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req);
+void iguana_helper(void *arg);
 
 #endif

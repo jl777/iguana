@@ -1013,8 +1013,10 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                     bp->numrecv++;
                 }
                 req->datalen = datalen;
-                block->txdata = req;
-                printf("store txdata[%d].%d <- %p\n",bp->hdrsi,bundlei,req);
+                req->argbp = bp, req->argbundlei = bundlei;
+                req->type = 'Q';
+                iguana_txdataQ(coin,req);
+                block->txdata = (void *)"submitted to helperQ";
                 req = 0;
             }
             else
