@@ -409,7 +409,7 @@ struct iguana_info
     portable_mutex_t peers_mutex,blocks_mutex;
     struct iguana_blocks blocks;
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
-    int32_t numpendings,zcount,recvcount,bcount,pcount; uint32_t recvtime,hdrstime;
+    int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,lastbundletime;
     int32_t initialheight,mapflags,minconfirms; void *launched,*started;
 };
 
