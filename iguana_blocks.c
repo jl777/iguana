@@ -1265,6 +1265,8 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                 }
                 if ( bp->numrecv > 3 )
                     numactive++;
+                if ( numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
+                    continue;
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
                     if ( iguana_bundletxdata(coin,bp,bundlei) != 0 )
@@ -1298,7 +1300,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             } else m = coin->chain->bundlesize;
         }
         prevbp = bp;
-        if ( dispflag != 0 && bp != 0 && bp->numrecv > 3 && bp->emitfinish == 0 )
+        if ( dispflag != 0 && bp != 0 && bp->emitfinish == 0 )
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
     coin->closestbundle = closestbundle;
