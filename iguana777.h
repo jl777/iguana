@@ -23,7 +23,7 @@
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 512 // 8
-#define _IGUANA_MAXBUNDLES 8 //512
+#define _IGUANA_MAXBUNDLES 16 //512
 #define IGUANA_MAXPACKETSIZE (2 * 1024 * 1024)
 #define IGUANA_RSPACE_SIZE (IGUANA_MAXPACKETSIZE * 16)
 #define IGUANA_MAXPEERS 1024
@@ -392,7 +392,7 @@ struct iguana_info
     struct iguana_peers peers;
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
     int64_t mining,totalfees,TMPallocated,MAXRECVCACHE;
-    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active;
+    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle;
     uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,firstblock,lastpossible,bundlescount;
     struct iguana_chain *chain;
     struct iguanakv *iAddrs,*txids,*spends,*unspents,*pkhashes;
