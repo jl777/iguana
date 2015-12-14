@@ -621,6 +621,7 @@ int main(int argc, const char * argv[])
     if ( argc < 2 )
         jsonstr = 0;
     else jsonstr = (char *)argv[1];
+    printf("main\n");
     iguana(jsonstr);
     return 0;
 }
