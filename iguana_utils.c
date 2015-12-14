@@ -24,7 +24,7 @@ long myallocated(uint8_t type,long change)
     static long Total_allocated,HWM_allocated,Type_allocated[256];
     int32_t i; long total = 0; char buf[2049];
     buf[0] = 0;
-    if ( type == 0 && change == 0 )
+   /* if ( type == 0 && change == 0 )
     {
         for (i=0; i<256; i++)
         {
@@ -46,7 +46,7 @@ long myallocated(uint8_t type,long change)
             printf("HWM allocated %ld %s\n",(long)Total_allocated,mbstr(Total_allocated));
             HWM_allocated = Total_allocated * 1.5;
         }
-    }
+    }*/
     return(total);
 }
 
