@@ -404,16 +404,8 @@ uint64_t calc_ipbits(char *ip_port)
     return(ipbits);
 }
 
-char *ipbits_str(uint64_t ipbits)
+char *ipbits_str(char ipaddr[64],uint64_t ipbits)
 {
-    static char ipaddr[64];
-    expand_ipbits(ipaddr,ipbits);
-    return(ipaddr);
-}
-
-char *ipbits_str2(uint64_t ipbits)
-{
-    static char ipaddr[64];
     expand_ipbits(ipaddr,ipbits);
     return(ipaddr);
 }
@@ -506,12 +498,13 @@ int32_t is_remote_access(char *previpaddr)
 
 char *conv_ipv6(char *ipv6addr)
 {
-    static unsigned char IPV4CHECK[10]; // 80 ZERO BITS for testing
+    unsigned char IPV4CHECK[10]; // 80 ZERO BITS for testing
     char ipv4str[4096];
     struct sockaddr_in6 ipv6sa;
     in_addr_t *ipv4bin;
     unsigned char *bytes;
     int32_t isok;
+    memset(IPV4CHECK,0,sizeof(IPV4CHECK));
     strcpy(ipv4str,ipv6addr);
     //isok = !uv_inet_pton(AF_INET,(const char*)ipv6addr,&ipv6sa.sin6_addr);
     //printf("isok.%d\n",isok);
