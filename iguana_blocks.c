@@ -1310,7 +1310,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
         if ( dispflag != 0 && bp != 0 && bp->emitfinish == 0 )
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
-    if ( closestbundle >= 0 && (coin->closestbundle < 0 || coin->bundles[coin->closestbundle]->numrecv >= coin->chain->bundlesize) )
+    //if ( closestbundle >= 0 && (coin->closestbundle < 0 || coin->bundles[coin->closestbundle]->numrecv >= coin->chain->bundlesize) )
         coin->closestbundle = closestbundle;
     if ( dispflag != 0 )
         printf(" PENDINGBUNDLES lastbundle.%d closest.[%d] %s | %d\n",lastbundle,closestbundle,mbstr(closest),coin->closestbundle);
