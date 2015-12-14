@@ -460,7 +460,9 @@ void iguana_helper(void *arg)
             else if ( bp->type == 'E' )
             {
                 fflush(fp);
+                myallocated();
                 iguana_emittxdata(bp->coin,bp);
+                myallocated();
                 if ( bp->coin != 0 )
                 {
                     if ( bp->coin->estsize > bp->coin->MAXRECVCACHE*.9 && bp->coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
