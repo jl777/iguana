@@ -21,7 +21,7 @@ portable_mutex_t MEMmutex;
 
 long myallocated(uint8_t type,long change)
 {
-    static long Total_allocated,HWM_allocated,Type_allocated[256];
+    static int32_t Total_allocated,HWM_allocated,Type_allocated[256];
     int32_t i; long total = 0; char buf[2049];
     buf[0] = 0;
     if ( type == 0 && change == 0 )
@@ -31,7 +31,7 @@ long myallocated(uint8_t type,long change)
             if ( Type_allocated[i] != 0 )
             {
                 total += Type_allocated[i];
-                sprintf(buf+strlen(buf),"(%c %ld) ",i,Type_allocated[i]);
+                sprintf(buf+strlen(buf),"(%c %ld) ",i,(long)Type_allocated[i]);
             }
         }
         sprintf(buf + strlen(buf),"-> total %ld %s",total,mbstr(total));
