@@ -215,7 +215,7 @@ void iguana_closemap(struct iguana_mappedptr *mp)
 
 int32_t iguana_syncmap(struct iguana_mappedptr *mp,long len)
 {
-    static long Sync_total;
+    //static long Sync_total;
 	int32_t err = -1;
 	if ( mp->actually_allocated != 0 )
 		return(0);
@@ -226,7 +226,7 @@ int32_t iguana_syncmap(struct iguana_mappedptr *mp,long len)
         err = msync(mp->fileptr,len,MS_SYNC);
         if ( err != 0 )
             printf("sync (%s) len %llu, err %d errno.%d\n",mp->fname,(long long)len,err,errno);
-        Sync_total += len;
+        //Sync_total += len;
         mp->dirty = 0;
     }
 	return(err);
