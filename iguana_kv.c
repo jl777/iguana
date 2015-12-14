@@ -142,7 +142,7 @@ int64_t iguana_copyfile(char *src,char *dest,int32_t cmpflag)
     return(len);
 }
 
-void *map_file(char *fname,uint64_t *filesizep,int32_t enablewrite)
+void *map_file(char *fname,long *filesizep,int32_t enablewrite)
 {
 	//void *mmap64(void *addr,size_t len,int32_t prot,int32_t flags,int32_t fildes,off_t off);
 	int32_t fd,rwflags,flags = MAP_FILE|MAP_SHARED;
