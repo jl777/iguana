@@ -15,7 +15,7 @@
 
 #include "iguana777.h"
 
-queue_t helperQ;
+queue_t helperQ,txQ;
 uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
 
 int64_t iguana_MEMallocated(struct iguana_info *coin)
@@ -217,6 +217,8 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     req = iguana_bundlereq(coin,addr,'B',datalen);
     req->blocks = block, req->n = datalen;
     memcpy(req->serialized,data,datalen);
+    Tx_allocated++;
+    Tx_allocsize += datalen;
     //printf("test emit txarray[%d] %p\n",numtx,block);
     block->txn_count = req->numtx = numtx;
     iguana_freetx(txarray,numtx);
@@ -461,6 +463,8 @@ void iguana_helper(void *arg)
                     if ( fwrite(req->serialized,1,req->datalen,fp) != req->datalen )
                         printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
                 }
+                Tx_freed++;
+                Tx_freesize += req->allocsize;
                 myfree(req,req->allocsize);
             }
             else if ( bp->type == 'E' )
