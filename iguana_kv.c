@@ -799,7 +799,7 @@ void *_iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,voi
         kv->M.dirty++;
         HASH_FIND(hh,kv->hashtables[((uint8_t *)key)[kv->keysize>>1]],key,kv->keysize,item);
         if ( kv->dispflag != 0 || item == 0 || item->hh.itemind != itemind )
-            fprintf(stderr,">> %s found item.%p iguana_kvwrite numkeys.%d kv.(%p) table.%p write kep.%p key.%s size.%d, %p value.(%08x) size.%d itemind.%d:%d\n",kv->name,item,kv->numkeys,key,kv->hashtables[((uint8_t *)itemkey)[kv->keysize>>1]],itemkey,itemkey!=0?bits256_str(*(bits256 *)itemkey):"0",kv->keysize,itemvalue,itemvalue!=0?calc_crc32(0,itemvalue,valuesize):0,valuesize,item!=0?item->hh.itemind:0,itemind);
+            fprintf(stderr,">> %s found item.%p iguana_kvwrite numkeys.%d kv.(%p) table.%p write kep.%p size.%d, %p value.(%08x) size.%d itemind.%d:%d\n",kv->name,item,kv->numkeys,key,kv->hashtables[((uint8_t *)itemkey)[kv->keysize>>1]],itemkey,kv->keysize,itemvalue,itemvalue!=0?calc_crc32(0,itemvalue,valuesize):0,valuesize,item!=0?item->hh.itemind:0,itemind);
         if ( item != 0 )
             return(value);
         else printf("null item after find kvwrite error\n"), getchar();
@@ -961,7 +961,9 @@ int32_t iguana_kvdisp(struct iguana_info *coin,struct iguanakv *kv)
             if ( (itemvalue= iguana_itemvalue(coin,&itemkey,kv,ptr,item)) != 0 )
             {
                 init_hexbytes_noT(hexstr,itemvalue,kv->RAMvaluesize);
-                printf("itemind.%d %s %s len.%d height.%d PoW %.15f\n",item->hh.itemind,bits256_str(*(bits256 *)itemkey),hexstr,kv->RAMvaluesize,((struct iguana_block *)itemvalue)->height,((struct iguana_block *)itemvalue)->L.PoW);
+                char str[65];
+                bits256_str(str,*(bits256 *)itemkey);
+                printf("itemind.%d %s %s len.%d height.%d PoW %.15f\n",item->hh.itemind,str,hexstr,kv->RAMvaluesize,((struct iguana_block *)itemvalue)->height,((struct iguana_block *)itemvalue)->L.PoW);
             }
             n++;
         }

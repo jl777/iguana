@@ -34,7 +34,9 @@ uint32_t iguana_txidind(struct iguana_info *coin,uint32_t *firstvoutp,uint32_t *
         }
         return(itemind);
     }
-    printf("%s -> error\n",bits256_str(txid));
+    char str[65];
+    bits256_str(str,txid);
+    printf("%s -> error\n",str);
     //iguana_kvdisp(coin,coin->txids);
     if ( firstvoutp != 0 )
         *firstvoutp = 0;
@@ -439,7 +441,9 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
                 }
                 else
                 {
-                    printf("block.%u txindind.%u cant find prev_hash.(%s)\n",blocknum,txidind,bits256_str(vin->prev_hash));
+                    char str[65];
+                    bits256_str(str,vin->prev_hash);
+                    printf("block.%u txindind.%u cant find prev_hash.(%s)\n",blocknum,txidind,str);
                     getchar();
                     break;
                 }
@@ -449,7 +453,9 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
             *numvinsp = numvins;
             if ( txind != 0 && outputs > inputs ) // need to calculate after entire block, also single thread all ramchains and add way to regen from reorg, ledgerhashes, sync to ledger, scripts and balances
             {
-                printf("FEECALC ERROR %s outputs %.8f > inputs %.8f\n",bits256_str(tx->txid),dstr(outputs),dstr(inputs));
+                char str[65];
+                bits256_str(str,tx->txid);
+                printf("FEECALC ERROR %s outputs %.8f > inputs %.8f\n",str,dstr(outputs),dstr(inputs));
             }
             (*totalfeesp) += (outputs - inputs);
             return(0);
@@ -485,7 +491,9 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
     {
         for (i=0; i<IGUANA_NUMAPPENDS; i++)
             printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
-        printf("-> pre parse %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),coin->blocks.parsedblocks);
+        char str[65];
+        bits256_str(str,coin->LEDGER.snapshot.ledgerhash);
+        printf("-> pre parse %s ledgerhashes.%d\n",str,coin->blocks.parsedblocks);
     }
     coin->LEDGER.snapshot.blockhash = block->hash2;
     coin->LEDGER.snapshot.merkle_root = block->merkle_root;

@@ -297,27 +297,15 @@ bits256 bits256_doublesha256(char *hashstr,uint8_t *data,int32_t datalen)
     return(hash);
 }
 
-char *bits256_str(bits256 x)
+char *bits256_str(char hexstr[65],bits256 x)
 {
-    static char *hexstr;
-    if ( hexstr == 0 )
-        hexstr = malloc(sizeof(bits256)*2 + 1);
     init_hexbytes_noT(hexstr,x.bytes,sizeof(x));
     return(hexstr);
 }
 
-char *bits256_str2(bits256 x)
+char *bits256_lstr(char hexstr[65],bits256 x)
 {
-    static char *hexstr;
-    if ( hexstr == 0 )
-        hexstr = malloc(sizeof(bits256)*2 + 1);
-    init_hexbytes_noT(hexstr,x.bytes,sizeof(x));
-    return(hexstr);
-}
-
-char *bits256_lstr(bits256 x)
-{
-    static char hexstr[65]; bits256 revx; int32_t i;
+    bits256 revx; int32_t i;
     for (i=0; i<32; i++)
         revx.bytes[i] = x.bytes[31-i];
     init_hexbytes_noT(hexstr,revx.bytes,sizeof(revx));

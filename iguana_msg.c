@@ -280,9 +280,11 @@ int32_t iguana_rwblock(int32_t rwflag,bits256 *hash2p,uint8_t *serialized,struct
     len += iguana_rwvarint(rwflag,&serialized[len],&x);
     if ( rwflag == 0 )
     {
+        char str[65];
+        bits256_str(str,*hash2p);
         if ( x < 65536 )
             msg->txn_count = (uint16_t)x;
-        else printf("txn_count overflow.%lld for %s\n",(long long)x,bits256_str(*hash2p));
+        else printf("txn_count overflow.%lld for %s\n",(long long)x,str);
     }
     //  ? 	txns 	tx[] 	Block transactions, in format of "tx" command
     return(len);

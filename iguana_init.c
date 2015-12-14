@@ -26,14 +26,15 @@ void iguana_initQ(queue_t *Q,char *name)
 void iguana_initQs(struct iguana_info *coin)
 {
     int32_t i;
-    iguana_initQ(&coin->hdrsQ,"hdrsQ");
     iguana_initQ(&coin->bundlesQ,"bundlesQ");
+    iguana_initQ(&coin->hdrsQ,"hdrsQ");
     iguana_initQ(&coin->blocksQ,"blocksQ");
     iguana_initQ(&coin->priorityQ,"priorityQ");
     iguana_initQ(&coin->possibleQ,"possibleQ");
-    iguana_initQ(&coin->helperQ,"emitQ");
-    iguana_initQ(&coin->finishedQ,"emitQ");
     iguana_initQ(&coin->jsonQ,"jsonQ");
+    iguana_initQ(&coin->helperQ,"helperQ");
+    iguana_initQ(&coin->helperQ,"helperQ");
+    iguana_initQ(&coin->TerminateQ,"TerminateQ");
     for (i=0; i<IGUANA_MAXPEERS; i++)
         iguana_initQ(&coin->peers.active[i].sendQ,"addrsendQ");
 }
@@ -58,18 +59,21 @@ void iguana_initcoin(struct iguana_info *coin)
 
 bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
 {
-    struct iguana_block block,*ptr; struct iguana_msgblock msg; bits256 hash2; uint8_t buf[1024]; double PoW;
+    struct iguana_block block,*ptr; struct iguana_msgblock msg; bits256 hash2;
+    char str[65]; uint8_t buf[1024]; double PoW;
     decode_hex(buf,(int32_t)strlen(chain->genesis_hex)/2,(char *)chain->genesis_hex);
     hash2 = bits256_doublesha256(0,buf,sizeof(struct iguana_msgblockhdr));
     iguana_rwblock(0,&hash2,buf,&msg);
     if  ( memcmp(hash2.bytes,chain->genesis_hashdata,sizeof(hash2)) != 0 )
     {
-        printf("genesis mismatch? calculated %s vs %s\n",bits256_str(hash2),(char *)chain->genesis_hex);
+        bits256_str(str,hash2);
+        printf("genesis mismatch? calculated %s vs %s\n",str,(char *)chain->genesis_hex);
         memset(hash2.bytes,0,sizeof(hash2));
         return(hash2);
     }
     PoW = PoW_from_compact(msg.H.bits,coin->chain->unitval);
-    printf("genesis.(%s) len.%d hash.%s\n",chain->genesis_hex,(int32_t)sizeof(msg.H),bits256_str(hash2));
+    bits256_str(str,hash2);
+    printf("genesis.(%s) len.%d hash.%s\n",chain->genesis_hex,(int32_t)sizeof(msg.H),str);
     iguana_convblock(&block,&msg,hash2,0,1,1,1,PoW);
     coin->latest.dep.numtxids = block.numvouts = 1;
     iguana_gotdata(coin,0,0,hash2);
@@ -354,7 +358,9 @@ uint32_t iguana_syncs(struct iguana_info *coin)
         height = coin->blocks.parsedblocks - (coin->firstblock != 0);
         for (i=0; i<IGUANA_NUMAPPENDS; i++)
             printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
-        printf("-> syncs %s ledgerhashes.%d\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),height);
+        char str[65];
+        bits256_str(str,coin->LEDGER.snapshot.ledgerhash);
+        printf("-> syncs %s ledgerhashes.%d\n",str,height);
         iguana_syncmap(&coin->iAddrs->M,0);
         iguana_syncmap(&coin->blocks.db->M,0);
         iguana_syncmap(&coin->unspents->M,0);
@@ -430,7 +436,9 @@ int32_t iguana_loadledger(struct iguana_info *coin,int32_t hwmheight)
                 printf("found ledger height.%d loadedht.%d\n",block->height,coin->LEDGER.snapshot.height); //getchar();
                 for (i=0; i<IGUANA_NUMAPPENDS; i++)
                     printf("%llx ",(long long)coin->LEDGER.snapshot.lhashes[i].txid);
-                printf("-> %s ledgerhashes.%x\n",bits256_str(coin->LEDGER.snapshot.ledgerhash),calc_crc32(0,&coin->latest.states[IGUANA_LHASH_TXIDS],sizeof(coin->latest.states[IGUANA_LHASH_TXIDS])));
+                char str[65];
+                bits256_str(str,coin->LEDGER.snapshot.ledgerhash);
+                printf("-> %s ledgerhashes.%x\n",str,calc_crc32(0,&coin->latest.states[IGUANA_LHASH_TXIDS],sizeof(coin->latest.states[IGUANA_LHASH_TXIDS])));
                 printf("loaded H.%d T%d U%d S%d P%d\n",coin->LEDGER.snapshot.height,dep->numtxids,dep->numunspents,dep->numspends,dep->numpkinds); //getchar();
                 coin->latest.credits = coin->LEDGER.snapshot.credits;
                 coin->latest.debits = coin->LEDGER.snapshot.debits;
@@ -493,7 +501,9 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
                 }
                 if ( txind == 0 && (firstvout != unspentind || firstvin != spendind) )
                 {
-                    printf("h.%d txind.%d txidind.%d %s firstvout.%d != U%d firstvin.%d != S%d\n",height,txind,txidind,bits256_str(T.txid),firstvout,unspentind,firstvin,spendind);
+                    char str[65];
+                    bits256_str(str,T.txid);
+                    printf("h.%d txind.%d txidind.%d %s firstvout.%d != U%d firstvin.%d != S%d\n",height,txind,txidind,str,firstvout,unspentind,firstvin,spendind);
                     iguana_txidind(coin,&firstvout,&firstvin,T.txid);
                     iguana_txidind(coin,&firstvout,&firstvin,T.txid);
                     return(-1);
@@ -541,7 +551,9 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
             }
             else
             {
-                printf("height.%d txind.%d txid.%s txidind.%d != %d\n",height,txind,bits256_str(T.txid),txidind,checkind);
+                char str[65];
+                bits256_str(str,T.txid);
+                printf("height.%d txind.%d txid.%s txidind.%d != %d\n",height,txind,str,txidind,checkind);
                 getchar();
                 return(-1);
             }

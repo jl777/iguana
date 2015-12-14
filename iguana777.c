@@ -50,7 +50,9 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
                 hash2 = iguana_blockhash(coin,&valid,height+iter);
                 if ( bits256_nonz(hash2) > 0 )
                 {
-                    fprintf(fp,"%d %s\n",height+iter,bits256_str(hash2));
+                    char str[65];
+                    bits256_str(str,hash2);
+                    fprintf(fp,"%d %s\n",height+iter,str);
                     retval = height+iter;
                 }
                 if ( coin->chain->hasheaders != 0 )
@@ -114,7 +116,9 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                         {
                             if ( (bp= iguana_bundlecreate(coin,bundlehash2,bits256_zero)) != 0 )
                             {
-                                printf("add bundle.%d:%d (%s) %p\n",bundleheight,bp->hdrsi,bits256_str(bundlehash2),bp);
+                                char str[65];
+                                bits256_str(str,bundlehash2);
+                                printf("add bundle.%d:%d (%s) %p\n",bundleheight,bp->hdrsi,str,bp);
                                 bp->bundleheight = bundleheight;
                                 flag = 0;
                             }
@@ -127,7 +131,10 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                     {
                         if ( (bp= iguana_bundlecreate(coin,bundlehash2,hash2)) != 0 )
                         {
-                            printf("add bundle.%d:%d (%s) %s %p\n",bundleheight,bp->hdrsi,bits256_str(bundlehash2),bits256_str2(hash2),bp);
+                            char str[65],str2[65];
+                            bits256_str(str,bundlehash2);
+                            bits256_str(str2,hash2);
+                            printf("add bundle.%d:%d (%s) %s %p\n",bundleheight,bp->hdrsi,str,str2,bp);
                             bp->bundleheight = bundleheight;
                             flag = 0;
                         }
@@ -285,7 +292,7 @@ void iguana_coinloop(void *arg)
         }
     }
     coin = coins[0];
-    iguana_possible_peer(coin,"127.0.0.1");
+    //iguana_possible_peer(coin,"127.0.0.1");
     while ( 1 )
     {
         flag = 0;

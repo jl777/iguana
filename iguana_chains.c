@@ -229,8 +229,11 @@ int32_t iguana_setchainvars(struct iguana_info *coin,uint32_t *firsttxidindp,uin
         {
             if ( iguana_needhdrs(coin) == 0 )
             {
-                printf("hash2.(%s) ",bits256_str(hash2));
-                fprintf(stderr,"iguana_blockchain no prev block.(%s)\n",bits256_str(prevhash));
+                char str[65],str2[65];
+                bits256_str(str,hash2);
+                bits256_str(str2,prevhash);
+                printf("hash2.(%s) ",str);
+                fprintf(stderr,"iguana_blockchain no prev block.(%s)\n",str2);
                 //getchar();
             }
             return(-1);
@@ -302,15 +305,20 @@ int32_t iguana_chainextend(struct iguana_info *coin,bits256 hash2,struct iguana_
             //   iguana_bundleinit(coin,newblock->height,hash2);
             //printf("%s height.%d PoW %f\n",bits256_str(hash2),block->height,block->PoW);
             // if ( coin->blocks.initblocks != 0 && ((newblock->height % 100) == 0 || coin->blocks.hwmheight > coin->longestchain-10) )
-            printf("ADD %s %d:%d:%d <- (%s) n.%u max.%u PoW %f 1st.%d numtx.%d\n",bits256_str(newblock->hash2),h,iguana_chainheight(coin,newblock),newblock->height,bits256_str(coin->blocks.hwmchain),coin->blocks.hwmheight+1,coin->blocks.maxblocks,newblock->L.PoW,newblock->L.numtxids,newblock->txn_count);
+            char str[65],str2[65];
+            bits256_str(str,newblock->hash2);
+            bits256_str(str2,coin->blocks.hwmchain);
+            printf("ADD %s %d:%d:%d <- (%s) n.%u max.%u PoW %f 1st.%d numtx.%d\n",str,h,iguana_chainheight(coin,newblock),newblock->height,str2,coin->blocks.hwmheight+1,coin->blocks.maxblocks,newblock->L.PoW,newblock->L.numtxids,newblock->txn_count);
             //iguana_queueblock(coin,newblock->height,hash2);
             //coin->newhdrs++;
         }
     } else printf("error from setchain.%d\n",newblock->height);
     if ( memcmp(hash2.bytes,coin->blocks.hwmchain.bytes,sizeof(hash2)) != 0 )
     {
+        char str[65];
+        bits256_str(str,hash2);
         if ( iguana_needhdrs(coin) == 0 )
-            printf("ORPHAN.%s height.%d PoW %f vs best %f\n",bits256_str(hash2),newblock->height,newblock->L.PoW,coin->blocks.hwmPoW);
+            printf("ORPHAN.%s height.%d PoW %f vs best %f\n",str,newblock->height,newblock->L.PoW,coin->blocks.hwmPoW);
         newblock->height = -1;
     }
     //iguana_audit(coin);

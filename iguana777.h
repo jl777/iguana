@@ -276,7 +276,7 @@ struct iguana_peer
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
     struct msgcounts msgcounts;
-    struct iguana_memspace SEROUT[_IGUANA_MAXPENDING * 2];
+    struct iguana_memspace SEROUT[_IGUANA_MAXPENDING * 2/_IGUANA_MAXPENDING];
 };
 
 struct iguana_peers
@@ -596,9 +596,9 @@ uint64_t calc_ipbits(char *ip_port);
 void expand_ipbits(char *ipaddr,uint64_t ipbits);
 
 bits256 bits256_doublesha256(char *hashstr,uint8_t *data,int32_t datalen);
-char *bits256_str(bits256 x);
-char *bits256_str2(bits256 x);
-char *bits256_lstr(bits256 x);
+char *bits256_str(char hexstr[65],bits256 x);
+char *bits256_str2(char hexstr[65],bits256 x);
+char *bits256_lstr(char hexstr[65],bits256 x);
 bits256 bits256_add(bits256 a,bits256 b);
 int32_t bits256_cmp(bits256 a,bits256 b);
 bits256 bits256_from_compact(uint32_t c);

@@ -353,7 +353,8 @@ void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 
 void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,uint8_t *data,int32_t datalen)
 {
     struct iguana_bundlereq *req;
-    printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(tx->txid));
+    char str[65]; bits256_str(str,tx->txid);
+    printf("%s unconfirmed.%s\n",addr->ipaddr,str);
     req = iguana_bundlereq(coin,addr,'U',datalen);
     req->datalen = datalen;
     memcpy(req->data,data,datalen);
