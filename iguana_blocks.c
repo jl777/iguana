@@ -1168,7 +1168,8 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
         }
         bp->numrecv = n;
         bp->datasize = datasize;
-        bp->estsize = (datasize * n) / coin->chain->bundlesize;
+        if ( n > 0 )
+            bp->estsize = ((uint64_t)datasize * coin->chain->bundlesize) / n;
         if ( n == coin->chain->bundlesize )
         {
             //printf("check %d blocks in hdrs.%d\n",n,bp->hdrsi);
@@ -1219,7 +1220,8 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
 int32_t iguana_issueloop(struct iguana_info *coin)
 {
     static uint32_t lastdisp;
-    int32_t i,closest,closestbundle,bundlei,qsize,m,numactive,numwaiting,maxwaiting,lastbundle,n,dispflag = 0,flag = 0;
+    int32_t i,closestbundle,bundlei,qsize,m,numactive,numwaiting,maxwaiting,lastbundle,n,dispflag = 0,flag = 0;
+    int64_t remaining,closest;
     struct iguana_bundle *bp,*prevbp,*nextbp; bits256 hash2;
     if ( time(NULL) > lastdisp+13 )
     {
@@ -1258,13 +1260,17 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             if ( bp->emitfinish == 0 )
             {
                 iguana_bundlecheck(coin,bp,numactive == 0 || i == coin->closestbundle || i == lastbundle);
-                if ( bp->numrecv > closest && bp->numrecv < coin->chain->bundlesize )
-                {
-                    closest = bp->numrecv;
-                    closestbundle = i;
-                }
                 if ( bp->numrecv > 3 || numactive == 0 )
+                {
                     numactive++;
+                    remaining = (bp->estsize - bp->datasize);
+                    if ( remaining > 0 && (closest < 0 || remaining < closest) )
+                    {
+                        //printf("closest.[%d] %d -> R.%d (%d - %d)\n",closestbundle,(int)closest,(int)remaining,(int)bp->estsize,(int)bp->datasize);
+                        closest = remaining;
+                        closestbundle = i;
+                    }
+                }
                 if ( numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
                     continue;
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
@@ -1305,7 +1311,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     }
     coin->closestbundle = closestbundle;
     if ( dispflag != 0 )
-        printf(" PENDINGBUNDLES lastbundle.%d closest.[%d] %d\n",lastbundle,closestbundle,closest);
+        printf(" PENDINGBUNDLES lastbundle.%d closest.[%d] %s\n",lastbundle,closestbundle,mbstr(closest));
     return(flag);
 }
 
