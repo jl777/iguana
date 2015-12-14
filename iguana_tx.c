@@ -364,7 +364,7 @@ void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,st
 
 void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx,uint8_t *data,int32_t datalen,uint8_t extra[256])
 {
-    struct iguana_bundlereq *req; int32_t i;
+    struct iguana_bundlereq *req; int32_t i; char fname[512]; long fpos;
     if ( 0 )
     {
         for (i=0; i<extra[0]; i++)
@@ -386,9 +386,18 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
         addr->recvtotal += datalen;
         if ( addr->fp != 0 )
         {
-            fwrite(&datalen,1,sizeof(datalen),addr->fp);
-            fwrite(&numtx,1,sizeof(numtx),addr->fp);
-            fwrite(data,1,datalen,addr->fp);
+            fpos = ftell(addr->fp) + datalen + sizeof(datalen);
+            if ( fpos > IGUANA_PEERFILESIZE )
+            {
+                fclose(addr->fp);
+                sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
+                addr->fp = fopen(fname,"wb");
+            }
+            if ( addr->fp != 0 )
+            {
+                fwrite(&datalen,1,sizeof(datalen),addr->fp);
+                fwrite(data,1,datalen,addr->fp);
+            }
         }
     }
     coin->recvcount++;

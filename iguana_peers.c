@@ -890,8 +890,9 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     struct pollfd fds; uint8_t *buf,serialized[64]; char fname[512]; int64_t remaining;
     int32_t i,bufsize,flag,timeout = coin->MAXPEERS/64+1;
     struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
-    printf("start dedicatedloop.%s\n",addr->ipaddr);
-    sprintf(fname,"tmp/%s/%s",coin->symbol,addr->ipaddr);
+    addr->addrind = (int32_t)(((long)addr - (long)&coin->peers.active[0]) / sizeof(*addr));
+    printf("start dedicatedloop.%s addrind.%d\n",addr->ipaddr,addr->addrind);
+    sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
     addr->fp = fopen(fname,"wb");
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
@@ -949,6 +950,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                 usleep(3000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
     }
+    if ( addr->fp != 0 )
+        fclose(addr->fp);
     iguana_iAkill(coin,addr,addr->dead != 0);
     printf("finish dedicatedloop.%s\n",addr->ipaddr);
     myfree(buf,bufsize);

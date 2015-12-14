@@ -19,6 +19,7 @@
 #define IGUANA_MAPHASHTABLES 1
 #define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 4)
 #define IGUANA_MAXBUNDLES (5000000 / 500)
+#define IGUANA_PEERFILESIZE (1024L * 1024L * 16)
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDHDRS 1
@@ -275,7 +276,7 @@ struct iguana_peer
     uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime;
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
-    struct msgcounts msgcounts; FILE *fp;
+    struct msgcounts msgcounts; FILE *fp; int32_t filecount,addrind;
     struct iguana_memspace *SEROUT[128];
 };
 
