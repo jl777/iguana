@@ -607,7 +607,7 @@ void *myrealloc(uint8_t type,void *oldptr,long oldsize,long newsize);
 void myfree(void *ptr,long size);
 void *myaligned_alloc(uint64_t allocsize);
 int32_t myaligned_free(void *ptr,long size);
-long myallocated();
+long myallocated(uint8_t type,long change);
 
 struct iguana_thread *iguana_launch(char *name,iguana_func funcp,void *arg,uint8_t type);
 int32_t iguana_numthreads(int32_t mask);

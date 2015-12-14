@@ -18,34 +18,36 @@
 //#include "../SuperNET_API/plugins/includes/utlist.h"
 
 portable_mutex_t MEMmutex;
-static long Total_allocated,HWM_allocated,Type_allocated[256];
 
-long myallocated()
+long myallocated(uint8_t type,long change)
 {
+    static long Total_allocated,HWM_allocated,Type_allocated[256];
     int32_t i; long total = 0; char buf[2049];
     buf[0] = 0;
-    for (i=0; i<256; i++)
+    if ( type == 0 && change == 0 )
     {
-        if ( Type_allocated[i] != 0 )
+        for (i=0; i<256; i++)
         {
-            total += Type_allocated[i];
-            sprintf(buf+strlen(buf),"(%c %ld) ",i,Type_allocated[i]);
+            if ( Type_allocated[i] != 0 )
+            {
+                total += Type_allocated[i];
+                sprintf(buf+strlen(buf),"(%c %ld) ",i,Type_allocated[i]);
+            }
+        }
+        sprintf(buf + strlen(buf),"-> total %ld %s",total,mbstr(total));
+        printf("%s\n",buf);
+    }
+    else
+    {
+        Type_allocated[type] += change;
+        Total_allocated += change;
+        if ( Total_allocated > HWM_allocated )
+        {
+            printf("HWM allocated %ld %s\n",Total_allocated,mbstr(Total_allocated));
+            HWM_allocated = Total_allocated * 1.5;
         }
     }
-    sprintf(buf + strlen(buf),"-> total %ld %s",total,mbstr(total));
-    printf("%s\n",buf);
     return(total);
-}
-
-void update_allocstats(uint8_t type,long allocsize)
-{
-    Total_allocated += allocsize;
-    Type_allocated[type] += allocsize;
-    if ( Total_allocated > HWM_allocated )
-    {
-        printf("HWM allocated %ld %s\n",Total_allocated,mbstr(Total_allocated));
-        HWM_allocated = Total_allocated * 1.5;
-    }
 }
 
 void *mycalloc(uint8_t type,int32_t n,long itemsize)
@@ -58,7 +60,7 @@ void *mycalloc(uint8_t type,int32_t n,long itemsize)
         return(0);
     }
     portable_mutex_lock(&MEMmutex);
-    update_allocstats(type,allocsize);
+    myallocated(type,allocsize);
     while ( (item= calloc(1,sizeof(struct allocitem) + allocsize)) == 0 )
     {
         printf("mycalloc: need to wait for memory.(%d,%ld) %s to be available\n",n,itemsize,mbstr(allocsize));
@@ -77,7 +79,7 @@ void *queueitem(char *str)
     portable_mutex_lock(&MEMmutex);
     n = (uint32_t)strlen(str) + 1;
     allocsize = (uint32_t)(sizeof(struct queueitem) + n);
-    update_allocstats(type,allocsize);
+    myallocated(type,allocsize);
     while ( (item= calloc(1,allocsize)) == 0 )
     {
         printf("queueitem: need to wait for memory.(%d,%ld) %s to be available\n",n,(long)sizeof(*item),mbstr(allocsize));
@@ -97,8 +99,9 @@ void _myfree(uint8_t type,uint32_t origallocsize,void *origptr,uint32_t allocsiz
     portable_mutex_lock(&MEMmutex);
     if ( allocsize == origallocsize )
     {
-        Type_allocated[type & 0xff] -= allocsize;
-        Total_allocated -= allocsize;
+        myallocated(type,-allocsize);
+       // Type_allocated[type & 0xff] -= allocsize;
+       // Total_allocated -= allocsize;
         //printf("myfree.%p size.%d %d type %x\n",origptr,allocsize,origallocsize,type);
         free(origptr);
     }
