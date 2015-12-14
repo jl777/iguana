@@ -156,105 +156,6 @@ struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,int32_t *lenp,st
     return(tx);
 }
 
-struct iguana_bundlereq *iguana_bundlereq(struct iguana_info *coin,struct iguana_peer *addr,int32_t type,int32_t datalen)
-{
-    struct iguana_bundlereq *req; int32_t allocsize;
-    allocsize = (uint32_t)sizeof(*req) + datalen;
-    req = mycalloc(type,1,allocsize);
-    req->allocsize = allocsize;
-    req->datalen = datalen;
-    req->addr = addr;
-    req->coin = coin;
-    req->type = type;
-    return(req);
-}
-
-void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *txids,int32_t n)
-{
-    struct iguana_bundlereq *req;
-    printf("got %d txids from %s\n",n,addr->ipaddr);
-    req = iguana_bundlereq(coin,addr,'T',0);
-    req->hashes = txids, req->n = n;
-    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
-}
-
-void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,uint8_t *data,int32_t datalen)
-{
-    struct iguana_bundlereq *req;
-    printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(tx->txid));
-    req = iguana_bundlereq(coin,addr,'U',datalen);
-    req->n = datalen;
-    memcpy(req->serialized,data,datalen);
-    iguana_freetx(tx,1);
-    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
-}
-
-void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx,uint8_t *data,int32_t datalen,uint8_t extra[256])
-{
-    struct iguana_bundlereq *req; int32_t i;
-    if ( 0 )
-    {
-        for (i=0; i<extra[0]; i++)
-            if ( extra[i] != 0 )
-                break;
-        if ( i != extra[0] )
-        {
-            for (i=0; i<extra[0]; i++)
-                printf("%02x ",extra[i]);
-            printf("extra\n");
-        }
-    }
-    if ( addr != 0 )
-    {
-        if ( addr->pendblocks > 0 )
-            addr->pendblocks--;
-        addr->lastblockrecv = (uint32_t)time(NULL);
-        addr->recvblocks += 1.;
-        addr->recvtotal += datalen;
-    }
-    coin->recvcount++;
-    coin->recvtime = (uint32_t)time(NULL);
-    req = iguana_bundlereq(coin,addr,'B',datalen);
-    req->blocks = block, req->n = datalen;
-    memcpy(req->serialized,data,datalen);
-    Tx_allocated++;
-    Tx_allocsize += datalen;
-    //printf("test emit txarray[%d] %p\n",numtx,block);
-    block->txn_count = req->numtx = numtx;
-    iguana_freetx(txarray,numtx);
-    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
-}
-
-void iguana_gotheadersM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *blocks,int32_t n)
-{
-    struct iguana_bundlereq *req;
-    if ( addr != 0 )
-    {
-        addr->recvhdrs++;
-        if ( addr->pendhdrs > 0 )
-            addr->pendhdrs--;
-        //printf("%s blocks[%d] ht.%d gotheaders pend.%d %.0f\n",addr->ipaddr,n,blocks[0].height,addr->pendhdrs,milliseconds());
-    }
-    req = iguana_bundlereq(coin,addr,'H',0);
-    req->blocks = blocks, req->n = n;
-    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
-}
-
-void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *blockhashes,int32_t n)
-{
-    struct iguana_bundlereq *req;
-    if ( addr != 0 )
-    {
-        addr->recvhdrs++;
-        if ( addr->pendhdrs > 0 )
-            addr->pendhdrs--;
-    }
-    req = iguana_bundlereq(coin,addr,'S',0);
-    req->hashes = blockhashes, req->n = n;
-    //printf("bundlesQ blockhashes.%p[%d]\n",blockhashes,n);
-    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
-}
-
 struct iguana_rawtx { bits256 txid; uint16_t numvouts,numvins; uint8_t rmd160[20]; };
 
 int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
@@ -367,9 +268,11 @@ int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,str
 
 void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
 {
-    FILE *fp; char fname[512]; uint8_t extra[256]; uint32_t offsets[_IGUANA_HDRSCOUNT+1];
-    struct iguana_msgtx *txarray,*tx; struct iguana_bundlereq *req; struct iguana_mappedptr M;
-    int32_t i,j,bundleheight,len2,height,numtx,n; long len; struct iguana_block *block;
+    FILE *fp; char fname[512];uint32_t offsets[_IGUANA_HDRSCOUNT+1];
+    //uint8_t extra[256];  struct iguana_msgtx *txarray,*tx;
+    struct iguana_bundlereq *req; struct iguana_mappedptr M;
+    int32_t i,bundleheight,height,numtx,n; long len; struct iguana_block *block;
+return;
     if ( emitbp == 0 )
         return;
     sprintf(fname,"tmp/%s/txdata.%d",coin->symbol,emitbp->bundleheight);
@@ -392,7 +295,7 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
             {
                 if ( (req= block->txdata) != 0 && (numtx= block->txn_count) > 0 )
                 {
-                    if ( 0 && fwrite(req->serialized,1,req->n,fp) != req->n )
+                    /*if ( 0 && fwrite(req->serialized,1,req->n,fp) != req->n )
                         printf("error writing serialized data.%d\n",req->n);
                     if ( 0 && (txarray= iguana_gentxarray(coin,&len2,block,req->serialized,req->n,extra)) != 0 )
                     {
@@ -402,7 +305,7 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
                         printf("emit.%d txarray.%p[%d]\n",i,txarray,numtx);
                         iguana_emittxarray(coin,fp,block,txarray,numtx);
                         iguana_freetx(txarray,numtx);
-                    }
+                    }*/
                 } else printf("emittxdata: unexpected missing txarray[%d]\n",i);
             } else printf("emittxdata: error with recvblockptr[%d]\n",emitbp->bundleheight + i);
         }
@@ -423,20 +326,6 @@ void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *emitbp)
     }
 }
 
-void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
-{
-    bp->coin = coin;
-    bp->type = 'E';
-    queue_enqueue("emitQ",&helperQ,&bp->DL,0);
-}
-
-void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req)
-{
-    req->coin = coin;
-    req->type = 'Q';
-    queue_enqueue("txdataQ",&helperQ,&req->DL,0);
-}
-
 void iguana_helper(void *arg)
 {
     FILE *fp = 0; char fname[512]; int32_t flag; long endpos = 0;
@@ -451,7 +340,7 @@ void iguana_helper(void *arg)
             if ( bp->type == 'Q' )
             {
                 req = (struct iguana_bundlereq *)bp;
-                //printf("START save tmp txdata %p [%d].%d datalen.%d\n",req->argbp,req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
+                printf("START.%p save tmp txdata %p [%d].%d datalen.%d %p\n",req,req->argbp,req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen,req->data);
                 if ( fp == 0 )
                 {
                     if ( (fp= fopen(fname,"rb+")) == 0 )
@@ -460,11 +349,18 @@ void iguana_helper(void *arg)
                 }
                 if ( fp != 0 )
                 {
-                    if ( fwrite(req->serialized,1,req->datalen,fp) != req->datalen )
+                    if ( fwrite(req->data,1,req->datalen,fp) != req->datalen )
                         printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
                 }
                 Tx_freed++;
                 Tx_freesize += req->allocsize;
+                if ( req->data != 0 )
+                {
+                    //myfree(req->data,req->datalen);
+                    iguana_peerfree(req->coin,req->addr,req->data,req->datalen);
+                }
+                if ( req->blocks != 0 )
+                    myfree(req->blocks,sizeof(*req->blocks));
                 myfree(req,req->allocsize);
             }
             else if ( bp->type == 'E' )
@@ -492,4 +388,126 @@ void iguana_helper(void *arg)
         if ( flag == 0 )
             usleep(10000);
     }
+}
+
+struct iguana_bundlereq *iguana_bundlereq(struct iguana_info *coin,struct iguana_peer *addr,int32_t type,int32_t datalen)
+{
+    struct iguana_bundlereq *req; int32_t allocsize;
+    allocsize = (uint32_t)sizeof(*req);
+    req = mycalloc(type,1,allocsize);
+    if ( datalen > 0 )
+        req->data = mycalloc('d',1,datalen);
+    req->allocsize = allocsize;
+    req->datalen = datalen;
+    req->addr = addr;
+    req->coin = coin;
+    req->type = type;
+    return(req);
+}
+
+void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *txids,int32_t n)
+{
+    struct iguana_bundlereq *req;
+    printf("got %d txids from %s\n",n,addr->ipaddr);
+    req = iguana_bundlereq(coin,addr,'T',0);
+    req->hashes = txids, req->n = n;
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,uint8_t *data,int32_t datalen)
+{
+    struct iguana_bundlereq *req;
+    printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(tx->txid));
+    req = iguana_bundlereq(coin,addr,'U',datalen);
+    req->datalen = datalen;
+    memcpy(req->data,data,datalen);
+    iguana_freetx(tx,1);
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *block,struct iguana_msgtx *txarray,int32_t numtx,uint8_t *data,int32_t datalen,uint8_t extra[256])
+{
+    struct iguana_bundlereq *req; int32_t i;
+    if ( 0 )
+    {
+        for (i=0; i<extra[0]; i++)
+            if ( extra[i] != 0 )
+                break;
+        if ( i != extra[0] )
+        {
+            for (i=0; i<extra[0]; i++)
+                printf("%02x ",extra[i]);
+            printf("extra\n");
+        }
+    }
+    if ( addr != 0 )
+    {
+        if ( addr->pendblocks > 0 )
+            addr->pendblocks--;
+        addr->lastblockrecv = (uint32_t)time(NULL);
+        addr->recvblocks += 1.;
+        addr->recvtotal += datalen;
+    }
+    coin->recvcount++;
+    coin->recvtime = (uint32_t)time(NULL);
+    req = iguana_bundlereq(coin,addr,'B',0);
+    req->blocks = block;
+    req->datalen = datalen;
+    if ( (req->data= iguana_peeralloc(coin,addr,datalen)) != 0 )
+    {
+        memcpy(req->data,data,datalen);
+        Tx_allocated++;
+        Tx_allocsize += datalen;
+    } else printf("iguana_peeralloc null ptr for req.%p\n",req), getchar();
+    //printf("test emit txarray[%d] %p\n",numtx,block);
+    block->txn_count = req->numtx = numtx;
+    if ( txarray != 0 )
+        iguana_freetx(txarray,numtx);
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_gotheadersM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *blocks,int32_t n)
+{
+    struct iguana_bundlereq *req;
+    if ( addr != 0 )
+    {
+        addr->recvhdrs++;
+        if ( addr->pendhdrs > 0 )
+            addr->pendhdrs--;
+        //printf("%s blocks[%d] ht.%d gotheaders pend.%d %.0f\n",addr->ipaddr,n,blocks[0].height,addr->pendhdrs,milliseconds());
+    }
+    req = iguana_bundlereq(coin,addr,'H',0);
+    req->blocks = blocks, req->n = n;
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bits256 *blockhashes,int32_t n)
+{
+    struct iguana_bundlereq *req;
+    if ( addr != 0 )
+    {
+        addr->recvhdrs++;
+        if ( addr->pendhdrs > 0 )
+            addr->pendhdrs--;
+    }
+    req = iguana_bundlereq(coin,addr,'S',0);
+    req->hashes = blockhashes, req->n = n;
+    //printf("bundlesQ blockhashes.%p[%d]\n",blockhashes,n);
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
+void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
+{
+    bp->coin = coin;
+    bp->type = 'E';
+    queue_enqueue("emitQ",&helperQ,&bp->DL,0);
+}
+
+void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req,struct iguana_bundle *bp,int32_t bundlei)
+{
+    req->coin = coin;
+    req->type = 'Q';
+    req->argbp = bp, req->argbundlei = bundlei;
+    printf("txdataQ.%p bp.%p[%d] data.%p datalen.%d\n",req,bp,bundlei,req->data,req->datalen);
+    queue_enqueue("txdataQ",&helperQ,&req->DL,0);
 }

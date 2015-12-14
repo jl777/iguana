@@ -1023,18 +1023,15 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                     bp->blocks[bundlei] = block;
                     block->datalen = req->datalen;
                     bp->numrecv++;
+                    iguana_txdataQ(coin,req,bp,bundlei);
+                    block->txdata = (void *)"submitted to helperQ";
+                    req = 0;
                 }
-                req->datalen = datalen;
-                req->argbp = bp, req->argbundlei = bundlei;
-                req->type = 'Q';
-                iguana_txdataQ(coin,req);
-                block->txdata = (void *)"submitted to helperQ";
-                req = 0;
             }
             else
             {
-                if ( (req->datalen != txdata->datalen || memcmp(txdata->serialized,req->serialized,txdata->datalen) != 0) && (rand() % 1000) == 0 )
-                    printf("data compare error.(%d %d)\n",req->datalen,txdata->datalen);
+                //if ( (req->datalen != txdata->datalen || memcmp(txdata->serialized,req->serialized,txdata->datalen) != 0) && (rand() % 1000) == 0 )
+                //    printf("data compare error.(%d %d)\n",req->datalen,txdata->datalen);
                 if ( (rand() % 1000) == 0 )
                     printf("got duplicate block %s\n",bits256_str(block->hash2));
             }
@@ -1054,43 +1051,6 @@ struct iguana_bundlereq *iguana_recvtxids(struct iguana_info *coin,struct iguana
 struct iguana_bundlereq *iguana_recvunconfirmed(struct iguana_info *coin,struct iguana_bundlereq *req,uint8_t *data,int32_t datalen)
 {
     return(req);
-}
-
-int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // single threaded
-{
-    int32_t flag = 0; struct iguana_bundlereq *req;
-    *newhwmp = 0;
-    while ( flag < 100 && (req= queue_dequeue(&coin->bundlesQ,0)) != 0 )
-    {
-        //printf("%s bundlesQ.%p type.%c n.%d\n",req->addr != 0 ? req->addr->ipaddr : "0",req,req->type,req->n);
-        if ( req->type == 'B' ) // one block with all txdata
-        {
-            if ( (req= iguana_recvblock(coin,req->addr,req,req->blocks,req->numtx,req->serialized,req->n,newhwmp)) != 0 && req->blocks != 0 )
-                myfree(req->blocks,sizeof(*req->blocks));
-        }
-        else if ( req->type == 'H' ) // blockhdrs (doesnt have txn_count!)
-        {
-            if ( (req= iguana_recvblockhdrs(coin,req,req->blocks,req->n,newhwmp)) != 0 )
-                myfree(req->blocks,sizeof(*req->blocks) * req->n);
-        }
-        else if ( req->type == 'S' ) // blockhashes
-        {
-            if ( (req= iguana_recvblockhashes(coin,req,req->hashes,req->n)) != 0 && req->hashes != 0 )
-                myfree(req->hashes,sizeof(*req->hashes) * req->n);
-        }
-        else if ( req->type == 'U' ) // unconfirmed tx
-            req = iguana_recvunconfirmed(coin,req,req->serialized,req->n);
-        else if ( req->type == 'T' ) // txids from inv
-        {
-            if ( (req= iguana_recvtxids(coin,req,req->hashes,req->n)) != 0 )
-                myfree(req->hashes,(req->n+1) * sizeof(*req->hashes));
-        }
-        else printf("iguana_updatebundles unknown type.%c\n",req->type);
-        flag++;
-        if ( req != 0 )
-            myfree(req,req->allocsize), req = 0;
-    }
-    return(flag);
 }
 
 char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,struct iguana_bundle *bp,struct iguana_bundle *nextbp,int32_t m)
@@ -1422,6 +1382,51 @@ int32_t iguana_updatecounts(struct iguana_info *coin)
     }
     if ( flag != 0 )
         iguana_savehdrs(coin);
+    return(flag);
+}
+
+int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // single threaded
+{
+    int32_t flag = 0; struct iguana_bundlereq *req;
+    *newhwmp = 0;
+    while ( flag < 100 && (req= queue_dequeue(&coin->bundlesQ,0)) != 0 )
+    {
+        //printf("%s bundlesQ.%p type.%c n.%d\n",req->addr != 0 ? req->addr->ipaddr : "0",req,req->type,req->n);
+        if ( req->type == 'B' ) // one block with all txdata
+        {
+            if ( (req= iguana_recvblock(coin,req->addr,req,req->blocks,req->numtx,req->data,req->datalen,newhwmp)) != 0 )
+            {
+                if ( req->data != 0 )
+                    iguana_peerfree(coin,req->addr,req->data,req->datalen), req->data = 0;
+                if ( req->blocks != 0 )
+                    myfree(req->blocks,sizeof(*req->blocks)), req->blocks = 0;
+            }
+        }
+        else if ( req->type == 'H' ) // blockhdrs (doesnt have txn_count!)
+        {
+            if ( (req= iguana_recvblockhdrs(coin,req,req->blocks,req->n,newhwmp)) != 0 )
+                myfree(req->blocks,sizeof(*req->blocks) * req->n), req->blocks = 0;
+        }
+        else if ( req->type == 'S' ) // blockhashes
+        {
+            if ( (req= iguana_recvblockhashes(coin,req,req->hashes,req->n)) != 0 && req->hashes != 0 )
+                myfree(req->hashes,sizeof(*req->hashes) * req->n), req->hashes = 0;
+        }
+        else if ( req->type == 'U' ) // unconfirmed tx
+        {
+            if ( (req= iguana_recvunconfirmed(coin,req,req->data,req->datalen)) != 0 )
+                myfree(req->data,req->datalen), req->data = 0;
+        }
+        else if ( req->type == 'T' ) // txids from inv
+        {
+            if ( (req= iguana_recvtxids(coin,req,req->hashes,req->n)) != 0 )
+                myfree(req->hashes,(req->n+1) * sizeof(*req->hashes)), req->hashes = 0;
+        }
+        else printf("iguana_updatebundles unknown type.%c\n",req->type);
+        flag++;
+        if ( req != 0 )
+            myfree(req,req->allocsize), req = 0;
+    }
     return(flag);
 }
 

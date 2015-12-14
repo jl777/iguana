@@ -591,21 +591,33 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
     }
     else if ( strcmp(H->command,"block") == 0 )
     {
-        struct iguana_block *block; struct iguana_msgtx *tx; uint8_t extra[256];
-        block = mycalloc('b',1,sizeof(*block));
-        memset(extra,0,sizeof(extra));
-        tx = iguana_gentxarray(coin,&len,block,data,datalen,extra);
-        if ( len == datalen )
+        if ( 1 )
         {
-            if ( addr != 0 )
+            struct iguana_block *block; struct iguana_msgtx *tx; uint8_t extra[256];
+            block = mycalloc('b',1,sizeof(*block));
+            memset(extra,0,sizeof(extra));
+            tx = iguana_gentxarray(coin,&len,block,data,datalen,extra);
+            if ( len == datalen )
             {
-                if ( len == datalen )
-                    addr->msgcounts.block++;
-                //addr->OV.reqrecv += datalen;
-                //printf("%s gotblock.%d datalen.%d last.[%02x]\n",addr->ipaddr,block->height,datalen,data[len-1]);
-            }
-            iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen,extra);
-        } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
+                if ( addr != 0 )
+                {
+                    if ( len == datalen )
+                        addr->msgcounts.block++;
+                    //addr->OV.reqrecv += datalen;
+                    //printf("%s gotblock.%d datalen.%d last.[%02x]\n",addr->ipaddr,block->height,datalen,data[len-1]);
+                }
+                iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen,extra);
+            } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
+        }
+        else
+        {
+            struct iguana_block block; bits256 hash2; struct iguana_msgblock msg;
+            memset(&msg,0,sizeof(msg));
+            len = iguana_rwblock(0,&hash2,data,&msg);
+            iguana_convblock(&block,&msg,hash2,block.height,block.L.numtxids,block.L.numunspents,block.L.numspends,block.L.PoW);
+            addr->msgcounts.block++;
+            iguana_gotblockM(coin,addr,&block,0,block.txn_count,data,datalen,0);
+        }
         //if ( tx != 0 )
         //    iguana_freetx(tx,block->txn_count);
         //myfree(block,sizeof(*block));

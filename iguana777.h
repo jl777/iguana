@@ -247,6 +247,22 @@ struct iguana_msgtx
 
 struct iguana_packet { struct queueitem DL; struct iguana_peer *addr; int32_t datalen,getdatablock; uint8_t serialized[]; };
 
+struct iguana_mappedptr
+{
+	char fname[512];
+	void *fileptr,*pending;
+	uint64_t allocsize,changedsize;
+	int32_t rwflag,dirty,actually_allocated;
+};
+
+struct iguana_memspace
+{
+    portable_mutex_t mutex; int64_t used,totalsize; struct iguana_mappedptr M; char name[64];
+    void *ptrs[1024]; int32_t allocsizes[1024],maxsizes[1024]; void *ptr;
+    int32_t alignflag,outofptrs,numptrs,availptrs,counter,maxheight,openfiles,lastcounter,threadsafe;
+    //uint8_t space[4];
+};
+
 struct msgcounts { uint32_t version,verack,getaddr,addr,inv,getdata,notfound,getblocks,getheaders,headers,tx,block,mempool,ping,pong,reject,filterload,filteradd,filterclear,merkleblock,alert; };
 
 struct iguana_peer
@@ -260,30 +276,16 @@ struct iguana_peer
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
     struct msgcounts msgcounts;
+    struct iguana_memspace SEROUT[2];
 };
 
 struct iguana_peers
 {
-    bits256 lastrequest;//,waitinghash[IGUANA_BUNDLESIZE]; float waiting[IGUANA_BUNDLESIZE];
+    bits256 lastrequest;
     struct iguana_peer active[IGUANA_MAXPEERS],*ranked[IGUANA_MAXPEERS],*localaddr;
     struct iguana_thread *peersloop,*recvloop,*acceptloop;
     double topmetrics[IGUANA_MAXPEERS],avemetric;
     uint32_t numranked,mostreceived,shuttingdown,lastpeer,lastmetrics,numconnected;
-};
-
-struct iguana_mappedptr
-{
-	char fname[512];
-	void *fileptr,*pending;
-	uint64_t allocsize,changedsize;
-	int32_t rwflag,dirty,actually_allocated;
-};
-
-struct iguana_memspace
-{
-    portable_mutex_t mutex; void *ptr; long used,size;
-    struct iguana_mappedptr M;
-    int32_t alignflag,counter,maxheight,openfiles,lastcounter; uint8_t space[4];
 };
 
 struct iguana_prevdep
@@ -385,7 +387,7 @@ struct iguana_bundlereq
     struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei; // must be identical to iguana_bundle
     struct iguana_peer *addr; struct iguana_block *blocks; bits256 *hashes; struct iguana_bundle *argbp;
     int32_t allocsize,datalen,n,numtx;
-    uint8_t serialized[];
+    uint8_t *data;
 };
 
 struct iguana_info
@@ -434,6 +436,9 @@ void iguana_acceptloop(void *args);
 void iguana_recvloop(void *args);
 int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *serialized,int32_t len);
 uint32_t iguana_updatemetrics(struct iguana_info *coin);
+void *iguana_peeralloc(struct iguana_info *coin,struct iguana_peer *addr,int32_t datalen);
+int64_t iguana_peerfree(struct iguana_info *coin,struct iguana_peer *addr,void *ptr,int32_t datalen);
+int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr);
 
 // serdes
 int32_t iguana_rwmem(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp);
@@ -629,7 +634,9 @@ void randombytes(unsigned char *x,long xlen);
 int32_t is_hexstr(char *str);
 void iguana_initQ(queue_t *Q,char *name);
 void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp);
-void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req);
+void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req,struct iguana_bundle *bp,int32_t bundlei);
 void iguana_helper(void *arg);
+int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size);
+void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag);
 
 #endif
