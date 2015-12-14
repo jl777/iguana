@@ -17,7 +17,7 @@
 //#include "../SuperNET_API/plugins/includes/uthash.h"
 //#include "../SuperNET_API/plugins/includes/utlist.h"
 
-portable_mutex_t MEMmutex;
+//portable_mutex_t MEMmutex;
 
 long myallocated(uint8_t type,long change)
 {
@@ -56,11 +56,11 @@ void *mycalloc(uint8_t type,int32_t n,long itemsize)
     struct allocitem *item; uint64_t allocsize = ((uint64_t)n * itemsize);
     if ( type == 0 && n == 0 && itemsize == 0 )
     {
-        portable_mutex_init(&MEMmutex);
+        //portable_mutex_init(&MEMmutex);
         myfree(mycalloc('t',1024,1024 * 32),1024*1024*32);
         return(0);
     }
-    portable_mutex_lock(&MEMmutex);
+    //portable_mutex_lock(&MEMmutex);
     myallocated(type,allocsize);
     while ( (item= calloc(1,sizeof(struct allocitem) + allocsize)) == 0 )
     {
@@ -70,14 +70,14 @@ void *mycalloc(uint8_t type,int32_t n,long itemsize)
     //printf("calloc origptr.%p retptr.%p size.%ld\n",item,(void *)(long)item + sizeof(*item),allocsize);
     item->allocsize = (uint32_t)allocsize;
     item->type = type;
-    portable_mutex_unlock(&MEMmutex);
+    //portable_mutex_unlock(&MEMmutex);
     return((void *)(long)item + sizeof(*item));
 }
 
 void *queueitem(char *str)
 {
     struct queueitem *item; uint32_t n,allocsize; char *data; uint8_t type = 'y';
-    portable_mutex_lock(&MEMmutex);
+    //portable_mutex_lock(&MEMmutex);
     n = (uint32_t)strlen(str) + 1;
     allocsize = (uint32_t)(sizeof(struct queueitem) + n);
     myallocated(type,allocsize);
@@ -91,13 +91,13 @@ void *queueitem(char *str)
     data = (void *)((uint64_t)item + sizeof(*item));
     memcpy(data,str,n);
     //printf("(%c) queueitem.%p itemdata.%p n.%d allocsize.%d\n",type,item,data,n,allocsize);
-    portable_mutex_unlock(&MEMmutex);
+    //portable_mutex_unlock(&MEMmutex);
     return(data);
 }
 
 void _myfree(uint8_t type,uint32_t origallocsize,void *origptr,uint32_t allocsize)
 {
-    portable_mutex_lock(&MEMmutex);
+    //portable_mutex_lock(&MEMmutex);
     if ( allocsize == origallocsize )
     {
         myallocated(type,-allocsize);
@@ -111,7 +111,7 @@ void _myfree(uint8_t type,uint32_t origallocsize,void *origptr,uint32_t allocsiz
         printf("myfree size error %d vs %d at %p\n",allocsize,origallocsize,origptr);
         getchar();
     }
-    portable_mutex_unlock(&MEMmutex);
+    //portable_mutex_unlock(&MEMmutex);
 }
 
 void myfree(void *_ptr,long allocsize)
