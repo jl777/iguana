@@ -469,7 +469,7 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
                 if ( bp->bundleheight >= 0 )
                     req->height = (bp->bundleheight + bundlei);
             }
-            if ( 0 && (bundlei % 250) == 0 )
+            //if ( 0 && (bundlei % 250) == 0 )
                 printf("%s %d %s recv.%d numranked.%d qsize.%d\n",str,req->height,bits256_str(hash2),coin->blocks.recvblocks,coin->peers.numranked,queue_size(Q));
             queue_enqueue(str,Q,&req->DL,0);
             return(1);
@@ -1162,7 +1162,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                     printf("priorityQ submit threshold %.3f [%d].%d\n",threshold,bp->hdrsi,i);
                 CLEARBIT(bp->recv,i);
                 bp->issued[i] = milliseconds();
-                iguana_blockQ(coin,bp,i,hash2,1);
+                iguana_blockQ(coin,bp,i,hash2,priorityflag);
                 bp->blocks[i] = 0;
             }
         }
@@ -1271,7 +1271,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         closestbundle = i;
                     }
                 }
-                if ( numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
+                if ( queue_size(&coin->blocksQ) > maxwaiting || (numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle) )
                     continue;
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
@@ -1309,9 +1309,10 @@ int32_t iguana_issueloop(struct iguana_info *coin)
         if ( dispflag != 0 && bp != 0 && bp->emitfinish == 0 )
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
-    coin->closestbundle = closestbundle;
+    //if ( closestbundle >= 0 && (coin->closestbundle < 0 || coin->bundles[coin->closestbundle]->numrecv >= coin->chain->bundlesize) )
+        coin->closestbundle = closestbundle;
     if ( dispflag != 0 )
-        printf(" PENDINGBUNDLES lastbundle.%d closest.[%d] %s\n",lastbundle,closestbundle,mbstr(closest));
+        printf(" PENDINGBUNDLES lastbundle.%d closest.[%d] %s | %d\n",lastbundle,closestbundle,mbstr(closest),coin->closestbundle);
     return(flag);
 }
 
