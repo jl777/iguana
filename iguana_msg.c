@@ -601,6 +601,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
             block = mycalloc('b',1,sizeof(*block));
             memset(extra,0,sizeof(extra));
             tx = iguana_gentxarray(coin,&len,block,data,datalen,extra);
+            //printf("len.%d datalen.%d tx.%p numtx.%d\n",len,datalen,tx,block->txn_count);
             if ( len == datalen )
             {
                 if ( addr != 0 )
@@ -612,8 +613,8 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 }
                 iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen,extra);
             } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
-            if ( tx != 0 )
-                iguana_freetx(tx,block->txn_count);
+            //if ( tx != 0 )
+            //    iguana_freetx(tx,block->txn_count);
         }
         else
         {
