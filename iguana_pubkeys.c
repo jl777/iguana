@@ -783,14 +783,14 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *p
     if ( pk_script[0] == 0x76 && pk_script[1] == 0xa9 && pk_script[pk_scriptlen-2] == 0x88 && pk_script[pk_scriptlen-1] == 0xac )
     {
         vcalc_sha256(0,sha256,&pk_script[3],pk_script[2]);
-        calc_rmd160(0,rmd160,sha256,sizeof(sha256));
+        //calc_rmd160(0,rmd160,sha256,sizeof(sha256));
         return(0);
     }
     else if ( pk_script[0] > 0 && pk_script[0] < 76 && pk_script[pk_scriptlen-1] == 0xac && pk_script[0] == pk_scriptlen-2 )
     {
         //printf("minus2\n");
         vcalc_sha256(0,sha256,&pk_script[1],pk_script[0]);
-        calc_rmd160(0,rmd160,sha256,sizeof(sha256));
+        //calc_rmd160(0,rmd160,sha256,sizeof(sha256));
         return(0);
     }
     if ( orign < sizeof(hexstr)/2-1)
@@ -805,7 +805,7 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *p
             fprintf(fp,"%s\n",hexstr), fflush(fp);
     }
     vcalc_sha256(0,sha256,pk_script,pk_scriptlen);
-    calc_rmd160(0,rmd160,sha256,sizeof(sha256));
+    //calc_rmd160(0,rmd160,sha256,sizeof(sha256));
     return(0);
 }
 
