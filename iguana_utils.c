@@ -20,7 +20,7 @@
 const bits256 bits256_zero;
 
 portable_mutex_t MEMmutex;
-long Total_allocated,HWM_allocated,Type_allocated[256];
+static long Total_allocated,HWM_allocated,Type_allocated[256];
 
 long myallocated()
 {
