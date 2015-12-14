@@ -64,7 +64,8 @@ void *mycalloc(uint8_t type,int32_t n,long itemsize)
     myallocated(type,allocsize);
     while ( (item= calloc(1,sizeof(struct allocitem) + allocsize)) == 0 )
     {
-        printf("mycalloc: need to wait for memory.(%d,%ld) %s to be available\n",n,itemsize,mbstr(allocsize));
+        char str[65];
+        printf("mycalloc: need to wait for memory.(%d,%ld) %s to be available\n",n,itemsize,mbstr(str,allocsize));
         sleep(1);
     }
     //printf("calloc origptr.%p retptr.%p size.%ld\n",item,(void *)(long)item + sizeof(*item),allocsize);
@@ -83,7 +84,8 @@ void *queueitem(char *str)
     myallocated(type,allocsize);
     while ( (item= calloc(1,allocsize)) == 0 )
     {
-        printf("queueitem: need to wait for memory.(%d,%ld) %s to be available\n",n,(long)sizeof(*item),mbstr(allocsize));
+        char str[65];
+        printf("queueitem: need to wait for memory.(%d,%ld) %s to be available\n",n,(long)sizeof(*item),mbstr(str,allocsize));
         sleep(1);
     }
     item->allocsize = (uint32_t)allocsize;
@@ -743,9 +745,8 @@ static double _kb(double n) { return(n / 1024.); }
 static double _mb(double n) { return(n / (1024.*1024.)); }
 static double _gb(double n) { return(n / (1024.*1024.*1024.)); }
 
-char *mbstr(double n)
+char *mbstr(char *str,double n)
 {
-	static char str[100];
 	if ( n < 1024*1024*10 )
 		sprintf(str,"%.3fkb",_kb(n));
 	else if ( n < 1024*1024*1024 )

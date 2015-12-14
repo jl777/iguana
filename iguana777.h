@@ -579,7 +579,7 @@ double dxblend(double *destp,double val,double decay);
 int32_t iguana_processjsonQ(struct iguana_info *coin); // reentrant, can be called during any idletime
 char *iguana_JSON(char *jsonstr);
 
-char *mbstr(double);
+char *mbstr(char *str,double);
 int init_hexbytes_noT(char *hexbytes,unsigned char *message,long len);
 int32_t decode_hex(unsigned char *bytes,int32_t n,char *hex);
 char hexbyte(int32_t c);

@@ -327,7 +327,7 @@ void iguana_coinloop(void *arg)
                 }
             }// bp block needs mutex
         }
-        if ( flag == 0 )
+        //if ( flag == 0 )
             usleep(10000);
     }
 }
@@ -456,9 +456,10 @@ void iguana_coins(void *arg)
                 continue;
             }
             iguana_coinargs(symbol,&maxrecvcache,&minconfirms,&maxpeers,&initialheight,&services,&maxpending,&maxbundles,item);
-            printf("init.(%s) maxpeers.%d maxrecvcache.%s maphash.%x services.%llx\n",symbol,maxpeers,mbstr(maxrecvcache),maphash,(long long)services);
+            char str[65];
+            printf("init.(%s) maxpeers.%d maxrecvcache.%s maphash.%x services.%llx\n",symbol,maxpeers,mbstr(str,maxrecvcache),maphash,(long long)services);
             coins[1 + i] = coin = iguana_setcoin(symbol,coins,maxpeers,maxrecvcache,services,initialheight,maphash,minconfirms,maxpending,maxbundles,item);
-            printf("MAXRECVCACHE.%s\n",mbstr(coin->MAXRECVCACHE));
+            printf("MAXRECVCACHE.%s\n",mbstr(str,coin->MAXRECVCACHE));
         }
         coins[0] = (void *)((long)n);
         //for (i=0; i<IGUANA_NUMHELPERS; i++)

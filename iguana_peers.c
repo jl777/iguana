@@ -947,7 +947,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     myfree(buf,bufsize);
     while ( (remaining= iguana_peerallocated(coin,addr)) > 0 )
     {
-        printf("waiting for helperQ to flush peer mem %s\n",mbstr(remaining));
+        char str[65];
+        printf("waiting for helperQ to flush peer mem %s\n",mbstr(str,remaining));
         sleep(5);
     }
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)

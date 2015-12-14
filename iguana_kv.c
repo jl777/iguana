@@ -336,9 +336,10 @@ void *iguana_mappedptr(void **ptrp,struct iguana_mappedptr *mp,uint64_t allocsiz
         allocsize = iguana_ensurefilesize(fname,allocsize,0);
 	if ( iguana_openmap(mp) != 0 )
 	{
+        char str[65];
         //printf("init_mappedptr %s.rwflag.%d | ",fname,rwflag);
         if ( allocsize != 0 )
-			printf("error mapping(%s) rwflag.%d ptr %p mapped %llu vs allocsize %llu %s\n",fname,rwflag,mp->fileptr,(long long)mp->allocsize,(long long)allocsize,mbstr(allocsize));
+			printf("error mapping(%s) rwflag.%d ptr %p mapped %llu vs allocsize %llu %s\n",fname,rwflag,mp->fileptr,(long long)mp->allocsize,(long long)allocsize,mbstr(str,allocsize));
         else allocsize = mp->allocsize;
 		if ( rwflag != 0 && allocsize != mp->allocsize )
 		{

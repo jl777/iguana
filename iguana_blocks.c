@@ -1317,8 +1317,9 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     }
     //if ( closestbundle >= 0 && (coin->closestbundle < 0 || coin->bundles[coin->closestbundle]->numrecv >= coin->chain->bundlesize) )
         coin->closestbundle = closestbundle;
+    char str[65];
     if ( dispflag != 0 )
-        printf(" PENDINGBUNDLES lastbundle.%d closest.[%d] %s | %d\n",lastbundle,closestbundle,mbstr(closest),coin->closestbundle);
+        printf(" PENDINGBUNDLES lastbundle.%d closest.[%d] %s | %d\n",lastbundle,closestbundle,mbstr(str,closest),coin->closestbundle);
     return(flag);
 }
 
@@ -1405,7 +1406,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             }
         }
     }
-    sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,numrecv,numemit,coin->numemitted,coin->longestchain,coin->MAXBUNDLES,mbstr(estsize));
+    char str2[65];
+    sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,numrecv,numemit,coin->numemitted,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
     coin->activebundles = numactive;
     coin->estsize = estsize;
 }
