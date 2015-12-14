@@ -17,8 +17,6 @@
 //#include "../SuperNET_API/plugins/includes/uthash.h"
 //#include "../SuperNET_API/plugins/includes/utlist.h"
 
-const bits256 bits256_zero;
-
 portable_mutex_t MEMmutex;
 static long Total_allocated,HWM_allocated,Type_allocated[256];
 
