@@ -612,6 +612,8 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 }
                 iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen,extra);
             } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
+            if ( tx != 0 )
+                iguana_freetx(tx,block->txn_count);
         }
         else
         {
