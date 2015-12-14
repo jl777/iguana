@@ -437,7 +437,7 @@ void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req)
 
 void iguana_helper(void *arg)
 {
-    FILE *fp = 0; long endpos = 0; char fname[512]; int32_t flag;
+    FILE *fp = 0; char fname[512]; int32_t flag; long endpos = 0;
     struct iguana_bundle *bp; struct iguana_bundlereq *req;
     sprintf(fname,"tmp/helper.%d",*(int32_t *)arg);
     printf("start helper %s fp.%p\n",fname,fp);
@@ -460,9 +460,6 @@ void iguana_helper(void *arg)
                 {
                     if ( fwrite(req->serialized,1,req->datalen,fp) != req->datalen )
                         printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
-                    endpos = ftell(fp);
-                    fclose(fp);
-                    fp = 0;
                 }
                 myfree(req,req->allocsize);
             }
