@@ -342,7 +342,8 @@ int32_t bits256_cmp(bits256 a,bits256 b)
 
 int32_t bits256_nonz(bits256 a)
 {
-    static const bits256 z;
+    bits256 z;
+    memset(z.bytes,0,sizeof(z));
     return(memcmp(a.bytes,z.bytes,sizeof(a)) != 0);
 }
 
