@@ -250,7 +250,7 @@ struct iguana_mappedptr
 {
 	char fname[512];
 	void *fileptr,*pending;
-	uint64_t allocsize,changedsize;
+	long allocsize,changedsize;
 	int32_t rwflag,dirty,actually_allocated;
 };
 
