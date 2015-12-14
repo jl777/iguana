@@ -16,7 +16,7 @@
 #include "iguana777.h"
 
 queue_t helperQ,txQ;
-static uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
+//static uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
 
 /*int64_t iguana_MEMallocated(struct iguana_info *coin)
 {
@@ -100,9 +100,9 @@ int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,
     *txidp = bits256_doublesha256(txidstr,txstart,len);
     //printf("txid.(%s) len.%d\n",bits256_str(*txidp),len);
     msg->allocsize = len;
-    Tx_allocated++, Tx_allocsize += len;
+    /*Tx_allocated++, Tx_allocsize += len;
     if ( ((Tx_allocated + Tx_freed) % 10000000) == 0 )
-        printf("h.%u len.%d (%llu - %llu) %lld (%llu - %llu)\n",height,len,(long long)Tx_allocated,(long long)Tx_freed,(long long)(Tx_allocated - Tx_freed),(long long)Tx_allocsize,(long long)Tx_freesize);
+        printf("h.%u len.%d (%llu - %llu) %lld (%llu - %llu)\n",height,len,(long long)Tx_allocated,(long long)Tx_freed,(long long)(Tx_allocated - Tx_freed),(long long)Tx_allocsize,(long long)Tx_freesize);*/
     return(len);
 }
 
@@ -111,7 +111,7 @@ void iguana_freetx(struct iguana_msgtx *tx,int32_t n)
     int32_t i,j; struct iguana_msgtx *origtx = tx;
     for (j=0; j<n; j++,tx++)
     {
-        Tx_freed++, Tx_freesize += tx->allocsize;
+        //Tx_freed++, Tx_freesize += tx->allocsize;
         if ( tx->vins != 0 )
         {
             for (i=0; i<tx->tx_in; i++)
@@ -353,8 +353,8 @@ void iguana_helper(void *arg)
                     if ( fwrite(req->data,1,req->datalen,fp) != req->datalen )
                         printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
                 }
-                Tx_freed++;
-                Tx_freesize += req->allocsize;
+                //Tx_freed++;
+                //Tx_freesize += req->allocsize;
                 if ( req->data != 0 )
                 {
                     //myfree(req->data,req->datalen);
@@ -457,8 +457,8 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     if ( (req->data= iguana_peeralloc(coin,addr,datalen)) != 0 )
     {
         memcpy(req->data,data,datalen);
-        Tx_allocated++;
-        Tx_allocsize += datalen;
+        //Tx_allocated++;
+        //Tx_allocsize += datalen;
     } else printf("iguana_peeralloc null ptr for req.%p\n",req), getchar();
     //printf("test emit txarray[%d] %p\n",numtx,block);
     block->txn_count = req->numtx = numtx;
