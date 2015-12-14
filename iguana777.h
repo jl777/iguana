@@ -147,7 +147,6 @@ int32_t msync(void *addr,size_t len,int32_t flags);
 #define SETBIT(bits,bitoffset) (((uint8_t *)bits)[(bitoffset) >> 3] |= (1 << ((bitoffset) & 7)))
 #define GETBIT(bits,bitoffset) (((uint8_t *)bits)[(bitoffset) >> 3] & (1 << ((bitoffset) & 7)))
 #define CLEARBIT(bits,bitoffset) (((uint8_t *)bits)[(bitoffset) >> 3] &= ~(1 << ((bitoffset) & 7)))
-extern const bits256 bits256_zero;
 
 #define IGUANA_MAPRECVDATA 1
 #define IGUANA_MAPTXIDITEMS 2

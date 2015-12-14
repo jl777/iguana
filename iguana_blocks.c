@@ -14,6 +14,7 @@
  ******************************************************************************/
 
 #include "iguana777.h"
+static const bits256 bits256_zero;
 
 #define iguana_block(coin,height) (height >= 0 ? coin->blocks.ptrs[height] : 0) // invariant ptr
 #define iguana_blockfind(coin,hash2) iguana_blockhashset(coin,-1,hash2,0)

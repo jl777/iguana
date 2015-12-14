@@ -15,7 +15,7 @@
 
 
 #include "iguana777.h"
-
+static const bits256 bits256_zero;
 
 int32_t iguana_needhdrs(struct iguana_info *coin)
 {
