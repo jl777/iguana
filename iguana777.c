@@ -314,14 +314,14 @@ void iguana_coinloop(void *arg)
                         //        m++;
                         iguana_bundlestats(coin,str);
                         printf("%s.%-2d %s %.2f min\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.);
-                        if ( (rand() % 60) == 0 )
+                        //if ( (rand() % 60) == 0 )
                             myallocated();
                     }
                 }
             }// bp block needs mutex
         }
         if ( flag == 0 )
-            usleep(100);
+            usleep(10000);
     }
 }
 

@@ -763,7 +763,7 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,bits256 bundl
     {
         //coin->bundles = myrealloc('W',coin->bundles,coin->bundles==0?0:coin->numhdrs*sizeof(*coin->bundles),(coin->numhdrs+1)*sizeof(*coin->bundles));
         bp = mycalloc('b',1,sizeof(*bp) + (1+coin->chain->bundlesize)*sizeof(*bp->issued)); //&coin->bundles[coin->numhdrs];
-        bp->blocks = mycalloc('b',sizeof(*bp->blocks),(1+coin->chain->bundlesize));
+        bp->blocks = mycalloc('k',sizeof(*bp->blocks),(1+coin->chain->bundlesize));
         bp->hdrsi = coin->bundlescount;
         bp->bundlehash2 = bundlehash2;
         bp->coin = coin;
