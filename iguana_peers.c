@@ -737,7 +737,7 @@ int64_t iguana_memallocated(struct iguana_memspace *mem)
 void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
 {
     void *ptr = 0;
-    printf("iguana_memalloc.%s size.%ld used.%llu of %llu, numptrs.%d avail.%d %lld\n",mem->name,size,(long long)mem->used,(long long)mem->totalsize,mem->numptrs,mem->availptrs,(long long)iguana_memallocated(mem));
+    //printf("iguana_memalloc.%s size.%ld used.%llu of %llu, numptrs.%d avail.%d %lld\n",mem->name,size,(long long)mem->used,(long long)mem->totalsize,mem->numptrs,mem->availptrs,(long long)iguana_memallocated(mem));
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_lock(&mem->mutex);
     if ( mem->availptrs == mem->numptrs && mem->used > (mem->totalsize >> 1) )
@@ -760,7 +760,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
             mem->outofptrs++;
             printf("iguana_memalloc: numptrs.%d outofptrs.%d\n",mem->numptrs,mem->outofptrs);
         }
-        printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
+        //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
     }
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_unlock(&mem->mutex);
@@ -781,7 +781,7 @@ int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size)
                 mem->availptrs++;
                 mem->allocsizes[i] = 0;
                 avail = (mem->totalsize - mem->used);
-                printf("avail %llu\n",(long long)avail);
+                //printf("avail %llu\n",(long long)avail);
             } else printf("iguana_memfree.%s: mismatched size %d for ptr.%p %d\n",mem->name,size,ptr,mem->allocsizes[i]);
             if ( mem->threadsafe != 0 )
                 portable_mutex_unlock(&mem->mutex);
@@ -822,7 +822,7 @@ void *iguana_peeralloc(struct iguana_info *coin,struct iguana_peer *addr,int32_t
                                 {
                                     mem->allocsizes[j] = datalen;
                                     mem->availptrs--;
-                                    printf("%s availptrs.%d size.%d j.%d diff.%d bestfit.%d %p.%d max.%d\n",mem->name,mem->availptrs,size,j,diff,bestfit,mem->ptrs[j],size,mem->maxsizes[j]);
+                                    //printf("%s availptrs.%d size.%d j.%d diff.%d bestfit.%d %p.%d max.%d\n",mem->name,mem->availptrs,size,j,diff,bestfit,mem->ptrs[j],size,mem->maxsizes[j]);
                                     if ( mem->threadsafe != 0 )
                                         portable_mutex_unlock(&mem->mutex);
                                     return(mem->ptrs[j]);
@@ -862,7 +862,7 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 int64_t iguana_peerfree(struct iguana_info *coin,struct iguana_peer *addr,void *ptr,int32_t datalen)
 {
     struct iguana_memspace *mem; long offset,i; int64_t avail = -1;
-    printf("iguana_peerfree.%p %d\n",ptr,datalen);
+    //printf("iguana_peerfree.%p %d\n",ptr,datalen);
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
     {
         mem = &addr->SEROUT[i];
@@ -892,7 +892,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
     {
         mem[i] = &addr->SEROUT[i];
-        mem[i]->totalsize = IGUANA_MAXPACKETSIZE * _IGUANA_MAXPENDING;
+        mem[i]->totalsize = IGUANA_MAXPACKETSIZE;
         mem[i]->ptr = mycalloc('P',1,mem[i]->totalsize);
         mem[i]->used = 0;
         strcpy(mem[i]->name,addr->ipaddr);
