@@ -350,10 +350,10 @@ struct iguana_block
     bits256 prev_block,merkle_root; // prev_block MUST be first
     struct iguana_prevdep L;
     int32_t height; uint32_t timestamp,nonce,bits,datalen;
-    uint16_t txn_count,numvouts,numvins,bundlei:11,matches:7,version:6,tbd:5,mainchain:1,mapped:1,valid:1;
-    void *txdata; struct iguana_bundle *bp;
+    uint32_t bundlei:11,hdrsi:21;
+    uint16_t txn_count,numvouts,numvins,version:6,mainchain:1,mapped:1,valid:1;
     UT_hash_handle hh;
-    bits256 bundlehash2,hash2;      // hash2 MUST be last, it is the prev_block for next item
+    bits256 hash2;      // hash2 MUST be last, it is the prev_block for next item
 } __attribute__((packed));
 
 struct iguana_blocks
@@ -374,7 +374,7 @@ struct iguana_ledger
 
 struct iguana_bundle
 {
-    struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei; // must be identical to iguana_bundlereq
+    struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei;
     struct iguana_block block;
     uint32_t issuetime,emitfinish; struct iguana_block **blocks;
     int32_t bundleheight,numgot,numissued,numrecv,hdrsi,n;
@@ -386,7 +386,7 @@ struct iguana_bundle
 
 struct iguana_bundlereq
 {
-    struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei; // must be identical to iguana_bundle
+    struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei;
     struct iguana_peer *addr; struct iguana_block *blocks; bits256 *hashes; struct iguana_bundle *argbp;
     int32_t allocsize,datalen,n,numtx;
     uint8_t *data;
@@ -411,7 +411,7 @@ struct iguana_info
 
     struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     
-    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,helperQ,TerminateQ;
+    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,TerminateQ;
     double parsemillis,avetime; uint32_t Launched[8],Terminated[8];
     portable_mutex_t peers_mutex,blocks_mutex;
     struct iguana_blocks blocks;
@@ -637,11 +637,14 @@ void randombytes(unsigned char *x,long xlen);
 int32_t is_hexstr(char *str);
 void iguana_initQ(queue_t *Q,char *name);
 void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp);
-void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req,struct iguana_bundle *bp,int32_t bundlei);
+void iguana_txdataQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp,long fpos,int32_t datalen);
 void iguana_helper(void *arg);
 int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size);
 void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag);
 int64_t iguana_memallocated(struct iguana_memspace *mem);
 void iguana_memreset(struct iguana_memspace *mem);
+
+struct iguana_helper { struct queueitem DL; void *coin,*addr,*bp,*fp; long fpos; int32_t allocsize,type,hdrsi,bundlei,datalen; };
+int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr);
 
 #endif

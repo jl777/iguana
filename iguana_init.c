@@ -31,10 +31,9 @@ void iguana_initQs(struct iguana_info *coin)
     iguana_initQ(&coin->blocksQ,"blocksQ");
     iguana_initQ(&coin->priorityQ,"priorityQ");
     iguana_initQ(&coin->possibleQ,"possibleQ");
-    printf("init_possibleQ.%p\n",&coin->possibleQ);
     iguana_initQ(&coin->jsonQ,"jsonQ");
-    iguana_initQ(&coin->helperQ,"helperQ");
-    iguana_initQ(&coin->helperQ,"helperQ");
+    iguana_initQ(&coin->finishedQ,"finishedQ");
+    //iguana_initQ(&coin->helperQ,"helperQ");
     iguana_initQ(&coin->TerminateQ,"TerminateQ");
     for (i=0; i<IGUANA_MAXPEERS; i++)
         iguana_initQ(&coin->peers.active[i].sendQ,"addrsendQ");
@@ -45,10 +44,6 @@ void iguana_initcoin(struct iguana_info *coin)
     int32_t i;
     portable_mutex_init(&coin->peers_mutex);
     portable_mutex_init(&coin->blocks_mutex);
-    //portable_mutex_init(&coin->recv_mutex);
-    //portable_mutex_init(&coin->txdata_mutex);
-    //portable_mutex_init(&coin->ramchain_mutex);
-    //portable_mutex_init(&coin->R.RSPACE.mutex);
     iguana_initQs(coin);
     randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
     coin->starttime = (uint32_t)time(NULL);

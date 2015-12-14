@@ -16,7 +16,7 @@
 #include "iguana777.h"
 
 int32_t iguana_launchcoin(char *symbol,cJSON *json);
-
+queue_t helperQ;
 struct iguana_jsonitem { struct queueitem DL; uint32_t expired,allocsize; char **retjsonstrp; char jsonstr[]; };
 
 static struct iguana_info Coins[64];
@@ -356,11 +356,65 @@ void iguana_issuejsonstrM(void *arg)
     free(jsonstr);//,strlen(jsonstr)+1);
 }
 
+void iguana_helper(void *arg)
+{
+    FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson; int32_t flag;
+    struct iguana_helper *ptr;
+    if ( arg != 0 && (argjson= cJSON_Parse(arg)) != 0 )
+    {
+        helpername = jstr(argjson,"name");
+        free_json(argjson);
+    }
+    if ( helpername == 0 )
+    {
+        sprintf(name,"helper.%d",rand());
+        helpername = name;
+    }
+    sprintf(fname,"tmp/%s",name);
+    printf("start helper %s fp.%p\n",fname,fp);
+    while ( 1 )
+    {
+        flag = 0;
+        while ( (ptr= queue_dequeue(&helperQ,0)) != 0 )
+        {
+            iguana_helpertask(fp,ptr);
+            myfree(ptr,ptr->allocsize);
+            flag++;
+        }
+        if ( flag == 0 )
+            usleep(10000);
+    }
+}
+
+void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
+{
+    struct iguana_helper *ptr;
+    ptr = mycalloc('i',1,sizeof(*ptr));
+    ptr->allocsize = sizeof(*ptr);
+    ptr->coin = coin;
+    ptr->bp = bp, ptr->hdrsi = bp->hdrsi;
+    ptr->type = 'E';
+    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
+}
+
+void iguana_txdataQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp,long fpos,int32_t datalen)
+{
+    struct iguana_helper *ptr;
+    ptr = mycalloc('i',1,sizeof(*ptr));
+    ptr->allocsize = sizeof(*ptr);
+    ptr->coin = coin;
+    ptr->addr = addr, ptr->fp = fp, ptr->fpos = fpos, ptr->datalen = datalen;
+    ptr->type = 'T';
+    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
+}
+
 void iguana_main(void *arg)
 {
-    int32_t i,len,flag; cJSON *json; uint8_t secretbuf[512]; char *coinargs=0,*secret,*jsonstr = arg;
+    char helperstr[64],*helperargs,*coinargs=0,*secret,*jsonstr = arg;
+    int32_t i,len,flag; cJSON *json; uint8_t secretbuf[512];
     //  portable_OS_init()?
     mycalloc(0,0,0);
+    iguana_initQ(&helperQ,"helperQ");
     ensure_directory("DB");
     ensure_directory("tmp");
     if ( jsonstr != 0 && (json= cJSON_Parse(jsonstr)) != 0 )
@@ -385,6 +439,12 @@ void iguana_main(void *arg)
 #else
         IGUANA_NUMHELPERS = 1;
 #endif
+    }
+    for (i=0; i<IGUANA_NUMHELPERS; i++)
+    {
+        sprintf(helperstr,"{\"name\":\"helper.%d\"}",i);
+        helperargs = clonestr(helperstr);
+        iguana_launch(iguana_coin("BTCD"),"iguana_helper",iguana_helper,helperargs,IGUANA_PERMTHREAD);
     }
     if ( coinargs != 0 )
         iguana_launch(iguana_coin("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);

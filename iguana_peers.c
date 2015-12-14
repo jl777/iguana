@@ -824,17 +824,12 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
-    struct pollfd fds; uint8_t *buf,serialized[64]; char fname[512]; int64_t remaining;
-    int32_t i,bufsize,flag,timeout = coin->MAXPEERS/64+1;
-    struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
-    addr->addrind = (int32_t)(((long)addr - (long)&coin->peers.active[0]) / sizeof(*addr));
-    printf("start dedicatedloop.%s addrind.%d\n",addr->ipaddr,addr->addrind);
-    sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
-    addr->fp = fopen(fname,"wb");
-    bufsize = IGUANA_MAXPACKETSIZE;
-    buf = mycalloc('r',1,bufsize);
+    struct pollfd fds; uint8_t *buf,serialized[64]; char fname[512];
+    int32_t bufsize,flag,timeout = coin->MAXPEERS/64+1;
+#ifdef IGUANA_PEERALLOC
+    int32_t i;  int64_t remaining; struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
-    {break;
+    {
         mem[i] = mycalloc('s',1,sizeof(*mem[i]));
         addr->SEROUT[i] = mem[i];
         mem[i]->totalsize = IGUANA_MAXPACKETSIZE;
@@ -844,6 +839,13 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
         //mem[i]->threadsafe = 1;
         iguana_memreset(mem[i]);
     }
+#endif
+    addr->addrind = (int32_t)(((long)addr - (long)&coin->peers.active[0]) / sizeof(*addr));
+    printf("start dedicatedloop.%s addrind.%d\n",addr->ipaddr,addr->addrind);
+    sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
+    addr->fp = fopen(fname,"wb");
+    bufsize = IGUANA_MAXPACKETSIZE;
+    buf = mycalloc('r',1,bufsize);
     //printf("send version myservices.%llu\n",(long long)coin->myservices);
     iguana_send_version(coin,addr,coin->myservices);
     iguana_queue_send(coin,addr,serialized,"getaddr",0,0,0);
@@ -873,18 +875,14 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                         addr->pendhdrs--;
                     addr->pendtime = 0;
                 }
-                //if ( ((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size) < coin->MAXRECVCACHE )
-                {
-                    memset(&fds,0,sizeof(fds));
-                    fds.fd = addr->usock;
-                    fds.events |= POLLOUT;
-                    if ( poll(&fds,1,timeout) > 0 )
-                        flag += iguana_pollQs(coin,addr);
-                }
-                //else printf("%s > %llu coin->IGUANA_MAXRECVCACHE\n",mbstr((int64_t)coin->R.RSPACE.openfiles * coin->R.RSPACE.size),(long long)coin->MAXRECVCACHE);
+                memset(&fds,0,sizeof(fds));
+                fds.fd = addr->usock;
+                fds.events |= POLLOUT;
+                if ( poll(&fds,1,timeout) > 0 )
+                    flag += iguana_pollQs(coin,addr);
             }
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
-                usleep(3000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
+                usleep(10000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
     }
     if ( addr->fp != 0 )
@@ -892,6 +890,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     iguana_iAkill(coin,addr,addr->dead != 0);
     printf("finish dedicatedloop.%s\n",addr->ipaddr);
     myfree(buf,bufsize);
+#ifdef IGUANA_PEERALLOC
     while ( (remaining= iguana_peerallocated(coin,addr)) > 0 )
     {
         char str[65];
@@ -907,6 +906,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             myfree(addr->SEROUT[i],sizeof(*addr->SEROUT[i]));
         }
     }
+#endif
     coin->peers.numconnected--;
 }
 

@@ -21,8 +21,8 @@
 
 long myallocated(uint8_t type,long change)
 {
-    static long Total_allocated,HWM_allocated,Type_allocated[256];
-    int32_t i; long total = 0; char buf[2049],str[65];
+    static int64_t Total_allocated,HWM_allocated,Type_allocated[256];
+    int32_t i; int64_t total = 0; char buf[2049],str[65];
     buf[0] = 0;
     if ( type == 0 && change == 0 )
     {
@@ -34,7 +34,7 @@ long myallocated(uint8_t type,long change)
                 sprintf(buf+strlen(buf),"(%c %ld) ",i,(long)Type_allocated[i]);
             }
         }
-        sprintf(buf + strlen(buf),"-> total %ld %s",total,mbstr(str,total));
+        sprintf(buf + strlen(buf),"-> total %lld %s",(long long)total,mbstr(str,total));
         printf("%s\n",buf);
     }
     else
@@ -52,7 +52,7 @@ long myallocated(uint8_t type,long change)
 
 void *mycalloc(uint8_t type,int32_t n,long itemsize)
 {
-    struct allocitem *item; uint64_t allocsize = ((uint64_t)n * itemsize);
+    struct allocitem *item; int64_t allocsize = ((uint64_t)n * itemsize);
     if ( type == 0 && n == 0 && itemsize == 0 )
     {
         //portable_mutex_init(&MEMmutex);
@@ -76,7 +76,7 @@ void *mycalloc(uint8_t type,int32_t n,long itemsize)
 
 void *queueitem(char *str)
 {
-    struct queueitem *item; uint32_t n,allocsize; char *data; uint8_t type = 'y';
+    struct queueitem *item; int32_t n,allocsize; char *data; uint8_t type = 'y';
     //portable_mutex_lock(&MEMmutex);
     n = (uint32_t)strlen(str) + 1;
     allocsize = (uint32_t)(sizeof(struct queueitem) + n);
@@ -96,7 +96,7 @@ void *queueitem(char *str)
     return(data);
 }
 
-void _myfree(uint8_t type,uint32_t origallocsize,void *origptr,uint32_t allocsize)
+void _myfree(uint8_t type,int32_t origallocsize,void *origptr,int32_t allocsize)
 {
     //portable_mutex_lock(&MEMmutex);
     if ( allocsize == origallocsize )
