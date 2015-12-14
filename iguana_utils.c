@@ -21,10 +21,10 @@ portable_mutex_t MEMmutex;
 
 long myallocated(uint8_t type,long change)
 {
-    static long Total_allocated,HWM_allocated,Type_allocated[256];
+    /*static long Total_allocated,HWM_allocated,Type_allocated[256];
     int32_t i; long total = 0; char buf[2049];
     buf[0] = 0;
-   /* if ( type == 0 && change == 0 )
+    if ( type == 0 && change == 0 )
     {
         for (i=0; i<256; i++)
         {
@@ -46,8 +46,9 @@ long myallocated(uint8_t type,long change)
             printf("HWM allocated %ld %s\n",(long)Total_allocated,mbstr(Total_allocated));
             HWM_allocated = Total_allocated * 1.5;
         }
-    }*/
-    return(total);
+    }
+    return(total);*/
+    return(0);
 }
 
 void *mycalloc(uint8_t type,int32_t n,long itemsize)
@@ -458,26 +459,26 @@ void iguana_terminator(void *arg)
     }
 }*/
 
-static queue_t TerminateQ; static uint32_t Launched[8],Terminated[8];
 
-int32_t iguana_numthreads(int32_t mask)
+int32_t iguana_numthreads(struct iguana_info *coin,int32_t mask)
 {
     int32_t i,sum = 0;
     for (i=0; i<8; i++)
         if ( ((1 << i) & mask) != 0 )
-            sum += (Launched[i] - Terminated[i]);
+            sum += (coin->Launched[i] - coin->Terminated[i]);
     return(sum);
 }
 
 void iguana_launcher(void *ptr)
 {
-    struct iguana_thread *t = ptr;
+    struct iguana_thread *t = ptr; struct iguana_info *coin;
+    coin = t->coin;
     t->funcp(t->arg);
-    Terminated[t->type % (sizeof(Terminated)/sizeof(*Terminated))]++;
-    queue_enqueue("TerminateQ",&TerminateQ,&t->DL,0);
+    coin->Terminated[t->type % (sizeof(coin->Terminated)/sizeof(*coin->Terminated))]++;
+    queue_enqueue("TerminateQ",&coin->TerminateQ,&t->DL,0);
 }
 
-void iguana_terminate(struct iguana_thread *t)
+void iguana_terminate(struct iguana_info *coin,struct iguana_thread *t)
 {
     int32_t retval;
     retval = pthread_join(t->handle,NULL);
@@ -486,23 +487,24 @@ void iguana_terminate(struct iguana_thread *t)
     myfree(t,sizeof(*t));
 }
 
-struct iguana_thread *iguana_launch(char *name,iguana_func funcp,void *arg,uint8_t type)
+struct iguana_thread *iguana_launch(struct iguana_info *coin,char *name,iguana_func funcp,void *arg,uint8_t type)
 {
     int32_t retval; struct iguana_thread *t;
     t = mycalloc('Z',1,sizeof(*t));
     strcpy(t->name,name);
+    t->coin = coin;
     t->funcp = funcp;
     t->arg = arg;
-    t->type = (type % (sizeof(Terminated)/sizeof(*Terminated)));
-    Launched[t->type]++;
+    t->type = (type % (sizeof(coin->Terminated)/sizeof(*coin->Terminated)));
+    coin->Launched[t->type]++;
     retval = pthread_create(&t->handle,NULL,(void *)iguana_launcher,(void *)t);
     if ( retval != 0 )
         printf("error launching %s\n",t->name);
-    while ( (t= queue_dequeue(&TerminateQ,0)) != 0 )
+    while ( (t= queue_dequeue(&coin->TerminateQ,0)) != 0 )
     {
         if ( (rand() % 100000) == 0 )
-            printf("terminated.%d launched.%d terminate.%p\n",Terminated[t->type],Launched[t->type],t);
-        iguana_terminate(t);
+            printf("terminated.%d launched.%d terminate.%p\n",coin->Terminated[t->type],coin->Launched[t->type],t);
+        iguana_terminate(coin,t);
     }
     return(t);
 }

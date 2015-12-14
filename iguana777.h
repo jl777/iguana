@@ -183,6 +183,7 @@ struct iguana_thread
 {
     struct queueitem DL;
     pthread_t handle;
+    struct iguana_info *coin;
     char name[16];
     uint8_t type;
     iguana_func funcp;
@@ -408,7 +409,8 @@ struct iguana_info
 
     struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     
-    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,helperQ; double parsemillis,avetime;
+    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,helperQ,TerminateQ;
+    double parsemillis,avetime; uint32_t Launched[8],Terminated[8];
     portable_mutex_t peers_mutex,blocks_mutex;
     struct iguana_blocks blocks;
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
@@ -609,8 +611,8 @@ void *myaligned_alloc(uint64_t allocsize);
 int32_t myaligned_free(void *ptr,long size);
 long myallocated(uint8_t type,long change);
 
-struct iguana_thread *iguana_launch(char *name,iguana_func funcp,void *arg,uint8_t type);
-int32_t iguana_numthreads(int32_t mask);
+struct iguana_thread *iguana_launch(struct iguana_info *coin,char *name,iguana_func funcp,void *arg,uint8_t type);
+int32_t iguana_numthreads(struct iguana_info *coin,int32_t mask);
 void iguana_terminator(void *arg);
 void free_queueitem(void *itemptr);
 void *queueitem(char *str);

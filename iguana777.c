@@ -86,7 +86,7 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                 addr = &coin->peers.active[m++];
                 iguana_initpeer(coin,addr,(uint32_t)calc_ipbits(line));
                 printf("call initpeer.(%s)\n",addr->ipaddr);
-                iguana_launch("connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
+                iguana_launch(coin,"connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
             }
         }
         else
@@ -400,9 +400,9 @@ int32_t iguana_launchcoin(char *symbol,cJSON *json)
             coins[0] = (void *)((long)1);
             coins[1] = coin;
             printf("launch coinloop for.%s\n",coin->symbol);
-            iguana_launch("iguana_coinloop",iguana_coinloop,coins,IGUANA_PERMTHREAD);
+            iguana_launch(coin,"iguana_coinloop",iguana_coinloop,coins,IGUANA_PERMTHREAD);
             for (i=0; i<IGUANA_NUMHELPERS; i++)
-                iguana_launch("helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
+                iguana_launch(coin,"helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
             return(1);
         }
         else
@@ -429,7 +429,7 @@ void iguana_coins(void *arg)
                 coins[1] = iguana_setcoin(symbol,coins,0,0,0,0,0,0,0,0,json);
                 coins[0] = (void *)((long)1);
                 for (i=0; i<IGUANA_NUMHELPERS; i++)
-                    iguana_launch("helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
+                    iguana_launch(coins[1],"helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
                 iguana_coinloop(coins);
             } else printf("no coins[] array in JSON.(%s) only BTCD and BTC can be quicklaunched\n",jsonstr);
             free_json(json);
@@ -455,7 +455,7 @@ void iguana_coins(void *arg)
         }
         coins[0] = (void *)((long)n);
         for (i=0; i<IGUANA_NUMHELPERS; i++)
-            iguana_launch("helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
+            iguana_launch(coin,"helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
         iguana_coinloop(coins);
     }
 }

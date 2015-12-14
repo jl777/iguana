@@ -365,7 +365,7 @@ uint32_t iguana_syncs(struct iguana_info *coin)
         iguana_syncmap(&coin->pkhashes->M,0);
         iguana_syncmap(&coin->pkhashes->M2,0);
         iguana_syncmap(&coin->pkhashes->M3,0);
-        printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,height,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
+        printf("%s threads.%d iA.%d ranked.%d hwm.%u parsed.%u T.%d U.%d %.8f S.%d %.8f net %.8f P.%d\n",coin->symbol,iguana_numthreads(coin,-1),coin->numiAddrs,coin->peers.numranked,coin->blocks.hwmheight+1,height,coin->latest.dep.numtxids,coin->latest.dep.numunspents,dstr(coin->latest.credits),coin->latest.dep.numspends,dstr(coin->latest.debits),dstr(coin->latest.credits)-dstr(coin->latest.debits),coin->latest.dep.numpkinds);
         sprintf(fname,"tmp/%s/ledger.%d",coin->symbol,height);
         sprintf(fname2,"DB/%s/ledger",coin->symbol);
         sprintf(fnameold,"tmp/%s/ledger.old",coin->symbol);

@@ -513,7 +513,7 @@ void iguana_startconnection(void *arg)
 void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,struct iguana_kvitem *item,uint64_t args,void *key,void *value,int32_t valuesize)
 {
     struct iguana_iAddr *iA = value; char ipaddr[64]; int32_t i; struct iguana_peer *addr = 0;
-    if ( iA->ipbits != 0 && iguana_numthreads(1 << IGUANA_CONNTHREAD) < IGUANA_MAXCONNTHREADS )//&& iA->status != IGUANA_PEER_READY && iA->status != IGUANA_PEER_CONNECTING )
+    if ( iA->ipbits != 0 && iguana_numthreads(coin,1 << IGUANA_CONNTHREAD) < IGUANA_MAXCONNTHREADS )//&& iA->status != IGUANA_PEER_READY && iA->status != IGUANA_PEER_CONNECTING )
     {
         //printf("%x\n",iA->ipbits);
         expand_ipbits(ipaddr,iA->ipbits);
@@ -540,7 +540,7 @@ void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,stru
             if ( iguana_rwiAddrind(coin,1,iA,item->hh.itemind) > 0 )
             {
                 //printf("iguana_startconnection.(%s) status.%d\n",ipaddr,IGUANA_PEER_CONNECTING);
-                iguana_launch("connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
+                iguana_launch(coin,"connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
             }
         } else printf("no open peer slots left\n");
     }

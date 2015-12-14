@@ -387,7 +387,7 @@ void iguana_main(void *arg)
 #endif
     }
     if ( coinargs != 0 )
-        iguana_launch("iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
+        iguana_launch(iguana_coin("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
     else
     {
 #ifdef __APPLE__
