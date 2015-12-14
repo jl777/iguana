@@ -963,8 +963,12 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     }
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
     {
-        myfree(addr->SEROUT[i]->ptr,IGUANA_MAXPACKETSIZE);
-        myfree(addr->SEROUT[i],sizeof(*addr->SEROUT[i]));
+        if ( addr->SEROUT[i] != 0 )
+        {
+            if ( addr->SEROUT[i]->ptr != 0 )
+                myfree(addr->SEROUT[i]->ptr,IGUANA_MAXPACKETSIZE);
+            myfree(addr->SEROUT[i],sizeof(*addr->SEROUT[i]));
+        }
     }
     coin->peers.numconnected--;
 }
