@@ -276,7 +276,7 @@ struct iguana_peer
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
     struct msgcounts msgcounts;
-    struct iguana_memspace SEROUT[_IGUANA_MAXPENDING * 2/_IGUANA_MAXPENDING];
+    struct iguana_memspace SEROUT[_IGUANA_MAXPENDING * 64];
 };
 
 struct iguana_peers
