@@ -18,7 +18,7 @@
 queue_t helperQ,txQ;
 static uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
 
-int64_t iguana_MEMallocated(struct iguana_info *coin)
+/*int64_t iguana_MEMallocated(struct iguana_info *coin)
 {
     int64_t total = coin->TMPallocated;
     if ( Tx_allocsize > Tx_freesize )
@@ -26,7 +26,8 @@ int64_t iguana_MEMallocated(struct iguana_info *coin)
     //total += coin->R.RSPACE.openfiles * coin->R.RSPACE.size;
     //total += iguana_packetsallocated(coin);
     return(total);
-}
+}*/
+
 // two passes to check data size
 int32_t iguana_rwvin(int32_t rwflag,uint8_t *serialized,struct iguana_msgvin *msg)
 {

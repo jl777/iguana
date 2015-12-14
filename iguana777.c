@@ -313,7 +313,7 @@ void iguana_coinloop(void *arg)
                         //    if ( GETBIT(coin->havehash,j) != 0 )
                         //        m++;
                         iguana_bundlestats(coin,str);
-                        printf("%s.%-2d %s %.2f min %s\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.,mbstr(iguana_MEMallocated(coin)));
+                        printf("%s.%-2d %s %.2f min %s\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.);
                         if ( (rand() % 60) == 0 )
                             myallocated();
                     }
