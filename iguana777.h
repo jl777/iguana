@@ -463,7 +463,7 @@ int32_t iguana_getdata(struct iguana_info *coin,uint8_t *serialized,int32_t type
 
 // DB
 void iguana_closemap(struct iguana_mappedptr *M);
-int32_t iguana_syncmap(struct iguana_mappedptr *mp,uint64_t len);
+int32_t iguana_syncmap(struct iguana_mappedptr *mp,long len);
 void *iguana_kvwrite(struct iguana_info *coin,struct iguanakv *kv,void *key,void *value,uint32_t *itemindp);
 void *iguana_kvread(struct iguana_info *coin,struct iguanakv *kv,void *key,void *space,uint32_t *itemindp);
 void *iguana_kviterate(struct iguana_info *coin,struct iguanakv *kv,uint64_t args,void *(*iterator)(struct iguana_info *coin,struct iguanakv *kv,struct iguana_kvitem *item,uint64_t args,void *key,void *value,int32_t valuesize));
