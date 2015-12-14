@@ -276,6 +276,7 @@ struct iguana_peer
     uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime;
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
+    int64_t allocated,freed;
     struct msgcounts msgcounts; FILE *fp; int32_t filecount,addrind;
     struct iguana_memspace *SEROUT[128];
 };
@@ -640,5 +641,7 @@ void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req,struct
 void iguana_helper(void *arg);
 int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size);
 void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag);
+int64_t iguana_memallocated(struct iguana_memspace *mem);
+void iguana_memreset(struct iguana_memspace *mem);
 
 #endif

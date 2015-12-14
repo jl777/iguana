@@ -21,8 +21,8 @@
 
 long myallocated(uint8_t type,long change)
 {
-    /*static long Total_allocated,HWM_allocated,Type_allocated[256];
-    int32_t i; long total = 0; char buf[2049];
+    static long Total_allocated,HWM_allocated,Type_allocated[256];
+    int32_t i; long total = 0; char buf[2049],str[65];
     buf[0] = 0;
     if ( type == 0 && change == 0 )
     {
@@ -34,7 +34,7 @@ long myallocated(uint8_t type,long change)
                 sprintf(buf+strlen(buf),"(%c %ld) ",i,(long)Type_allocated[i]);
             }
         }
-        sprintf(buf + strlen(buf),"-> total %ld %s",total,mbstr(total));
+        sprintf(buf + strlen(buf),"-> total %ld %s",total,mbstr(str,total));
         printf("%s\n",buf);
     }
     else
@@ -43,12 +43,11 @@ long myallocated(uint8_t type,long change)
         Total_allocated += change;
         if ( Total_allocated > HWM_allocated )
         {
-            printf("HWM allocated %ld %s\n",(long)Total_allocated,mbstr(Total_allocated));
+            printf("HWM allocated %ld %s\n",(long)Total_allocated,mbstr(str,Total_allocated));
             HWM_allocated = Total_allocated * 1.5;
         }
     }
-    return(total);*/
-    return(0);
+    return(total);
 }
 
 void *mycalloc(uint8_t type,int32_t n,long itemsize)
@@ -285,6 +284,86 @@ int32_t queue_size(queue_t *queue)
     DL_COUNT(queue->list,tmp,count);
     portable_mutex_unlock(&queue->mutex);
 	return count;
+}
+
+void iguana_memreset(struct iguana_memspace *mem)
+{
+    printf("iguana_memreset.%p\n",mem);
+    mem->used = mem->availptrs = mem->outofptrs = mem->numptrs = 0;
+    memset(mem->ptrs,0,sizeof(mem->ptrs));
+    memset(mem->maxsizes,0,sizeof(mem->maxsizes));
+    memset(mem->allocsizes,0,sizeof(mem->allocsizes));
+    if ( mem->threadsafe != 0 )
+        portable_mutex_init(&mem->mutex);
+}
+
+int64_t iguana_memallocated(struct iguana_memspace *mem)
+{
+    int64_t i,avail = (mem->totalsize - mem->used);
+    for (i=0; i<mem->numptrs; i++)
+        if ( mem->allocsizes[i] == 0 )
+            avail += mem->maxsizes[i];
+    return(avail);
+}
+
+void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
+{
+    void *ptr = 0;
+    //printf("iguana_memalloc.%s size.%ld used.%llu of %llu, numptrs.%d avail.%d %lld\n",mem->name,size,(long long)mem->used,(long long)mem->totalsize,mem->numptrs,mem->availptrs,(long long)iguana_memallocated(mem));
+    //if ( mem->threadsafe != 0 )
+    //    portable_mutex_lock(&mem->mutex);
+    if ( mem->availptrs == mem->numptrs && mem->used > (mem->totalsize >> 1) )
+        iguana_memreset(mem);
+    if ( (mem->used + size) < mem->totalsize )
+    {
+        ptr = (void *)((uint64_t)mem->ptr + (uint64_t)mem->used);
+        mem->used += size;
+        if ( size*clearflag != 0 )
+            memset(ptr,0,size);
+        if ( mem->alignflag != 0 && (mem->used & 0xf) != 0 )
+            mem->used += 0x10 - (mem->used & 0xf);
+        if ( mem->numptrs < sizeof(mem->ptrs)/sizeof(*mem->ptrs) )
+        {
+            mem->allocsizes[mem->numptrs] = mem->maxsizes[mem->numptrs] = (int32_t)size;
+            mem->ptrs[mem->numptrs++] = ptr;
+        }
+        else
+        {
+            mem->outofptrs++;
+            printf("iguana_memalloc: numptrs.%d outofptrs.%d\n",mem->numptrs,mem->outofptrs);
+        }
+        //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
+    }
+    //if ( mem->threadsafe != 0 )
+    //    portable_mutex_unlock(&mem->mutex);
+    return(ptr);
+}
+
+int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size)
+{
+    int32_t i; int64_t avail = -1;
+    if ( mem->threadsafe != 0 )
+        portable_mutex_lock(&mem->mutex);
+    for (i=0; i<mem->numptrs; i++)
+    {
+        if ( ptr == mem->ptrs[i] )
+        {
+            if ( mem->allocsizes[i] == size )
+            {
+                mem->availptrs++;
+                mem->allocsizes[i] = 0;
+                avail = (mem->totalsize - mem->used);
+                //printf("avail %llu\n",(long long)avail);
+            } else printf("iguana_memfree.%s: mismatched size %d for ptr.%p %d\n",mem->name,size,ptr,mem->allocsizes[i]);
+            if ( mem->threadsafe != 0 )
+                portable_mutex_unlock(&mem->mutex);
+            return(avail);
+        }
+    }
+    if ( mem->threadsafe != 0 )
+        portable_mutex_unlock(&mem->mutex);
+    printf("iguana_memfree: cant find ptr.%p %d\n",ptr,size);
+    return(avail);
 }
 
 bits256 bits256_doublesha256(char *hashstr,uint8_t *data,int32_t datalen)
