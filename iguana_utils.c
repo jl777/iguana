@@ -21,7 +21,7 @@ portable_mutex_t MEMmutex;
 
 long myallocated(uint8_t type,long change)
 {
-    static int32_t Total_allocated,HWM_allocated,Type_allocated[256];
+    static long Total_allocated,HWM_allocated,Type_allocated[256];
     int32_t i; long total = 0; char buf[2049];
     buf[0] = 0;
     if ( type == 0 && change == 0 )
