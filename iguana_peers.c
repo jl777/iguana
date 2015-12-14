@@ -797,7 +797,7 @@ int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size)
 void *iguana_peeralloc(struct iguana_info *coin,struct iguana_peer *addr,int32_t datalen)
 {
     struct iguana_memspace *mem; long i,iter; int32_t j,diff,size,bestfit; void *ptr;
-    return(calloc(1,datalen));
+    //return(calloc(1,datalen));
     //printf("iguana_peeralloc.%s\n",addr->ipaddr);
     while ( 1 )
     {
@@ -806,7 +806,7 @@ void *iguana_peeralloc(struct iguana_info *coin,struct iguana_peer *addr,int32_t
         {
             for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
             {
-                mem = &addr->SEROUT[i];
+                mem = addr->SEROUT[i];
                 if ( mem->threadsafe != 0 )
                     portable_mutex_lock(&mem->mutex);
                 if ( iter < 2 && mem->availptrs > 0 )
@@ -856,7 +856,7 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 {
     int32_t i; int64_t total = 0;
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
-        total += iguana_memallocated(&addr->SEROUT[i]);
+        total += iguana_memallocated(addr->SEROUT[i]);
     return(total);
 }
 
@@ -864,11 +864,11 @@ int64_t iguana_peerfree(struct iguana_info *coin,struct iguana_peer *addr,void *
 {
     struct iguana_memspace *mem; long offset,i; int64_t avail = -1;
     //printf("iguana_peerfree.%p %d\n",ptr,datalen);
-    free(ptr);
-    return(1);
+    //free(ptr);
+    //return(1);
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
     {
-        mem = &addr->SEROUT[i];
+        mem = addr->SEROUT[i];
         offset = ((long)ptr - (long)mem->ptr);
         if ( offset >= 0 && offset+datalen < mem->totalsize )
         {
@@ -893,8 +893,9 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
-    {break;
-        mem[i] = &addr->SEROUT[i];
+    {
+        mem[i] = mycalloc('s',1,sizeof(*mem[i]));
+        addr->SEROUT[i] = mem[i];
         mem[i]->totalsize = IGUANA_MAXPACKETSIZE;
         mem[i]->ptr = mycalloc('P',1,mem[i]->totalsize);
         mem[i]->used = 0;
@@ -955,7 +956,10 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
         sleep(5);
     }
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
-        myfree(addr->SEROUT[i].ptr,IGUANA_MAXPACKETSIZE * _IGUANA_MAXPENDING);
+    {
+        myfree(addr->SEROUT[i]->ptr,IGUANA_MAXPACKETSIZE);
+        myfree(addr->SEROUT[i],sizeof(*addr->SEROUT[i]));
+    }
     coin->peers.numconnected--;
 }
 

@@ -258,7 +258,7 @@ struct iguana_mappedptr
 struct iguana_memspace
 {
     portable_mutex_t mutex; long used,totalsize; struct iguana_mappedptr M; char name[64];
-    void *ptrs[4096]; int32_t allocsizes[4096],maxsizes[4096]; void *ptr;
+    void *ptrs[1024]; int32_t allocsizes[1024],maxsizes[1024]; void *ptr;
     int32_t alignflag,outofptrs,numptrs,availptrs,counter,maxheight,openfiles,lastcounter,threadsafe;
     //uint8_t space[4];
 };
@@ -276,7 +276,7 @@ struct iguana_peer
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
     struct msgcounts msgcounts;
-    struct iguana_memspace SEROUT[_IGUANA_MAXPENDING * 8];
+    struct iguana_memspace *SEROUT[16];
 };
 
 struct iguana_peers
