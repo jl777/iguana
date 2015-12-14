@@ -258,7 +258,7 @@ struct iguana_mappedptr
 struct iguana_memspace
 {
     portable_mutex_t mutex; long used,totalsize; struct iguana_mappedptr M; char name[64];
-    void *ptrs[1024]; int32_t allocsizes[1024],maxsizes[1024]; void *ptr;
+    void *ptrs[4096]; int32_t allocsizes[4096],maxsizes[4096]; void *ptr;
     int32_t alignflag,outofptrs,numptrs,availptrs,counter,maxheight,openfiles,lastcounter,threadsafe;
     //uint8_t space[4];
 };
