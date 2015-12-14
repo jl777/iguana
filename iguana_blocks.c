@@ -14,7 +14,7 @@
  ******************************************************************************/
 
 #include "iguana777.h"
-static const bits256 bits256_zero;
+//static const bits256 bits256_zero;
 
 #define iguana_block(coin,height) (height >= 0 ? coin->blocks.ptrs[height] : 0) // invariant ptr
 #define iguana_blockfind(coin,hash2) iguana_blockhashset(coin,-1,hash2,0)
@@ -125,7 +125,7 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
 bits256 iguana_blockhash(struct iguana_info *coin,int32_t *validp,int32_t height)
 {
     struct iguana_block *block; bits256 hash2; uint8_t serialized[sizeof(struct iguana_msgblock)];
-    *validp = 0; hash2 = bits256_zero;
+    *validp = 0; memset(hash2.bytes,0,sizeof(hash2));
     if ( (block= iguana_block(coin,height)) != 0 )
     {
         hash2 = block->hash2;
@@ -547,11 +547,12 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
 
 bits256 iguana_bundleihash2(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei)
 {
-    struct iguana_block *block;
+    struct iguana_block *block; bits256 zero;
     if ( bp->hdrsi == 0 && bp->bundleheight == 0 && bundlei == 0 )
         return(*(bits256 *)coin->chain->genesis_hashdata);
+    memset(zero.bytes,0,sizeof(zero));
     if ( bundlei < -1 )
-        return(bits256_zero);
+        return(zero);
     else if ( bundlei == -1 )
         return(bp->prevbundlehash2);
     else if ( bundlei == 0 )
@@ -567,7 +568,7 @@ bits256 iguana_bundleihash2(struct iguana_info *coin,struct iguana_bundle *bp,in
             char str[65],str2[65];
             bits256_str(str,bp->blockhashes[bundlei]), bits256_str(str2,block->hash2);
             printf("bundleihash2 error at bundlei.%d %s != %s\n",bundlei,str,str2);
-            return(bits256_zero);
+            return(zero);
         }
         return(bp->blockhashes[bundlei]);
     }
@@ -575,7 +576,7 @@ bits256 iguana_bundleihash2(struct iguana_info *coin,struct iguana_bundle *bp,in
         return(block->hash2);
     else if ( bp->blockhashes != 0 )
         return(bp->blockhashes[bundlei]);
-    else return(bits256_zero);
+    else return(zero);
 }
 
 int32_t iguana_hash2set(struct iguana_info *coin,char *str,bits256 *orighash2,bits256 newhash2)
@@ -848,9 +849,11 @@ struct iguana_block *iguana_recvblockhdr(struct iguana_info *coin,struct iguana_
             }
             if ( prevbundlei == coin->chain->bundlesize-1 )
             {
+                bits256 zero;
+                memset(zero.bytes,0,sizeof(zero));
                 bits256_str(str,block->hash2);
                 printf("prev AUTOCREATE.%s\n",str);
-                iguana_bundlecreate(coin,block->hash2,bits256_zero);
+                iguana_bundlecreate(coin,block->hash2,zero);
             }
             return(block);
         }
@@ -948,9 +951,11 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
             iguana_bundlecreate(coin,blockhashes[1],blockhashes[2]);
             if ( 0 && num == coin->chain->bundlesize+1 && iguana_bundlefind(coin,&bundlei,blockhashes[num - 1],0) == 0 )
             {
+                bits256 zero;
+                memset(zero.bytes,0,sizeof(zero));
                 bits256_str(str,blockhashes[num - 1]);
                 printf("AUTO EXTEND2.%s[%d]\n",str,num);
-                iguana_bundlecreate(coin,blockhashes[num - 1],bits256_zero);
+                iguana_bundlecreate(coin,blockhashes[num - 1],zero);
             }
         }
     }
