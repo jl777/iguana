@@ -437,9 +437,9 @@ void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req)
 
 void iguana_helper(void *arg)
 {
-    FILE *fp; char fname[512]; int32_t flag; struct iguana_bundle *bp; struct iguana_bundlereq *req;
+    FILE *fp = 0; long endpos = 0; char fname[512]; int32_t flag;
+    struct iguana_bundle *bp; struct iguana_bundlereq *req;
     sprintf(fname,"tmp/helper.%d",*(int32_t *)arg);
-    fp = fopen(fname,"wb");
     printf("start helper %s fp.%p\n",fname,fp);
     while ( 1 )
     {
@@ -450,14 +450,21 @@ void iguana_helper(void *arg)
             {
                 req = (struct iguana_bundlereq *)bp;
                 //printf("START save tmp txdata %p [%d].%d datalen.%d\n",req->argbp,req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
+                if ( fp == 0 )
+                {
+                    if ( (fp= fopen(fname,"rb+")) == 0 )
+                        fp = fopen(fname,"wb");
+                    fseek(fp,endpos,SEEK_SET);
+                }
                 if ( fp != 0 )
                 {
                     if ( fwrite(req->serialized,1,req->datalen,fp) != req->datalen )
                         printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
+                    endpos = ftell(fp);
+                    fclose(fp);
+                    fp = 0;
                 }
-                myallocated();
                 myfree(req,req->allocsize);
-                myallocated();
             }
             else if ( bp->type == 'E' )
             {
