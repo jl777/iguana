@@ -16,7 +16,7 @@
 #include "iguana777.h"
 
 queue_t helperQ,txQ;
-uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
+static uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
 
 int64_t iguana_MEMallocated(struct iguana_info *coin)
 {
