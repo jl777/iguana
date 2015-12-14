@@ -14,7 +14,6 @@
  ******************************************************************************/
 
 #include "iguana777.h"
-static const bits256 bits256_zero;
 
 int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp)
 {
@@ -339,7 +338,7 @@ int32_t iguana_rwblockhash(int32_t rwflag,uint8_t *serialized,uint32_t *nVersion
 
 void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgversion *vers)
 {
-    uint8_t serialized[sizeof(struct iguana_msghdr)];
+    uint8_t serialized[sizeof(struct iguana_msghdr)]; bits256 zero;
     //printf("gotversion from %s\n",addr->ipaddr);
     if ( (vers->nServices & NODE_NETWORK) == 0 )
         printf("other node.(%s) doesnt relay\n",addr->ipaddr);
@@ -349,7 +348,8 @@ void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct 
         addr->relayflag = vers->relayflag;
         addr->height = vers->nStartingHeight;
         addr->relayflag = 1;
-        iguana_gotdata(coin,addr,addr->height,bits256_zero);
+        memset(&zero,0,sizeof(zero));
+        iguana_gotdata(coin,addr,addr->height,zero);
         iguana_queue_send(coin,addr,serialized,"verack",0,0,0);
         //iguana_send_ping(coin,addr);
     } else printf("nServices.%llx nonce.%llu invalid version message from.(%s)\n",(long long)vers->nServices,(long long)vers->nonce,addr->ipaddr);
@@ -435,14 +435,15 @@ void iguana_gotpong(struct iguana_info *coin,struct iguana_peer *addr,uint64_t n
 
 int32_t iguana_gethdrs(struct iguana_info *coin,uint8_t *serialized,char *cmd,char *hashstr)
 {
-    uint32_t len,n; bits256 hash2;
+    uint32_t len,n; bits256 hash2; bits256 zero;
     decode_hex(hash2.bytes,sizeof(hash2),hashstr);
+    memset(zero.bytes,0,sizeof(zero));
     n = 0;
     len = iguana_rwnum(1,&serialized[sizeof(struct iguana_msghdr)],sizeof(uint32_t),&n);
     n++;
     len += iguana_rwvarint32(1,&serialized[sizeof(struct iguana_msghdr) + len],(uint32_t *)&n);
     len += iguana_rwbignum(1,&serialized[sizeof(struct iguana_msghdr) + len],sizeof(bits256),hash2.bytes);
-    len += iguana_rwbignum(1,&serialized[sizeof(struct iguana_msghdr) + len],sizeof(bits256),(uint8_t *)bits256_zero.bytes);
+    len += iguana_rwbignum(1,&serialized[sizeof(struct iguana_msghdr) + len],sizeof(bits256),(uint8_t *)zero.bytes);
     return(iguana_sethdr((void *)serialized,coin->chain->netmagic,cmd,&serialized[sizeof(struct iguana_msghdr)],len));
 }
 
