@@ -455,7 +455,9 @@ void iguana_helper(void *arg)
                     if ( fwrite(req->serialized,1,req->datalen,fp) != req->datalen )
                         printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
                 }
+                myallocated();
                 myfree(req,req->allocsize);
+                myallocated();
             }
             else if ( bp->type == 'E' )
             {
@@ -480,6 +482,6 @@ void iguana_helper(void *arg)
             //printf("FINISH emittxdata\n");
         }
         if ( flag == 0 )
-            sleep(1);
+            usleep(10000);
     }
 }
