@@ -15,7 +15,6 @@
 
 #include "iguana777.h"
 
-queue_t helperQ,txQ;
 //static uint64_t Tx_allocated,Tx_allocsize,Tx_freed,Tx_freesize;
 
 /*int64_t iguana_MEMallocated(struct iguana_info *coin)
@@ -329,62 +328,70 @@ return;
 
 void iguana_helper(void *arg)
 {
-    FILE *fp = 0; char fname[512]; int32_t flag; long endpos = 0;
-    struct iguana_bundle *bp; struct iguana_bundlereq *req;
-    sprintf(fname,"tmp/helper.%d",*(int32_t *)arg);
+    FILE *fp = 0; char fname[512]; int32_t flag; long endpos = 0; struct iguana_info *coin,**coins = arg;
+    struct iguana_bundle *bp; struct iguana_bundlereq *req; int32_t i,n;
+    n = (int32_t)(long)coins[0];
+    coins++;
+    sprintf(fname,"tmp/helper.%d",rand());
     printf("start helper %s fp.%p\n",fname,fp);
     while ( 1 )
     {
         flag = 0;
-        if ( (bp= queue_dequeue(&helperQ,0)) != 0 )
+        for (i=0; i<n; i++)
         {
-            if ( bp->type == 'Q' )
+            if ( (coin= coins[i]) != 0 )
             {
-                req = (struct iguana_bundlereq *)bp;
-                printf("START.%p save tmp txdata %p [%d].%d datalen.%d %p\n",req,req->argbp,req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen,req->data);
-                if ( fp == 0 )
+                if ( (bp= queue_dequeue(&coin->helperQ,0)) != 0 )
                 {
-                    if ( (fp= fopen(fname,"rb+")) == 0 )
-                        fp = fopen(fname,"wb");
-                    fseek(fp,endpos,SEEK_SET);
+                    if ( bp->type == 'Q' )
+                    {
+                        req = (struct iguana_bundlereq *)bp;
+                        printf("START.%p save tmp txdata %p [%d].%d datalen.%d %p\n",req,req->argbp,req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen,req->data);
+                        if ( fp == 0 )
+                        {
+                            if ( (fp= fopen(fname,"rb+")) == 0 )
+                                fp = fopen(fname,"wb");
+                            fseek(fp,endpos,SEEK_SET);
+                        }
+                        if ( fp != 0 )
+                        {
+                            if ( fwrite(req->data,1,req->datalen,fp) != req->datalen )
+                                printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
+                        }
+                        //Tx_freed++;
+                        //Tx_freesize += req->allocsize;
+                        if ( req->data != 0 )
+                        {
+                            //myfree(req->data,req->datalen);
+                            iguana_peerfree(req->coin,req->addr,req->data,req->datalen);
+                        }
+                        if ( req->blocks != 0 )
+                            myfree(req->blocks,sizeof(*req->blocks));
+                        myfree(req,req->allocsize);
+                    }
+                    else if ( bp->type == 'E' )
+                    {
+                        fflush(fp);
+                        myallocated(0,0);
+                        iguana_emittxdata(bp->coin,bp);
+                        myallocated(0,0);
+                        if ( bp->coin != 0 )
+                        {
+                            if ( bp->coin->estsize > bp->coin->MAXRECVCACHE*.9 && bp->coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
+                                bp->coin->MAXBUNDLES--;
+                            else if ( bp->coin->activebundles >= bp->coin->MAXBUNDLES && bp->coin->estsize < bp->coin->MAXRECVCACHE*.5 )
+                                bp->coin->MAXBUNDLES++;
+                            bp->coin->numemitted++;
+                        }
+                    }
+                    else
+                    {
+                        printf("iguana_helper: unsupported type.%c %d %p\n",bp->type,bp->type,bp);
+                    }
+                    flag++;
+                    //printf("FINISH emittxdata\n");
                 }
-                if ( fp != 0 )
-                {
-                    if ( fwrite(req->data,1,req->datalen,fp) != req->datalen )
-                        printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
-                }
-                //Tx_freed++;
-                //Tx_freesize += req->allocsize;
-                if ( req->data != 0 )
-                {
-                    //myfree(req->data,req->datalen);
-                    iguana_peerfree(req->coin,req->addr,req->data,req->datalen);
-                }
-                if ( req->blocks != 0 )
-                    myfree(req->blocks,sizeof(*req->blocks));
-                myfree(req,req->allocsize);
             }
-            else if ( bp->type == 'E' )
-            {
-                fflush(fp);
-                myallocated(0,0);
-                iguana_emittxdata(bp->coin,bp);
-                myallocated(0,0);
-                if ( bp->coin != 0 )
-                {
-                    if ( bp->coin->estsize > bp->coin->MAXRECVCACHE*.9 && bp->coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
-                        bp->coin->MAXBUNDLES--;
-                    else if ( bp->coin->activebundles >= bp->coin->MAXBUNDLES && bp->coin->estsize < bp->coin->MAXRECVCACHE*.5 )
-                        bp->coin->MAXBUNDLES++;
-                    bp->coin->numemitted++;
-                }
-            }
-            else
-            {
-                printf("iguana_helper: unsupported type.%c %d %p\n",bp->type,bp->type,bp);
-            }
-            flag++;
-            //printf("FINISH emittxdata\n");
         }
         if ( flag == 0 )
             usleep(10000);
@@ -501,7 +508,7 @@ void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
 {
     bp->coin = coin;
     bp->type = 'E';
-    queue_enqueue("emitQ",&helperQ,&bp->DL,0);
+    queue_enqueue("emitQ",&coin->helperQ,&bp->DL,0);
 }
 
 void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req,struct iguana_bundle *bp,int32_t bundlei)
@@ -510,5 +517,5 @@ void iguana_txdataQ(struct iguana_info *coin,struct iguana_bundlereq *req,struct
     req->type = 'Q';
     req->argbp = bp, req->argbundlei = bundlei;
     printf("txdataQ.%p bp.%p[%d] data.%p datalen.%d\n",req,bp,bundlei,req->data,req->datalen);
-    queue_enqueue("txdataQ",&helperQ,&req->DL,0);
+    queue_enqueue("txdataQ",&coin->helperQ,&req->DL,0);
 }

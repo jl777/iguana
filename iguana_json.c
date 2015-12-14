@@ -19,7 +19,6 @@ int32_t iguana_launchcoin(char *symbol,cJSON *json);
 
 struct iguana_jsonitem { struct queueitem DL; uint32_t expired,allocsize; char **retjsonstrp; char jsonstr[]; };
 
-queue_t finishedQ;
 static struct iguana_info Coins[64];
 const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "BitcoinDark", "129" } };
 
@@ -246,20 +245,20 @@ char *iguana_genericjsonstr(char *jsonstr)
 int32_t iguana_processjsonQ(struct iguana_info *coin) // reentrant, can be called during any idletime
 {
     struct iguana_jsonitem *ptr;
-    if ( (ptr= queue_dequeue(&finishedQ,0)) != 0 )
+    if ( (ptr= queue_dequeue(&coin->finishedQ,0)) != 0 )
     {
         if ( ptr->expired != 0 )
         {
             printf("garbage collection: expired.(%s)\n",ptr->jsonstr);
             myfree(ptr,ptr->allocsize);
-        } else queue_enqueue("finishedQ",&finishedQ,&ptr->DL,0);
+        } else queue_enqueue("finishedQ",&coin->finishedQ,&ptr->DL,0);
     }
     if ( (ptr= queue_dequeue(&coin->jsonQ,0)) != 0 )
     {
         printf("process.(%s)\n",ptr->jsonstr);
         if ( (*ptr->retjsonstrp= iguana_jsonstr(coin,ptr->jsonstr)) == 0 )
             *ptr->retjsonstrp = clonestr("{\"error\":\"null return from iguana_jsonstr\"}");
-        queue_enqueue("finishedQ",&finishedQ,&ptr->DL,0);
+        queue_enqueue("finishedQ",&coin->finishedQ,&ptr->DL,0);
         return(1);
     }
     return(0);
@@ -285,7 +284,7 @@ char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag
             if ( (retjsonstr= *ptr->retjsonstrp) != 0 )
             {
                 printf("blocking retjsonstr.(%s)\n",retjsonstr);
-                queue_delete(&finishedQ,&ptr->DL,allocsize,1);
+                queue_delete(&coin->finishedQ,&ptr->DL,allocsize,1);
                 return(retjsonstr);
             }
             usleep(1000);
@@ -359,11 +358,9 @@ void iguana_issuejsonstrM(void *arg)
 
 void iguana_main(void *arg)
 {
-    extern queue_t helperQ;
-    int32_t i,len,flag,*nump; cJSON *json; uint8_t secretbuf[512]; char *coinargs,*secret,*jsonstr = arg;
+    int32_t i,len,flag; cJSON *json; uint8_t secretbuf[512]; char *coinargs=0,*secret,*jsonstr = arg;
     //  portable_OS_init()?
     mycalloc(0,0,0);
-    iguana_initQ(&helperQ,"helperQ");
     ensure_directory("DB");
     ensure_directory("tmp");
     if ( jsonstr != 0 && (json= cJSON_Parse(jsonstr)) != 0 )
@@ -386,14 +383,8 @@ void iguana_main(void *arg)
 #ifdef __linux__
         IGUANA_NUMHELPERS = 8;
 #else
-        IGUANA_NUMHELPERS = 4;
+        IGUANA_NUMHELPERS = 1;
 #endif
-    }
-    for (i=0; i<IGUANA_NUMHELPERS; i++)
-    {
-        nump = malloc(sizeof(int32_t));
-        (*nump) = i;
-        iguana_launch("helpers",iguana_helper,nump,IGUANA_HELPERTHREAD);
     }
     if ( coinargs != 0 )
         iguana_launch("iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);

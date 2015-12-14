@@ -408,7 +408,7 @@ struct iguana_info
 
     struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     
-    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ; double parsemillis,avetime;
+    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,helperQ; double parsemillis,avetime;
     portable_mutex_t peers_mutex,blocks_mutex;
     struct iguana_blocks blocks;
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];

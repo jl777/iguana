@@ -382,7 +382,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
 
 int32_t iguana_launchcoin(char *symbol,cJSON *json)
 {
-    int32_t maxpeers,maphash,initialheight,minconfirms,maxpending,maxbundles;
+    int32_t i,maxpeers,maphash,initialheight,minconfirms,maxpending,maxbundles;
     int64_t maxrecvcache; uint64_t services; struct iguana_info **coins,*coin;
     if ( symbol == 0 )
         return(-1);
@@ -401,6 +401,8 @@ int32_t iguana_launchcoin(char *symbol,cJSON *json)
             coins[1] = coin;
             printf("launch coinloop for.%s\n",coin->symbol);
             iguana_launch("iguana_coinloop",iguana_coinloop,coins,IGUANA_PERMTHREAD);
+            for (i=0; i<IGUANA_NUMHELPERS; i++)
+                iguana_launch("helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
             return(1);
         }
         else
@@ -426,6 +428,8 @@ void iguana_coins(void *arg)
                 coins = mycalloc('A',1+1,sizeof(*coins));
                 coins[1] = iguana_setcoin(symbol,coins,0,0,0,0,0,0,0,0,json);
                 coins[0] = (void *)((long)1);
+                for (i=0; i<IGUANA_NUMHELPERS; i++)
+                    iguana_launch("helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
                 iguana_coinloop(coins);
             } else printf("no coins[] array in JSON.(%s) only BTCD and BTC can be quicklaunched\n",jsonstr);
             free_json(json);
@@ -450,6 +454,8 @@ void iguana_coins(void *arg)
             printf("MAXRECVCACHE.%s\n",mbstr(coin->MAXRECVCACHE));
         }
         coins[0] = (void *)((long)n);
+        for (i=0; i<IGUANA_NUMHELPERS; i++)
+            iguana_launch("helpers",iguana_helper,coins,IGUANA_HELPERTHREAD);
         iguana_coinloop(coins);
     }
 }
