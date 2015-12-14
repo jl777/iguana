@@ -856,7 +856,8 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 {
     int32_t i; int64_t total = 0;
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
-        total += iguana_memallocated(addr->SEROUT[i]);
+        if ( addr->SEROUT[i] != 0 )
+            total += iguana_memallocated(addr->SEROUT[i]);
     return(total);
 }
 
