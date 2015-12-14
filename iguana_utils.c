@@ -187,7 +187,7 @@ void lock_queue(queue_t *queue)
 void queue_enqueue(char *name,queue_t *queue,struct queueitem *origitem,int32_t offsetflag)
 {
     struct queueitem *item;
-    if ( queue->list == 0 && name != 0 && name[0] != 0 )
+    if ( queue->name[0] == 0 && name != 0 && name[0] != 0 )
         strcpy(queue->name,name);//,sizeof(queue->name));
     if ( origitem == 0 )
     {

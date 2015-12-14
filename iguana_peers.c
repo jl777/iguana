@@ -553,7 +553,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
     struct iguana_iAddr iA; struct iguana_kvitem item;
     if ( ipaddr != 0 )
     {
-        //printf("Q possible peer.(%s)\n",ipaddr);
+        //printf("%p Q possible peer.(%s)\n",coin,ipaddr);
         queue_enqueue("possibleQ",&coin->possibleQ,queueitem(ipaddr),1);
         return((uint32_t)time(NULL));
     }

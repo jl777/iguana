@@ -38,7 +38,7 @@ int32_t _iguana_verifysort(struct iguana_info *coin)
             run++;
         i++;
     }
-    printf("_iguana_verifysort: n.%d topheight.%d run.%d\n",i,height,run);
+    printf("_iguana_verifysort: n.%d run.%d\n",i,run);
     return(run);
 }
 
@@ -57,7 +57,7 @@ int32_t _iguana_blocklink(struct iguana_info *coin,struct iguana_block *block)
     int32_t height,n = 0; struct iguana_block *prev,*next;
     if ( block == 0 )
         printf("iguana_blockslink: illegal null block %p\n",block), getchar();
-    block->hh.next = block->hh.prev = 0;
+    block->hh.next = 0, block->hh.prev = 0;
     if ( (height= (int32_t)block->hh.itemind) > 0 && (prev= iguana_block(coin,height-1)) != 0 )
     {
         prev->hh.next = block;
@@ -839,7 +839,7 @@ struct iguana_block *iguana_recvblockhdr(struct iguana_info *coin,struct iguana_
         {
             (*bpp) = bp;
             char str[65];
-            if ( prevbundlei >= 0 && prevbundlei < bp->n-1 )
+            if ( prevbundlei >= 0 && prevbundlei < coin->chain->bundlesize-1 )
             {
                 *bundleip = prevbundlei + 1;
                 bits256_str(str,block->hash2);

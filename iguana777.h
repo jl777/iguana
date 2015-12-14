@@ -175,7 +175,7 @@ typedef struct queue
 {
 	struct queueitem *list;
 	portable_mutex_t mutex;
-    char name[31],initflag;
+    char name[64],initflag;
 } queue_t;
 
 typedef void (*iguana_func)(void *);

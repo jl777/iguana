@@ -31,6 +31,7 @@ void iguana_initQs(struct iguana_info *coin)
     iguana_initQ(&coin->blocksQ,"blocksQ");
     iguana_initQ(&coin->priorityQ,"priorityQ");
     iguana_initQ(&coin->possibleQ,"possibleQ");
+    printf("init_possibleQ.%p\n",&coin->possibleQ);
     iguana_initQ(&coin->jsonQ,"jsonQ");
     iguana_initQ(&coin->helperQ,"helperQ");
     iguana_initQ(&coin->helperQ,"helperQ");
