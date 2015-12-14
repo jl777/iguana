@@ -778,7 +778,7 @@ int32_t btc_pub65toaddr(char *coinaddr,uint8_t addrtype,char pubkey[131],uint8_t
 
 int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *pk_script,int32_t pk_scriptlen,bits256 debugtxid)
 {
-    char hexstr[8192]; uint32_t orign; uint8_t sha256[32],*orig;
+   /* char hexstr[8192]; uint32_t orign; uint8_t sha256[32],*orig;
     orign = pk_scriptlen, orig = pk_script;
     if ( pk_script[0] == 0x76 && pk_script[1] == 0xa9 && pk_script[pk_scriptlen-2] == 0x88 && pk_script[pk_scriptlen-1] == 0xac )
     {
@@ -805,7 +805,7 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *p
             fprintf(fp,"%s\n",hexstr), fflush(fp);
     }
     vcalc_sha256(0,sha256,pk_script,pk_scriptlen);
-    calc_rmd160(0,rmd160,sha256,sizeof(sha256));
+    calc_rmd160(0,rmd160,sha256,sizeof(sha256));*/
     return(0);
 }
 
