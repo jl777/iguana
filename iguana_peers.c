@@ -887,10 +887,12 @@ int64_t iguana_peerfree(struct iguana_info *coin,struct iguana_peer *addr,void *
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
-    struct pollfd fds; uint8_t *buf,serialized[64]; int64_t remaining;
+    struct pollfd fds; uint8_t *buf,serialized[64]; char fname[512]; int64_t remaining;
     int32_t i,bufsize,flag,timeout = coin->MAXPEERS/64+1;
     struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
     printf("start dedicatedloop.%s\n",addr->ipaddr);
+    sprintf(fname,"tmp/%s/%s",coin->symbol,addr->ipaddr);
+    addr->fp = fopen(fname,"wb");
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)

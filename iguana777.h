@@ -275,7 +275,7 @@ struct iguana_peer
     uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime;
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
-    struct msgcounts msgcounts;
+    struct msgcounts msgcounts; FILE *fp;
     struct iguana_memspace *SEROUT[128];
 };
 

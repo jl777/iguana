@@ -384,11 +384,17 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
         addr->lastblockrecv = (uint32_t)time(NULL);
         addr->recvblocks += 1.;
         addr->recvtotal += datalen;
+        if ( addr->fp != 0 )
+        {
+            fwrite(&datalen,1,sizeof(datalen),addr->fp);
+            fwrite(&numtx,1,sizeof(numtx),addr->fp);
+            fwrite(data,1,datalen,addr->fp);
+        }
     }
     coin->recvcount++;
     coin->recvtime = (uint32_t)time(NULL);
     req = iguana_bundlereq(coin,addr,'B',0);
-    datalen = 16;
+datalen = 16;
     req->blocks = block;
     req->datalen = datalen;
     if ( (req->data= iguana_peeralloc(coin,addr,datalen)) != 0 )
