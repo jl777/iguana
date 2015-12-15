@@ -151,6 +151,15 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
             fwrite(txdata,1,txdata->datalen,fp);
         }
     }
+    {
+        static int32_t maxrecvlen,maxdatalen,maxhashmem;
+        if ( recvlen > maxrecvlen )
+            printf("maxrecvlen %d -> %d\n",maxrecvlen,recvlen), maxrecvlen = recvlen;
+        if ( datalen > maxdatalen )
+            printf("maxdatalen %d -> %d\n",maxdatalen,datalen), maxdatalen = datalen;
+        if ( hashmem->used > maxhashmem )
+            printf("maxhashmem %d -> %ld\n",maxhashmem,hashmem->used), maxhashmem = (int32_t)hashmem->used;
+    }
     return(txdatabits);
 }
 
