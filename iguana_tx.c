@@ -76,7 +76,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
     struct iguana_txid *T,*t; struct iguana_unspent *U,*u; struct iguana_spend *S,*s; struct iguana_pkhash *P;
     FILE *fp; long fpos;  bits256 *externalT; struct iguana_kvitem *txids,*pkhashes,*ptr;
     struct iguana_memspace *txmem,*hashmem; struct iguana_msgtx *tx; struct iguana_txblock *txdata = 0;
-    int32_t i,j,numvins,numvouts,numexternal,numpkinds,scriptlen,sequence,spend_unspentind,datalen = 0;
+    int32_t i,j,numvins,numvouts,numexternal,numpkinds,scriptlen,sequence,spend_unspentind;
     uint32_t txidind,unspentind,spendind,pkind; uint8_t *script,rmd160[20]; uint64_t txdatabits = 0;
     txmem = &addr->TXDATA, hashmem = &addr->HASHMEM;
     txids = pkhashes = 0;
@@ -142,7 +142,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
     }
     if ( (txdata->numexternaltxids= numexternal) > 0 )
         externalT = iguana_memalloc(txmem,sizeof(*externalT) * numexternal,0);
-    datalen = (int32_t)txmem->used;
+    txdata->datalen = (int32_t)txmem->used;
     if ( numvins != txdata->numspends || numvouts != txdata->numunspents || i != txdata->numtxids )
     {
         printf("counts mismatch: numvins %d != %d txdata->numvins || numvouts %d != %d txdata->numvouts || i %d != %d txdata->numtxids\n",numvins,txdata->numspends,numvouts,txdata->numunspents,i,txdata->numtxids);
@@ -160,13 +160,16 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
         }
     }
     {
-        static int32_t maxrecvlen,maxdatalen,maxhashmem;
+        static int32_t maxrecvlen,maxdatalen,maxhashmem; static double recvsum,datasum;
+        recvsum += recvlen, datasum += txdata->datalen;
         if ( recvlen > maxrecvlen )
-            printf("maxrecvlen %d -> %d\n",maxrecvlen,recvlen), maxrecvlen = recvlen;
-        if ( datalen > maxdatalen )
-            printf("maxdatalen %d -> %d\n",maxdatalen,datalen), maxdatalen = datalen;
+            printf("[%.3f] %.0f/%.0f maxrecvlen %d -> %d\n",recvsum/datasum,recvsum,datasum,maxrecvlen,recvlen), maxrecvlen = recvlen;
+        if ( txdata->datalen > maxdatalen )
+            printf("[%.3f] %.0f/%.0f maxdatalen %d -> %d\n",recvsum/datasum,recvsum,datasum,maxdatalen,txdata->datalen), maxdatalen = txdata->datalen;
         if ( hashmem->used > maxhashmem )
-            printf("maxhashmem %d -> %ld\n",maxhashmem,hashmem->used), maxhashmem = (int32_t)hashmem->used;
+            printf("[%.3f] %.0f/%.0f maxhashmem %d -> %ld\n",recvsum/datasum,recvsum,datasum,maxhashmem,hashmem->used), maxhashmem = (int32_t)hashmem->used;
+        if ( (rand() % 1000) == 0 )
+            printf("[%.3f] %.0f/%.0f recvlen vs datalen\n",recvsum/datasum,recvsum,datasum);
     }
     return(txdatabits);
 }

@@ -337,9 +337,9 @@ void iguana_coinargs(char *symbol,int64_t *maxrecvcachep,int32_t *minconfirmsp,i
     if ( (*maxrecvcachep= j64bits(json,"maxrecvcache")) != 0 )
         *maxrecvcachep *= 1024 * 1024 * 1024L;
     *minconfirmsp = juint(json,"minconfirms");
-    *maxpeersp= juint(json,"maxpeers");
-    *maxpendingp= juint(json,"maxpending");
-    *maxbundlesp= juint(json,"maxbundles");
+    *maxpeersp = juint(json,"maxpeers");
+    *maxpendingp = juint(json,"maxpending");
+    *maxbundlesp = juint(json,"maxbundles");
     if ( (*initialheightp= juint(json,"initialheight")) == 0 )
         *initialheightp = (strcmp(symbol,"BTC") == 0) ? 400000 : 100000;
     *servicesp = j64bits(json,"services");
@@ -357,9 +357,9 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
-        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING;
+        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*8;
     if ( (coin->MAXBUNDLES= maxbundles) <= 0 )
-        coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*4;
+        coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*64;
     coin->myservices = services;
     sprintf(dirname,"DB/%s",symbol);
     ensure_directory(dirname);
