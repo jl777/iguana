@@ -212,10 +212,16 @@ double PoW_from_compact(uint32_t nBits,uint8_t unitval) // NOT consensus safe, b
     return(PoW);
 }
 
-int32_t iguana_setchainvars(struct iguana_info *coin,uint32_t *firsttxidindp,uint32_t *firstvoutp,uint32_t *firstvinp,double *PoWp,bits256 hash2,uint32_t nBits,bits256 prevhash,int32_t txn_count)
+struct iguana_prevdep *iguana_prevdepfind(struct iguana_info *coin,struct iguana_block *block)
 {
-    int32_t height=-1,firstvout=0,firstvin=0,firsttxidind=0; double PoW; struct iguana_block *prev;
-    *PoWp = *firsttxidindp = *firstvoutp = *firstvinp = 0;
+    return(0); // it is not yet
+}
+
+int32_t iguana_setchainvars(struct iguana_info *coin,struct iguana_prevdep *lp,bits256 hash2,uint32_t nBits,bits256 prevhash,int32_t txn_count) // uint32_t *firsttxidindp,uint32_t *firstvoutp,uint32_t *firstvinp,double *PoWp
+{
+    int32_t height=-1,firstvout=0,firstvin=0,firsttxidind=0; double PoW;
+    struct iguana_prevdep *prevlp; struct iguana_block *prev;
+    memset(lp,0,sizeof(*lp));
     if ( memcmp(coin->chain->genesis_hashdata,hash2.bytes,sizeof(hash2)) == 0 )
     {
         PoW = PoW_from_compact(nBits,coin->chain->unitval);
@@ -241,36 +247,37 @@ int32_t iguana_setchainvars(struct iguana_info *coin,uint32_t *firsttxidindp,uin
         else
         {
             height = prev->height + 1;
-            PoW = (PoW_from_compact(nBits,coin->chain->unitval) + prev->L.PoW);
-            if ( txn_count > 0 )
+            if ( (prevlp= iguana_prevdepfind(coin,prev)) != 0 )
             {
-                if ( prev->txn_count > 0 && prev->L.numtxids > 0 )
-                    firsttxidind = prev->L.numtxids + prev->txn_count;
-                if ( prev->numvouts > 0 && prev->L.numtxids > 0 )
-                    firstvout = prev->L.numunspents + prev->numvouts;
-                if ( prev->L.numspends > 0 )
-                    firstvin = prev->L.numspends + prev->numvins;
-                //printf("PREV.%d firsttxidind.%d firstvout.%d+%d firstvin.%d+%d (%d %d %d)\n",prev->height,prev->L.numtxids,prev->L.numunspents,prev->numvouts,prev->L.numspends,prev->numvins,firsttxidind,firstvout,firstvin);
-            } //else printf("null txn_count in block.%d\n",height);
-            //printf("txn.%d prev.(%d %f txn.%d) ",txn_count,prev->height,prev->PoW,prev->txn_count);
-            //printf("prev.%d 1st %d + prev txn.%d %f -> %d\n",prev->height,prev->firsttxidind,prev->txn_count,prev->PoW,firsttxidind);
+                PoW = (PoW_from_compact(nBits,coin->chain->unitval) + prevlp->PoW);
+                if ( txn_count > 0 && prevlp->numtxids > 0 && prev->numvouts > 0 && prevlp->numunspents > 0 && prevlp->numspends > 0 )
+                {
+                    firsttxidind = prevlp->numtxids + prev->txn_count;
+                    firstvout = prevlp->numunspents + prev->numvouts;
+                    firstvin = prevlp->numspends + prev->numvins;
+                    //printf("PREV.%d firsttxidind.%d firstvout.%d+%d firstvin.%d+%d (%d %d %d)\n",prev->height,prev->L.numtxids,prev->L.numunspents,prev->numvouts,prev->L.numspends,prev->numvins,firsttxidind,firstvout,firstvin);
+                }
+            }
         }
     }
-    *PoWp = PoW;
-    *firsttxidindp = firsttxidind;
-    *firstvoutp = firstvout;
-    *firstvinp = firstvin;
+    if ( lp != 0 )
+    {
+        lp->PoW = PoW;
+        lp->numtxids = firsttxidind;
+        lp->numunspents = firstvout;
+        lp->numspends = firstvin;
+    }
     //printf("set height.%d: %d %f firstvin.%d firstvout.%d\n",height,firsttxidind,PoW,firstvin,firstvout);
     return(height);
 }
 
-int32_t iguana_setdependencies(struct iguana_info *coin,struct iguana_block *block)
+int32_t iguana_setdependencies(struct iguana_info *coin,struct iguana_block *block,struct iguana_prevdep *lp)
 {
     int32_t h,height;
     if ( block == 0 )
         return(-1);
     height = block->height;
-    if ( (h= iguana_setchainvars(coin,&block->L.numtxids,&block->L.numunspents,&block->L.numspends,&block->L.PoW,block->hash2,block->bits,block->prev_block,block->txn_count)) == height )
+    if ( (h= iguana_setchainvars(coin,lp,block->hash2,block->bits,block->prev_block,block->txn_count)) == height )
     {
         // place to make sure connected to ramchain
         return(height);
@@ -281,19 +288,19 @@ int32_t iguana_setdependencies(struct iguana_info *coin,struct iguana_block *blo
     return(-1);
 }
 
-int32_t iguana_chainextend(struct iguana_info *coin,bits256 hash2,struct iguana_block *newblock)
+int32_t iguana_chainextend(struct iguana_info *coin,bits256 hash2,struct iguana_block *newblock,struct iguana_prevdep *lp)
 {
     int32_t h;
-    if ( (newblock->height= iguana_setdependencies(coin,newblock)) >= 0 )
+    if ( (newblock->height= iguana_setdependencies(coin,newblock,lp)) >= 0 )
     {
-        if ( newblock->L.PoW > coin->blocks.hwmPoW )
+        if ( lp->PoW > coin->blocks.hwmPoW )
         {
             if ( newblock->height+1 > coin->blocks.maxblocks )
                 coin->blocks.maxblocks = (newblock->height + 1);
             h = newblock->height;
             iguana_kvwrite(coin,coin->blocks.db,hash2.bytes,newblock,(uint32_t *)&h);
             coin->blocks.hwmheight = newblock->height;
-            coin->blocks.hwmPoW = newblock->L.PoW;
+            coin->blocks.hwmPoW = lp->PoW;
             coin->blocks.hwmchain = hash2;
             coin->latest.blockhash = hash2;
             coin->latest.merkle_root = newblock->merkle_root;
@@ -308,7 +315,7 @@ int32_t iguana_chainextend(struct iguana_info *coin,bits256 hash2,struct iguana_
             char str[65],str2[65];
             bits256_str(str,newblock->hash2);
             bits256_str(str2,coin->blocks.hwmchain);
-            printf("ADD %s %d:%d:%d <- (%s) n.%u max.%u PoW %f 1st.%d numtx.%d\n",str,h,iguana_chainheight(coin,newblock),newblock->height,str2,coin->blocks.hwmheight+1,coin->blocks.maxblocks,newblock->L.PoW,newblock->L.numtxids,newblock->txn_count);
+            printf("ADD %s %d:%d:%d <- (%s) n.%u max.%u PoW %f 1st.%d numtx.%d\n",str,h,iguana_chainheight(coin,newblock),newblock->height,str2,coin->blocks.hwmheight+1,coin->blocks.maxblocks,lp->PoW,lp->numtxids,newblock->txn_count);
             //iguana_queueblock(coin,newblock->height,hash2);
             //coin->newhdrs++;
         }
@@ -318,7 +325,7 @@ int32_t iguana_chainextend(struct iguana_info *coin,bits256 hash2,struct iguana_
         char str[65];
         bits256_str(str,hash2);
         if ( iguana_needhdrs(coin) == 0 )
-            printf("ORPHAN.%s height.%d PoW %f vs best %f\n",str,newblock->height,newblock->L.PoW,coin->blocks.hwmPoW);
+            printf("ORPHAN.%s height.%d PoW %f vs best %f\n",str,newblock->height,lp->PoW,coin->blocks.hwmPoW);
         newblock->height = -1;
     }
     //iguana_audit(coin);

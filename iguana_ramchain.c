@@ -174,8 +174,8 @@ uint32_t iguana_addunspent(struct iguana_info *coin,uint32_t blocknum,uint32_t t
         {
             if ( acct->lastunspentind < coin->latest.dep.numunspents )
             {
-                if ( coin->Uextras[unspentind].prevunspentind != 0 && coin->Uextras[unspentind].prevunspentind != acct->lastunspentind )
-                    printf("warning: overwriting U%d next %d with %d\n",acct->lastunspentind,coin->Uextras[unspentind].prevunspentind,unspentind);
+                if ( coin->U[unspentind].prevunspentind != 0 && coin->U[unspentind].prevunspentind != acct->lastunspentind )
+                    printf("warning: overwriting U%d next %d with %d\n",acct->lastunspentind,coin->U[unspentind].prevunspentind,unspentind);
             } else printf("block.%d U%d -> %.8f account[%d]:%d lastunspent.%d vs numunspents.%d\n",blocknum,unspentind,dstr(acct->balance),pkind,coin->latest.dep.numpkinds,acct->lastunspentind,coin->latest.dep.numunspents);
         }
         //printf("U%d vs %d: T%d P%d last.(U%d S%d) %.8f\n",unspentind,coin->latest.dep.numunspents,txidind,pkind,acct->lastunspentind,acct->lastspendind,dstr(value));
@@ -186,7 +186,7 @@ uint32_t iguana_addunspent(struct iguana_info *coin,uint32_t blocknum,uint32_t t
             return(0);
         }
         //printf("Uextras[U%d].prevunspentind <- P[%d] lastunspentind U%d\n",unspentind,pkind,acct->lastunspentind);
-        coin->Uextras[unspentind].prevunspentind = acct->lastunspentind;
+        coin->U[unspentind].prevunspentind = acct->lastunspentind;
         vupdate_sha256(coin->latest.lhashes[IGUANA_LHASH_UPREV].bytes,&coin->latest.states[IGUANA_LHASH_UPREV],(void *)&acct->lastunspentind,sizeof(acct->lastunspentind));
         acct->lastunspentind = unspentind;
         coin->latest.dep.numunspents = (unspentind + 1);
@@ -236,8 +236,8 @@ uint32_t iguana_addspend(struct iguana_info *coin,uint64_t *spentvaluep,uint32_t
         {
             if ( acct->lastspendind < coin->latest.dep.numspends )
             {
-                if ( coin->Sextras[spendind].prevspendind != 0 && coin->Sextras[spendind].prevspendind != acct->lastspendind )
-                    printf(">>>>>>>>>>>> warning: S%d T%d overwriting S%d prev %d with %d\n",spendind,spendtxidind,acct->lastspendind,coin->Sextras[spendind].prevspendind,acct->lastspendind), getchar();
+                if ( coin->S[spendind].prevspendind != 0 && coin->S[spendind].prevspendind != acct->lastspendind )
+                    printf(">>>>>>>>>>>> warning: S%d T%d overwriting S%d prev %d with %d\n",spendind,spendtxidind,acct->lastspendind,coin->S[spendind].prevspendind,acct->lastspendind), getchar();
                 //printf("Sprev[%d] <- S%d\n",spendind,acct->lastspendind);
             } else printf("T%d S%d -> U%d account[%d] lastspendind.%d vs numspends.%d\n",spendtxidind,spendind,unspentind,pkind,acct->lastspendind,coin->latest.dep.numspends);
         }
@@ -248,7 +248,7 @@ uint32_t iguana_addspend(struct iguana_info *coin,uint64_t *spentvaluep,uint32_t
             return(-1);
         }
         //printf("Sextras[S%d].prevspendind <- P%d.lastspendind %d\n",spendind,pkind,acct->lastspendind);
-        coin->Sextras[spendind].prevspendind = acct->lastspendind;
+        coin->S[spendind].prevspendind = acct->lastspendind;
         vupdate_sha256(coin->latest.lhashes[IGUANA_LHASH_SPREV].bytes,&coin->latest.states[IGUANA_LHASH_SPREV],(void *)&acct->lastspendind,sizeof(acct->lastspendind));
         acct->lastspendind = spendind;
         coin->latest.dep.numspends = (spendind + 1);
@@ -283,13 +283,13 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
     credits = debits = Udebits = 0;
     while ( acct->lastunspentind >= coin->latest.dep.numunspents )
     {
-        if ( (prev= coin->Uextras[acct->lastunspentind].prevunspentind) < acct->lastunspentind )
+        if ( (prev= coin->U[acct->lastunspentind].prevunspentind) < acct->lastunspentind )
             acct->lastunspentind = prev;
         else return(-1);
     }
     while ( acct->lastspendind >= coin->latest.dep.numspends )
     {
-        if ( (prev= coin->Sextras[acct->lastspendind].prevspendind) < acct->lastspendind )
+        if ( (prev= coin->S[acct->lastspendind].prevspendind) < acct->lastspendind )
             acct->lastspendind = prev;
         else return(-1);
     }
@@ -297,9 +297,9 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
     while ( prev != 0 )
     {
         firstunspentind = prev;
-        if ( coin->Uextras[prev].prevunspentind >= prev )
+        if ( coin->U[prev].prevunspentind >= prev )
         {
-            printf("pkind.%d illegal coin->U[%d].prevunspentind of %d\n",pkind,prev,coin->Uextras[prev].prevunspentind);
+            printf("pkind.%d illegal coin->U[%d].prevunspentind of %d\n",pkind,prev,coin->U[prev].prevunspentind);
             return(-2);
         }
         if ( coin->U[prev].pkind != pkind )
@@ -315,7 +315,7 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
         credits += coin->U[prev].value;
         if ( coin->Uextras[prev].spendind != 0 )
             Udebits += coin->U[prev].value;
-        prev = coin->Uextras[prev].prevunspentind;
+        prev = coin->U[prev].prevunspentind;
     }
     if ( firstunspentind != coin->P[pkind].firstunspentind )
     {
@@ -338,15 +338,15 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
                 prev = acct->lastspendind, firstspendind = 0;
                 while ( prev != 0 )
                 {
-                    printf("(U%d S%d).S%d ",coin->S[prev].unspentind,coin->Sextras[prev].prevspendind,prev);
-                    prev = coin->Sextras[prev].prevspendind;
+                    printf("(U%d S%d).S%d ",coin->S[prev].unspentind,coin->S[prev].prevspendind,prev);
+                    prev = coin->S[prev].prevspendind;
                 }
                 printf("prevspendinds for S%d for acct[%d]\n",acct->lastspendind,pkind);
             }
             return(-7);
         }
         debits += coin->U[unspentind].value;
-        prev = coin->Sextras[prev].prevspendind;
+        prev = coin->S[prev].prevspendind;
     }
     if ( firstspendind != coin->pkextras[pkind].firstspendind )
     {
@@ -368,14 +368,14 @@ int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acc
                 while ( prev != 0 )
                 {
                     printf("(U%d %.8f P%d S%d) ",prev,dstr(coin->U[prev].value),coin->U[prev].pkind,coin->Uextras[prev].spendind);
-                    prev = coin->Uextras[prev].prevunspentind;
+                    prev = coin->U[prev].prevunspentind;
                 }
                 printf("prevunspentinds for U%d for acct[%d]\n",acct->lastunspentind,pkind);
                 prev = acct->lastspendind;
                 while ( prev != 0 )
                 {
-                    printf("(U%d %.8f S%d).S%d ",coin->S[prev].unspentind,dstr(coin->U[coin->S[prev].unspentind].value),coin->Sextras[prev].prevspendind,prev);
-                    prev = coin->Sextras[prev].prevspendind;
+                    printf("(U%d %.8f S%d).S%d ",coin->S[prev].unspentind,dstr(coin->U[coin->S[prev].unspentind].value),coin->S[prev].prevspendind,prev);
+                    prev = coin->S[prev].prevspendind;
                 }
                 printf("prevspendinds for S%d for acct[%d]\n",acct->lastspendind,pkind);
             }
@@ -468,6 +468,7 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
 
 int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,struct iguana_msgtx *tx,int32_t numtx)
 {
+#ifdef oldway
     int32_t txind,pkind,i; uint16_t numvouts,numvins;
     pkind = block->L.numpkinds = coin->latest.dep.numpkinds;
     block->L.supply = coin->latest.dep.supply;
@@ -543,6 +544,7 @@ int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,st
         printf("restore lhashes, special alignement case\n");
     } //else printf("loaded.%d vs parsed.%d\n",coin->loadedLEDGER.snapshot.height,coin->blocks.parsedblocks);
     coin->blocks.parsedblocks++;
+#endif
     return(0);
 }
 

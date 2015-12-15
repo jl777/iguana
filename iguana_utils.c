@@ -338,7 +338,7 @@ int64_t iguana_memallocated(struct iguana_memspace *mem)
 
 void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
 {
-    void *ptr = 0;
+    int32_t modval; void *ptr = 0;
     //printf("iguana_memalloc.%s size.%ld used.%llu of %llu, numptrs.%d avail.%d %lld\n",mem->name,size,(long long)mem->used,(long long)mem->totalsize,mem->numptrs,mem->availptrs,(long long)iguana_memallocated(mem));
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_lock(&mem->mutex);
@@ -352,8 +352,11 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
         mem->used += size;
         if ( size*clearflag != 0 )
             memset(ptr,0,size);
-        if ( mem->alignflag != 0 && (mem->used & 0xf) != 0 )
-            mem->used += 0x10 - (mem->used & 0xf);
+        if ( mem->alignflag != 0 )
+        {
+            if ( (modval= (mem->used % mem->alignflag)) != 0 )
+                mem->used += mem->alignflag - modval;
+        }
 #ifdef IGUANA_PEERALLOC
         if ( mem->numptrs < sizeof(mem->ptrs)/sizeof(*mem->ptrs) )
         {
@@ -367,7 +370,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
         }
 #endif
      //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
-    }
+    } else printf("error memalloc mem.%p %s alloc %ld used %ld alloc.%ld -> %s %p\n",mem,mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr), getchar();
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_unlock(&mem->mutex);
     return(ptr);

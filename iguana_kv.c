@@ -964,7 +964,7 @@ int32_t iguana_kvdisp(struct iguana_info *coin,struct iguanakv *kv)
                 init_hexbytes_noT(hexstr,itemvalue,kv->RAMvaluesize);
                 char str[65];
                 bits256_str(str,*(bits256 *)itemkey);
-                printf("itemind.%d %s %s len.%d height.%d PoW %.15f\n",item->hh.itemind,str,hexstr,kv->RAMvaluesize,((struct iguana_block *)itemvalue)->height,((struct iguana_block *)itemvalue)->L.PoW);
+                printf("itemind.%d %s %s len.%d height.%d\n",item->hh.itemind,str,hexstr,kv->RAMvaluesize,((struct iguana_block *)itemvalue)->height);
             }
             n++;
         }

@@ -426,8 +426,16 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                 //if ( strcmp(addr->ipaddr,"127.0.0.1") == 0 )
                 //printf("%s parse.(%s) len.%d\n",addr->ipaddr,H.command,len);
                 //printf("addr->dead.%u\n",addr->dead);
-                iguana_memreset(&addr->TXMEM);
-                if ( iguana_parser(coin,addr,&addr->TXMEM,&H,buf,len) < 0 || addr->dead != 0 )
+                if ( strcmp(H.command,"block") == 0 || strcmp(H.command,"tx") == 0 )
+                {
+                    if ( addr->RAWMEM.ptr == 0 )
+                        iguana_meminit(&addr->RAWMEM,0,IGUANA_MAXPACKETSIZE+4096,0);
+                    if ( addr->TXDATA.ptr == 0 )
+                        iguana_meminit(&addr->TXDATA,0,IGUANA_MAXPACKETSIZE/4,0);
+                    if ( addr->HASHMEM.ptr == 0 )
+                        iguana_meminit(&addr->HASHMEM,0,IGUANA_MAXPACKETSIZE/8,0);
+                }
+                if ( iguana_parser(coin,addr,&addr->RAWMEM,&addr->TXDATA,&addr->HASHMEM,&H,buf,len) < 0 || addr->dead != 0 )
                 {
                     printf("%p addr->dead.%d or parser break at %u\n",&addr->dead,addr->dead,(uint32_t)time(NULL));
                     addr->dead = (uint32_t)time(NULL);
@@ -847,7 +855,6 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     addr->fp = fopen(fname,"wb");
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
-    iguana_meminit(&addr->TXMEM,0,IGUANA_MAXPACKETSIZE+4096,0);
     //printf("send version myservices.%llu\n",(long long)coin->myservices);
     iguana_send_version(coin,addr,coin->myservices);
     iguana_queue_send(coin,addr,serialized,"getaddr",0,0,0);
@@ -888,11 +895,13 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
         }
     }
     if ( addr->fp != 0 )
-        fclose(addr->fp);
+        fflush(addr->fp);
     iguana_iAkill(coin,addr,addr->dead != 0);
     printf("finish dedicatedloop.%s\n",addr->ipaddr);
     myfree(buf,bufsize);
-    iguana_mempurge(&addr->TXMEM);
+    iguana_mempurge(&addr->RAWMEM);
+    iguana_mempurge(&addr->TXDATA);
+    iguana_mempurge(&addr->HASHMEM);
 #ifdef IGUANA_PEERALLOC
     while ( (remaining= iguana_peerallocated(coin,addr)) > 0 )
     {
