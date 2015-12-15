@@ -1456,12 +1456,12 @@ int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // sin
         //printf("%s bundlesQ.%p type.%c n.%d\n",req->addr != 0 ? req->addr->ipaddr : "0",req,req->type,req->n);
         if ( req->type == 'B' ) // one block with all txdata
         {
-            if ( (req= iguana_recvblock(coin,req->addr,req,req->blocks,req->numtx,req->datalen,newhwmp)) != 0 )
+            if ( (req= iguana_recvblock(coin,req->addr,req,&req->block,req->numtx,req->datalen,newhwmp)) != 0 )
             {
                 //if ( req->data != 0 )
                 //    iguana_peerfree(coin,req->addr,req->data,req->datalen), req->data = 0;
-                if ( req->blocks != 0 )
-                    myfree(req->blocks,sizeof(*req->blocks)), req->blocks = 0;
+                //if ( req->blocks != 0 )
+                //    myfree(req->blocks,sizeof(*req->blocks)), req->blocks = 0;
             }
         }
         else if ( req->type == 'H' ) // blockhdrs (doesnt have txn_count!)

@@ -392,8 +392,8 @@ struct iguana_bundle
 
 struct iguana_bundlereq
 {
-    struct queueitem DL; struct iguana_info *coin; int32_t type,argbundlei;
-    struct iguana_peer *addr; struct iguana_block *blocks; bits256 *hashes; struct iguana_bundle *argbp;
+    struct queueitem DL; struct iguana_info *coin; int32_t type;
+    struct iguana_peer *addr; struct iguana_block *blocks,block; bits256 *hashes;
     int32_t allocsize,datalen,n,numtx;
     uint8_t serialized[];
 };

@@ -157,6 +157,7 @@ struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,struct iguana_me
     return(tx);
 }
 
+/*
 struct iguana_rawtx { bits256 txid; uint16_t numvouts,numvins; uint8_t rmd160[20]; };
 
 int32_t iguana_emittx(struct iguana_info *coin,FILE *fp,struct iguana_block *block,struct iguana_msgtx *tx,int32_t txi,uint32_t *numvoutsp,uint32_t *numvinsp,int64_t *outputp)
@@ -232,7 +233,7 @@ void iguana_emittxarray(struct iguana_info *coin,FILE *fp,struct iguana_block *b
     }
 }
 
-/*int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,struct iguana_bundle *bp,char *fname)
+int32_t iguana_maptxdata(struct iguana_info *coin,struct iguana_mappedptr *M,struct iguana_bundle *bp,char *fname)
 {
     void *fileptr = 0; int32_t i; uint32_t *offsets; struct iguana_block *block;
     if ( (fileptr= iguana_mappedptr(0,M,0,0,fname)) != 0 )
@@ -402,7 +403,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     coin->recvcount++;
     coin->recvtime = (uint32_t)time(NULL);
     req = iguana_bundlereq(coin,addr,'B',0);
-    req->blocks = block;
+    req->block = *block;
     req->datalen = datalen;
     /*if ( (req->data= iguana_peeralloc(coin,addr,datalen)) != 0 )
     {
@@ -412,8 +413,8 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     } else printf("iguana_peeralloc null ptr for req.%p\n",req), getchar();*/
     //printf("test emit txarray[%d] %p\n",numtx,block);
     block->txn_count = req->numtx = numtx;
-    if ( txarray != 0 )
-        iguana_freetx(txarray,numtx);
+    //if ( txarray != 0 )
+    //    iguana_freetx(txarray,numtx);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 

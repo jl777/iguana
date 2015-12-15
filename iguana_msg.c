@@ -597,10 +597,10 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
     {
         if ( 1 )
         {
-            struct iguana_block *block; struct iguana_msgtx *tx; uint8_t extra[256];
-            block = mycalloc('b',1,sizeof(*block));
+            struct iguana_block block; struct iguana_msgtx *tx; uint8_t extra[256];
+            //block = mycalloc('b',1,sizeof(*block));
             memset(extra,0,sizeof(extra));
-            tx = iguana_gentxarray(coin,mem,&len,block,data,datalen,extra);
+            tx = iguana_gentxarray(coin,mem,&len,&block,data,datalen,extra);
             //printf("len.%d datalen.%d tx.%p numtx.%d\n",len,datalen,tx,block->txn_count);
             if ( len == datalen )
             {
@@ -611,8 +611,8 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     //addr->OV.reqrecv += datalen;
                     //printf("%s gotblock.%d datalen.%d last.[%02x]\n",addr->ipaddr,block->height,datalen,data[len-1]);
                 }
-                iguana_gotblockM(coin,addr,block,tx,block->txn_count,data,datalen,extra);
-            } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block->txn_count,len,datalen);
+                iguana_gotblockM(coin,addr,&block,tx,block.txn_count,data,datalen,extra);
+            } else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",block.txn_count,len,datalen);
             //if ( tx != 0 )
             //    iguana_freetx(tx,block->txn_count);
         }
