@@ -156,6 +156,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
         {
             fwrite(&txdata->datalen,1,sizeof(txdata->datalen),fp);
             fwrite(txdata,1,txdata->datalen,fp);
+            fflush(fp);
         }
     }
     {
@@ -261,7 +262,7 @@ int32_t iguana_gentxarray(struct iguana_info *coin,struct iguana_memspace *mem,s
     }
     if ( coin->chain->hastimestamp != 0 && len != datalen && data[len] == (datalen - len - 1) )
     {
-        printf("\n>>>>>>>>>>> len.%d vs datalen.%d [%d]\n",len,datalen,data[len]);
+        //printf("\n>>>>>>>>>>> len.%d vs datalen.%d [%d]\n",len,datalen,data[len]);
         memcpy(txdata->space,&data[len],datalen-len);
         len += (datalen-len);
         txdata->extralen = (datalen - len);

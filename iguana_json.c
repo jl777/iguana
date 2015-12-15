@@ -394,6 +394,7 @@ void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
     ptr->coin = coin;
     ptr->bp = bp, ptr->hdrsi = bp->hdrsi;
     ptr->type = 'E';
+    printf("EMIT.%d[%d]\n",ptr->hdrsi,bp->n);
     queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
 }
 
@@ -452,7 +453,7 @@ void iguana_main(void *arg)
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTC\",\"active\":1}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTCD\",\"active\":1}");
 #endif
     }
     if ( arg != 0 )

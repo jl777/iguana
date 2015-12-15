@@ -1119,7 +1119,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 
 int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int32_t priorityflag)
 {
-    int32_t i,qsize,n = 0; struct iguana_block *block; bits256 hash2; double threshold; uint64_t datasize =0;
+    int32_t i,qsize,incomplete,n = 0; struct iguana_block *block; bits256 hash2; double threshold; uint64_t datasize =0;
     //printf("bp.%p bundlecheck.%d emit.%d\n",bp,bp->hdrsi,bp->emitfinish);
     if ( bp != 0 && bp->emitfinish == 0 )
     {
@@ -1175,25 +1175,29 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
         if ( n == coin->chain->bundlesize )
         {
             //printf("check %d blocks in hdrs.%d\n",n,bp->hdrsi);
-            for (i=0; i<n-1; i++)
+            for (i=incomplete=0; i<n-1; i++)
             {
                 if ( memcmp(bp->blocks[i]->hash2.bytes,bp->blocks[i+1]->prev_block.bytes,sizeof(bits256)) != 0 )
                 {
-                    char str[65],str2[65],str3[65];
-                    bits256_str(str,bp->blocks[i]->hash2);
-                    bits256_str(str2,bp->blocks[i+1]->prev_block);
-                    bits256_str(str3,bp->blocks[i+1]->hash2);
-                    printf("%s ->%d %d<- %s %s ",str,i,i+1,str2,str3);
-                    printf("broken chain in hdrs.%d %d %p <-> %p %d\n",bp->hdrsi,i,bp->blocks[i],bp->blocks[i+1],i+1);
-                    CLEARBIT(bp->recv,i);
-                    bp->issued[i] = bp->issued[i+1] = milliseconds();
-                    iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
-                    iguana_blockQ(coin,bp,i+1,bp->blocks[i+1]->hash2,1);
-                    bp->blocks[i] = bp->blocks[i+1] = 0;
-                    break;
+                    if ( bits256_nonz(bp->blocks[i]->prev_block) > 0 && bits256_nonz(bp->blocks[i+1]->prev_block) > 0 && bits256_nonz(bp->blocks[i+1]->hash2) > 0 )
+                    {
+                        char str[65],str2[65],str3[65];
+                        bits256_str(str,bp->blocks[i]->hash2);
+                        bits256_str(str2,bp->blocks[i+1]->prev_block);
+                        bits256_str(str3,bp->blocks[i+1]->hash2);
+                        printf("%s ->%d %d<- %s %s ",str,i,i+1,str2,str3);
+                        printf("broken chain in hdrs.%d %d %p <-> %p %d\n",bp->hdrsi,i,bp->blocks[i],bp->blocks[i+1],i+1);
+                        CLEARBIT(bp->recv,i);
+                        bp->issued[i] = bp->issued[i+1] = milliseconds();
+                        iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
+                        iguana_blockQ(coin,bp,i+1,bp->blocks[i+1]->hash2,1);
+                        bp->blocks[i] = bp->blocks[i+1] = 0;
+                        break;
+                    }
+                    else incomplete++;
                 }
             }
-            if ( i == n-1 )
+            if ( i == n-1 && incomplete == 0 )
             {
                 if ( bp->blockhashes != 0 )
                 {
