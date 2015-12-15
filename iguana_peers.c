@@ -432,9 +432,9 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                     if ( addr->RAWMEM.ptr == 0 )
                         iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE+4096,0);
                     if ( addr->TXDATA.ptr == 0 )
-                        iguana_meminit(&addr->TXDATA,addr->ipaddr,0,IGUANA_MAXPACKETSIZE,0);
+                        iguana_meminit(&addr->TXDATA,addr->ipaddr,0,IGUANA_MAXPACKETSIZE+4096,0);
                     if ( addr->HASHMEM.ptr == 0 )
-                        iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,IGUANA_MAXPACKETSIZE*8,0);
+                        iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,IGUANA_MAXPACKETSIZE*16,0);
                 }
                 if ( iguana_parser(coin,addr,&addr->RAWMEM,&addr->TXDATA,&addr->HASHMEM,&H,buf,len) < 0 || addr->dead != 0 )
                 {
