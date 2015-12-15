@@ -278,7 +278,7 @@ struct iguana_peer
     struct iguana_msgaddress A;
     char ipaddr[64],lastcommand[16],coinstr[16],symbol[16];
     uint64_t pingnonce,totalsent,totalrecv; double pingtime,sendmillis,pingsum,getdatamillis;
-    uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime;
+    uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime,lastflush;
     int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
     double recvblocks,recvtotal;
     int64_t allocated,freed;
@@ -671,6 +671,6 @@ void iguana_mempurge(struct iguana_memspace *mem);
 
 struct iguana_helper { struct queueitem DL; void *coin,*addr,*bp,*fp; long fpos; int32_t allocsize,type,hdrsi,bundlei,datalen; };
 int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr);
-void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp);
+void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr);
 
 #endif

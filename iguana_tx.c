@@ -156,7 +156,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
         {
             fwrite(&txdata->datalen,1,sizeof(txdata->datalen),fp);
             fwrite(txdata,1,txdata->datalen,fp);
-            iguana_flushQ(coin,addr,fp);
+            iguana_flushQ(coin,addr);
         }
     }
     {
@@ -377,16 +377,17 @@ void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bi
 
 int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
 {
-    struct iguana_info *coin;
+    struct iguana_info *coin; struct iguana_peer *addr;
+    coin = ptr->coin, addr = ptr->addr;
     if ( ptr->type == 'F' )
     {
-        if ( ptr->addr != 0 && ptr->fp != 0 )
+        if ( addr != 0 && addr->fp != 0 )
         {
-            printf("flush.%s\n",((struct iguana_peer *)ptr)->ipaddr);
-            fflush(ptr->fp);
+            printf("flush.%s %p\n",addr->ipaddr,addr->fp);
+            fflush(addr->fp);
         }
     }
-    if ( ptr->type == 'E' )
+    else if ( ptr->type == 'E' )
     {
         if ( (coin= ptr->coin) != 0 )
         {
