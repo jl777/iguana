@@ -156,7 +156,8 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
         {
             fwrite(&txdata->datalen,1,sizeof(txdata->datalen),fp);
             fwrite(txdata,1,txdata->datalen,fp);
-            iguana_flushQ(coin,addr);
+            //iguana_flushQ(coin,addr);
+            fflush(fp);
         }
     }
     {
