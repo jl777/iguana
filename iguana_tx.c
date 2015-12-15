@@ -383,7 +383,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
     {
         if ( addr != 0 && addr->fp != 0 )
         {
-            printf("flush.%s %p\n",addr->ipaddr,addr->fp);
+            //printf("flush.%s %p\n",addr->ipaddr,addr->fp);
             fflush(addr->fp);
         }
     }

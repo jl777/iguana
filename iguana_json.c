@@ -419,7 +419,7 @@ void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr)
         ptr->coin = coin;
         ptr->addr = addr;
         ptr->type = 'F';
-        printf("FLUSH.%s\n",addr->ipaddr);
+        //printf("FLUSH.%s %u lag.%d\n",addr->ipaddr,addr->lastflush,(int32_t)(time(NULL)-addr->lastflush));
         addr->lastflush = (uint32_t)time(NULL);
         queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
     }
