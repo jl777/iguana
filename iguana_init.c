@@ -839,7 +839,7 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
         len = (int32_t)strlen(coin->chain->genesis_hex)/2;
         decode_hex(buf,len,(char *)coin->chain->genesis_hex);
         iguana_sethdr(&H,coin->chain->netmagic,"block",buf,len);
-        iguana_meminit(&MEM,txspace,sizeof(txspace),0);
+        iguana_meminit(&MEM,"genesis",txspace,sizeof(txspace),0);
         iguana_parser(coin,0,&MEM,&MEM,&MEM,&H,buf,len);
         printf("coin->blocks.parsedblocks.%d KV counts T.%d P.%d U.%d S.%d\n",coin->blocks.parsedblocks,coin->txids->numkeys,coin->pkhashes->numkeys,coin->unspents->numkeys,coin->spends->numkeys);
         printf("auto parse genesis\n"); //getchar();

@@ -321,7 +321,7 @@ void iguana_coinloop(void *arg)
                         //        m++;
                         iguana_bundlestats(coin,str);
                         printf("%s.%-2d %s %.2f min\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.);
-                        if ( (rand() % 60) == 0 )
+                        //if ( (rand() % 60) == 0 )
                             myallocated(0,0);
                     }
                 }

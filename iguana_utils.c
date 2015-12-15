@@ -299,8 +299,9 @@ void iguana_memreset(struct iguana_memspace *mem)
         portable_mutex_init(&mem->mutex);
 }
 
-void *iguana_meminit(struct iguana_memspace *mem,void *ptr,int64_t totalsize,int32_t threadsafe)
+void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t totalsize,int32_t threadsafe)
 {
+    strcpy(mem->name,name);
     mem->threadsafe = threadsafe;
     mem->totalsize = totalsize;
     if ( (mem->ptr= ptr) == 0 )
@@ -311,6 +312,7 @@ void *iguana_meminit(struct iguana_memspace *mem,void *ptr,int64_t totalsize,int
             exit(-1);
             return(0);
         }
+        printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
         mem->allocated = 1;
     }
     return(mem->ptr);

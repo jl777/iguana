@@ -22,7 +22,7 @@
 #ifndef UTHASH_H
 #define UTHASH_H
 
-#define HASH_BLOOM 16
+//#define HASH_BLOOM 16
 
 #include <string.h>   /* memcmp,strlen */
 #include <stddef.h>   /* ptrdiff_t */

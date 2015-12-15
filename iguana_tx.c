@@ -13,18 +13,23 @@
  *                                                                            *
  ******************************************************************************/
 
+#define uthash_malloc(size) iguana_memalloc(mem,size,1)
+#define uthash_free iguana_stub
+
 #include "iguana777.h"
+void iguana_stub(void *ptr,int size) { printf("uthash_free ptr.%p %d\n",ptr,size); }
 
 #define iguana_hashfind(hashtable,key,keylen) iguana_hashset(hashtable,0,key,keylen,-1)
 
 struct iguana_kvitem *iguana_hashset(struct iguana_kvitem *hashtable,struct iguana_memspace *mem,void *key,int32_t keylen,int32_t itemind)
 {
-    struct iguana_kvitem *ptr; int32_t allocsize;
+    struct iguana_kvitem *ptr = 0; int32_t allocsize;
     HASH_FIND(hh,hashtable,key,keylen,ptr);
     if ( ptr == 0 && itemind >= 0 )
     {
         allocsize = (int32_t)(sizeof(*ptr));
-        ptr = (mem == 0) ? mycalloc('y',1,allocsize) : iguana_memalloc(mem,allocsize,1);
+        if ( mem != 0 )
+            ptr = iguana_memalloc(mem,allocsize,1);
         if ( ptr == 0 )
             printf("fatal alloc error in hashset\n"), exit(-1);
         //printf("ptr.%p allocsize.%d key.%p keylen.%d itemind.%d\n",ptr,allocsize,key,keylen,itemind);
@@ -93,11 +98,13 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
         {
             u = &U[unspentind];
             script = tx->vouts[j].pk_script, scriptlen = tx->vouts[j].pk_scriptlen;
+            iguana_calcrmd160(coin,rmd160,script,scriptlen,tx->txid);
             if ( (ptr= iguana_hashfind(pkhashes,rmd160,sizeof(rmd160))) == 0 )
             {
                 memcpy(P[numpkinds].rmd160,rmd160,sizeof(rmd160));
-                if ( (ptr= iguana_hashset(pkhashes,hashmem,rmd160,sizeof(rmd160),numpkinds++)) == 0 )
+                if ( (ptr= iguana_hashset(pkhashes,hashmem,P[numpkinds].rmd160,sizeof(P[numpkinds].rmd160),numpkinds)) == 0 )
                     printf("fatal error adding pkhash\n"), exit(-1);
+                numpkinds++;
             }
             u->value = tx->vouts[j].value, u->txidind = txidind;
             u->pkind = ptr->hh.itemind;
@@ -323,7 +330,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
         addr->lastblockrecv = (uint32_t)time(NULL);
         addr->recvblocks += 1.;
         addr->recvtotal += datalen;
-        if ( (txdatabits= iguana_txdataset(coin,addr,txdata,txarray,txdata->block.txn_count,data,datalen)) != 0 )
+        if ( 1 && (txdatabits= iguana_txdataset(coin,addr,txdata,txarray,txdata->block.txn_count,data,datalen)) != 0 )
             req->datalen = datalen;
     }
     coin->recvcount++;

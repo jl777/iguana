@@ -666,7 +666,7 @@ int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size);
 void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag);
 int64_t iguana_memallocated(struct iguana_memspace *mem);
 void iguana_memreset(struct iguana_memspace *mem);
-void *iguana_meminit(struct iguana_memspace *mem,void *ptr,int64_t totalsize,int32_t threadsafe);
+void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t totalsize,int32_t threadsafe);
 void iguana_mempurge(struct iguana_memspace *mem);
 
 struct iguana_helper { struct queueitem DL; void *coin,*addr,*bp,*fp; long fpos; int32_t allocsize,type,hdrsi,bundlei,datalen; };
