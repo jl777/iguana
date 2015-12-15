@@ -156,7 +156,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
         {
             fwrite(&txdata->datalen,1,sizeof(txdata->datalen),fp);
             fwrite(txdata,1,txdata->datalen,fp);
-            fflush(fp);
+            iguana_flushQ(coin,addr,fp);
         }
     }
     {
@@ -377,6 +377,26 @@ void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bi
 
 int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
 {
+    struct iguana_info *coin;
+    if ( ptr->type == 'F' )
+    {
+        if ( ptr->addr != 0 && ptr->fp != 0 )
+        {
+            printf("flush.%s\n",((struct iguana_peer *)ptr)->ipaddr);
+            fflush(ptr->fp);
+        }
+    }
+    if ( ptr->type == 'E' )
+    {
+        if ( (coin= ptr->coin) != 0 )
+        {
+            if ( coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
+                coin->MAXBUNDLES--;
+            else if ( coin->activebundles >= coin->MAXBUNDLES && coin->estsize < coin->MAXRECVCACHE*.5 )
+                coin->MAXBUNDLES++;
+            coin->numemitted++;
+        }
+    }
    /* if ( bp->type == 'Q' )
     {
         req = (struct iguana_bundlereq *)ptr;
@@ -400,14 +420,6 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
         //myallocated(0,0);
         //iguana_emittxdata(bp->coin,bp);
         //myallocated(0,0);
-        if ( bp->coin != 0 )
-        {
-            if ( bp->coin->estsize > bp->coin->MAXRECVCACHE*.9 && bp->coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
-                bp->coin->MAXBUNDLES--;
-            else if ( bp->coin->activebundles >= bp->coin->MAXBUNDLES && bp->coin->estsize < bp->coin->MAXRECVCACHE*.5 )
-                bp->coin->MAXBUNDLES++;
-            bp->coin->numemitted++;
-        }
     }
     else
     {

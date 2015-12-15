@@ -671,5 +671,6 @@ void iguana_mempurge(struct iguana_memspace *mem);
 
 struct iguana_helper { struct queueitem DL; void *coin,*addr,*bp,*fp; long fpos; int32_t allocsize,type,hdrsi,bundlei,datalen; };
 int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr);
+void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp);
 
 #endif

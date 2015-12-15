@@ -409,6 +409,17 @@ void iguana_txdataQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp,l
     queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
 }
 
+void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp)
+{
+    struct iguana_helper *ptr;
+    ptr = mycalloc('i',1,sizeof(*ptr));
+    ptr->allocsize = sizeof(*ptr);
+    ptr->coin = coin;
+    ptr->addr = addr, ptr->fp = fp;
+    ptr->type = 'F';
+    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
+}
+
 void iguana_main(void *arg)
 {
     char helperstr[64],*helperargs,*coinargs=0,*secret,*jsonstr = arg;
