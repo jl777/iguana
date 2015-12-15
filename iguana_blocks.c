@@ -1185,6 +1185,11 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                     bits256_str(str3,bp->blocks[i+1]->hash2);
                     printf("%s ->%d %d<- %s %s ",str,i,i+1,str2,str3);
                     printf("broken chain in hdrs.%d %d %p <-> %p %d\n",bp->hdrsi,i,bp->blocks[i],bp->blocks[i+1],i+1);
+                    CLEARBIT(bp->recv,i);
+                    bp->issued[i] = bp->issued[i+1] = milliseconds();
+                    iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
+                    iguana_blockQ(coin,bp,i+1,bp->blocks[i+1]->hash2,1);
+                    bp->blocks[i] = bp->blocks[i+1] = 0;
                     break;
                 }
             }
