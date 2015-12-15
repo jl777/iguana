@@ -829,10 +829,12 @@ int32_t iguana_initramchain(struct iguana_info *coin,int32_t hwmheight,int32_t m
     printf("height.%d after validateramchain hwmheight.%d flag.%d parsed.%d\n",height,hwmheight,flag,coin->blocks.parsedblocks); //getchar();
     if ( coin->blocks.parsedblocks == 0 )
     {
+        uint8_t txspace[8192]; struct iguana_memspace TXMEM;
         len = (int32_t)strlen(coin->chain->genesis_hex)/2;
         decode_hex(buf,len,(char *)coin->chain->genesis_hex);
         iguana_sethdr(&H,coin->chain->netmagic,"block",buf,len);
-        iguana_parser(coin,0,&H,buf,len);
+        iguana_meminit(&TXMEM,txspace,sizeof(txspace),0);
+        iguana_parser(coin,0,&TXMEM,&H,buf,len);
         printf("coin->blocks.parsedblocks.%d KV counts T.%d P.%d U.%d S.%d\n",coin->blocks.parsedblocks,coin->txids->numkeys,coin->pkhashes->numkeys,coin->unspents->numkeys,coin->spends->numkeys);
         printf("auto parse genesis\n"); //getchar();
     }

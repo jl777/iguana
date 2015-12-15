@@ -288,22 +288,52 @@ int32_t queue_size(queue_t *queue)
 
 void iguana_memreset(struct iguana_memspace *mem)
 {
-    printf("iguana_memreset.%p\n",mem);
-    mem->used = mem->availptrs = mem->outofptrs = mem->numptrs = 0;
+    mem->used = 0;
+#ifdef IGUANA_PEERALLOC
+    mem->availptrs = mem->outofptrs = mem->numptrs = 0;
     memset(mem->ptrs,0,sizeof(mem->ptrs));
     memset(mem->maxsizes,0,sizeof(mem->maxsizes));
     memset(mem->allocsizes,0,sizeof(mem->allocsizes));
+#endif
     if ( mem->threadsafe != 0 )
         portable_mutex_init(&mem->mutex);
 }
 
+void *iguana_meminit(struct iguana_memspace *mem,void *ptr,int64_t totalsize,int32_t threadsafe)
+{
+    mem->threadsafe = threadsafe;
+    mem->totalsize = totalsize;
+    if ( (mem->ptr= ptr) == 0 )
+    {
+        if ( (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
+        {
+            printf("iguana_meminit: cant get %d bytes\n",(int32_t)totalsize);
+            getchar();
+            return(0);
+        }
+        mem->allocated = 1;
+    }
+    return(mem->ptr);
+}
+
+void iguana_mempurge(struct iguana_memspace *mem)
+{
+    if ( mem->allocated != 0 && mem->ptr != 0 )
+        myfree(mem->ptr,mem->totalsize);
+    iguana_memreset(mem);
+    mem->totalsize = 0;
+}
+
 int64_t iguana_memallocated(struct iguana_memspace *mem)
 {
-    int64_t i,avail = (mem->totalsize - mem->used);
+    int64_t avail = (mem->totalsize - mem->used);
+#ifdef IGUANA_PEERALLOC
+    int32_t i;
     for (i=0; i<mem->numptrs; i++)
         if ( mem->allocsizes[i] == 0 )
-            avail += mem->maxsizes[i];
-    return(avail);
+           avail += mem->maxsizes[i];
+#endif
+  return(avail);
 }
 
 void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
@@ -312,8 +342,10 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
     //printf("iguana_memalloc.%s size.%ld used.%llu of %llu, numptrs.%d avail.%d %lld\n",mem->name,size,(long long)mem->used,(long long)mem->totalsize,mem->numptrs,mem->availptrs,(long long)iguana_memallocated(mem));
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_lock(&mem->mutex);
+#ifdef IGUANA_PEERALLOC
     if ( mem->availptrs == mem->numptrs && mem->used > (mem->totalsize >> 1) )
         iguana_memreset(mem);
+#endif
     if ( (mem->used + size) < mem->totalsize )
     {
         ptr = (void *)((uint64_t)mem->ptr + (uint64_t)mem->used);
@@ -322,6 +354,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
             memset(ptr,0,size);
         if ( mem->alignflag != 0 && (mem->used & 0xf) != 0 )
             mem->used += 0x10 - (mem->used & 0xf);
+#ifdef IGUANA_PEERALLOC
         if ( mem->numptrs < sizeof(mem->ptrs)/sizeof(*mem->ptrs) )
         {
             mem->allocsizes[mem->numptrs] = mem->maxsizes[mem->numptrs] = (int32_t)size;
@@ -332,7 +365,8 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
             mem->outofptrs++;
             printf("iguana_memalloc: numptrs.%d outofptrs.%d\n",mem->numptrs,mem->outofptrs);
         }
-        //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
+#endif
+     //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
     }
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_unlock(&mem->mutex);
@@ -341,6 +375,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
 
 int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size)
 {
+#ifdef IGUANA_PEERALLOC
     int32_t i; int64_t avail = -1;
     if ( mem->threadsafe != 0 )
         portable_mutex_lock(&mem->mutex);
@@ -364,6 +399,10 @@ int64_t iguana_memfree(struct iguana_memspace *mem,void *ptr,int32_t size)
         portable_mutex_unlock(&mem->mutex);
     printf("iguana_memfree: cant find ptr.%p %d\n",ptr,size);
     return(avail);
+#else
+    printf("iguana_free not supported without #define IGUANA_PEERALLOC\n");
+    return(0);
+#endif
 }
 
 bits256 bits256_doublesha256(char *hashstr,uint8_t *data,int32_t datalen)

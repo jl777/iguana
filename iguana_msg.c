@@ -478,7 +478,7 @@ int32_t iguana_getdata(struct iguana_info *coin,uint8_t *serialized,int32_t type
     return(retval);
 }*/
 
-int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
+int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_memspace *mem,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
 {
     int32_t height,i,retval,srvmsg,bloom,intvectors,len= -100; uint64_t nonce,x;
     uint32_t type,firsttxidind,firstvout,firstvin; bits256 hash2; double PoW;
@@ -584,8 +584,8 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
     else if ( strcmp(H->command,"tx") == 0 )
     {
         struct iguana_msgtx *tx;
-        tx = mycalloc('u',1,sizeof(*tx));
-        len = iguana_rwtx(0,data,tx,datalen,&tx->txid,-1,coin->chain->hastimestamp);
+        tx = iguana_memalloc(mem,sizeof(*tx),1);//mycalloc('u',1,sizeof(*tx));
+        len = iguana_rwtx(0,mem,data,tx,datalen,&tx->txid,-1,coin->chain->hastimestamp);
         if ( len == datalen && addr != 0 )
         {
             iguana_gotunconfirmedM(coin,addr,tx,data,datalen);
@@ -600,7 +600,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
             struct iguana_block *block; struct iguana_msgtx *tx; uint8_t extra[256];
             block = mycalloc('b',1,sizeof(*block));
             memset(extra,0,sizeof(extra));
-            tx = iguana_gentxarray(coin,&len,block,data,datalen,extra);
+            tx = iguana_gentxarray(coin,mem,&len,block,data,datalen,extra);
             //printf("len.%d datalen.%d tx.%p numtx.%d\n",len,datalen,tx,block->txn_count);
             if ( len == datalen )
             {

@@ -28,7 +28,7 @@
 }*/
 
 // two passes to check data size
-int32_t iguana_rwvin(int32_t rwflag,uint8_t *serialized,struct iguana_msgvin *msg)
+int32_t iguana_rwvin(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgvin *msg)
 {
     int32_t len = 0;
     len += iguana_rwbignum(rwflag,&serialized[len],sizeof(msg->prev_hash),msg->prev_hash.bytes);
@@ -36,7 +36,7 @@ int32_t iguana_rwvin(int32_t rwflag,uint8_t *serialized,struct iguana_msgvin *ms
     //printf("vin.(%s) %d\n",bits256_str(msg->prev_hash),msg->prev_vout);
     len += iguana_rwvarint32(rwflag,&serialized[len],&msg->scriptlen);
     if ( rwflag == 0 )
-        msg->script = mycalloc('s',1,msg->scriptlen);
+        msg->script = iguana_memalloc(mem,msg->scriptlen,1);//mycalloc('s',1,msg->scriptlen);
     len += iguana_rwmem(rwflag,&serialized[len],msg->scriptlen,msg->script);
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->sequence),&msg->sequence);
     //int i; for (i=0; i<msg->scriptlen; i++)
@@ -45,13 +45,13 @@ int32_t iguana_rwvin(int32_t rwflag,uint8_t *serialized,struct iguana_msgvin *ms
     return(len);
 }
 
-int32_t iguana_rwvout(int32_t rwflag,uint8_t *serialized,struct iguana_msgvout *msg)
+int32_t iguana_rwvout(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgvout *msg)
 {
     int32_t len = 0;
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->value),&msg->value);
     len += iguana_rwvarint32(rwflag,&serialized[len],&msg->pk_scriptlen);
     if ( rwflag == 0 )
-        msg->pk_script = mycalloc('s',1,msg->pk_scriptlen);
+        msg->pk_script = iguana_memalloc(mem,msg->pk_scriptlen,1);//mycalloc('s',1,msg->pk_scriptlen);
     len += iguana_rwmem(rwflag,&serialized[len],msg->pk_scriptlen,msg->pk_script);
     //printf("(%.8f scriptlen.%d) ",dstr(msg->value),msg->pk_scriptlen);
     //int i; for (i=0; i<msg->pk_scriptlen; i++)
@@ -60,7 +60,7 @@ int32_t iguana_rwvout(int32_t rwflag,uint8_t *serialized,struct iguana_msgvout *
     return(len);
 }
 
-int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,int32_t maxsize,bits256 *txidp,int32_t height,int32_t hastimestamp)
+int32_t iguana_rwtx(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgtx *msg,int32_t maxsize,bits256 *txidp,int32_t height,int32_t hastimestamp)
 {
     int32_t i,len = 0; uint8_t *txstart = serialized; char txidstr[65]; uint32_t timestamp;
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->version),&msg->version);
@@ -71,9 +71,9 @@ int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,
     if ( msg->tx_in > 0 && msg->tx_out*100 < maxsize )
     {
         if ( rwflag == 0 )
-            msg->vins = mycalloc('v',msg->tx_in,sizeof(*msg->vins));
+            msg->vins = iguana_memalloc(mem,msg->tx_in * sizeof(*msg->vins),1);//mycalloc('v',msg->tx_in,sizeof(*msg->vins));
         for (i=0; i<msg->tx_in; i++)
-            len += iguana_rwvin(rwflag,&serialized[len],&msg->vins[i]);
+            len += iguana_rwvin(rwflag,mem,&serialized[len],&msg->vins[i]);
         //printf("numvins.%d\n",msg->tx_in);
     }
     else
@@ -86,9 +86,9 @@ int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,
     {
         //printf("numvouts.%d ",msg->tx_out);
         if ( rwflag == 0 )
-            msg->vouts = mycalloc('v',msg->tx_out,sizeof(*msg->vouts));
+            msg->vouts = iguana_memalloc(mem,msg->tx_out * sizeof(*msg->vouts),1);//mycalloc('v',msg->tx_out,sizeof(*msg->vouts));
         for (i=0; i<msg->tx_out; i++)
-            len += iguana_rwvout(rwflag,&serialized[len],&msg->vouts[i]);
+            len += iguana_rwvout(rwflag,mem,&serialized[len],&msg->vouts[i]);
     }
     else
     {
@@ -108,6 +108,7 @@ int32_t iguana_rwtx(int32_t rwflag,uint8_t *serialized,struct iguana_msgtx *msg,
 void iguana_freetx(struct iguana_msgtx *tx,int32_t n)
 {
     int32_t i,j; struct iguana_msgtx *origtx = tx;
+return;
     for (j=0; j<n; j++,tx++)
     {
         //Tx_freed++, Tx_freesize += tx->allocsize;
@@ -129,7 +130,7 @@ void iguana_freetx(struct iguana_msgtx *tx,int32_t n)
     myfree(origtx,sizeof(*origtx) * n);
 }
 
-struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,int32_t *lenp,struct iguana_block *block,uint8_t *data,int32_t datalen,uint8_t extra[256])
+struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,struct iguana_memspace *mem,int32_t *lenp,struct iguana_block *block,uint8_t *data,int32_t datalen,uint8_t extra[256])
 {
     struct iguana_msgtx *tx; bits256 hash2; struct iguana_msgblock msg; int32_t i,n,len;
     memset(&msg,0,sizeof(msg));
@@ -139,10 +140,10 @@ struct iguana_msgtx *iguana_gentxarray(struct iguana_info *coin,int32_t *lenp,st
     block->height = iguana_setdependencies(coin,block);
     //printf("iguana_gentxarray block %s prev.(%s): height.%d firsttxidind.%d firstvout.%d firstvin.%d PoW %f numtx.%d\n",bits256_str2(hash2),bits256_str(msg.H.prev_block),block->height,block->L.firsttxidind,block->L.firstvout,block->L.firstvin,block->L.PoW,msg.txn_count);
     iguana_convblock(block,&msg,hash2,block->height,block->L.numtxids,block->L.numunspents,block->L.numspends,block->L.PoW);
-    tx = mycalloc('t',msg.txn_count,sizeof(*tx));
+    tx = iguana_memalloc(mem,msg.txn_count*sizeof(*tx),1);//mycalloc('t',msg.txn_count,sizeof(*tx));
     for (i=0; i<msg.txn_count; i++)
     {
-        if ( (n= iguana_rwtx(0,&data[len],&tx[i],datalen - len,&tx[i].txid,block->height,coin->chain->hastimestamp)) < 0 )
+        if ( (n= iguana_rwtx(0,mem,&data[len],&tx[i],datalen - len,&tx[i].txid,block->height,coin->chain->hastimestamp)) < 0 )
             break;
         len += n;
     }
@@ -329,10 +330,8 @@ return;
 struct iguana_bundlereq *iguana_bundlereq(struct iguana_info *coin,struct iguana_peer *addr,int32_t type,int32_t datalen)
 {
     struct iguana_bundlereq *req; int32_t allocsize;
-    allocsize = (uint32_t)sizeof(*req);
+    allocsize = (uint32_t)sizeof(*req) + datalen;
     req = mycalloc(type,1,allocsize);
-    if ( datalen > 0 )
-        req->data = mycalloc('d',1,datalen);
     req->allocsize = allocsize;
     req->datalen = datalen;
     req->addr = addr;
@@ -357,7 +356,7 @@ void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,st
     printf("%s unconfirmed.%s\n",addr->ipaddr,str);
     req = iguana_bundlereq(coin,addr,'U',datalen);
     req->datalen = datalen;
-    memcpy(req->data,data,datalen);
+    memcpy(req->serialized,data,datalen);
     iguana_freetx(tx,1);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
@@ -403,15 +402,14 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     coin->recvcount++;
     coin->recvtime = (uint32_t)time(NULL);
     req = iguana_bundlereq(coin,addr,'B',0);
-datalen = 16;
     req->blocks = block;
     req->datalen = datalen;
-    if ( (req->data= iguana_peeralloc(coin,addr,datalen)) != 0 )
+    /*if ( (req->data= iguana_peeralloc(coin,addr,datalen)) != 0 )
     {
         memcpy(req->data,data,datalen);
         //Tx_allocated++;
         //Tx_allocsize += datalen;
-    } else printf("iguana_peeralloc null ptr for req.%p\n",req), getchar();
+    } else printf("iguana_peeralloc null ptr for req.%p\n",req), getchar();*/
     //printf("test emit txarray[%d] %p\n",numtx,block);
     block->txn_count = req->numtx = numtx;
     if ( txarray != 0 )

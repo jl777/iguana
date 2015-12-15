@@ -1035,14 +1035,14 @@ void iguana_gotdata(struct iguana_info *coin,struct iguana_peer *addr,int32_t he
     }
 }
 
-struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,uint8_t *data,int32_t datalen,int32_t *newhwmp)
+struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,int32_t datalen,int32_t *newhwmp)
 {
     struct iguana_bundle *bp; int32_t bundlei; struct iguana_block *block; double duration = 0.;
     if ( (block= iguana_recvblockhdr(coin,&bp,&bundlei,origblock,newhwmp)) != 0 )
     {
         iguana_copyblock(coin,block,origblock);
         //printf("iguana_recvblock (%s) %d[%d] bit.%d recv.%d %02x %02x\n",bits256_str(block->hash2),bp->hdrsi,bundlei,GETBIT(bp->recv,bundlei),bp->numrecv,bp->recv[0],bp->recv[bp->n/8]);
-        if ( bp != 0 && data != 0 && datalen > 0 )
+        if ( bp != 0 && datalen > 0 )
         {
             //printf("iguana_recvblock (%s) %d[%d] bit.%d recv.%d %02x %02x\n",bits256_str(block->hash2),bp->hdrsi,bundlei,GETBIT(bp->recv,bundlei),bp->numrecv,bp->recv[0],bp->recv[bp->n/8]);
             SETBIT(bp->recv,bundlei);
@@ -1188,13 +1188,13 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
             //printf("check %d blocks in hdrs.%d\n",n,bp->hdrsi);
             for (i=0; i<n-1; i++)
             {
-                if ( memcmp(bp->blocks[i]->hash2.bytes,bp->blocks[i+1]->prev_block.bytes,sizeof(bits256)) != 0 )
+                if ( memcmp(bp->blocks[i]->hash2.bytes,bp->blocks[i+1]->prev_block.bytes,sizeof(bits256)) != 0 )//&& bits256_nonz() > 0 && bits256_nonz() > 0 )
                 {
                     char str[65],str2[65],str3[65];
                     bits256_str(str,bp->blocks[i]->hash2);
                     bits256_str(str2,bp->blocks[i+1]->prev_block);
                     bits256_str(str3,bp->blocks[i+1]->hash2);
-                    printf("%s -><- %s %s ",str,str2,str3);
+                    printf("%s ->%d %d<- %s %s ",str,i,i+1,str2,str3);
                     printf("broken chain in hdrs.%d %d %p <-> %p %d\n",bp->hdrsi,i,bp->blocks[i],bp->blocks[i+1],i+1);
                     break;
                 }
@@ -1456,10 +1456,10 @@ int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // sin
         //printf("%s bundlesQ.%p type.%c n.%d\n",req->addr != 0 ? req->addr->ipaddr : "0",req,req->type,req->n);
         if ( req->type == 'B' ) // one block with all txdata
         {
-            if ( (req= iguana_recvblock(coin,req->addr,req,req->blocks,req->numtx,req->data,req->datalen,newhwmp)) != 0 )
+            if ( (req= iguana_recvblock(coin,req->addr,req,req->blocks,req->numtx,req->datalen,newhwmp)) != 0 )
             {
-                if ( req->data != 0 )
-                    iguana_peerfree(coin,req->addr,req->data,req->datalen), req->data = 0;
+                //if ( req->data != 0 )
+                //    iguana_peerfree(coin,req->addr,req->data,req->datalen), req->data = 0;
                 if ( req->blocks != 0 )
                     myfree(req->blocks,sizeof(*req->blocks)), req->blocks = 0;
             }
@@ -1476,8 +1476,8 @@ int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // sin
         }
         else if ( req->type == 'U' ) // unconfirmed tx
         {
-            if ( (req= iguana_recvunconfirmed(coin,req,req->data,req->datalen)) != 0 )
-                myfree(req->data,req->datalen), req->data = 0;
+            req = iguana_recvunconfirmed(coin,req,req->serialized,req->datalen);
+                //myfree(req->data,req->datalen), req->data = 0;
         }
         else if ( req->type == 'T' ) // txids from inv
         {
