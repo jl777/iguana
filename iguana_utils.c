@@ -308,7 +308,7 @@ void *iguana_meminit(struct iguana_memspace *mem,void *ptr,int64_t totalsize,int
         if ( (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
         {
             printf("iguana_meminit: cant get %d bytes\n",(int32_t)totalsize);
-            getchar();
+            exit(-1);
             return(0);
         }
         mem->allocated = 1;
@@ -370,7 +370,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
         }
 #endif
      //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
-    } else printf("error memalloc mem.%p %s alloc %ld used %ld alloc.%ld -> %s %p\n",mem,mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr), getchar();
+    } else printf("error memalloc mem.%p %s alloc %ld used %ld alloc.%ld -> %s %p\n",mem,mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr), exit(-1);
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_unlock(&mem->mutex);
     return(ptr);

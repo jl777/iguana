@@ -26,7 +26,7 @@ struct iguana_kvitem *iguana_hashset(struct iguana_kvitem *hashtable,struct igua
         allocsize = (int32_t)(sizeof(*ptr));
         ptr = (mem == 0) ? mycalloc('y',1,allocsize) : iguana_memalloc(mem,allocsize,1);
         if ( ptr == 0 )
-            printf("fatal alloc error in hashset\n"), getchar();
+            printf("fatal alloc error in hashset\n"), exit(-1);
         //printf("ptr.%p allocsize.%d key.%p keylen.%d itemind.%d\n",ptr,allocsize,key,keylen,itemind);
         ptr->hh.itemind = itemind;
         HASH_ADD_KEYPTR(hh,hashtable,key,keylen,ptr);
@@ -79,7 +79,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
     if ( (txdata= iguana_txdataptrs(&T,&U,&S,&P,0,txmem,origtxdata)) == 0 || T == 0 || U == 0 || S == 0 || P == 0 )
     {
         printf("fatal error getting txdataptrs\n");
-        getchar();
+        exit(-1);
         return(0);
     }
     txidind = unspentind = spendind = pkind = 0;
@@ -97,7 +97,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
             {
                 memcpy(P[numpkinds].rmd160,rmd160,sizeof(rmd160));
                 if ( (ptr= iguana_hashset(pkhashes,hashmem,rmd160,sizeof(rmd160),numpkinds++)) == 0 )
-                    printf("fatal error adding pkhash\n"), getchar();
+                    printf("fatal error adding pkhash\n"), exit(-1);
             }
             u->value = tx->vouts[j].value, u->txidind = txidind;
             u->pkind = ptr->hh.itemind;
