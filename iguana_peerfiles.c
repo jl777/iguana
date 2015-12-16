@@ -70,7 +70,7 @@ void *iguana_txdataptr(struct iguana_info *coin,struct iguana_mappedptr *M,char 
             if ( txdatabits.isdir == 0 )
                 return(&rawptr[sizeof(uint32_t)]);
             else printf("isdir set without IGUANA_MARKER.%x\n",IGUANA_MARKER);
-        } else printf("txdataptr: len.%d error [%d %d %d %d] (%d %d)\n",len,txdatabits.datalen,txdatabits.addrind,txdatabits.fpos,txdatabits.filecount,len == txdatabits.datalen,len < IGUANA_MAXPACKETSIZE), getchar();
+        } else printf("txdataptr: len.%d error [%d %d %d %d] (%d %d)\n",len,txdatabits.datalen,txdatabits.addrind,txdatabits.fpos,txdatabits.filecount,len == txdatabits.datalen,len < IGUANA_MAXPACKETSIZE);//, getchar();
     } //else printf("txdataptr.%s %p %ld vs %ld\n",M->fname,M->fileptr,M->allocsize,(txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)));
     return(0);
 }
@@ -261,7 +261,13 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
                 ptrs[i] = coin->chain->genesis_hashdata, flag++;
             else if ( (ptrs[i]= iguana_peerfileptr(coin,txdatabits,1)) != 0 )
                 flag++;
-            else printf("peerfileptr[%d] (%d %d %d %d) null bp.%p %d\n",i,txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,bp,bp->hdrsi);
+            else
+            {
+                printf("peerfileptr[%d] (%d %d %d %d) null bp.%p %d\n",i,txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,bp,bp->hdrsi);
+                CLEARBIT(bp->recv,i);
+                memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
+                bp->blocks[i] = 0;
+            }
             addrind = txdatabits.addrind, fileind = txdatabits.filecount;
             if ( numdirs > 0 )
             {
@@ -306,6 +312,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
                 else printf("peerdir.(%d %d) finished.%d of %d\n",inds[j][0],inds[j][1],finished,num);
             } else printf("cant get peerdirptr.(%d %d)\n",inds[j][0],inds[j][1]);
         }
+        bp->emitfinish = (uint32_t)time(NULL);
     }
     else
     {
