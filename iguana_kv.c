@@ -199,6 +199,7 @@ void _iguana_closemap(struct iguana_mappedptr *mp)
 	else if ( mp->fileptr != 0 )
 		iguana_releasemap(mp->fileptr,mp->allocsize);
 	mp->fileptr = 0;
+    mp->closetime = (uint32_t)time(NULL);
 }
 
 void iguana_closemap(struct iguana_mappedptr *mp)
@@ -305,7 +306,9 @@ int32_t iguana_openmap(struct iguana_mappedptr *mp)
 			//printf("error mapping(%s) ptr %p mapped %ld vs allocsize %ld\n",mp->fname,mp->fileptr,mp->allocsize,allocsize);
 			return(-1);
 		}
-	}
+        mp->closetime = 0;
+        mp->opentime = (uint32_t)time(NULL);
+    }
 	return(0);
 }
 
