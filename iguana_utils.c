@@ -1011,17 +1011,17 @@ int32_t iguana_sortbignum(void *buf,int32_t size,uint32_t num,int32_t structsize
     if ( dir > 0 )
     {
         if ( size == 32 )
-            mergesort(buf,num,structsize,_increasing_bits256);
+            qsort(buf,num,structsize,_increasing_bits256);
         else if ( size == 20 )
-            mergesort(buf,num,structsize,_increasing_rmd160);
+            qsort(buf,num,structsize,_increasing_rmd160);
         else retval = -1;
     }
     else
     {
         if ( size == 32 )
-            mergesort(buf,num,structsize,_decreasing_bits256);
+            qsort(buf,num,structsize,_decreasing_bits256);
         else if ( size == 20 )
-            mergesort(buf,num,structsize,_decreasing_rmd160);
+            qsort(buf,num,structsize,_decreasing_rmd160);
         else retval = -1;
     }
     if ( retval < 0 )
