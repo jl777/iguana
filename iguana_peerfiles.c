@@ -187,7 +187,7 @@ struct iguana_fileitem *iguana_peerdirptr(struct iguana_info *coin,int32_t *nump
 struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t datalen)
 {
     char fname[512]; int32_t marker; uint32_t dirpos;
-    if ( bits256_nonz(hash2) == 0 || addr->fp == 0 || ftell(addr->fp)+datalen >= IGUANA_PEERFILESIZE || addr->numfilehash2 >= addr->maxfilehash2 )
+    if ( bits256_nonz(hash2) == 0 || addr->fp == 0 || ftell(addr->fp)+datalen >= IGUANA_PEERFILESIZE-IGUANA_MAXPACKETSIZE || addr->numfilehash2 >= addr->maxfilehash2 )
     //if ( addr->fp == 0 )
     {
         if ( addr->fp != 0 )
