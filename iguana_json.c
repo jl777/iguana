@@ -369,7 +369,6 @@ void iguana_helper(void *arg)
     }
     sprintf(fname,"tmp/%s",helpername);
     fp = fopen(fname,"wb");
-    printf("start helper %s fp.%p arg.%s\n",fname,fp,arg!=0?arg:"nullarg");
     if ( argjson != 0 )
         free_json(argjson);
     while ( 1 )
