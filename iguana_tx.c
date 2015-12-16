@@ -417,7 +417,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
                 ptrs[i] = coin->chain->genesis_hashdata, flag++;
             else if ( (ptrs[i]= iguana_peerfileptr(coin,txdatabits,1)) != 0 )
                 flag++;
-            else printf("peerfileptr[%d] (%d %d %d %d) null bp.%p %d\n",i,txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,bp,bp->hdrsi);
+            else printf("peerfileptr[%d] (%d %d %llu %d) null bp.%p %d\n",i,txdatabits.addrind,txdatabits.filecount,(long long)txdatabits.fpos,txdatabits.datalen,bp,bp->hdrsi);
             addrind = txdatabits.addrind, fileind = txdatabits.filecount;
             if ( numdirs > 0 )
             {
