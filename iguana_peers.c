@@ -430,9 +430,9 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                 {
                     //printf("Init %s memory %p %p %p\n",addr->ipaddr,addr->RAWMEM.ptr,addr->TXDATA.ptr,addr->HASHMEM.ptr);
                     if ( addr->RAWMEM.ptr == 0 )
-                        iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE+4096,0);
+                        iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE,0);
                     if ( addr->TXDATA.ptr == 0 )
-                        iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE+65536,0);
+                        iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE,0);
                     if ( addr->HASHMEM.ptr == 0 )
                         iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,IGUANA_MAXPACKETSIZE*10,0);
                 }
@@ -852,8 +852,9 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 #endif
     addr->addrind = (int32_t)(((long)addr - (long)&coin->peers.active[0]) / sizeof(*addr));
     printf("start dedicatedloop.%s addrind.%d\n",addr->ipaddr,addr->addrind);
-    sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
-    addr->fp = fopen(fname,"wb");
+    //sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
+    //addr->fp = fopen(fname,"wb");
+    addr->maxfilehash2 = 8192;
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
     //printf("send version myservices.%llu\n",(long long)coin->myservices);
@@ -900,6 +901,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     iguana_iAkill(coin,addr,addr->dead != 0);
     printf("finish dedicatedloop.%s\n",addr->ipaddr);
     myfree(buf,bufsize);
+    if ( addr->filehash2 != 0 )
+        myfree(addr->filehash2,addr->maxfilehash2*sizeof(*addr->filehash2));
     iguana_mempurge(&addr->RAWMEM);
     iguana_mempurge(&addr->TXDATA);
     iguana_mempurge(&addr->HASHMEM);
