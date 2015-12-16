@@ -403,7 +403,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
             if ( ptr->bp != 0 )
             {
                 ((struct iguana_bundle *)ptr->bp)->emitfinish = (uint32_t)time(NULL);
-                iguana_bundlesaveHT(coin,ptr->bp);
+                //iguana_bundlesaveHT(coin,ptr->bp);
             }
             if ( coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
                 coin->MAXBUNDLES--;

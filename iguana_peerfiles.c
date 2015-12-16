@@ -294,6 +294,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
             iguana_ramchainpurge(coin,ramchain);
             bp->emitfinish = (uint32_t)time(NULL);
         }
+        else bp->emitfinish = 0;
         for (j=0; j<numdirs; j++)
         {
             finished = 0;
