@@ -101,6 +101,7 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
     oldesti = -1;
     oldest = 0;
     iguana_peerfilename(coin,fname,txdatabits.addrind,txdatabits.filecount);
+    portable_mutex_lock(&coin->peers.filesM_mutex);
     if ( coin->peers.filesM != 0 )
     {
         for (i=0; i<coin->peers.numfilesM; i++)
@@ -110,7 +111,7 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
             {
                 if ( M->fileptr != 0 && (ptr= iguana_txdataptr(coin,M,fname,txdatabits)) != 0 )
                 {
-                    //portable_mutex_unlock(&coin->peers.filesM_mutex);
+                    portable_mutex_unlock(&coin->peers.filesM_mutex);
                     //printf("peerfileptr.(%s) %d %d -> %p\n",fname,txdatabits.addrind,txdatabits.filecount,ptr);
                     return(ptr);
                 }
@@ -126,7 +127,6 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
     }
     if ( createflag != 0 )
     {
-        portable_mutex_lock(&coin->peers.filesM_mutex);
         if ( oldesti >= 0 && oldest > 60 )
         {
             M = &coin->peers.filesM[oldesti];
@@ -147,8 +147,8 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
             ptr = iguana_txdataptr(coin,M,fname,txdatabits);
             //printf("mapped.(%s) size.%ld %p\n",fname,(long)M->allocsize,ptr);
         } else printf("iguana_peerfileptr error mapping.(%s)\n",fname);
-        portable_mutex_unlock(&coin->peers.filesM_mutex);
     }
+    portable_mutex_unlock(&coin->peers.filesM_mutex);
     return(ptr);
 }
 
@@ -353,8 +353,8 @@ struct iguana_txdatabits iguana_ramchainPT(struct iguana_info *coin,struct iguan
             {
                 fwrite(&datalen,1,sizeof(datalen),fp);
                 fwrite(txdata,1,datalen,fp);
-                //iguana_flushQ(coin,addr); this is actually slower
-                fflush(fp);
+                iguana_flushQ(coin,addr);
+                //fflush(fp);
             }
         }
     }
@@ -367,7 +367,7 @@ struct iguana_txdatabits iguana_ramchainPT(struct iguana_info *coin,struct iguan
             printf("[%.3f] %.0f/%.0f maxdatalen %d -> %d\n",recvsum/datasum,recvsum,datasum,maxdatalen,txdata->datalen), maxdatalen = txdata->datalen;
         if ( hashmem->used > maxhashmem )
             printf("[%.3f] %.0f/%.0f maxhashmem %d -> %ld\n",recvsum/datasum,recvsum,datasum,maxhashmem,hashmem->used), maxhashmem = (int32_t)hashmem->used;
-        if ( (rand() % 1000) == 0 )
+        if ( (rand() % 10000) == 0 )
             printf("[%.3f] %.0f/%.0f recvlen vs datalen T.%ld U.%ld S.%ld P.%ld\n",recvsum/datasum,recvsum,datasum,sizeof(*T),sizeof(*U),sizeof(*S),sizeof(*P));
     }
     memcpy(origtxdata,txdata,sizeof(*txdata)+txdata->extralen);
