@@ -358,13 +358,10 @@ void iguana_issuejsonstrM(void *arg)
 
 void iguana_helper(void *arg)
 {
-    FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson; int32_t flag;
+    FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson=0; int32_t flag;
     struct iguana_helper *ptr;
     if ( arg != 0 && (argjson= cJSON_Parse(arg)) != 0 )
-    {
         helpername = jstr(argjson,"name");
-        free_json(argjson);
-    }
     if ( helpername == 0 )
     {
         sprintf(name,"helper.%d",rand());
@@ -372,6 +369,8 @@ void iguana_helper(void *arg)
     }
     sprintf(fname,"tmp/%s",helpername);
     printf("start helper %s fp.%p arg.%s\n",fname,fp,arg!=0?arg:"nullarg");
+    if ( argjson != 0 )
+        free_json(argjson);
     while ( 1 )
     {
         flag = 0;
