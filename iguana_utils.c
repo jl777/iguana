@@ -312,7 +312,7 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
             exit(-1);
             return(0);
         }
-        //printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
+        printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
         mem->allocated = 1;
     }
     return(mem->ptr);
@@ -452,6 +452,19 @@ bits256 bits256_add(bits256 a,bits256 b)
     return(sum);
 }
 
+int32_t bits256_cmp(bits256 a,bits256 b)
+{
+    int32_t i;
+    for (i=0; i<4; i++)
+    {
+        if ( a.ulongs[i] > b.ulongs[i] )
+            return(1);
+        else if ( a.ulongs[i] < b.ulongs[i] )
+            return(-1);
+    }
+    return(0);
+}
+
 int32_t bits256_nonz(bits256 a)
 {
     bits256 z;
@@ -482,37 +495,6 @@ bits256 bits256_from_compact(uint32_t c)
         x = bits256_lshift(x);
     return(x);
 }
-
-int32_t bits256_cmp(bits256 a,bits256 b)
-{
-    int32_t i;
-    for (i=0; i<4; i++)
-    {
-        if ( a.ulongs[i] > b.ulongs[i] )
-            return(1);
-        else if ( a.ulongs[i] < b.ulongs[i] )
-            return(-1);
-    }
-    return(0);
-}
-
-int32_t rmd160_cmp(uint8_t a[20],uint8_t b[20])
-{
-    int32_t i;
-    for (i=0; i<20; i++)
-    {
-        if ( a[i] > b[i] )
-            return(1);
-        else if ( a[i] < b[i] )
-            return(-1);
-    }
-    return(0);
-}
-
-static int _increasing_bits256(const void *a,const void *b) { return(bits256_cmp(*(bits256 *)a,*(bits256 *)b)); }
-static int _decreasing_bits256(const void *a,const void *b) { return(-bits256_cmp(*(bits256 *)a,*(bits256 *)b)); }
-static int _increasing_rmd160(const void *a,const void *b) { return(rmd160_cmp((uint8_t *)a,(uint8_t *)b)); }
-static int _decreasing_rmd160(const void *a,const void *b) { return(-rmd160_cmp((uint8_t *)a,(uint8_t *)b)); }
 
 void calc_OP_HASH160(char hexstr[41],uint8_t hash160[20],char *pubkey)
 {
@@ -718,13 +700,13 @@ int32_t decode_hex(unsigned char *bytes,int32_t n,char *hex)
     return(n + adjust);
 }
 
-char *init_hexbytes_noT(char *hexbytes,unsigned char *message,long len)
+int32_t init_hexbytes_noT(char *hexbytes,unsigned char *message,long len)
 {
     int32_t i;
     if ( len == 0 )
     {
         hexbytes[0] = 0;
-        return(hexbytes);
+        return(1);
     }
     for (i=0; i<len; i++)
     {
@@ -734,8 +716,7 @@ char *init_hexbytes_noT(char *hexbytes,unsigned char *message,long len)
     }
     hexbytes[len*2] = 0;
     //printf("len.%ld\n",len*2+1);
-    return(hexbytes);
-    //return((int32_t)len*2+1);
+    return((int32_t)len*2+1);
 }
 
 void touppercase(char *str)
@@ -984,47 +965,4 @@ void *iguana_filestr(int64_t *allocsizep,char *fname)
     int64_t filesize = 0; char *buf = 0;
     *allocsizep = 0;
     return(iguana_loadfile(fname,&buf,&filesize,allocsizep));
-}
-
-static int _decreasing_double(const void *a,const void *b)
-{
-#define double_a (*(double *)a)
-#define double_b (*(double *)b)
-	if ( double_b > double_a )
-		return(1);
-	else if ( double_b < double_a )
-		return(-1);
-	return(0);
-#undef double_a
-#undef double_b
-}
-
-int32_t iguana_revsortds(double *buf,uint32_t num,int32_t size)
-{
-	qsort(buf,num,size,_decreasing_double);
-	return(0);
-}
-
-int32_t iguana_sortbignum(void *buf,int32_t size,uint32_t num,int32_t structsize,int32_t dir)
-{
-    int32_t retval = 0;
-    if ( dir > 0 )
-    {
-        if ( size == 32 )
-            qsort(buf,num,structsize,_increasing_bits256);
-        else if ( size == 20 )
-            qsort(buf,num,structsize,_increasing_rmd160);
-        else retval = -1;
-    }
-    else
-    {
-        if ( size == 32 )
-            qsort(buf,num,structsize,_decreasing_bits256);
-        else if ( size == 20 )
-            qsort(buf,num,structsize,_decreasing_rmd160);
-        else retval = -1;
-    }
-    if ( retval < 0 )
-        printf("iguana_sortbignum only does bits256 and rmd160 for now\n");
-	return(retval);
 }
