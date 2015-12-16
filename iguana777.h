@@ -345,7 +345,7 @@ struct iguana_iAddr { uint32_t ipbits,ind,lastkilled,numkilled,lastconnect,numco
 struct iguana_block
 {
     bits256 prev_block,merkle_root;
-    uint64_t txdatabits;
+    struct iguana_txdatabits txdatabits;
     int32_t height; uint32_t timestamp,nonce,bits,recvlen;
     uint32_t bundlei:11,hdrsi:21;
     uint16_t txn_count,numvouts,numvins,version:6,mainchain:1,valid:1;
@@ -419,7 +419,7 @@ struct iguana_bundlereq
 {
     struct queueitem DL; struct iguana_info *coin; int32_t type;
     struct iguana_peer *addr; struct iguana_block *blocks,block; bits256 *hashes;
-    uint64_t txdatabits;
+    struct iguana_txdatabits txdatabits;
     int32_t allocsize,datalen,n,numtx;
     uint8_t serialized[];
 };
@@ -553,7 +553,6 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
 int32_t iguana_hash2height(struct iguana_info *coin,bits256 hash2);
 int32_t iguana_blockheight(struct iguana_info *coin,struct iguana_block *block); // partially confirmed
 int32_t iguana_chainheight(struct iguana_info *coin,struct iguana_block *block); // in the blockchain
-struct iguana_bundle *iguana_bundlesearch(struct iguana_info *coin,int32_t *bundleip,bits256 bundlehash2,bits256 hash2,int32_t searchmask);
 
 uint32_t iguana_syncs(struct iguana_info *coin);
 //void iguana_audit(struct iguana_info *coin);
@@ -606,6 +605,7 @@ double PoW_from_compact(uint32_t nBits,uint8_t unitval);
 void calc_rmd160(char *hexstr,uint8_t buf[20],uint8_t *msg,int32_t len);
 void calc_OP_HASH160(char *hexstr,uint8_t hash160[20],char *msg);
 double dxblend(double *destp,double val,double decay);
+struct iguana_bundle *iguana_bundlesearch(struct iguana_info *coin,int32_t *bundleip,bits256 hash2);
 
 // json
 int32_t iguana_processjsonQ(struct iguana_info *coin); // reentrant, can be called during any idletime

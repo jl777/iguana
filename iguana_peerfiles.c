@@ -211,3 +211,93 @@ struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguan
     }
     return(txdatabits);
 }
+
+
+struct iguana_ramchain *iguana_bundlemerge(struct iguana_info *coin,void *ptrs[],int32_t n,struct iguana_bundle *bp)
+{
+    struct iguana_ramchain *ramchain = 0;
+    return(ramchain);
+}
+
+int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_bundle *bp,int32_t n)
+{
+    printf("ramchainsave.%s %d[%d]\n",coin->symbol,bp->hdrsi,n);
+    return(0);
+}
+
+void iguana_ramchainpurge(struct iguana_info *coin,struct iguana_ramchain *ramchain)
+{
+    
+}
+
+int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) // helper thread
+{
+    void *ptrs[IGUANA_MAXBUNDLESIZE]; uint32_t inds[IGUANA_MAXBUNDLESIZE][2]; struct iguana_fileitem *dir;
+    struct iguana_bundle *itembp; int32_t addrind,bundlei,finished,fileind,i,j,num,flag,numdirs=0;
+    struct iguana_txdatabits txdatabits; struct iguana_ramchain *ramchain;
+    memset(ptrs,0,sizeof(ptrs));
+    memset(inds,0,sizeof(inds));
+    flag = 0;
+    for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
+    {
+        if ( bp->blocks[i] != 0 )
+        {
+            txdatabits = bp->blocks[i]->txdatabits;
+            if ( memcmp(bp->blocks[i]->hash2.bytes,coin->chain->genesis_hashdata,sizeof(bits256)) == 0 )
+                ptrs[i] = coin->chain->genesis_hashdata, flag++;
+            else if ( (ptrs[i]= iguana_peerfileptr(coin,txdatabits,1)) != 0 )
+                flag++;
+            else printf("peerfileptr[%d] (%d %d %d %d) null bp.%p %d\n",i,txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,bp,bp->hdrsi);
+            addrind = txdatabits.addrind, fileind = txdatabits.filecount;
+            if ( numdirs > 0 )
+            {
+                for (j=0; j<numdirs; j++)
+                {
+                    if ( inds[j][0] == addrind && inds[j][1] == fileind )
+                        break;
+                }
+            } else j = 0;
+            if ( j == numdirs )
+            {
+                inds[j][0] = addrind;
+                inds[j][1] = fileind;
+                numdirs++;
+            }
+        }
+    }
+    if ( flag == i )
+    {
+        printf(">>>>>>>>> start MERGE numdirs.%d i.%d flag.%d\n",numdirs,i,flag);
+        if ( (ramchain= iguana_bundlemerge(coin,ptrs,i,bp)) != 0 )
+        {
+            iguana_ramchainsave(coin,ramchain,bp,i);
+            iguana_ramchainpurge(coin,ramchain);
+        }
+        for (j=0; j<numdirs; j++)
+        {
+            finished = 0;
+            if ( (dir= iguana_peerdirptr(coin,&num,inds[j][0],inds[j][1],1)) != 0 )
+            {
+                for (i=0; i<num; i++)
+                {
+                    if ( (itembp= iguana_bundlesearch(coin,&bundlei,dir[i].hash2)) != 0 )
+                    {
+                        //printf("dir[i.%d] j.%d %s %d[%d] %u\n",i,j,bits256_str(str,dir[i].hash2),itembp->hdrsi,bundlei,itembp->emitfinish);
+                        if ( itembp->emitfinish != 0 )
+                            finished++;
+                    }
+                }
+                if ( finished == num )
+                    iguana_peerfileclose(coin,inds[j][0],inds[j][1]);
+                else printf("peerdir.(%d %d) finished.%d of %d\n",inds[j][0],inds[j][1],finished,num);
+            } //else printf("cant get peerdirptr.(%d %d)\n",inds[j][0],inds[j][1]);
+        }
+    }
+    else
+    {
+        printf(">>>>> bundlesaveHT error: numdirs.%d i.%d flag.%d\n",numdirs,i,flag);
+        bp->emitfinish = 0;
+    }
+    return(flag);
+}
+

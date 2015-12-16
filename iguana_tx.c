@@ -71,7 +71,7 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
     return(txdata);
 }
 
-uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen)
+struct iguana_txdatabits iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen)
 {
     struct iguana_txid *T,*t; struct iguana_unspent *U,*u; struct iguana_spend *S,*s; struct iguana_pkhash *P;
     FILE *fp; long fpos;  bits256 *externalT; struct iguana_kvitem *txids,*pkhashes,*ptr;
@@ -87,7 +87,7 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
     {
         printf("fatal error getting txdataptrs\n");
         exit(-1);
-        return(0);
+        return(txdatabits);
     }
     txidind = unspentind = spendind = pkind = 0;
     for (i=numvouts=numpkinds=0; i<txn_count; i++,txidind++)
@@ -148,7 +148,8 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
     if ( numvins != txdata->numspends || numvouts != txdata->numunspents || i != txdata->numtxids )
     {
         printf("counts mismatch: numvins %d != %d txdata->numvins || numvouts %d != %d txdata->numvouts || i %d != %d txdata->numtxids\n",numvins,txdata->numspends,numvouts,txdata->numunspents,i,txdata->numtxids);
-        return(0);
+        exit(-1);
+        return(txdatabits);
     }
     fpos = (addr->fp != 0) ? ftell(addr->fp) : 0;
     txdatabits = iguana_calctxidbits(addr->addrind,addr->filecount,(uint32_t)fpos,txdata->datalen);
@@ -177,7 +178,7 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
             printf("[%.3f] %.0f/%.0f recvlen vs datalen\n",recvsum/datasum,recvsum,datasum);
     }
     memcpy(origtxdata,txdata,sizeof(*origtxdata));
-    return(*(uint64_t *)&txdatabits);
+    return(txdatabits);
 }
 
 // two passes to check data size
@@ -319,7 +320,8 @@ void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,st
 
 void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *txdata,struct iguana_msgtx *txarray,uint8_t *data,int32_t datalen)
 {
-    struct iguana_bundlereq *req; int32_t i; uint64_t txdatabits = 0;
+    struct iguana_bundlereq *req; int32_t i; struct iguana_txdatabits txdatabits;
+    memset(&txdatabits,0,sizeof(txdatabits));
     if ( 0 )
     {
         for (i=0; i<txdata->space[0]; i++)
@@ -340,7 +342,8 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
         addr->lastblockrecv = (uint32_t)time(NULL);
         addr->recvblocks += 1.;
         addr->recvtotal += datalen;
-        if ( 1 && (txdatabits= iguana_blockramchainPT(coin,addr,txdata,txarray,txdata->block.txn_count,data,datalen)) != 0 )
+        txdatabits = iguana_blockramchainPT(coin,addr,txdata,txarray,txdata->block.txn_count,data,datalen);
+        if ( txdatabits.datalen != 0 )
             req->datalen = datalen;
     }
     coin->recvcount++;
