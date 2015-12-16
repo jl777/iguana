@@ -101,7 +101,6 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
     oldesti = -1;
     oldest = 0;
     iguana_peerfilename(coin,fname,txdatabits.addrind,txdatabits.filecount);
-    portable_mutex_lock(&coin->peers.filesM_mutex);
     if ( coin->peers.filesM != 0 )
     {
         for (i=0; i<coin->peers.numfilesM; i++)
@@ -111,7 +110,7 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
             {
                 if ( M->fileptr != 0 && (ptr= iguana_txdataptr(coin,M,fname,txdatabits)) != 0 )
                 {
-                    portable_mutex_unlock(&coin->peers.filesM_mutex);
+                    //portable_mutex_unlock(&coin->peers.filesM_mutex);
                     //printf("peerfileptr.(%s) %d %d -> %p\n",fname,txdatabits.addrind,txdatabits.filecount,ptr);
                     return(ptr);
                 }
@@ -127,6 +126,7 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
     }
     if ( createflag != 0 )
     {
+        portable_mutex_lock(&coin->peers.filesM_mutex);
         if ( oldesti >= 0 && oldest > 60 )
         {
             M = &coin->peers.filesM[oldesti];
@@ -147,8 +147,8 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
             ptr = iguana_txdataptr(coin,M,fname,txdatabits);
             //printf("mapped.(%s) size.%ld %p\n",fname,(long)M->allocsize,ptr);
         } else printf("iguana_peerfileptr error mapping.(%s)\n",fname);
+        portable_mutex_unlock(&coin->peers.filesM_mutex);
     }
-    portable_mutex_unlock(&coin->peers.filesM_mutex);
     return(ptr);
 }
 
