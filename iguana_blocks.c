@@ -461,7 +461,7 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
         getchar();
         return(-1);
     }
-    if ( priority != 0 || (block= bp->blocks[bundlei]) == 0 || block->txdatabits.datalen == 0 )
+    if ( priority != 0 || (block= bp->blocks[bundlei]) == 0 || block->txdatabits.datalen == 0  || block->txdatabits.filecount == 0 )
     {
         if ( priority != 0 )
             str = "priorityQ", Q = &coin->priorityQ;
@@ -521,7 +521,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
     {
         hash2 = req->hash2;
         height = req->height;
-        if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && req->bp->blocks[req->bundlei] != 0 && req->bp->blocks[req->bundlei]->txdatabits.datalen != 0 )
+        if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && req->bp->blocks[req->bundlei] != 0 && req->bp->blocks[req->bundlei]->txdatabits.datalen != 0  && req->bp->blocks[req->bundlei]->txdatabits.filecount != 0 )
         {
             //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
             myfree(req,sizeof(*req));
@@ -1152,7 +1152,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 continue;
             if ( (block= bp->blocks[i]) == 0 )
                 block = bp->blocks[i] = iguana_blockfind(coin,hash2);
-            if ( block != 0 )
+            if ( block != 0 && block->txdatabits.datalen != 0 && block->txdatabits.filecount != 0 )
             {
                 char str[65];
                 if ( block->recvlen != 0 )
@@ -1291,7 +1291,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                 RTqsize = queue_size(&coin->blocksQ);
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
-                    if ( bp->blocks[bundlei] != 0 && bp->blocks[bundlei]->txdatabits.datalen != 0 )
+                    if ( bp->blocks[bundlei] != 0 && bp->blocks[bundlei]->txdatabits.datalen != 0 && bp->blocks[bundlei]->txdatabits.filecount != 0 )
                     {
                         m++;
                         //printf("hashes.%p numrecv.%d hdrs->n.%d qsize.%d\n",bp->blockhashes,bp->numrecv,bp->n,qsize);
