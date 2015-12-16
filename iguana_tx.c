@@ -647,8 +647,8 @@ void iguana_gotblockMPT(struct iguana_info *coin,struct iguana_peer *addr,struct
             req->datalen = txdata->datalen;
             if ( txdatabitsptr != 0 )
                 (*txdatabitsptr) = txdatabits;
-            else printf("unexpected null txdatabitsptr\n"), getchar();
-        } else printf("txdatabits.datalen overflow %d vs %d or zero filecount.%d\n",txdata->datalen,txdatabits.datalen,txdatabits.filecount), getchar();
+            else printf("unexpected null txdatabitsptr\n"), exit(-1);
+        } else printf("txdatabits.datalen overflow %d vs %d or zero filecount.%d\n",txdata->datalen,txdatabits.datalen,txdatabits.filecount), exit(-1);
     }
     coin->recvcount++;
     coin->recvtime = (uint32_t)time(NULL);

@@ -31,9 +31,9 @@ int32_t _iguana_verifysort(struct iguana_info *coin)
     HASH_ITER(hh,coin->blocks.hash,block,tmp)
     {
         if ( (height= block->hh.itemind) < 0 )
-            printf("sortblocks error i.%d height.%d?\n",i,height), getchar();
+            printf("sortblocks error i.%d height.%d?\n",i,height), exit(-1);
         if ( height <= prevheight )
-            printf("sortblocks error i.%d height.%d vs prevheight.%d\n",i,height,prevheight), getchar();
+            printf("sortblocks error i.%d height.%d vs prevheight.%d\n",i,height,prevheight), exit(-1);
         if ( height == run )
             run++;
         i++;
@@ -56,7 +56,7 @@ int32_t _iguana_blocklink(struct iguana_info *coin,struct iguana_block *block)
 {
     int32_t height,n = 0; struct iguana_block *prev,*next;
     if ( block == 0 )
-        printf("iguana_blockslink: illegal null block %p\n",block), getchar();
+        printf("iguana_blockslink: illegal null block %p\n",block), exit(-1);
     block->hh.next = 0, block->hh.prev = 0;
     if ( (height= (int32_t)block->hh.itemind) > 0 && (prev= iguana_block(coin,height-1)) != 0 )
     {
@@ -388,12 +388,12 @@ void iguana_audit(struct iguana_info *coin)
                 h = height;
                 printf("fixup height.%d\n",height);
                 iguana_kvwrite(coin,coin->blocks.db,hash2.bytes,block,(uint32_t *)&h);
-                //getchar();
+                //exit(-1);
             }
             if ( (h= iguana_addblock(coin,hash2,block)) != height )
             {
                 printf("height.%d h.%d n.%d didnt work\n",height,h,n);
-                //getchar();
+                //exit(-1);
                 break;
             }
             n++;
@@ -458,7 +458,7 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
     if ( bits256_nonz(hash2) == 0 )
     {
         printf("cant queue zerohash bundlei.%d\n",bundlei);
-        getchar();
+        exit(-1);
         return(-1);
     }
     if ( priority != 0 || (block= bp->blocks[bundlei]) == 0 || block->txdatabits.datalen == 0 )
@@ -585,7 +585,7 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *str,bits256 *orighash2,bi
 {
     if ( bits256_nonz(newhash2) == 0 )
     {
-        printf("iguana_hash2set warning: newhash2 is zero\n"), getchar();
+        printf("iguana_hash2set warning: newhash2 is zero\n"), exit(-1);
         return(-1);
     }
     if ( bits256_nonz(*orighash2) > 0 )
@@ -596,7 +596,7 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *str,bits256 *orighash2,bi
             bits256_str(str2,*orighash2), bits256_str(str2,newhash2);
             printf("iguana_hash2set overwrite [%s] %s with %s\n",str,str2,str3);
             if ( strcmp(str,"firstblockhash2") == 0 )
-                getchar();
+                exit(-1);
             *orighash2 = newhash2;
             return(-1);
         }
@@ -1080,7 +1080,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                     block->txdatabits = req->txdatabits;
                     block->recvlen = datalen;
                     bp->numrecv++;
-                } else printf("recvblock unexpected null datalen.%d of fileind.%d bp.%p %d[%d]\n",req->txdatabits.datalen,req->txdatabits.filecount,bp,bp->hdrsi,bundlei), getchar();
+                } else printf("recvblock unexpected null datalen.%d of fileind.%d bp.%p %d[%d]\n",req->txdatabits.datalen,req->txdatabits.filecount,bp,bp->hdrsi,bundlei), exit(-1);
             }
             //printf("%s hdrsi.%d recv[%d] dur.%.0f avetimes.(%.2f %.2f) numpendinds.%d %f\n",bits256_str(block->hash2),hdrs->hdrsi,bundlei,duration,hdrs->avetime,coin->avetime,coin->numpendings,hdrs->issued[bundlei]);
         }
