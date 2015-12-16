@@ -155,7 +155,6 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
 int32_t iguana_peerfileclose(struct iguana_info *coin,uint32_t addrind,uint32_t filecount)
 {
     char fname[512]; int32_t i,n = 0; struct iguana_mappedptr *M;
-return(0);
     iguana_peerfilename(coin,fname,addrind,filecount);
     printf("PEERFILECLOSE.%s\n",fname);
     portable_mutex_lock(&coin->peers.filesM_mutex);
@@ -173,7 +172,7 @@ return(0);
             }
         }
     }
-    portable_mutex_unlock(&coin->peers.filesM_mutex);
+    //portable_mutex_unlock(&coin->peers.filesM_mutex);
     return(n);
 }
 
@@ -355,8 +354,8 @@ struct iguana_txdatabits iguana_ramchainPT(struct iguana_info *coin,struct iguan
             {
                 fwrite(&datalen,1,sizeof(datalen),fp);
                 fwrite(txdata,1,datalen,fp);
-                //iguana_flushQ(coin,addr);
-                fflush(fp);
+                iguana_flushQ(coin,addr);
+                //fflush(fp);
             }
         }
     }
