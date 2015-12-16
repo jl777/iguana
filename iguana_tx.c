@@ -100,6 +100,7 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
     fpos = txdatabits.fpos, datalen = txdatabits.datalen;
     oldesti = -1;
     oldest = 0;
+    return("test");
     iguana_peerfilename(coin,fname,txdatabits.addrind,txdatabits.filecount);
     //portable_mutex_lock(&coin->peers.filesM_mutex);
     if ( coin->peers.filesM != 0 )
