@@ -370,7 +370,7 @@ void iguana_helper(void *arg)
         sprintf(name,"helper.%d",rand());
         helpername = name;
     }
-    sprintf(fname,"tmp/%s",name);
+    sprintf(fname,"tmp/%s",helpername);
     printf("start helper %s fp.%p\n",fname,fp);
     while ( 1 )
     {
