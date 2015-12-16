@@ -180,6 +180,19 @@ struct iguana_txdatabits iguana_blockramchainPT(struct iguana_info *coin,struct 
     return(txdatabits);
 }
 
+struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,void *ptrs[],int32_t n,struct iguana_bundle *bp)
+{
+    int32_t i; struct iguana_ramchain *ramchain = malloc(1);
+    //if ( (ramchain= iguana_ramchaininitHT(coin,ptrs[0])) != 0 )
+    {
+        for (i=1; i<n; i++)
+        {
+            
+        }
+    }
+    return(ramchain);
+}
+
 // two passes to check data size
 int32_t iguana_rwvin(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgvin *msg)
 {
@@ -381,36 +394,4 @@ void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bi
     req->hashes = blockhashes, req->n = n;
     //printf("bundlesQ blockhashes.%p[%d]\n",blockhashes,n);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
-}
-
-int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
-{
-    struct iguana_info *coin; struct iguana_peer *addr;
-    coin = ptr->coin, addr = ptr->addr;
-    if ( ptr->type == 'F' )
-    {
-        if ( addr != 0 && addr->fp != 0 )
-        {
-            //printf("flush.%s %p\n",addr->ipaddr,addr->fp);
-            fflush(addr->fp);
-        }
-    }
-    else if ( ptr->type == 'E' )
-    {
-        printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
-        if ( (coin= ptr->coin) != 0 )
-        {
-            if ( ptr->bp != 0 )
-            {
-                ((struct iguana_bundle *)ptr->bp)->emitfinish = (uint32_t)time(NULL);
-                iguana_bundlesaveHT(coin,ptr->bp);
-            }
-            if ( coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
-                coin->MAXBUNDLES--;
-            else if ( coin->activebundles >= coin->MAXBUNDLES && coin->estsize < coin->MAXRECVCACHE*.5 )
-                coin->MAXBUNDLES++;
-            coin->numemitted++;
-        }
-    }
-    return(0);
 }

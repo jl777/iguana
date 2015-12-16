@@ -34,7 +34,7 @@ struct iguana_txdatabits { uint64_t addrind:IGUANA_LOG2MAXPEERS,filecount:10,fpo
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 64
-#define _IGUANA_MAXBUNDLES 16 //512
+#define _IGUANA_MAXBUNDLES 1 //512
 
 #define IGUANA_PERMTHREAD 0
 #define IGUANA_CONNTHREAD 1
@@ -683,6 +683,14 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr);
 void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr);
 struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t recvlen);
 struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount,uint32_t fpos,uint32_t datalen);
-int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp);
+//int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp);
+
+struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,void *ptrs[],int32_t n,struct iguana_bundle *bp);
+int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_bundle *bp,int32_t n);
+void iguana_ramchainpurge(struct iguana_info *coin,struct iguana_ramchain *ramchain);
+
+int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2,int32_t priority);
+void iguana_copyblock(struct iguana_info *coin,struct iguana_block *block,struct iguana_block *origblock);
+int32_t iguana_rpctest(struct iguana_info *coin);
 
 #endif

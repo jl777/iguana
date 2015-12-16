@@ -358,8 +358,8 @@ void iguana_issuejsonstrM(void *arg)
 
 void iguana_helper(void *arg)
 {
-    FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson=0; int32_t flag;
-    struct iguana_helper *ptr;
+    FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson=0; int32_t i,flag;
+    struct iguana_helper *ptr; struct iguana_info *coin;
     if ( arg != 0 && (argjson= cJSON_Parse(arg)) != 0 )
         helpername = jstr(argjson,"name");
     if ( helpername == 0 )
@@ -381,7 +381,16 @@ void iguana_helper(void *arg)
             flag++;
         }
         if ( flag == 0 )
-            usleep(10000);
+        {
+            for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+            {
+                coin = &Coins[i];
+                if ( coin->launched != 0 )
+                    flag += iguana_rpctest(coin);
+            }
+            if ( flag == 0 )
+                usleep(10000);
+        }
     }
 }
 

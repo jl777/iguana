@@ -226,24 +226,6 @@ struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguan
     return(txdatabits);
 }
 
-
-struct iguana_ramchain *iguana_bundlemerge(struct iguana_info *coin,void *ptrs[],int32_t n,struct iguana_bundle *bp)
-{
-    struct iguana_ramchain *ramchain = malloc(sizeof(*ramchain));
-    return(ramchain);
-}
-
-int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_bundle *bp,int32_t n)
-{
-    printf("ramchainsave.%s %d[%d]\n",coin->symbol,bp->hdrsi,n);
-    return(0);
-}
-
-void iguana_ramchainpurge(struct iguana_info *coin,struct iguana_ramchain *ramchain)
-{
-    
-}
-
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) // helper thread
 {
     void *ptrs[IGUANA_MAXBUNDLESIZE]; uint32_t inds[IGUANA_MAXBUNDLESIZE][2]; struct iguana_fileitem *dir;
@@ -288,13 +270,12 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
     if ( flag == i )
     {
         printf(">>>>>>>>> start MERGE numdirs.%d i.%d flag.%d\n",numdirs,i,flag);
-        if ( (ramchain= iguana_bundlemerge(coin,ptrs,i,bp)) != 0 )
+        if ( (ramchain= iguana_bundlemergeHT(coin,ptrs,i,bp)) != 0 )
         {
             iguana_ramchainsave(coin,ramchain,bp,i);
             iguana_ramchainpurge(coin,ramchain);
             bp->emitfinish = (uint32_t)time(NULL);
-        }
-        else bp->emitfinish = 0;
+        } else bp->emitfinish = 0;
         for (j=0; j<numdirs; j++)
         {
             finished = 0;
@@ -322,4 +303,37 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
     }
     return(flag);
 }
+
+int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
+{
+    struct iguana_info *coin; struct iguana_peer *addr;
+    coin = ptr->coin, addr = ptr->addr;
+    if ( ptr->type == 'F' )
+    {
+        if ( addr != 0 && addr->fp != 0 )
+        {
+            //printf("flush.%s %p\n",addr->ipaddr,addr->fp);
+            fflush(addr->fp);
+        }
+    }
+    else if ( ptr->type == 'E' )
+    {
+        printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
+        if ( (coin= ptr->coin) != 0 )
+        {
+            if ( ptr->bp != 0 )
+            {
+                ((struct iguana_bundle *)ptr->bp)->emitfinish = (uint32_t)time(NULL);
+                iguana_bundlesaveHT(coin,ptr->bp);
+            }
+            if ( coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
+                coin->MAXBUNDLES--;
+            else if ( coin->activebundles >= coin->MAXBUNDLES && coin->estsize < coin->MAXRECVCACHE*.5 )
+                coin->MAXBUNDLES++;
+            coin->numemitted++;
+        }
+    }
+    return(0);
+}
+
 

@@ -552,3 +552,14 @@ int32_t iguana_updateramchain(struct iguana_info *coin)
 {
     return(0);
 }
+
+int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_bundle *bp,int32_t n)
+{
+    printf("ramchainsave.%s %d[%d]\n",coin->symbol,bp->hdrsi,n);
+    return(0);
+}
+
+void iguana_ramchainpurge(struct iguana_info *coin,struct iguana_ramchain *ramchain)
+{
+    
+}
