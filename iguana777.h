@@ -289,7 +289,7 @@ struct iguana_peer
     int64_t allocated,freed;
     struct msgcounts msgcounts; FILE *fp; int32_t filecount,addrind;
     struct iguana_memspace RAWMEM,TXDATA,HASHMEM;
-    struct iguana_fileitem *filehash2; int32_t numfilehash2;
+    struct iguana_fileitem filehash2[1024]; int32_t numfilehash2;
 #ifdef IGUANA_PEERALLOC
     struct iguana_memspace *SEROUT[128];
 #endif
