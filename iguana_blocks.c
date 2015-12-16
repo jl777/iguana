@@ -1160,14 +1160,21 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 if ( block->hdrsi != bp->hdrsi )
                 {
                     printf("%s %d[%d] != %d[%d]\n",bits256_str(str,block->hash2),block->hdrsi,block->bundlei,bp->hdrsi,i);
-                    block->hdrsi = bp->hdrsi;
+                    CLEARBIT(bp->recv,i);
+                    memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
+                    bp->issued[i] = milliseconds();
+                    iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
+                    bp->blocks[i] = 0;
                 }
-                if ( block->bundlei != i )
+                else if ( block->bundlei != i )
                 {
                     printf("%s %d[%d] != %d[%d]\n",bits256_str(str,block->hash2),block->hdrsi,block->bundlei,bp->hdrsi,i);
-                    block->bundlei = i;
-                }
-                n++;
+                    CLEARBIT(bp->recv,i);
+                    memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
+                    bp->issued[i] = milliseconds();
+                    iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
+                    bp->blocks[i] = 0;
+                } else n++;
             }
             else if ( priorityflag != 0 && qsize == 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
             {
@@ -1202,6 +1209,8 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                         printf("%s ->%d %d<- %s %s ",str,i,i+1,str2,str3);
                         printf("broken chain in hdrs.%d %d %p <-> %p %d\n",bp->hdrsi,i,bp->blocks[i],bp->blocks[i+1],i+1);
                         CLEARBIT(bp->recv,i);
+                        memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
+                        memset(&bp->blocks[i+1]->txdatabits,0,sizeof(bp->blocks[i+1]->txdatabits));
                         bp->issued[i] = bp->issued[i+1] = milliseconds();
                         iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
                         iguana_blockQ(coin,bp,i+1,bp->blocks[i+1]->hash2,1);
