@@ -430,9 +430,9 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                 {
                     //printf("Init %s memory %p %p %p\n",addr->ipaddr,addr->RAWMEM.ptr,addr->TXDATA.ptr,addr->HASHMEM.ptr);
                     if ( addr->RAWMEM.ptr == 0 )
-                        iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE,0);
+                        iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE+4096,0);
                     if ( addr->TXDATA.ptr == 0 )
-                        iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE,0);
+                        iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE+65536,0);
                     if ( addr->HASHMEM.ptr == 0 )
                         iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,IGUANA_MAXPACKETSIZE*10,0);
                 }
@@ -834,7 +834,7 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
-    struct pollfd fds; uint8_t *buf,serialized[64]; 
+    struct pollfd fds; uint8_t *buf,serialized[64]; char fname[512];
     int32_t bufsize,flag,timeout = coin->MAXPEERS/64+1;
 #ifdef IGUANA_PEERALLOC
     int32_t i;  int64_t remaining; struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
@@ -852,6 +852,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 #endif
     addr->addrind = (int32_t)(((long)addr - (long)&coin->peers.active[0]) / sizeof(*addr));
     printf("start dedicatedloop.%s addrind.%d\n",addr->ipaddr,addr->addrind);
+    sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
+    addr->fp = fopen(fname,"wb");
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
     //printf("send version myservices.%llu\n",(long long)coin->myservices);

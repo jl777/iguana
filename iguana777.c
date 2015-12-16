@@ -146,6 +146,25 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
     }
 }
 
+static int _decreasing_double(const void *a,const void *b)
+{
+#define double_a (*(double *)a)
+#define double_b (*(double *)b)
+	if ( double_b > double_a )
+		return(1);
+	else if ( double_b < double_a )
+		return(-1);
+	return(0);
+#undef double_a
+#undef double_b
+}
+
+static int32_t revsortds(double *buf,uint32_t num,int32_t size)
+{
+	qsort(buf,num,size,_decreasing_double);
+	return(0);
+}
+
 double iguana_metric(struct iguana_peer *addr,uint32_t now,double decay)
 {
     int32_t duration; double metric = addr->recvblocks * addr->recvtotal;
@@ -181,7 +200,7 @@ int32_t iguana_peermetrics(struct iguana_info *coin)
     }
     if ( n > 0 )
     {
-        iguana_revsortds(sortbuf,n,sizeof(double)*2);
+        revsortds(sortbuf,n,sizeof(double)*2);
         portable_mutex_lock(&coin->peers_mutex);
         for (sum=i=0; i<n; i++)
         {

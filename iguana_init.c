@@ -44,7 +44,6 @@ void iguana_initcoin(struct iguana_info *coin)
     int32_t i;
     portable_mutex_init(&coin->peers_mutex);
     portable_mutex_init(&coin->blocks_mutex);
-    portable_mutex_init(&coin->peers.filesM_mutex);
     iguana_initQs(coin);
     randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
     coin->starttime = (uint32_t)time(NULL);

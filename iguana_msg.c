@@ -575,7 +575,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 }
             }
             //printf("GOT HEADERS n.%d len.%d\n",n,len);
-            iguana_gotheadersMPT(coin,addr,blocks,n);
+            iguana_gotheadersM(coin,addr,blocks,n);
             //myfree(blocks,sizeof(*blocks) * n);
             if ( len == datalen && addr != 0 )
                 addr->msgcounts.headers++;
@@ -586,24 +586,24 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
         struct iguana_msgtx *tx;
         iguana_memreset(rawmem);
         tx = iguana_memalloc(rawmem,sizeof(*tx),1);//mycalloc('u',1,sizeof(*tx));
-        len = iguana_rwtx(0,rawmem,data,tx,datalen,&tx->txid,coin->chain->hastimestamp);
+        len = iguana_rwtx(0,rawmem,data,tx,datalen,&tx->txid,-1,coin->chain->hastimestamp);
         if ( len == datalen && addr != 0 )
         {
-            iguana_gotunconfirmedMPT(coin,addr,tx,data,datalen);
+            iguana_gotunconfirmedM(coin,addr,tx,data,datalen);
             printf("tx datalen.%d\n",datalen);
             addr->msgcounts.tx++;
         }
     }
     else if ( strcmp(H->command,"block") == 0 )
     {
-        struct iguana_rawblock txdata; struct iguana_block block;
+        struct iguana_txblock txdata;
         if ( addr != 0 )
             addr->msgcounts.block++;
         iguana_memreset(rawmem), iguana_memreset(txmem), iguana_memreset(hashmem);
         memset(&txdata,0,sizeof(txdata));
-        if ( (len= iguana_gentxarray(coin,rawmem,&txdata,&block,&len,data,datalen)) == datalen )
-            iguana_gotblockMPT(coin,addr,&txdata,&block,rawmem->ptr,data,datalen);
-        else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",txdata.numtxids,len,datalen);
+        if ( (len= iguana_gentxarray(coin,rawmem,&txdata,&len,data,datalen)) == datalen )
+            iguana_gotblockM(coin,addr,&txdata,rawmem->ptr,data,datalen);
+        else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",txdata.block.txn_count,len,datalen);
     }
     else if ( strcmp(H->command,"reject") == 0 )
     {
@@ -694,13 +694,13 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     printf("n.%d != x.%d -> realloc blockhashes\n",n,(int32_t)x+1);
                     blockhashes = myrealloc('f',blockhashes,(int32_t)((x+1)*sizeof(*blockhashes)),n*sizeof(*blockhashes));
                 } // else printf("n.%d == x.%d\n",n,(int32_t)x);
-                iguana_gotblockhashesMPT(coin,addr,blockhashes,n), blockhashes = 0;
+                iguana_gotblockhashesM(coin,addr,blockhashes,n), blockhashes = 0;
             }
             if ( m > 0 )
             {
                 if ( m != x )
                     txids = myrealloc('t',txids,(int32_t)((x+1)*sizeof(*txids)),(m+1)*sizeof(*txids));
-                iguana_gottxidsMPT(coin,addr,txids,m), txids = 0;
+                iguana_gottxidsM(coin,addr,txids,m), txids = 0;
             }
         }
         if ( txids != 0 )
