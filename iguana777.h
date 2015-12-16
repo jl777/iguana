@@ -294,7 +294,7 @@ struct iguana_peer
     struct iguana_memspace *SEROUT[128];
 #endif
     FILE *fp; int32_t filecount,addrind,numfilehash2;
-    struct iguana_fileitem filehash2[1024];
+    struct iguana_fileitem *filehash2;//[1024];
 };
 
 struct iguana_peers
