@@ -347,15 +347,15 @@ struct iguana_txdatabits iguana_ramchainPT(struct iguana_info *coin,struct iguan
         fpos = ftell(addr->fp);
         txdatabits = iguana_calctxidbits(addr->addrind,addr->filecount,fpos,txdata->datalen);
         //printf("txdatabits.(%d %d %d %d) txdatalen.%d\n",txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,txdata->datalen);
-        if ( 0 && fp != 0 )
+        if ( fp != 0 )
         {
             datalen = txdata->datalen;
             if ( datalen == txdata->datalen )
             {
                 fwrite(&datalen,1,sizeof(datalen),fp);
                 fwrite(txdata,1,datalen,fp);
-                iguana_flushQ(coin,addr);
-                //fflush(fp);
+                //iguana_flushQ(coin,addr);
+                fflush(fp);
             }
         }
     }
