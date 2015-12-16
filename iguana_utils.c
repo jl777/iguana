@@ -299,14 +299,22 @@ void iguana_memreset(struct iguana_memspace *mem)
         portable_mutex_init(&mem->mutex);
 }
 
+void iguana_mempurge(struct iguana_memspace *mem)
+{
+    if ( mem->allocated != 0 && mem->ptr != 0 && mem->totalsize > 0 )
+        myfree(mem->ptr,mem->totalsize);
+    iguana_memreset(mem);
+    mem->totalsize = 0;
+}
+
 void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t totalsize,int32_t threadsafe)
 {
     strcpy(mem->name,name);
-    mem->threadsafe = threadsafe;
-    mem->totalsize = totalsize;
-    if ( (mem->ptr= ptr) == 0 )
+    if ( ptr == 0 )
     {
-        if ( (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
+        if ( mem->ptr != 0 && mem->totalsize < totalsize )
+            iguana_mempurge(mem);
+        if ( mem->ptr == 0 && (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
         {
             printf("iguana_meminit: cant get %d bytes\n",(int32_t)totalsize);
             exit(-1);
@@ -315,15 +323,15 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
         //printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
         mem->allocated = 1;
     }
-    return(mem->ptr);
-}
-
-void iguana_mempurge(struct iguana_memspace *mem)
-{
-    if ( mem->allocated != 0 && mem->ptr != 0 )
-        myfree(mem->ptr,mem->totalsize);
+    else
+    {
+        iguana_mempurge(mem);
+        mem->ptr = ptr;
+    }
+    mem->threadsafe = threadsafe;
+    mem->totalsize = totalsize;
     iguana_memreset(mem);
-    mem->totalsize = 0;
+    return(mem->ptr);
 }
 
 int64_t iguana_memallocated(struct iguana_memspace *mem)

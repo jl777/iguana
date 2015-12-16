@@ -553,13 +553,49 @@ int32_t iguana_updateramchain(struct iguana_info *coin)
     return(0);
 }
 
-int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_bundle *bp,int32_t n)
+struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata)
 {
-    printf("ramchainsave.%s %d[%d]\n",coin->symbol,bp->hdrsi,n);
+    struct iguana_txblock *txdata; int32_t allocsize,rwflag = (origtxdata != 0);
+    iguana_memreset(mem);
+    allocsize = (int32_t)(sizeof(*txdata) - sizeof(txdata->space) + ((origtxdata != 0) ? origtxdata->extralen : 0));
+    mem->alignflag = sizeof(uint32_t);
+    if ( (txdata = iguana_memalloc(mem,allocsize,0)) == 0 )
+        return(0);
+    //printf("rwflag.%d origtxdat.%p allocsize.%d extralen.%d T.%d U.%d S.%d P.%d\n",rwflag,origtxdata,allocsize,origtxdata->extralen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds);
+    if ( origtxdata != 0 )
+        memcpy(txdata,origtxdata,allocsize);
+    *Tptrp = iguana_memalloc(mem,sizeof(**Tptrp) * txdata->numtxids,rwflag);
+    *Uptrp = iguana_memalloc(mem,sizeof(**Uptrp) * txdata->numunspents,rwflag);
+    *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * txdata->numspends,rwflag);
+    if ( externalTptrp != 0 )
+    {
+        *Pptrp = iguana_memalloc(mem,0,rwflag);
+        externalTptrp = iguana_memalloc(mem,txdata->numexternaltxids * sizeof(**externalTptrp),rwflag);
+    } else *Pptrp = iguana_memalloc(mem,sizeof(**Pptrp) * txdata->numpkinds,rwflag);
+    return(txdata);
+}
+
+int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain)
+{
+    printf("ramchainsave.%s %d[%d]\n",coin->symbol,ramchain->hdrsi,ramchain->numblocks);
     return(0);
 }
 
-void iguana_ramchainpurge(struct iguana_info *coin,struct iguana_ramchain *ramchain)
+int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain)
 {
-    
+    // iguana_memfree(mem,ramchain,sizeof(*ramchain));
+    return(0);
 }
+
+int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_memspace *memB,struct iguana_ramchain *ramchainB)
+{
+    return(0);
+}
+
+struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,void *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei)
+{
+    struct iguana_ramchain *ramchain;
+    ramchain = iguana_memalloc(mem,sizeof(*ramchain),1);
+    return(ramchain);
+}
+

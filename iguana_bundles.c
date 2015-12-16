@@ -39,7 +39,6 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *str,bits256 *orighash2,bi
     return(0);
 }
 
-
 bits256 iguana_bundleihash2(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei)
 {
     struct iguana_block *block; bits256 zero;

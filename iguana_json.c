@@ -16,18 +16,17 @@
 #include "iguana777.h"
 
 int32_t iguana_launchcoin(char *symbol,cJSON *json);
-queue_t helperQ;
 struct iguana_jsonitem { struct queueitem DL; uint32_t expired,allocsize; char **retjsonstrp; char jsonstr[]; };
-
-static struct iguana_info Coins[64];
-const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "BitcoinDark", "129" } };
 
 struct iguana_info *iguana_coin(const char *symbol)
 {
     struct iguana_info *coin; int32_t i = 0;
     if ( symbol == 0 )
     {
-        for (i=sizeof(Hardcoded_coins)/sizeof(*Hardcoded_coins); i<sizeof(Coins)/sizeof(*Coins); i++)
+        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+            if ( Hardcoded_coins[i][0] == 0 )
+                break;
+        for (; i<sizeof(Coins)/sizeof(*Coins); i++)
         {
             if ( Coins[i].symbol[0] == 0 )
             {
@@ -40,8 +39,10 @@ struct iguana_info *iguana_coin(const char *symbol)
     }
     else
     {
-        for (i=0; i<sizeof(Hardcoded_coins)/sizeof(*Hardcoded_coins); i++)
+        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
         {
+            if ( Hardcoded_coins[i][0] == 0 )
+                break;
             coin = &Coins[i];
             if ( strcmp(symbol,Hardcoded_coins[i][0]) == 0 )
             {
@@ -354,83 +355,6 @@ void iguana_issuejsonstrM(void *arg)
     printf("%s\n",retjsonstr);
     free(retjsonstr);//,strlen(retjsonstr)+1);
     free(jsonstr);//,strlen(jsonstr)+1);
-}
-
-void iguana_helper(void *arg)
-{
-    FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson=0; int32_t i,flag;
-    struct iguana_helper *ptr; struct iguana_info *coin;
-    if ( arg != 0 && (argjson= cJSON_Parse(arg)) != 0 )
-        helpername = jstr(argjson,"name");
-    if ( helpername == 0 )
-    {
-        sprintf(name,"helper.%d",rand());
-        helpername = name;
-    }
-    sprintf(fname,"tmp/%s",helpername);
-    fp = fopen(fname,"wb");
-    if ( argjson != 0 )
-        free_json(argjson);
-    while ( 1 )
-    {
-        flag = 0;
-        while ( (ptr= queue_dequeue(&helperQ,0)) != 0 )
-        {
-            iguana_helpertask(fp,ptr);
-            myfree(ptr,ptr->allocsize);
-            flag++;
-        }
-        if ( flag == 0 )
-        {
-            for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
-            {
-                coin = &Coins[i];
-                if ( coin->launched != 0 )
-                    flag += iguana_rpctest(coin);
-            }
-            if ( flag == 0 )
-                usleep(10000);
-        }
-    }
-}
-
-void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
-{
-    struct iguana_helper *ptr;
-    ptr = mycalloc('i',1,sizeof(*ptr));
-    ptr->allocsize = sizeof(*ptr);
-    ptr->coin = coin;
-    ptr->bp = bp, ptr->hdrsi = bp->hdrsi;
-    ptr->type = 'E';
-    printf("EMIT.%d[%d] emitfinish.%u\n",ptr->hdrsi,bp->n,bp->emitfinish);
-    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
-}
-
-void iguana_txdataQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp,long fpos,int32_t datalen)
-{
-    struct iguana_helper *ptr;
-    ptr = mycalloc('i',1,sizeof(*ptr));
-    ptr->allocsize = sizeof(*ptr);
-    ptr->coin = coin;
-    ptr->addr = addr, ptr->fp = fp, ptr->fpos = fpos, ptr->datalen = datalen;
-    ptr->type = 'T';
-    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
-}
-
-void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr)
-{
-    struct iguana_helper *ptr;
-    if ( time(NULL) > addr->lastflush+3 )
-    {
-        ptr = mycalloc('i',1,sizeof(*ptr));
-        ptr->allocsize = sizeof(*ptr);
-        ptr->coin = coin;
-        ptr->addr = addr;
-        ptr->type = 'F';
-        //printf("FLUSH.%s %u lag.%d\n",addr->ipaddr,addr->lastflush,(int32_t)(time(NULL)-addr->lastflush));
-        addr->lastflush = (uint32_t)time(NULL);
-        queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
-    }
 }
 
 void iguana_main(void *arg)

@@ -23,6 +23,7 @@
 #define IGUANA_LOG2MAXPEERS 9
 #define IGUANA_LOG2PACKETSIZE 21
 #define IGUANA_LOG2PEERFILESIZE 23
+#define IGUANA_MARKER 0x07770777
 
 #define IGUANA_MAXPEERS (1 << IGUANA_LOG2MAXPEERS)
 #define IGUANA_MAXPACKETSIZE (1 << IGUANA_LOG2PACKETSIZE)
@@ -388,6 +389,7 @@ struct iguana_ramchain
 {
     uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
     uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
+    int32_t numblocks,hdrsi,bundleheight; bits256 prevhash2,firsthash2,lasthash2,nexthash2;
     struct iguana_kvitem *txids,*pkhashes;
     struct iguana_txid *T; struct iguana_unspent *U; struct iguana_spend *S; struct iguana_pkhash *P;
     struct iguana_Uextra *Uextras; struct iguana_pkextra *pkextras; // onetime zero to nonzero
@@ -679,18 +681,28 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
 void iguana_mempurge(struct iguana_memspace *mem);
 
 struct iguana_helper { struct queueitem DL; void *coin,*addr,*bp,*fp; long fpos; int32_t allocsize,type,hdrsi,bundlei,datalen; };
-int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr);
+int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_helper *ptr);
 void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr);
-struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t recvlen);
+//struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t recvlen);
 struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount,uint32_t fpos,uint32_t datalen);
 //int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp);
 
-struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,void *ptrs[],int32_t n,struct iguana_bundle *bp);
-int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_bundle *bp,int32_t n);
-void iguana_ramchainpurge(struct iguana_info *coin,struct iguana_ramchain *ramchain);
+void iguana_peerfilename(struct iguana_info *coin,char *fname,uint32_t addrind,uint32_t filecount);
+
+struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata);
+
+struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,void *ptrs[],int32_t n,struct iguana_bundle *bp);
+int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain);
+int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain);
+struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,void *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei);
+int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_memspace *memB,struct iguana_ramchain *ramchainB);
 
 int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2,int32_t priority);
 void iguana_copyblock(struct iguana_info *coin,struct iguana_block *block,struct iguana_block *origblock);
 int32_t iguana_rpctest(struct iguana_info *coin);
+extern queue_t helperQ;
+extern const char *Hardcoded_coins[][3];
+void iguana_main(void *arg);
+extern struct iguana_info Coins[64];
 
 #endif

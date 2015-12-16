@@ -15,7 +15,7 @@
 
 
 #include "iguana777.h"
-static const bits256 bits256_zero;
+//static const bits256 bits256_zero;
 
 int32_t iguana_needhdrs(struct iguana_info *coin)
 {
@@ -73,9 +73,10 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
 
 void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
 {
-    int32_t j,k,m,c,height,flag,bundleheight = -1; char checkstr[1024],line[1024];
+    int32_t j,k,m,c,height,flag,bundleheight = -1; char checkstr[1024],line[1024]; bits256 zero;
     struct iguana_peer *addr; struct iguana_bundle *bp; bits256 hash2,bundlehash2;
     m = flag = 0;
+    memset(&zero,0,sizeof(zero));
     while ( fgets(line,sizeof(line),fp) > 0 )
     {
         j = (int32_t)strlen(line) - 1;
@@ -114,7 +115,7 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                             iguana_recvalloc(coin,height + coin->chain->bundlesize*100);
                         if ( flag != 0 )
                         {
-                            if ( (bp= iguana_bundlecreate(coin,bundlehash2,bits256_zero)) != 0 )
+                            if ( (bp= iguana_bundlecreate(coin,bundlehash2,zero)) != 0 )
                             {
                                 char str[65];
                                 bits256_str(str,bundlehash2);
