@@ -223,7 +223,7 @@ FILE *iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits25
             fflush(addr->fp);
         }
         iguana_peerfilename(coin,fname,addr->addrind,++addr->filecount);
-        addr->fp = fopen(fname,"wb");
+        addr->fp = fopen(fname,"wb+");
         addr->numfilehash2 = 0;
     }
     addr->filehash2[addr->numfilehash2].hash2 = hash2;
