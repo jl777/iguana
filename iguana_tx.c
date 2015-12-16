@@ -49,7 +49,7 @@ struct iguana_kvitem *iguana_hashset(struct iguana_kvitem *hashtable,struct igua
     return(ptr);
 }
 
-struct iguana_txblock *iguana_txdataptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata)
+struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata)
 {
     struct iguana_txblock *txdata; int32_t allocsize,rwflag = (origtxdata != 0);
     iguana_memreset(mem);
@@ -71,7 +71,7 @@ struct iguana_txblock *iguana_txdataptrs(struct iguana_txid **Tptrp,struct iguan
     return(txdata);
 }
 
-uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen)
+uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen)
 {
     struct iguana_txid *T,*t; struct iguana_unspent *U,*u; struct iguana_spend *S,*s; struct iguana_pkhash *P;
     FILE *fp; long fpos;  bits256 *externalT; struct iguana_kvitem *txids,*pkhashes,*ptr;
@@ -81,7 +81,7 @@ uint64_t iguana_txdataset(struct iguana_info *coin,struct iguana_peer *addr,stru
     txmem = &addr->TXDATA, hashmem = &addr->HASHMEM;
     txids = pkhashes = 0;
     //printf("recvlen.%d txn_count.%d\n",recvlen,txn_count);
-    if ( (txdata= iguana_txdataptrs(&T,&U,&S,&P,0,txmem,origtxdata)) == 0 || T == 0 || U == 0 || S == 0 || P == 0 )
+    if ( (txdata= iguana_ramchainptrs(&T,&U,&S,&P,0,txmem,origtxdata)) == 0 || T == 0 || U == 0 || S == 0 || P == 0 )
     {
         printf("fatal error getting txdataptrs\n");
         exit(-1);
@@ -335,7 +335,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
         addr->lastblockrecv = (uint32_t)time(NULL);
         addr->recvblocks += 1.;
         addr->recvtotal += datalen;
-        if ( 1 && (txdatabits= iguana_txdataset(coin,addr,txdata,txarray,txdata->block.txn_count,data,datalen)) != 0 )
+        if ( 1 && (txdatabits= iguana_blockramchainPT(coin,addr,txdata,txarray,txdata->block.txn_count,data,datalen)) != 0 )
             req->datalen = datalen;
     }
     coin->recvcount++;

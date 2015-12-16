@@ -256,6 +256,7 @@ struct iguana_mappedptr
 	void *fileptr,*pending;
 	long allocsize,changedsize;
 	int32_t rwflag,dirty,actually_allocated;
+    uint32_t closetime,opentime;
 };
 
 struct iguana_memspace
@@ -271,6 +272,10 @@ struct iguana_memspace
 
 struct msgcounts { uint32_t version,verack,getaddr,addr,inv,getdata,notfound,getblocks,getheaders,headers,tx,block,mempool,ping,pong,reject,filterload,filteradd,filterclear,merkleblock,alert; };
 
+struct iguana_txdatabits { uint64_t addrind:8,filecount:10,fpos:24,datalen:21,isdir:1; };
+
+struct iguana_fileitem { bits256 hash2; struct iguana_txdatabits txdatabits; };
+
 struct iguana_peer
 {
     struct queueitem DL;
@@ -284,6 +289,7 @@ struct iguana_peer
     int64_t allocated,freed;
     struct msgcounts msgcounts; FILE *fp; int32_t filecount,addrind;
     struct iguana_memspace RAWMEM,TXDATA,HASHMEM;
+    struct iguana_fileitem *filehash2; int32_t numfilehash2;
 #ifdef IGUANA_PEERALLOC
     struct iguana_memspace *SEROUT[128];
 #endif
@@ -296,6 +302,7 @@ struct iguana_peers
     struct iguana_thread *peersloop,*recvloop,*acceptloop;
     double topmetrics[IGUANA_MAXPEERS],avemetric;
     uint32_t numranked,mostreceived,shuttingdown,lastpeer,lastmetrics,numconnected;
+    portable_mutex_t filesM_mutex; struct iguana_mappedptr *filesM; int32_t numfilesM;
 };
 
 struct iguana_prevdep
