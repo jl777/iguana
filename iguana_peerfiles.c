@@ -229,7 +229,7 @@ struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguan
 
 struct iguana_ramchain *iguana_bundlemerge(struct iguana_info *coin,void *ptrs[],int32_t n,struct iguana_bundle *bp)
 {
-    struct iguana_ramchain *ramchain = 0;
+    struct iguana_ramchain *ramchain = malloc(sizeof(*ramchain));
     return(ramchain);
 }
 
@@ -292,6 +292,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
         {
             iguana_ramchainsave(coin,ramchain,bp,i);
             iguana_ramchainpurge(coin,ramchain);
+            bp->emitfinish = (uint32_t)time(NULL);
         }
         for (j=0; j<numdirs; j++)
         {
@@ -312,7 +313,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
                 else printf("peerdir.(%d %d) finished.%d of %d\n",inds[j][0],inds[j][1],finished,num);
             } else printf("cant get peerdirptr.(%d %d)\n",inds[j][0],inds[j][1]);
         }
-        bp->emitfinish = (uint32_t)time(NULL);
     }
     else
     {
