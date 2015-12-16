@@ -681,5 +681,6 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr);
 void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr);
 struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t recvlen);
 struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount,uint32_t fpos,uint32_t datalen);
+int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp);
 
 #endif

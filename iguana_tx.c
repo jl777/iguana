@@ -398,8 +398,11 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
     }
     else if ( ptr->type == 'E' )
     {
+        printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
         if ( (coin= ptr->coin) != 0 )
         {
+            if ( ptr->bp != 0 )
+                iguana_bundlesaveHT(coin,ptr->bp);
             if ( coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
                 coin->MAXBUNDLES--;
             else if ( coin->activebundles >= coin->MAXBUNDLES && coin->estsize < coin->MAXRECVCACHE*.5 )
