@@ -451,7 +451,7 @@ void iguana_main(void *arg)
     if ( IGUANA_NUMHELPERS == 0 )
     {
 #ifdef __linux__
-        IGUANA_NUMHELPERS = 8;
+        IGUANA_NUMHELPERS = 1;
 #else
         IGUANA_NUMHELPERS = 1;
 #endif
