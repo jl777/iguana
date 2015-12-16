@@ -186,8 +186,9 @@ struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguan
             fwrite(&addr->numfilehash2,1,sizeof(addr->numfilehash2),addr->fp);
             fwrite(&dirpos,1,sizeof(dirpos),addr->fp);
             fwrite(&marker,1,sizeof(marker),addr->fp);
+            fclose(addr->fp);
             //iguana_flushQ(coin,addr);
-            fflush(addr->fp);
+            //fflush(addr->fp);
         }
         iguana_peerfilename(coin,fname,addr->addrind,++addr->filecount);
         txdatabits.filecount = addr->filecount;
