@@ -20,7 +20,7 @@
 #define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 4)
 #define IGUANA_MAXBUNDLES (5000000 / 500)
 #define IGUANA_LOG2MAXPEERS 8
-#define IGUANA_LOG2PEERFILESIZE 24
+#define IGUANA_LOG2PEERFILESIZE 22
 #define IGUANA_LOG2MAXPACKETSIZE 21
 #define IGUANA_PEERFILESIZE (1 << IGUANA_LOG2PEERFILESIZE)
 #define IGUANA_MAXPACKETSIZE (1 << IGUANA_LOG2MAXPACKETSIZE)
@@ -294,7 +294,7 @@ struct iguana_peer
     struct iguana_memspace *SEROUT[128];
 #endif
     FILE *fp; int32_t filecount,addrind,numfilehash2;
-    struct iguana_fileitem filehash2[1024];
+    struct iguana_fileitem filehash2[64];
 };
 
 struct iguana_peers
