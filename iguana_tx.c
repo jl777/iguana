@@ -219,8 +219,8 @@ FILE *iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits25
             fwrite(&addr->numfilehash2,1,sizeof(addr->numfilehash2),addr->fp);
             fwrite(&dirpos,1,sizeof(dirpos),addr->fp);
             fwrite(&marker,1,sizeof(marker),addr->fp);
-            //iguana_flushQ(coin,addr);
-            fflush(addr->fp);
+            iguana_flushQ(coin,addr);
+            //fflush(addr->fp);
         }
         iguana_peerfilename(coin,fname,addr->addrind,++addr->filecount);
         addr->fp = fopen(fname,"wb");
@@ -354,8 +354,8 @@ struct iguana_txdatabits iguana_ramchainPT(struct iguana_info *coin,struct iguan
             {
                 fwrite(&datalen,1,sizeof(datalen),fp);
                 fwrite(txdata,1,datalen,fp);
-                iguana_flushQ(coin,addr);
-                //fflush(fp);
+                //iguana_flushQ(coin,addr);
+                fflush(fp);
             }
         }
     }
