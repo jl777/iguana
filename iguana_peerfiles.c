@@ -39,7 +39,7 @@ struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount
 void *iguana_txdataptr(struct iguana_info *coin,struct iguana_mappedptr *M,char *fname,struct iguana_txdatabits txdatabits)
 {
     int32_t len; uint8_t *rawptr;
-    if ( M->fileptr != 0 && M->allocsize >= (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
+    if ( M->fileptr != 0 )//&& M->allocsize >= (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
     {
         rawptr = (void *)((long)M->fileptr + txdatabits.fpos);
         memcpy(&len,rawptr,sizeof(len));
@@ -112,7 +112,7 @@ void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdat
         if ( iguana_mappedptr(0,M,0,0,fname) != 0 )
         {
             ptr = iguana_txdataptr(coin,M,fname,txdatabits);
-            //printf("mapped.(%s) size.%ld %p\n",fname,(long)M->allocsize,ptr);
+            printf("mapped.(%s) size.%ld %p\n",fname,(long)M->allocsize,ptr);
         } else printf("iguana_peerfileptr error mapping.(%s)\n",fname);
     }
     portable_mutex_unlock(&coin->peers.filesM_mutex);
@@ -163,7 +163,7 @@ struct iguana_fileitem *iguana_peerdirptr(struct iguana_info *coin,int32_t *nump
             txdatabits.isdir = 1;
             return(iguana_peerfileptr(coin,txdatabits,1));
         }
-        else if ( marker == IGUANA_MARKER )
+        else //if ( marker == IGUANA_MARKER )
             printf("marker.%x vs %x: dirpos.%d num.%d -> %ld vs %ld\n",marker,IGUANA_MARKER,dirpos,*nump,dirpos + sizeof(uint32_t) * 4 + *nump * sizeof(struct iguana_fileitem),ftell(fp));
         fclose(fp);
     } else printf("cant open dir.(%s)\n",fname);
@@ -290,7 +290,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_bundle *bp) /
                 if ( finished == num )
                     iguana_peerfileclose(coin,inds[j][0],inds[j][1]);
                 else printf("peerdir.(%d %d) finished.%d of %d\n",inds[j][0],inds[j][1],finished,num);
-            } //else printf("cant get peerdirptr.(%d %d)\n",inds[j][0],inds[j][1]);
+            } else printf("cant get peerdirptr.(%d %d)\n",inds[j][0],inds[j][1]);
         }
     }
     else
