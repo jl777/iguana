@@ -152,7 +152,7 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
     }
     fpos = (addr->fp != 0) ? ftell(addr->fp) : 0;
     txdatabits = iguana_calctxidbits(addr->addrind,addr->filecount,(uint32_t)fpos,txdata->datalen);
-    addr->fp = iguana_peerfilePT(coin,addr,txdata->block.hash2,txdatabits,recvlen);
+    txdatabits = iguana_peerfilePT(coin,addr,txdata->block.hash2,txdatabits,txdata->datalen);
     if ( (fp= addr->fp) != 0 )
     {
         //txdatabits = fpos | ((uint64_t)addr->addrind << IGUANA_LOG2MAXFILESIZE) | ((uint64_t)addr->filecount << (IGUANA_LOG2MAXFILESIZE+IGUANA_LOG2MAXPEERS));
@@ -173,7 +173,7 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
             printf("[%.3f] %.0f/%.0f maxdatalen %d -> %d\n",recvsum/datasum,recvsum,datasum,maxdatalen,txdata->datalen), maxdatalen = txdata->datalen;
         if ( hashmem->used > maxhashmem )
             printf("[%.3f] %.0f/%.0f maxhashmem %d -> %ld\n",recvsum/datasum,recvsum,datasum,maxhashmem,hashmem->used), maxhashmem = (int32_t)hashmem->used;
-        if ( (rand() % 1000) == 0 )
+        if ( (rand() % 10000) == 0 )
             printf("[%.3f] %.0f/%.0f recvlen vs datalen\n",recvsum/datasum,recvsum,datasum);
     }
     memcpy(origtxdata,txdata,sizeof(*origtxdata));

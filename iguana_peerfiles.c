@@ -170,11 +170,11 @@ struct iguana_fileitem *iguana_peerdirptr(struct iguana_info *coin,int32_t *nump
     return(0);
 }
 
-FILE *iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t recvlen)
+struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t datalen)
 {
     char fname[512]; int32_t marker; uint32_t dirpos;
-    //if ( bits256_nonz(hash2) == 0 || addr->fp == 0 || ftell(addr->fp) > IGUANA_PEERFILESIZE-IGUANA_MAXPACKETSIZE || addr->numfilehash2 >= sizeof(addr->filehash2)/sizeof(*addr->filehash2) )
-    if ( addr->fp == 0 )
+    if ( bits256_nonz(hash2) == 0 || addr->fp == 0 || ftell(addr->fp)+datalen > IGUANA_PEERFILESIZE-IGUANA_MAXPACKETSIZE || addr->numfilehash2 >= sizeof(addr->filehash2)/sizeof(*addr->filehash2) )
+    //if ( addr->fp == 0 )
     {
         if ( addr->fp != 0 )
         {
@@ -190,6 +190,7 @@ FILE *iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits25
             fflush(addr->fp);
         }
         iguana_peerfilename(coin,fname,addr->addrind,++addr->filecount);
+        txdatabits.filecount = addr->filecount;
         addr->fp = fopen(fname,"wb");
         addr->numfilehash2 = 0;
     }
@@ -207,5 +208,5 @@ FILE *iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits25
         addr->filehash2[addr->numfilehash2].txdatabits = txdatabits;
         addr->numfilehash2++;
     }
-    return(addr->fp);
+    return(txdatabits);
 }
