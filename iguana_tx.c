@@ -409,33 +409,5 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_helper *ptr)
             coin->numemitted++;
         }
     }
-   /* if ( bp->type == 'Q' )
-    {
-        req = (struct iguana_bundlereq *)ptr;
-        //printf("START.%p save tmp txdata %p [%d].%d datalen.%d %p\n",req,req->argbp,req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen,req->data);
-        if ( fp != 0 )
-        {
-            if ( fwrite(req->data,1,req->datalen,fp) != req->datalen )
-                printf("error writing [%d].%d datalen.%d\n",req->argbp!=0?req->argbp->hdrsi:-1,req->argbundlei,req->datalen);
-        }
-        //Tx_freed++;
-        //Tx_freesize += req->allocsize;
-        if ( req->data != 0 )
-            myfree(req->data,req->datalen);
-        if ( req->blocks != 0 )
-            myfree(req->blocks,sizeof(*req->blocks));
-        myfree(req,req->allocsize);
-    }
-    else if ( bp->type == 'E' )
-    {
-        fflush(fp);
-        //myallocated(0,0);
-        //iguana_emittxdata(bp->coin,bp);
-        //myallocated(0,0);
-    }
-    else
-    {
-        printf("iguana_helper: unsupported type.%c %d %p\n",bp->type,bp->type,bp);
-    }*/
     return(0);
 }
