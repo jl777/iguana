@@ -1222,7 +1222,10 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 }
                 iguana_bundleblockadd(coin,bp,0,iguana_bundleihash2(coin,bp,0));
                 iguana_bundleblockadd(coin,bp,coin->chain->bundlesize-1,iguana_bundleihash2(coin,bp,coin->chain->bundlesize-1));
-                iguana_emitQ(coin,bp);
+                if ( bp->emitfinish <= 1 )
+                    iguana_emitQ(coin,bp);
+                if ( bp->emitfinish == 0 )
+                    bp->emitfinish = 1;
                 coin->numpendings--;
                 return(1);
             }
