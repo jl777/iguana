@@ -312,7 +312,7 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
             exit(-1);
             return(0);
         }
-        printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
+        //printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
         mem->allocated = 1;
     }
     return(mem->ptr);

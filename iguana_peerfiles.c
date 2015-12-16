@@ -39,8 +39,22 @@ struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount
 void *iguana_txdataptr(struct iguana_info *coin,struct iguana_mappedptr *M,char *fname,struct iguana_txdatabits txdatabits)
 {
     int32_t len; uint8_t *rawptr;
-    if ( M->fileptr != 0 )//&& M->allocsize >= (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
+    if ( M->fileptr != 0 )
     {
+        if ( M->allocsize < (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
+        {
+            iguana_closemap(M);
+            if ( iguana_mappedptr(0,M,0,0,fname) == 0 )
+            {
+                printf("error on reopen (%s)\n",fname);
+                return(0);
+            }
+            else if ( M->allocsize < (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
+            {
+                printf("too small (%s) %llu vs %ld\n",fname,(long long)M->allocsize,(txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)));
+                return(0);
+            }
+        }
         rawptr = (void *)((long)M->fileptr + txdatabits.fpos);
         memcpy(&len,rawptr,sizeof(len));
         if ( len == IGUANA_MARKER )
@@ -56,7 +70,7 @@ void *iguana_txdataptr(struct iguana_info *coin,struct iguana_mappedptr *M,char 
             if ( txdatabits.isdir == 0 )
                 return(&rawptr[sizeof(uint32_t)]);
             else printf("isdir set without IGUANA_MARKER.%x\n",IGUANA_MARKER);
-        } else printf("txdataptr: len.%d error %d (%d %d)\n",len,txdatabits.datalen,len == txdatabits.datalen,len < IGUANA_MAXPACKETSIZE);
+        } else printf("txdataptr: len.%d error [%d %d %d %d] (%d %d)\n",len,txdatabits.datalen,txdatabits.addrind,txdatabits.fpos,txdatabits.filecount,len == txdatabits.datalen,len < IGUANA_MAXPACKETSIZE), getchar();
     } //else printf("txdataptr.%s %p %ld vs %ld\n",M->fname,M->fileptr,M->allocsize,(txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)));
     return(0);
 }
