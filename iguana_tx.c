@@ -372,7 +372,7 @@ struct iguana_txdatabits iguana_ramchainPT(struct iguana_info *coin,struct iguan
             printf("[%.3f] %.0f/%.0f recvlen vs datalen T.%ld U.%ld S.%ld P.%ld\n",recvsum/datasum,recvsum,datasum,sizeof(*T),sizeof(*U),sizeof(*S),sizeof(*P));
     }
     memcpy(origtxdata,txdata,sizeof(*txdata)+txdata->extralen);
-    //printf("ret txdatabits.(%d %d %d %d) datalen.%d\n",txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,txdata->datalen);
+    printf("ret txdatabits.(%d %d %d %d) datalen.%d\n",txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,txdata->datalen);
     return(txdatabits);
 }
 
