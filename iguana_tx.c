@@ -77,7 +77,9 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
     FILE *fp; long fpos;  bits256 *externalT; struct iguana_kvitem *txids,*pkhashes,*ptr;
     struct iguana_memspace *txmem,*hashmem; struct iguana_msgtx *tx; struct iguana_txblock *txdata = 0;
     int32_t i,j,numvins,numvouts,numexternal,numpkinds,scriptlen,sequence,spend_unspentind;
-    uint32_t txidind,unspentind,spendind,pkind; uint8_t *script,rmd160[20]; uint64_t txdatabits = 0;
+    uint32_t txidind,unspentind,spendind,pkind; uint8_t *script,rmd160[20];
+    struct iguana_txdatabits txdatabits;
+    memset(&txdatabits,0,sizeof(txdatabits));
     txmem = &addr->TXDATA, hashmem = &addr->HASHMEM;
     txids = pkhashes = 0;
     //printf("recvlen.%d txn_count.%d\n",recvlen,txn_count);
@@ -148,10 +150,12 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
         printf("counts mismatch: numvins %d != %d txdata->numvins || numvouts %d != %d txdata->numvouts || i %d != %d txdata->numtxids\n",numvins,txdata->numspends,numvouts,txdata->numunspents,i,txdata->numtxids);
         return(0);
     }
+    fpos = (addr->fp != 0) ? ftell(addr->fp) : 0;
+    txdatabits = iguana_calctxidbits(addr->addrind,addr->filecount,(uint32_t)fpos,txdata->datalen);
+    addr->fp = iguana_peerfilePT(coin,addr,txdata->block.hash2,txdatabits,recvlen);
     if ( (fp= addr->fp) != 0 )
     {
-        fpos = ftell(addr->fp);
-        txdatabits = fpos | ((uint64_t)addr->addrind << IGUANA_LOG2MAXFILESIZE) | ((uint64_t)addr->filecount << (IGUANA_LOG2MAXFILESIZE+IGUANA_LOG2MAXPEERS));
+        //txdatabits = fpos | ((uint64_t)addr->addrind << IGUANA_LOG2MAXFILESIZE) | ((uint64_t)addr->filecount << (IGUANA_LOG2MAXFILESIZE+IGUANA_LOG2MAXPEERS));
         if ( fp != 0 )
         {
             fwrite(&txdata->datalen,1,sizeof(txdata->datalen),fp);
@@ -172,7 +176,8 @@ uint64_t iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *add
         if ( (rand() % 1000) == 0 )
             printf("[%.3f] %.0f/%.0f recvlen vs datalen\n",recvsum/datasum,recvsum,datasum);
     }
-    return(txdatabits);
+    memcpy(origtxdata,txdata,sizeof(*origtxdata));
+    return(*(uint64_t *)&txdatabits);
 }
 
 // two passes to check data size
