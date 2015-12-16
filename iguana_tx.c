@@ -156,7 +156,6 @@ struct iguana_txdatabits iguana_blockramchainPT(struct iguana_info *coin,struct 
     txdatabits = iguana_peerfilePT(coin,addr,txdata->block.hash2,txdatabits,txdata->datalen);
     if ( (fp= addr->fp) != 0 )
     {
-        //txdatabits = fpos | ((uint64_t)addr->addrind << IGUANA_LOG2MAXFILESIZE) | ((uint64_t)addr->filecount << (IGUANA_LOG2MAXFILESIZE+IGUANA_LOG2MAXPEERS));
         if ( fp != 0 )
         {
             fwrite(&txdata->datalen,1,sizeof(txdata->datalen),fp);

@@ -854,7 +854,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     printf("start dedicatedloop.%s addrind.%d\n",addr->ipaddr,addr->addrind);
     //sprintf(fname,"tmp/%s/peer%d.%d",coin->symbol,addr->addrind,addr->filecount++);
     //addr->fp = fopen(fname,"wb");
-    addr->maxfilehash2 = 8192;
+    addr->maxfilehash2 = IGUANA_MAXFILEITEMS;
     bufsize = IGUANA_MAXPACKETSIZE;
     buf = mycalloc('r',1,bufsize);
     //printf("send version myservices.%llu\n",(long long)coin->myservices);

@@ -15,21 +15,26 @@
 
 #ifndef iguana777_net_h
 #define iguana777_net_h
+#include <stdint.h>
 
 #define IGUANA_MAPHASHTABLES 1
 #define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 4)
 #define IGUANA_MAXBUNDLES (5000000 / 500)
-#define IGUANA_PEERFILESIZE (1024L * 1024L * 16)
-#define IGUANA_LOG2MAXPEERS 10
+#define IGUANA_LOG2MAXPEERS 9
+#define IGUANA_LOG2PACKETSIZE 21
+#define IGUANA_LOG2PEERFILESIZE 23
+
 #define IGUANA_MAXPEERS (1 << IGUANA_LOG2MAXPEERS)
-#define IGUANA_LOG2MAXFILESIZE 40   // 256 GB
+#define IGUANA_MAXPACKETSIZE (1 << IGUANA_LOG2PACKETSIZE)
+#define IGUANA_PEERFILESIZE (1 << IGUANA_LOG2PEERFILESIZE)
+struct iguana_txdatabits { uint64_t addrind:IGUANA_LOG2MAXPEERS,filecount:10,fpos:IGUANA_LOG2PEERFILESIZE,datalen:IGUANA_LOG2PACKETSIZE,isdir:1; };
+
+#define IGUANA_MAXFILEITEMS 1024
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 64
 #define _IGUANA_MAXBUNDLES 16 //512
-#define IGUANA_MAXPACKETSIZE (1024 * 1024 * 2)
-#define IGUANA_RSPACE_SIZE (IGUANA_MAXPACKETSIZE * 16)
 
 #define IGUANA_PERMTHREAD 0
 #define IGUANA_CONNTHREAD 1
@@ -59,7 +64,6 @@
 #define IGUANA_NUMAPPENDS (IGUANA_LHASH_PKFIRSTSPEND + 1)
 
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -271,8 +275,6 @@ struct iguana_memspace
 };
 
 struct msgcounts { uint32_t version,verack,getaddr,addr,inv,getdata,notfound,getblocks,getheaders,headers,tx,block,mempool,ping,pong,reject,filterload,filteradd,filterclear,merkleblock,alert; };
-
-struct iguana_txdatabits { uint64_t addrind:8,filecount:10,fpos:24,datalen:21,isdir:1; };
 
 struct iguana_fileitem { bits256 hash2; struct iguana_txdatabits txdatabits; };
 

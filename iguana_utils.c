@@ -966,3 +966,28 @@ void *iguana_filestr(int64_t *allocsizep,char *fname)
     *allocsizep = 0;
     return(iguana_loadfile(fname,&buf,&filesize,allocsizep));
 }
+
+/*int32_t iguana_sortbignum(void *buf,int32_t size,uint32_t num,int32_t structsize,int32_t dir)
+{
+    int32_t retval = 0;
+    if ( dir > 0 )
+    {
+        if ( size == 32 )
+            qsort(buf,num,structsize,_increasing_bits256);
+        else if ( size == 20 )
+            qsort(buf,num,structsize,_increasing_rmd160);
+        else retval = -1;
+    }
+    else
+    {
+        if ( size == 32 )
+            qsort(buf,num,structsize,_decreasing_bits256);
+        else if ( size == 20 )
+            qsort(buf,num,structsize,_decreasing_rmd160);
+        else retval = -1;
+    }
+    if ( retval < 0 )
+        printf("iguana_sortbignum only does bits256 and rmd160 for now\n");
+	return(retval);
+}
+*/
