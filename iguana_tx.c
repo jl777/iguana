@@ -96,7 +96,7 @@ void *iguana_txdataptr(struct iguana_info *coin,struct iguana_mappedptr *M,char 
 
 void *iguana_peerfileptr(struct iguana_info *coin,struct iguana_txdatabits txdatabits,int32_t createflag)
 {
-    char fname[512]; int32_t i,oldesti,oldest,duration,datalen,fpos; struct iguana_mappedptr *M = 0; void *ptr = 0;
+    char fname[512]; int32_t i,oldesti,oldest,duration,datalen; uint64_t fpos; struct iguana_mappedptr *M = 0; void *ptr = 0;
     fpos = txdatabits.fpos, datalen = txdatabits.datalen;
     oldesti = -1;
     oldest = 0;
