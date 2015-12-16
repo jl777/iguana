@@ -207,6 +207,7 @@ FILE *iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits25
 {
     char fname[512]; int32_t marker; uint32_t dirpos;
     *txdatabitsptrp = 0;
+    iguana_peerfilename(coin,fname,addr->addrind,++addr->filecount);
     if ( bits256_nonz(hash2) == 0 || addr->fp == 0 || ftell(addr->fp) > IGUANA_PEERFILESIZE-IGUANA_MAXPACKETSIZE || addr->numfilehash2 >= sizeof(addr->filehash2)/sizeof(*addr->filehash2) )
     {
         if ( addr->fp != 0 )
@@ -222,9 +223,13 @@ FILE *iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits25
             //iguana_flushQ(coin,addr);
             fflush(addr->fp);
         }
-        iguana_peerfilename(coin,fname,addr->addrind,++addr->filecount);
         addr->fp = fopen(fname,"wb");
         addr->numfilehash2 = 0;
+    }
+    if ( addr->fp == 0 )
+    {
+        printf("error creating %s %s\n",addr->ipaddr,fname);
+        exit(1);
     }
     addr->filehash2[addr->numfilehash2].hash2 = hash2;
     (*txdatabitsptrp) = &addr->filehash2[addr->numfilehash2].txdatabits;
