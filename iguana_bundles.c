@@ -642,8 +642,8 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 bp->issued[i] = milliseconds();
                 iguana_blockQ(coin,bp,i,hash2,priorityflag);
                 bp->blocks[i] = 0;
-                lasti = -1;
-            }
+                lasti = i;
+            } else lasti = i;
         }
         if ( n == coin->chain->bundlesize-1 )
             printf("bp.%d %d %d\n",bp->hdrsi,bp->bundleheight,lasti);
