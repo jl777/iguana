@@ -351,11 +351,12 @@ struct iguana_block *iguana_recvblockhdr(struct iguana_info *coin,struct iguana_
         iguana_bundleblockadd(coin,bp,*bundleip,block->hash2);
         if ( *bundleip > 0 && bits256_nonz(block->prev_block) > 0 )
             iguana_bundleblockadd(coin,bp,(*bundleip) - 1,block->prev_block);
-        if ( bp->hdrsi < coin->bundlescount/3 && *bundleip == bp->n-1 )
+        if ( bp->hdrsi < coin->bundlescount/2 && *bundleip == bp->n-1 )
         {
+            printf("Q all of hdrs.%d\n",bp->hdrsi);
             for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
                 if ( bp->blocks[i] != 0 )
-                    iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,bp->hdrsi < coin->bundlescount/6);
+                    iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,bp->hdrsi < coin->bundlescount/4);
         }
     }
     return(block);
