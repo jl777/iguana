@@ -592,6 +592,7 @@ int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_ramchain *ram
 
 int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata)
 {
+    printf("merge txdata datalen.%d\n",txdata->datalen);
     return(0);
 }
 

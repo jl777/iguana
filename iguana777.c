@@ -218,7 +218,7 @@ void iguana_coinloop(void *arg)
         if ( flag == 0 )
         {
             //printf("IDLE\n");
-            usleep(1000);
+            //usleep(1000);
         }
     }
 }
