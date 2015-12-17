@@ -38,6 +38,7 @@ struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount
 int32_t iguana_peerfilecloseHT(struct iguana_info *coin,uint32_t addrind,uint32_t filecount)
 {
     char fname[512]; int32_t i,n = 0; struct iguana_mappedptr *M;
+return(0);
     iguana_peerfilename(coin,fname,addrind,filecount);
     printf("PEERFILECLOSE.%s\n",fname);
     portable_mutex_lock(&coin->peers.filesM_mutex);
