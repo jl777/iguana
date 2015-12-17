@@ -41,7 +41,7 @@ int32_t iguana_peerfilecloseHT(struct iguana_info *coin,uint32_t addrind,uint32_
 return(0);
     iguana_peerfilename(coin,fname,addrind,filecount);
     printf("PEERFILECLOSE.%s\n",fname);
-    portable_mutex_lock(&coin->peers.filesM_mutex);
+    //portable_mutex_lock(&coin->peers.filesM_mutex);
     if ( coin->peers.filesM != 0 )
     {
         for (i=0; i<coin->peers.numfilesM; i++)
@@ -56,7 +56,7 @@ return(0);
             }
         }
     }
-    portable_mutex_unlock(&coin->peers.filesM_mutex);
+    //portable_mutex_unlock(&coin->peers.filesM_mutex);
     return(n);
 }
 
@@ -104,7 +104,7 @@ void *iguana_peerfileptrHT(struct iguana_info *coin,struct iguana_txdatabits txd
     oldesti = -1;
     oldest = 0;
     iguana_peerfilename(coin,fname,txdatabits.addrind,txdatabits.filecount);
-    portable_mutex_lock(&coin->peers.filesM_mutex);
+    //portable_mutex_lock(&coin->peers.filesM_mutex);
     if ( coin->peers.filesM != 0 )
     {
         for (i=0; i<coin->peers.numfilesM; i++)
@@ -114,7 +114,7 @@ void *iguana_peerfileptrHT(struct iguana_info *coin,struct iguana_txdatabits txd
             {
                 if ( M->fileptr != 0 && (ptr= _iguana_txdataptrHT(coin,M,fname,txdatabits)) != 0 )
                 {
-                    portable_mutex_unlock(&coin->peers.filesM_mutex);
+                    //portable_mutex_unlock(&coin->peers.filesM_mutex);
                     //printf("peerfileptr.(%s) %d %d -> %p\n",fname,txdatabits.addrind,txdatabits.filecount,ptr);
                     return(ptr);
                 }
@@ -151,7 +151,7 @@ void *iguana_peerfileptrHT(struct iguana_info *coin,struct iguana_txdatabits txd
             printf("mapped.(%s) size.%ld %p\n",fname,(long)M->allocsize,ptr);
         } else printf("iguana_peerfileptr error mapping.(%s)\n",fname);
     }
-    portable_mutex_unlock(&coin->peers.filesM_mutex);
+    //portable_mutex_unlock(&coin->peers.filesM_mutex);
     return(ptr);
 }
 
@@ -262,7 +262,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             }
         }
     }
-    bp->emitfinish = (uint32_t)time(NULL);
     if ( flag == i )
     {
         iguana_meminit(mem,"bundleHT",0,estimatedsize + IGUANA_MAXPACKETSIZE,0);
@@ -272,6 +271,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             iguana_ramchainsave(coin,mem,ramchain);
             iguana_ramchainfree(coin,mem,ramchain);
+            bp->emitfinish = (uint32_t)time(NULL);
         } else bp->emitfinish = 0;
         iguana_mempurge(mem);
         iguana_mempurge(memB);
