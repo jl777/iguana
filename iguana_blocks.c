@@ -489,11 +489,40 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
     return(0);
 }
 
+int32_t iguana_peerissue(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_blockreq *req)
+{
+    uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
+    char hexstr[65]; bits256 hash2; int32_t datalen,flag = 0;
+    hash2 = req->hash2;
+    if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && req->bp->blocks[req->bundlei] != 0 )
+    {
+        //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
+        myfree(req,sizeof(*req));
+    }
+    else if ( req->bp != 0 && req->bundlei >= 0 && GETBIT(req->bp->recv,req->bundlei) == 0 )
+    {
+        init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
+        if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
+        {
+            if ( 0 && queue_size(&coin->priorityQ) > 0 )
+                printf("%s %s BLOCK.%d:%d bit.%d qsizes.(p%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
+            iguana_send(coin,addr,serialized,datalen);
+            addr->pendblocks++;
+            addr->pendtime = (uint32_t)time(NULL);
+            if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n )
+                req->bp->issued[req->bundlei] = milliseconds();
+            flag++;
+            myfree(req,sizeof(*req));
+        } else printf("error constructing request %s\n",hexstr);
+    }
+    return(flag);
+}
+
 int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
-    char *hashstr=0,hexstr[65]; bits256 hash2; int32_t limit,height=-1,datalen,flag = 0;
-    struct iguana_blockreq *req=0;
+    char *hashstr=0,fname[512]; bits256 hash2; int32_t iter,limit,datalen,flag= 0;
+    struct iguana_blockreq *req=0; queue_t *Q;
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
     {
         //printf("%s check hdrsQ\n",addr->ipaddr);
@@ -517,31 +546,16 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         limit = 1;
     else if ( limit > coin->MAXPENDING )
         limit = coin->MAXPENDING;
-    while ( (req= queue_dequeue(&coin->priorityQ,0)) != 0 || (coin->peers.numfiles < IGUANA_MAXFILES && addr->pendblocks < limit && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
+    for (iter=0; iter<2; iter++)
     {
-        hash2 = req->hash2;
-        height = req->height;
-        if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && req->bp->blocks[req->bundlei] != 0 )
+        Q = (iter == 0) ? &coin->priorityQ : &coin->blocksQ;
+        if ( (iter == 0 && (req= queue_dequeue(Q,0)) != 0) ||
+            (iter == 1 && coin->peers.numfiles < IGUANA_MAXFILES && addr->pendblocks < limit && (req= queue_dequeue(Q,0)) != 0) )
         {
-            //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
-            myfree(req,sizeof(*req));
-        }
-        else if ( req->bp != 0 && req->bundlei >= 0 && GETBIT(req->bp->recv,req->bundlei) == 0 )
-        {
-            init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
-            if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
-            {
-                if ( 0 && queue_size(&coin->priorityQ) > 0 )
-                    printf("%s %s BLOCK.%d:%d bit.%d qsizes.(p%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
-                iguana_send(coin,addr,serialized,datalen);
-                addr->pendblocks++;
-                addr->pendtime = (uint32_t)time(NULL);
-                if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n )
-                    req->bp->issued[req->bundlei] = milliseconds();
-                flag++;
-                myfree(req,sizeof(*req));
-                return(flag);
-            } else printf("error constructing request %s.%d\n",hexstr,height);
+            hash2 = req->hash2;
+            if ( iguana_peerfile_exists(coin,addr,fname,hash2) >= 0 )
+                flag += iguana_peerissue(coin,addr,req);
+            else queue_enqueue("requeue",Q,&req->DL,0);
         }
     }
     return(flag);

@@ -53,11 +53,23 @@ struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct igu
     return(ramchain);
 }
 
+int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *fname,bits256 hash2)
+{
+    FILE *fp; int32_t bundlei;
+    if ( (bundlei= iguana_peerfname(coin,fname,addr->ipbits,hash2)) >= 0 )
+    {
+        if ( (fp= fopen(fname,"rb")) == 0 )
+            bundlei = -1;
+        else fclose(fp);
+    }
+    return(bundlei);
+}
+
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
 {
     struct iguana_txblock *ptrs[IGUANA_MAXBUNDLESIZE]; struct iguana_block *block;
     char fname[1024]; FILE *fp; uint64_t estimatedsize = 0;
-    int32_t i,maxrecv,addrind,bundlei,flag,numdirs=0; struct iguana_ramchain *ramchain;
+    int32_t i,maxrecv,addrind,flag,numdirs=0; struct iguana_ramchain *ramchain;
     flag = maxrecv = 0;
     for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
     {
@@ -100,7 +112,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             if ( coin->peers.active[addrind].ipbits != 0 )
             {
-                if ( (bundlei= iguana_peerfname(coin,fname,coin->peers.active[addrind].ipbits,bp->bundlehash2)) >= 0 )
+                if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->bundlehash2) > 0 )
                 {
                     if ( (fp= fopen(fname,"rb")) != 0 )
                     {
