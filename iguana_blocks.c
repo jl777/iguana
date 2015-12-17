@@ -555,7 +555,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
             hash2 = req->hash2;
             if ( iguana_peerfile_exists(coin,addr,fname,hash2) >= 0 || (rand() % 100) < 10 )
                 flag += iguana_peerissue(coin,addr,req);
-            else queue_enqueue("requeue",Q,&req->DL,0);
+            else queue_enqueue("requeue",Q,&req->DL,0), flag++;
         }
     }
     return(flag);
