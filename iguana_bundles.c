@@ -479,13 +479,6 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
                     if ( bp->n < coin->chain->bundlesize )
                         iguana_blockQ(coin,bp,n-1,blockhashes[n-1],1);
                     else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],1);*/
-                    if ( 0 && bp->hdrsi < coin->bundlescount/4 )
-                    {
-                        printf("Q all of hdrs.%d\n",bp->hdrsi);
-                        for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
-                            if ( (block= iguana_blockfind(coin,blockhashes[i])) != 0 )
-                                iguana_blockQ(coin,bp,i,block->hash2,bp->hdrsi < coin->bundlescount/8);
-                    }
                     break;
                 }
                 else
@@ -739,7 +732,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     if ( lastbundle != coin->lastbundle )
         coin->lastbundletime = (uint32_t)time(NULL);
     coin->lastbundle = lastbundle;
-    if ( time(NULL) < coin->starttime+60 )
+    if ( 0 && time(NULL) < coin->starttime+60 )
         lastbundle = -1;
     n = 0;
     closest = closestbundle = -1;
@@ -764,7 +757,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         closestbundle = i;
                     }
                 }
-                if (  i > (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
+                if (  i < (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
                     continue;
                 RTqsize = queue_size(&coin->blocksQ);
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
@@ -779,7 +772,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                     if ( bits256_nonz(hash2) > 0 )
                     {
                         //printf("hdrsi.%d qsize.%d bcount.%d check bundlei.%d bit.%d %.3f lag %.3f ave %.3f\n",bp->hdrsi,qsize,coin->bcount,bundlei,GETBIT(bp->recv,bundlei),bp->issued[bundlei],milliseconds() - bp->issued[bundlei],bp->avetime);
-                        if ( GETBIT(bp->recv,bundlei) == 0 || (bp->blocks[bundlei] != 0 && bp->blocks[bundlei]->ipbits == 0) )
+                        if ( GETBIT(bp->recv,bundlei) == 0 )
                         {
                             if ( bp->issued[bundlei] > SMALLVAL )
                                 numwaiting++;
@@ -879,7 +872,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                             if ( bp->issued[bundlei] > SMALLVAL )
                             {
                                 numissued++;
-                                if ( GETBIT(bp->recv,bundlei) != 0 && bp->blocks[bundlei] != 0 && bp->blocks[bundlei]->ipbits != 0 )
+                                if ( GETBIT(bp->recv,bundlei) != 0 )
                                 {
                                     flag++;
                                     numrecv++;
@@ -928,7 +921,7 @@ int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // sin
 {
     int32_t flag = 0; struct iguana_bundlereq *req;
     *newhwmp = 0;
-    while ( flag < 10000 && (req= queue_dequeue(&coin->bundlesQ,0)) != 0 )
+    while ( flag < 100 && (req= queue_dequeue(&coin->bundlesQ,0)) != 0 )
     {
         //printf("%s bundlesQ.%p type.%c n.%d\n",req->addr != 0 ? req->addr->ipaddr : "0",req,req->type,req->n);
         if ( req->type == 'B' ) // one block with all txdata
