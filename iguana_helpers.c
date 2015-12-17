@@ -366,7 +366,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
             if ( coin->MAXBUNDLES > IGUANA_MAXACTIVEBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
                 coin->MAXBUNDLES--;
             else if ( (coin->MAXBUNDLES * coin->estsize)/(coin->activebundles+1) < coin->MAXRECVCACHE*.75 )
-                coin->MAXBUNDLES += coin->MAXBUNDLES;
+                coin->MAXBUNDLES += (coin->MAXBUNDLES >> 1);
             else printf("no change to MAXBUNDLES.%d\n",coin->MAXBUNDLES);
         } else printf("no coin in helper request?\n");
     }
