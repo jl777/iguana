@@ -596,7 +596,18 @@ int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *me
     return(0);
 }
 
-/*struct iguana_ramchain
+
+/*struct iguana_txblock
+{
+    struct iguana_prevdep L; // external input
+    // following set on first pass in msg parsing
+    struct iguana_block block;
+    uint32_t numtxids,numunspents,numspends,extralen,recvlen;
+    // following set during second pass (still in peer context)
+    uint32_t numpkinds,numexternaltxids,datalen;
+    uint8_t space[256]; // order: extra[], T, U, S, P, external txids
+};
+struct iguana_ramchain
 {
     uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
     uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
@@ -606,11 +617,18 @@ int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *me
     struct iguana_Uextra *Uextras; struct iguana_pkextra *pkextras; // onetime zero to nonzero
     struct iguana_account *accounts; // volatile
 };*/
-struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *txdata,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei,int32_t datalen)
+struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *txdata,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t hdrsi,int32_t bundlei,int32_t datalen)
 {
-    struct iguana_ramchain *ramchain;
+    struct iguana_ramchain *ramchain; struct iguana_memspace txmem;
+    memset(&txmem,0,sizeof(txmem));
+    iguana_meminit(&txmem,"bramchain",txdata,datalen,0);
     ramchain = iguana_memalloc(mem,sizeof(*ramchain),1);
-    printf("txdata datalen.%d\n",txdata->datalen);
+    if ( iguana_ramchainptrs(&ramchain->T,&ramchain->U,&ramchain->S,&ramchain->P,&ramchain->externalT,&txmem,0) != txdata || ramchain->T == 0 || ramchain->U == 0 || ramchain->S == 0 || ramchain->P == 0 )
+    {
+        printf("iguana_ramchaininit: cant set pointers hdrsi.%d bundlei.%d\n",hdrsi,bundlei);
+        iguana_ramchainfree(coin,ramchain);
+        return(0);
+    }
     return(ramchain);
 }
 

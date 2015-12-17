@@ -19,7 +19,7 @@
 
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 8
-#define _IGUANA_MAXBUNDLES 8 //512
+#define _IGUANA_MAXBUNDLES 2 
 #define IGUANA_MAXACTIVEBUNDLES 64
 #define IGUANA_MAXFILES 4096
 
@@ -696,7 +696,7 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
 struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *ptrs[],int32_t n,struct iguana_bundle *bp);
 int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain);
 int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_ramchain *ramchain);
-struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei,int32_t datalen);
+struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t hdrsi,int32_t bundlei,int32_t datalen);
 int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata);
 
 int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2,int32_t priority);
