@@ -361,7 +361,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp) == 0 )
                     coin->numemitted++;
             }
-            if ( coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES )
+            if ( coin->MAXBUNDLES > 2*_IGUANA_MAXBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
                 coin->MAXBUNDLES--;
             else if ( coin->activebundles >= coin->MAXBUNDLES && coin->estsize < coin->MAXRECVCACHE*.5 )
                 coin->MAXBUNDLES++;

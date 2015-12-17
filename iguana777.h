@@ -35,7 +35,7 @@ struct iguana_txdatabits { uint64_t addrind:IGUANA_LOG2MAXPEERS,filecount:10,fpo
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 64
-#define _IGUANA_MAXBUNDLES 1 //512
+#define _IGUANA_MAXBUNDLES 8 //512
 
 #define IGUANA_PERMTHREAD 0
 #define IGUANA_CONNTHREAD 1
