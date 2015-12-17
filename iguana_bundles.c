@@ -764,7 +764,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         closestbundle = i;
                     }
                 }
-                if (  i > (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
+                //if (  i > (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
                     continue;
                 RTqsize = queue_size(&coin->blocksQ);
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
