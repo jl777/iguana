@@ -288,7 +288,7 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,bits256 bundl
 
 struct iguana_block *iguana_recvblockhdr(struct iguana_info *coin,struct iguana_bundle **bpp,int32_t *bundleip,struct iguana_block *block,int32_t *newhwmp)
 {
-    struct iguana_bundle *prevbp,*bp = 0; int32_t j,prevbundlei; bits256 orighash2 = block->hash2;
+    struct iguana_bundle *prevbp,*bp = 0; int32_t i,j,prevbundlei; bits256 orighash2 = block->hash2;
     (*bpp) = 0;
     *bundleip = -2;
     if ( (block= iguana_blockhashset(coin,-1,block->hash2,1)) == 0 )
@@ -351,6 +351,12 @@ struct iguana_block *iguana_recvblockhdr(struct iguana_info *coin,struct iguana_
         iguana_bundleblockadd(coin,bp,*bundleip,block->hash2);
         if ( *bundleip > 0 && bits256_nonz(block->prev_block) > 0 )
             iguana_bundleblockadd(coin,bp,(*bundleip) - 1,block->prev_block);
+        if ( bp->hdrsi < coin->bundlescount/4 && *bundleip == bp->n-1 )
+        {
+            for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
+                if ( bp->blocks[i] != 0 )
+                    iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,0);
+        }
     }
     return(block);
 }
