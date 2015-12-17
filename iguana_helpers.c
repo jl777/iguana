@@ -33,7 +33,7 @@ struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct igu
     {
         for (i=1; i<n; i++)
         {
-            if ( ptrs[i] != 0 && (block= bp->blocks[i]) != 0 )
+            if ( ptrs[i] != 0 )
             {
                 if ( iguana_ramchainmerge(coin,mem,ramchain,ptrs[i]) < 0 )
                 {
