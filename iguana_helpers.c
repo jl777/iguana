@@ -263,7 +263,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         iguana_meminit(mem,"bundleHT",0,estimatedsize,0);
         iguana_meminit(memB,"ramchainB",0,maxrecv + 65536,0);
-        printf(">>>>>>>>> start MERGE numdirs.%d i.%d flag.%d\n",numdirs,i,flag);
+        printf(">>>>>>>>> start MERGE numdirs.%d i.%d flag.%d estimated.%ld maxrecv.%d\n",numdirs,i,flag,estimatedsize,maxrecv);
         if ( (ramchain= iguana_bundlemergeHT(coin,mem,memB,ptrs,i,bp)) != 0 )
         {
             iguana_ramchainsave(coin,mem,ramchain);

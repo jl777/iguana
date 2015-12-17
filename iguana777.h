@@ -17,6 +17,10 @@
 #define iguana777_net_h
 #include <stdint.h>
 
+#define IGUANA_MAXPENDHDRS 1
+#define _IGUANA_MAXPENDING 64
+#define _IGUANA_MAXBUNDLES 8 //512
+
 #define IGUANA_MAPHASHTABLES 1
 #define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 4)
 #define IGUANA_MAXBUNDLES (5000000 / 500)
@@ -33,9 +37,6 @@ struct iguana_txdatabits { uint64_t addrind:IGUANA_LOG2MAXPEERS,filecount:10,fpo
 #define IGUANA_MAXFILEITEMS 8192
 
 #define IGUANA_RECENTPEER (3600 * 24 * 7)
-#define IGUANA_MAXPENDHDRS 1
-#define _IGUANA_MAXPENDING 64
-#define _IGUANA_MAXBUNDLES 8 //512
 
 #define IGUANA_PERMTHREAD 0
 #define IGUANA_CONNTHREAD 1
