@@ -87,6 +87,119 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
     return(hash2);
 }
 
+int32_t iguana_savehdrs(struct iguana_info *coin)
+{
+    int32_t height,iter,valid,retval = 0; char fname[512],tmpfname[512],oldfname[512]; bits256 hash2; FILE *fp;
+    sprintf(oldfname,"%s_oldhdrs.txt",coin->symbol);
+    sprintf(tmpfname,"tmp/%s/hdrs.txt",coin->symbol);
+    sprintf(fname,"%s_hdrs.txt",coin->symbol);
+    if ( (fp= fopen(tmpfname,"w")) != 0 )
+    {
+        fprintf(fp,"%d\n",coin->blocks.hashblocks);
+        for (height=0; height<=coin->blocks.hashblocks; height+=coin->chain->bundlesize)
+        {
+            for (iter=0; iter<2; iter++)
+            {
+                hash2 = iguana_blockhash(coin,&valid,height+iter);
+                if ( bits256_nonz(hash2) > 0 )
+                {
+                    char str[65];
+                    bits256_str(str,hash2);
+                    fprintf(fp,"%d %s\n",height+iter,str);
+                    retval = height+iter;
+                }
+                if ( coin->chain->hasheaders != 0 )
+                    break;
+            }
+        }
+        //printf("new hdrs.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
+        if ( ftell(fp) > iguana_filesize(fname) )
+        {
+            printf("new hdrs.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
+            fclose(fp);
+            iguana_renamefile(fname,oldfname);
+            iguana_copyfile(tmpfname,fname,1);
+        } else fclose(fp);
+    }
+    return(retval);
+}
+
+void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
+{
+    int32_t j,k,m,c,height,flag,bundleheight = -1; char checkstr[1024],line[1024]; bits256 zero;
+    struct iguana_peer *addr; struct iguana_bundle *bp; bits256 hash2,bundlehash2;
+    m = flag = 0;
+    memset(&zero,0,sizeof(zero));
+    while ( fgets(line,sizeof(line),fp) > 0 )
+    {
+        j = (int32_t)strlen(line) - 1;
+        line[j] = 0;
+        //printf("parse line.(%s) maxpeers.%d\n",line,coin->MAXPEERS);
+        if ( iter == 0 )
+        {
+            if ( m < coin->MAXPEERS && m < 32 )
+            {
+                addr = &coin->peers.active[m++];
+                iguana_initpeer(coin,addr,(uint32_t)calc_ipbits(line));
+                printf("call initpeer.(%s)\n",addr->ipaddr);
+                iguana_launch(coin,"connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
+            }
+        }
+        else
+        {
+            for (k=height=0; k<j-1; k++)
+            {
+                if ( (c= line[k]) == ' ' )
+                    break;
+                else if ( c >= '0' && c <= '9' )
+                    height = (height * 10) + (line[k] - '0');
+                else break;
+            }
+            printf("parseline: k.%d %d height.%d m.%d bundlesize.%d\n",k,line[k],height,m,coin->chain->bundlesize);
+            if ( line[k] == ' ' )
+            {
+                decode_hex(hash2.bytes,sizeof(hash2),line+k+1);
+                init_hexbytes_noT(checkstr,hash2.bytes,sizeof(hash2));
+                if ( strcmp(checkstr,line+k+1) == 0 )
+                {
+                    if ( (height % coin->chain->bundlesize) == 0 )
+                    {
+                        if ( height > coin->blocks.maxbits-coin->chain->bundlesize*10 )
+                            iguana_recvalloc(coin,height + coin->chain->bundlesize*100);
+                        if ( flag != 0 )
+                        {
+                            if ( (bp= iguana_bundlecreate(coin,bundlehash2,zero)) != 0 )
+                            {
+                                char str[65];
+                                bits256_str(str,bundlehash2);
+                                printf("add bundle.%d:%d (%s) %p\n",bundleheight,bp->hdrsi,str,bp);
+                                bp->bundleheight = bundleheight;
+                                flag = 0;
+                            }
+                        }
+                        bundlehash2 = hash2;
+                        bundleheight = height;
+                        flag = 1;
+                    }
+                    else if ( (height % coin->chain->bundlesize) == 1 && height == bundleheight+1 )
+                    {
+                        if ( (bp= iguana_bundlecreate(coin,bundlehash2,hash2)) != 0 )
+                        {
+                            char str[65],str2[65];
+                            bits256_str(str,bundlehash2);
+                            bits256_str(str2,hash2);
+                            printf("add bundle.%d:%d (%s) %s %p\n",bundleheight,bp->hdrsi,str,str2,bp);
+                            bp->bundleheight = bundleheight;
+                            flag = 0;
+                        }
+                    }
+                    iguana_blockhashset(coin,height,hash2,100);
+                }
+            }
+        }
+    }
+}
+
 int32_t iguana_verifyiAddr(struct iguana_info *coin,void *key,void *value,int32_t itemind,int32_t itemsize)
 {
     struct iguana_iAddr *iA = value;

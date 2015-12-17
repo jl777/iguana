@@ -19,11 +19,11 @@
 #define iguana_block(coin,height) (height >= 0 ? coin->blocks.ptrs[height] : 0) // invariant ptr
 #define iguana_blockfind(coin,hash2) iguana_blockhashset(coin,-1,hash2,0)
 
-static int32_t _sort_by_itemind(struct iguana_block *a, struct iguana_block *b)
+/*static int32_t _sort_by_itemind(struct iguana_block *a, struct iguana_block *b)
 {
     if (a->hh.itemind == b->hh.itemind) return 0;
     return (a->hh.itemind < b->hh.itemind) ? -1 : 1;
-}
+}*/
 
 int32_t _iguana_verifysort(struct iguana_info *coin)
 {
