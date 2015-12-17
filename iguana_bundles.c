@@ -738,6 +738,8 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     closest = closestbundle = -1;
     for (i=0; i<coin->bundlescount; i++)
     {
+        if ( i >= coin->numemitted+coin->MAXBUNDLES )
+            break;
         qsize = queue_size(&coin->blocksQ);
         m = 0;
         if ( (bp= coin->bundles[i]) != 0 )
