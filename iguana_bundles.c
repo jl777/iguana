@@ -727,7 +727,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
     if ( lastbundle != coin->lastbundle )
         coin->lastbundletime = (uint32_t)time(NULL);
     coin->lastbundle = lastbundle;
-    if ( time(NULL) < coin->starttime+60 )
+    if ( 0 && time(NULL) < coin->starttime+60 )
         lastbundle = -1;
     n = 0;
     closest = closestbundle = -1;
