@@ -68,7 +68,7 @@ void iguana_removefile(char *fname,int32_t scrubflag)
     long i,fpos;
     if ( (fp= fopen(iguana_compatible_path(fname),"rb+")) != 0 )
     {
-        printf("delete(%s)\n",fname);
+        //printf("delete(%s)\n",fname);
         if ( scrubflag != 0 )
         {
             fseek(fp,0,SEEK_END);

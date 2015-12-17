@@ -555,15 +555,18 @@ int32_t iguana_updateramchain(struct iguana_info *coin)
 
 struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata)
 {
-    struct iguana_txblock *txdata; int32_t allocsize,rwflag = (origtxdata != 0);
+    struct iguana_txblock *txdata; int32_t allocsize,extralen,rwflag = (origtxdata != 0);
     iguana_memreset(mem);
     allocsize = (int32_t)(sizeof(*txdata) - sizeof(txdata->space) + ((origtxdata != 0) ? origtxdata->extralen : 0));
     mem->alignflag = sizeof(uint32_t);
-    if ( (txdata = iguana_memalloc(mem,allocsize,0)) == 0 )
+    if ( (txdata= iguana_memalloc(mem,allocsize,0)) == 0 )
         return(0);
-    //printf("rwflag.%d origtxdat.%p allocsize.%d extralen.%d T.%d U.%d S.%d P.%d\n",rwflag,origtxdata,allocsize,origtxdata->extralen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds);
+    extralen = (origtxdata != 0) ? origtxdata->extralen : txdata->extralen;
+    if ( rwflag == 0 )
+        printf("datalen.%d rwflag.%d origtxdat.%p allocsize.%d extralen.%d T.%d U.%d S.%d P.%d\n",(int32_t)mem->totalsize,rwflag,origtxdata,allocsize,extralen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds);
     if ( origtxdata != 0 )
         memcpy(txdata,origtxdata,allocsize);
+    else iguana_memalloc(mem,txdata->extralen,0);
     *Tptrp = iguana_memalloc(mem,sizeof(**Tptrp) * txdata->numtxids,rwflag);
     *Uptrp = iguana_memalloc(mem,sizeof(**Uptrp) * txdata->numunspents,rwflag);
     *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * txdata->numspends,rwflag);
@@ -606,6 +609,7 @@ struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct igua
 {
     struct iguana_ramchain *ramchain; struct iguana_memspace txmem; struct iguana_txblock *txdata = 0;
     ramchain = iguana_memalloc(mem,sizeof(*ramchain),1);
+    memset(&txmem,0,sizeof(txmem));
     iguana_meminit(&txmem,"ramchaintxmem",ptr,datalen,0);
     if ( (txdata= iguana_ramchainptrs(&ramchain->T,&ramchain->U,&ramchain->S,&ramchain->P,&ramchain->externalT,&txmem,0)) == 0 || ramchain->T == 0 || ramchain->U == 0 || ramchain->S == 0 || ramchain->P == 0 )
     {

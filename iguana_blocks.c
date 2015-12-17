@@ -461,7 +461,7 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
         getchar();
         return(-1);
     }
-    if ( priority != 0 || (block= bp->blocks[bundlei]) == 0 || block->txdatabits.datalen == 0  || block->txdatabits.filecount == 0 )
+    if ( priority != 0 || (block= bp->blocks[bundlei]) == 0 )
     {
         if ( priority != 0 )
             str = "priorityQ", Q = &coin->priorityQ;
@@ -517,11 +517,11 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         limit = 1;
     else if ( limit > coin->MAXPENDING )
         limit = coin->MAXPENDING;
-    while ( (req= queue_dequeue(&coin->priorityQ,0)) != 0 || (addr->pendblocks < limit && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
+    while ( (req= queue_dequeue(&coin->priorityQ,0)) != 0 || (coin->peers.numfiles < IGUANA_MAXFILES && addr->pendblocks < limit && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
     {
         hash2 = req->hash2;
         height = req->height;
-        if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && req->bp->blocks[req->bundlei] != 0 && req->bp->blocks[req->bundlei]->txdatabits.datalen != 0  && req->bp->blocks[req->bundlei]->txdatabits.filecount != 0 )
+        if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && req->bp->blocks[req->bundlei] != 0 )
         {
             //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
             myfree(req,sizeof(*req));

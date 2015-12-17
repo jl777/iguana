@@ -522,12 +522,12 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 dxblend(&bp->avetime,duration,.9);
                 dxblend(&coin->avetime,bp->avetime,.9);
             }
-            if ( bundlei == 1 )
-                iguana_blockQ(coin,bp,0,block->prev_block,1);
-            if ( bundlei >= 0 && bundlei < bp->n && bundlei < coin->chain->bundlesize && block->txdatabits.datalen == 0 )
+            //if ( bundlei == 1 )
+            //    iguana_blockQ(coin,bp,0,block->prev_block,1);
+            if ( req->addr != 0 && bundlei >= 0 && bundlei < bp->n && bundlei < coin->chain->bundlesize )
             {
                 bp->blocks[bundlei] = block;
-                block->txdatabits = req->txdatabits;
+                block->addrind = req->addr->addrind;
                 block->recvlen = datalen;
                 bp->numrecv++;
                 //iguana_txdataQ(coin,req,bp,bundlei);
@@ -605,16 +605,18 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 continue;
             if ( (block= bp->blocks[i]) == 0 )
                 block = bp->blocks[i] = iguana_blockfind(coin,hash2);
-            if ( block != 0 && block->txdatabits.datalen != 0 && block->txdatabits.filecount != 0 )
+            if ( block != 0 )
             {
-                char str[65];
+                //char str[65];
                 if ( block->recvlen != 0 )
                     datasize += block->recvlen;
                 if ( block->hdrsi != bp->hdrsi )
-                {
-                    printf("%s %d[%d] != %d[%d]\n",bits256_str(str,block->hash2),block->hdrsi,block->bundlei,bp->hdrsi,i);
+                    block->hdrsi = bp->hdrsi;
+                if ( block->bundlei != i )
+                    block->bundlei = i;
+                /*    printf("%s %d[%d] != %d[%d]\n",bits256_str(str,block->hash2),block->hdrsi,block->bundlei,bp->hdrsi,i);
                     CLEARBIT(bp->recv,i);
-                    memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
+                    //memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
                     bp->issued[i] = milliseconds();
                     iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
                     bp->blocks[i] = 0;
@@ -623,11 +625,12 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 {
                     printf("%s %d[%d] != %d[%d]\n",bits256_str(str,block->hash2),block->hdrsi,block->bundlei,bp->hdrsi,i);
                     CLEARBIT(bp->recv,i);
-                    memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
+                    //memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
                     bp->issued[i] = milliseconds();
                     iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
                     bp->blocks[i] = 0;
-                } else n++;
+                } else */
+                n++;
             }
             else if ( priorityflag != 0 && qsize == 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + ((remains == 1) ? 100 : threshold))) )
             {
@@ -662,8 +665,8 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                         printf("%s ->%d %d<- %s %s ",str,i,i+1,str2,str3);
                         printf("broken chain in hdrs.%d %d %p <-> %p %d\n",bp->hdrsi,i,bp->blocks[i],bp->blocks[i+1],i+1);
                         CLEARBIT(bp->recv,i);
-                        memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
-                        memset(&bp->blocks[i+1]->txdatabits,0,sizeof(bp->blocks[i+1]->txdatabits));
+                        //memset(&bp->blocks[i]->txdatabits,0,sizeof(bp->blocks[i]->txdatabits));
+                        //memset(&bp->blocks[i+1]->txdatabits,0,sizeof(bp->blocks[i+1]->txdatabits));
                         bp->issued[i] = bp->issued[i+1] = milliseconds();
                         iguana_blockQ(coin,bp,i,bp->blocks[i]->hash2,1);
                         iguana_blockQ(coin,bp,i+1,bp->blocks[i+1]->hash2,1);
@@ -755,7 +758,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                 RTqsize = queue_size(&coin->blocksQ);
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
-                    if ( bp->blocks[bundlei] != 0 && bp->blocks[bundlei]->txdatabits.datalen != 0 && bp->blocks[bundlei]->txdatabits.filecount != 0 )
+                    if ( bp->blocks[bundlei] != 0 )
                     {
                         m++;
                         //printf("hashes.%p numrecv.%d hdrs->n.%d qsize.%d\n",bp->blockhashes,bp->numrecv,bp->n,qsize);
