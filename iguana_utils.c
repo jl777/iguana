@@ -314,8 +314,8 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
     {
         if ( mem->ptr != 0 && mem->totalsize < totalsize )
         {
-            mem->totalsize = totalsize;
             iguana_mempurge(mem);
+            mem->totalsize = 0;
         }
         if ( mem->ptr == 0 )
         {

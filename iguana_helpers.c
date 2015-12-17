@@ -263,7 +263,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         iguana_meminit(mem,"bundleHT",0,estimatedsize,0);
         iguana_meminit(memB,"ramchainB",0,maxrecv + 65536,0);
-        printf(">>>>>>>>> start MERGE numdirs.%d i.%d flag.%d estimated.%ld maxrecv.%d\n",numdirs,i,flag,estimatedsize,maxrecv);
+        printf(">>>>>>>>> start MERGE numdirs.%d i.%d flag.%d estimated.%ld maxrecv.%d\n",numdirs,i,flag,(long)estimatedsize,maxrecv);
         if ( (ramchain= iguana_bundlemergeHT(coin,mem,memB,ptrs,i,bp)) != 0 )
         {
             iguana_ramchainsave(coin,mem,ramchain);
@@ -271,6 +271,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             bp->emitfinish = (uint32_t)time(NULL);
         } else bp->emitfinish = 0;
         iguana_mempurge(mem);
+        iguana_mempurge(memB);
         for (j=0; j<numdirs; j++)
         {
             finished = 0;
@@ -307,7 +308,7 @@ void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
     ptr->coin = coin;
     ptr->bp = bp, ptr->hdrsi = bp->hdrsi;
     ptr->type = 'E';
-    printf("EMIT.%d[%d] emitfinish.%u\n",ptr->hdrsi,bp->n,bp->emitfinish);
+    printf("%s EMIT.%d[%d] emitfinish.%u\n",coin->symbol,ptr->hdrsi,bp->n,bp->emitfinish);
     queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
 }
 
@@ -361,11 +362,13 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp) == 0 )
                     coin->numemitted++;
             }
+            printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
             if ( coin->MAXBUNDLES > 2*_IGUANA_MAXBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
                 coin->MAXBUNDLES--;
             else if ( coin->activebundles >= coin->MAXBUNDLES && coin->estsize < coin->MAXRECVCACHE*.5 )
                 coin->MAXBUNDLES++;
-        }
+            else printf("no change to MAXBUNDLES.%d\n",coin->MAXBUNDLES);
+        } else printf("no coin in helper request?\n");
     }
     return(0);
 }
