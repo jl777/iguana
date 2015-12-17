@@ -382,10 +382,10 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 for (i=bundlei; i<bp->n&&j<bp->n&&i<coin->chain->bundlesize; i++,j++)
                     iguana_bundleblockadd(coin,bp,i,blockhashes[j]);
             }
-            iguana_blockQ(coin,bp,1,blockhashes[1],1);
-            if ( bp->n < coin->chain->bundlesize )
-                iguana_blockQ(coin,bp,bp->n-1,blockhashes[bp->n-1],1);
-            else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],1);
+            //iguana_blockQ(coin,bp,1,blockhashes[1],1);
+            //if ( bp->n < coin->chain->bundlesize )
+            //    iguana_blockQ(coin,bp,bp->n-1,blockhashes[bp->n-1],1);
+            //else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],1);
         }
         else
         {
@@ -474,11 +474,11 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
                     for (i=1; i<n; i++)
                         if ( (block= iguana_blockfind(coin,blockhashes[i])) != 0 )
                             iguana_copyblock(coin,block,&blocks[i-1]);
-                    iguana_blockQ(coin,bp,0,bp->bundlehash2,1);
+                    /*iguana_blockQ(coin,bp,0,bp->bundlehash2,1);
                     iguana_blockQ(coin,bp,1,blockhashes[1],1);
                     if ( bp->n < coin->chain->bundlesize )
                         iguana_blockQ(coin,bp,n-1,blockhashes[n-1],1);
-                    else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],1);
+                    else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],1);*/
                     break;
                 }
                 else
