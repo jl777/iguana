@@ -578,19 +578,19 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
     return(txdata);
 }
 
-int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain)
+int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain)
 {
     printf("ramchainsave.%s %d[%d]\n",coin->symbol,ramchain->hdrsi,ramchain->numblocks);
     return(0);
 }
 
-int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain)
+int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_ramchain *ramchain)
 {
     // iguana_memfree(mem,ramchain,sizeof(*ramchain));
     return(0);
 }
 
-int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_memspace *memB,struct iguana_ramchain *ramchainB)
+int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata)
 {
     return(0);
 }
@@ -605,18 +605,11 @@ int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *me
     struct iguana_Uextra *Uextras; struct iguana_pkextra *pkextras; // onetime zero to nonzero
     struct iguana_account *accounts; // volatile
 };*/
-struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,void *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei,int32_t datalen)
+struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *txdata,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei,int32_t datalen)
 {
-    struct iguana_ramchain *ramchain; struct iguana_memspace txmem; struct iguana_txblock *txdata = 0;
+    struct iguana_ramchain *ramchain;
     ramchain = iguana_memalloc(mem,sizeof(*ramchain),1);
-    memset(&txmem,0,sizeof(txmem));
-    iguana_meminit(&txmem,"ramchaintxmem",ptr,datalen,0);
-    if ( (txdata= iguana_ramchainptrs(&ramchain->T,&ramchain->U,&ramchain->S,&ramchain->P,&ramchain->externalT,&txmem,0)) == 0 || ramchain->T == 0 || ramchain->U == 0 || ramchain->S == 0 || ramchain->P == 0 )
-    {
-        printf("iguana_ramchaininit: error getting txdataptrs\n");
-        return(0);
-    }
-    else printf("did ramchain init\n");
+    printf("txdata datalen.%d\n",txdata->datalen);
     return(ramchain);
 }
 

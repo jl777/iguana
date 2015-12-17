@@ -21,7 +21,7 @@
 #define _IGUANA_MAXPENDING 64
 #define _IGUANA_MAXBUNDLES 8 //512
 #define IGUANA_MAXACTIVEBUNDLES 64
-#define IGUANA_MAXFILES 32768
+#define IGUANA_MAXFILES 2048
 
 #define IGUANA_MAPHASHTABLES 1
 #define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 4)
@@ -350,8 +350,8 @@ struct iguana_iAddr { uint32_t ipbits,ind,lastkilled,numkilled,lastconnect,numco
 struct iguana_block
 {
     bits256 prev_block,merkle_root;
-    int32_t height; uint32_t timestamp,nonce,bits,recvlen;
-    uint32_t bundlei:11,hdrsi:21,version:22,addrind:10;
+    int32_t height; uint32_t timestamp,nonce,bits,recvlen,ipbits;
+    uint32_t bundlei:11,hdrsi:21,version:22;
     uint16_t numvouts,numvins,txn_count:14,mainchain:1,valid:1;
     UT_hash_handle hh;
     bits256 hash2;
@@ -693,11 +693,11 @@ void iguana_peerfilename(struct iguana_info *coin,char *fname,uint32_t addrind,u
 
 struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata);
 
-struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,void *ptrs[],int32_t datalens[],int32_t n,struct iguana_bundle *bp);
-int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain);
-int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain);
-struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,void *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei,int32_t datalen);
-int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_memspace *memB,struct iguana_ramchain *ramchainB);
+struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *ptrs[],int32_t n,struct iguana_bundle *bp);
+int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain);
+int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_ramchain *ramchain);
+struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei,int32_t datalen);
+int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata);
 
 int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2,int32_t priority);
 void iguana_copyblock(struct iguana_info *coin,struct iguana_block *block,struct iguana_block *origblock);
@@ -706,5 +706,7 @@ extern queue_t helperQ;
 extern const char *Hardcoded_coins[][3];
 void iguana_main(void *arg);
 extern struct iguana_info Coins[64];
+int32_t iguana_peerfname(struct iguana_info *coin,char *fname,uint32_t ipbits,bits256 hash2);
+struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,char *fname,struct iguana_memspace *mem,uint32_t ipbits,bits256 hash2);
 
 #endif

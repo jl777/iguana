@@ -15,29 +15,37 @@
 
 #include "iguana777.h"
 
-struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,void *ptrs[],int32_t datalens[],int32_t n,struct iguana_bundle *bp)
+int32_t iguana_peerfname(struct iguana_info *coin,char *fname,uint32_t ipbits,bits256 hash2)
 {
-    int32_t i; struct iguana_ramchain *ramchain=0,*ramchainB; struct iguana_block *block;
-    if ( ptrs[0] != 0 && (block= bp->blocks[0]) != 0 && (ramchain= iguana_ramchaininit(coin,mem,ptrs[0],bp->prevbundlehash2,block->prev_block,block->hash2,0,datalens[0])) != 0 )
+    struct iguana_bundle *bp; int32_t bundlei; char str[65];
+    if ( ipbits == 0 )
+        printf("illegal ipbits.%d\n",ipbits), getchar();
+    if ( (bp= iguana_bundlesearch(coin,&bundlei,hash2)) != 0 )
+        hash2 = bp->bundlehash2;
+    sprintf(fname,"tmp/%s/%s.peer%08x",coin->symbol,bits256_str(str,hash2),ipbits);
+    return(bundlei);
+}
+
+struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *ptrs[],int32_t n,struct iguana_bundle *bp)
+{
+    int32_t i; struct iguana_ramchain *ramchain=0; struct iguana_block *block;
+    if ( ptrs[0] != 0 && (block= bp->blocks[0]) != 0 && (ramchain= iguana_ramchaininit(coin,mem,ptrs[0],bp->prevbundlehash2,block->prev_block,block->hash2,0,ptrs[0]->datalen)) != 0 )
     {
         for (i=1; i<n; i++)
         {
-            iguana_memreset(memB);
-            if ( ptrs[i] != 0 && (block= bp->blocks[i]) != 0 && (ramchainB= iguana_ramchaininit(coin,memB,ptrs[i],bp->prevbundlehash2,block->prev_block,block->hash2,i,datalens[i])) != 0 )
+            if ( ptrs[i] != 0 && (block= bp->blocks[i]) != 0 )
             {
-                if ( iguana_ramchainmerge(coin,mem,ramchain,memB,ramchainB) < 0 )
+                if ( iguana_ramchainmerge(coin,mem,ramchain,ptrs[i]) < 0 )
                 {
                     printf("error merging ramchain.%s hdrsi.%d at ptrs[%d]\n",coin->symbol,bp->hdrsi,i);
-                    iguana_ramchainfree(coin,memB,ramchainB);
-                    iguana_ramchainfree(coin,mem,ramchain);
+                    iguana_ramchainfree(coin,ramchain);
                     return(0);
                 }
-                iguana_ramchainfree(coin,memB,ramchainB);
             }
             else
             {
                 printf("error generating ramchain.%s hdrsi.%d for ptrs[%d]\n",coin->symbol,bp->hdrsi,i);
-                iguana_ramchainfree(coin,mem,ramchain);
+                iguana_ramchainfree(coin,ramchain);
                 return(0);
             }
         }
@@ -47,23 +55,21 @@ struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct igu
 
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
 {
-    void *ptrs[IGUANA_MAXBUNDLESIZE]; int32_t datalens[IGUANA_MAXBUNDLESIZE]; struct iguana_mappedptr M;
-    int32_t retval,i,maxrecv,flag,numdirs=0; struct iguana_ramchain *ramchain; uint64_t estimatedsize = 0;
-    struct iguana_block *block; char fname[1024],str[65];
+    struct iguana_txblock *ptrs[IGUANA_MAXBUNDLESIZE]; struct iguana_block *block;
+    char fname[1024]; FILE *fp; uint64_t estimatedsize = 0;
+    int32_t i,maxrecv,addrind,bundlei,flag,numdirs=0; struct iguana_ramchain *ramchain;
     flag = maxrecv = 0;
     for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
     {
         if ( (block= bp->blocks[i]) != 0 )
         {
             if ( memcmp(block->hash2.bytes,coin->chain->genesis_hashdata,sizeof(bits256)) == 0 )
-                ptrs[i] = coin->chain->genesis_hashdata, flag++;
+                ptrs[i] = (struct iguana_txblock *)coin->chain->genesis_hashdata, flag++;
             else
             {
-                memset(&M,0,sizeof(M));
-                sprintf(fname,"tmp/%s/%s.peer%d",coin->symbol,bits256_str(str,block->hash2),block->addrind);
-                if ( (ptrs[i]= iguana_mappedptr(0,&M,0,0,fname)) != 0 )
+                iguana_meminit(&memB[i],"ramchainB",0,block->recvlen + 4096,0);
+                if ( (ptrs[i]= iguana_peertxdata(coin,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
                 {
-                    datalens[i] = (int32_t)M.allocsize;
                     if ( block->recvlen > maxrecv )
                         maxrecv = block->recvlen;
                     estimatedsize += block->recvlen;
@@ -71,7 +77,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 }
                 else
                 {
-                    printf("error getting block hdrs.%d ptr[%d]\n",bp->hdrsi,i);
+                    printf("error (%s) hdrs.%d ptr[%d]\n",fname,bp->hdrsi,i);
                     CLEARBIT(bp->recv,i);
                     bp->issued[i] = 0;
                     block = 0;
@@ -82,16 +88,30 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     if ( flag == i )
     {
         iguana_meminit(mem,"bundleHT",0,estimatedsize + IGUANA_MAXPACKETSIZE,0);
-        iguana_meminit(memB,"ramchainB",0,maxrecv + IGUANA_MAXPACKETSIZE,0);
-        printf(">>>>>>>>> start MERGE.(%ld %ld) numdirs.%d i.%d flag.%d estimated.%ld maxrecv.%d\n",(long)mem->totalsize,(long)memB->totalsize,numdirs,i,flag,(long)estimatedsize,maxrecv);
-        if ( (ramchain= iguana_bundlemergeHT(coin,mem,memB,ptrs,datalens,i,bp)) != 0 )
+        printf(">>>>>>>>> start MERGE.(%ld) i.%d flag.%d estimated.%ld maxrecv.%d\n",(long)mem->totalsize,i,flag,(long)estimatedsize,maxrecv);
+        if ( (ramchain= iguana_bundlemergeHT(coin,mem,ptrs,i,bp)) != 0 )
         {
-            iguana_ramchainsave(coin,mem,ramchain);
-            iguana_ramchainfree(coin,mem,ramchain);
+            iguana_ramchainsave(coin,ramchain);
+            iguana_ramchainfree(coin,ramchain);
             bp->emitfinish = (uint32_t)time(NULL);
          } else bp->emitfinish = 0;
         iguana_mempurge(mem);
-        iguana_mempurge(memB);
+        for (addrind=0; addrind<IGUANA_MAXPEERS; addrind++)
+        {
+            if ( coin->peers.active[addrind].ipbits != 0 )
+            {
+                if ( (bundlei= iguana_peerfname(coin,fname,coin->peers.active[addrind].ipbits,bp->bundlehash2)) >= 0 )
+                {
+                    if ( (fp= fopen(fname,"rb")) != 0 )
+                    {
+                        fclose(fp);
+                        printf("remove.(%s)\n",fname);
+                        iguana_removefile(fname,0);
+                        coin->peers.numfiles--;
+                    }
+                }
+            }
+        }
     }
     else
     {
@@ -99,20 +119,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         bp->emitfinish = 0;
     }
     for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
-    {
-        if ( (block= bp->blocks[i]) != 0 && ptrs[i] != 0 )
-        {
-            if ( memcmp(block->hash2.bytes,coin->chain->genesis_hashdata,sizeof(bits256)) != 0 )
-            {
-                sprintf(fname,"tmp/%s/%s.peer%d",coin->symbol,bits256_str(str,block->hash2),block->addrind);
-                if ( (retval= munmap(ptrs[i],datalens[i])) != 0 )
-                    printf("error.%d unmapping %s[%d]\n",retval,fname,datalens[i]);
-                iguana_removefile(fname,0);
-                coin->peers.numfiles--;
-                //printf("delete.(%s) %d\n",fname,coin->peers.numfiles);
-            }
-        }
-    }
+        iguana_mempurge(&memB[i]);
     return(flag);
 }
 
@@ -192,7 +199,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
 void iguana_helper(void *arg)
 {
     FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson=0; int32_t i,flag;
-    struct iguana_helper *ptr; struct iguana_info *coin; struct iguana_memspace MEM,MEMB;
+    struct iguana_helper *ptr; struct iguana_info *coin; struct iguana_memspace MEM,*MEMB;
     if ( arg != 0 && (argjson= cJSON_Parse(arg)) != 0 )
         helpername = jstr(argjson,"name");
     if ( helpername == 0 )
@@ -204,13 +211,14 @@ void iguana_helper(void *arg)
     fp = fopen(fname,"wb");
     if ( argjson != 0 )
         free_json(argjson);
-    memset(&MEM,0,sizeof(MEM)), memset(&MEMB,0,sizeof(MEMB));
+    memset(&MEM,0,sizeof(MEM));
+    MEMB = mycalloc('b',IGUANA_MAXBUNDLESIZE,sizeof(*MEMB));
     while ( 1 )
     {
         flag = 0;
         while ( (ptr= queue_dequeue(&helperQ,0)) != 0 )
         {
-            iguana_helpertask(fp,&MEM,&MEMB,ptr);
+            iguana_helpertask(fp,&MEM,MEMB,ptr);
             myfree(ptr,ptr->allocsize);
             flag++;
         }
