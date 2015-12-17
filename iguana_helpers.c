@@ -239,9 +239,12 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             else
             {
                 printf("peerfileptr[%d] (%d %d %d %d) null bp.%p %d\n",i,txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,bp,bp->hdrsi);
-                CLEARBIT(bp->recv,i);
-                memset(&block->txdatabits,0,sizeof(block->txdatabits));
-                block = 0;
+                if ( 0 )
+                {
+                    CLEARBIT(bp->recv,i);
+                    memset(&block->txdatabits,0,sizeof(block->txdatabits));
+                    block = 0;
+                }
             }
             addrind = txdatabits.addrind, fileind = txdatabits.filecount;
             if ( numdirs > 0 )
@@ -260,6 +263,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             }
         }
     }
+    bp->emitfinish = (uint32_t)time(NULL);
     if ( flag == i )
     {
         iguana_meminit(mem,"bundleHT",0,estimatedsize + IGUANA_MAXPACKETSIZE,0);
@@ -269,7 +273,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             iguana_ramchainsave(coin,mem,ramchain);
             iguana_ramchainfree(coin,mem,ramchain);
-            bp->emitfinish = (uint32_t)time(NULL);
         } else bp->emitfinish = 0;
         iguana_mempurge(mem);
         iguana_mempurge(memB);
