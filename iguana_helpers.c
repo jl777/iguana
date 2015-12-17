@@ -62,21 +62,19 @@ return(0);
 
 void *_iguana_txdataptrHT(struct iguana_info *coin,struct iguana_mappedptr *M,char *fname,struct iguana_txdatabits txdatabits)
 {
-    int32_t len; uint8_t *rawptr;
+    int32_t len; uint8_t *rawptr; uint32_t starttime = (uint32_t)time(NULL);
     if ( M->fileptr != 0 )
     {
-        if ( M->allocsize < (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
+        while ( M->allocsize < (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
         {
             iguana_closemap(M);
-            if ( iguana_mappedptr(0,M,0,0,fname) == 0 )
+            if ( iguana_mappedptr(0,M,0,0,fname) == 0 || M->allocsize < (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
             {
-                printf("error on reopen (%s)\n",fname);
-                return(0);
-            }
-            else if ( M->allocsize < (txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)) )
-            {
-                printf("too small (%s) %llu vs %ld\n",fname,(long long)M->allocsize,(txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)));
-                return(0);
+                if ( time(NULL) > starttime+3 )
+                {
+                    printf("too small (%s) %llu vs %ld\n",fname,(long long)M->allocsize,(txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)));
+                    return(0);
+                } else sleep(1);
             }
         }
         rawptr = (void *)((long)M->fileptr + txdatabits.fpos);
