@@ -263,7 +263,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         iguana_meminit(mem,"bundleHT",0,estimatedsize,0);
         iguana_meminit(memB,"ramchainB",0,maxrecv + 65536,0);
-        printf(">>>>>>>>> start MERGE numdirs.%d i.%d flag.%d estimated.%ld maxrecv.%d\n",numdirs,i,flag,(long)estimatedsize,maxrecv);
+        printf(">>>>>>>>> start MERGE.(%ld %ld) numdirs.%d i.%d flag.%d estimated.%ld maxrecv.%d\n",(long)mem->totalsize,(long)memB->totalsize,numdirs,i,flag,(long)estimatedsize,maxrecv);
         if ( (ramchain= iguana_bundlemergeHT(coin,mem,memB,ptrs,i,bp)) != 0 )
         {
             iguana_ramchainsave(coin,mem,ramchain);
@@ -365,7 +365,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
             printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
             if ( coin->MAXBUNDLES > 2*_IGUANA_MAXBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
                 coin->MAXBUNDLES--;
-            else if ( coin->activebundles >= coin->MAXBUNDLES && coin->estsize < coin->MAXRECVCACHE*.5 )
+            else if ( (coin->MAXBUNDLES * coin->estsize)/(coin->activebundles+1) < coin->MAXRECVCACHE*.75 )
                 coin->MAXBUNDLES++;
             else printf("no change to MAXBUNDLES.%d\n",coin->MAXBUNDLES);
         } else printf("no coin in helper request?\n");

@@ -1002,7 +1002,7 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
 #ifndef IGUANA_DEDICATED_THREADS
     coin->peers.peersloop = iguana_launch("peersloop",iguana_peersloop,coin,IGUANA_PERMTHREAD);
 #endif
-    if ( (coin->MAXBUNDLES= coin->bundlescount / 3) < _IGUANA_MAXBUNDLES )
+    if ( 0 && (coin->MAXBUNDLES= coin->bundlescount / 4) < _IGUANA_MAXBUNDLES )
         coin->MAXBUNDLES = _IGUANA_MAXBUNDLES;
     //coin->peers.acceptloop = iguana_launch("acceptloop",iguana_acceptloop,coin,IGUANA_PERMTHREAD);
     //coin->peers.recvloop = iguana_launch("recvloop",iguana_recvloop,coin,IGUANA_PERMTHREAD);

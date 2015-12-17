@@ -302,7 +302,7 @@ void iguana_memreset(struct iguana_memspace *mem)
 void iguana_mempurge(struct iguana_memspace *mem)
 {
     if ( mem->allocated != 0 && mem->ptr != 0 && mem->totalsize > 0 )
-        myfree(mem->ptr,mem->totalsize);
+        myfree(mem->ptr,mem->totalsize), mem->ptr = 0;
     iguana_memreset(mem);
     mem->totalsize = 0;
 }
@@ -316,7 +316,8 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
         {
             iguana_mempurge(mem);
             mem->totalsize = 0;
-        }
+            //printf("memptr.%p totalsize.%ld vs totalsize.%ld\n",mem->ptr,(long)mem->totalsize,(long)totalsize);
+        } //else printf("mem->ptr.%p mem->totalsize %ld\n",mem->ptr,(long)mem->totalsize);
         if ( mem->ptr == 0 )
         {
             if ( (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
@@ -326,8 +327,8 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
                 return(0);
             }
             mem->totalsize = totalsize;
-        }
-        //printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
+        } //else printf("memptr.%p\n",mem->ptr);
+        //printf("meminit.(%s) %d vs %ld\n",mem->name,(int32_t)totalsize,(long)mem->totalsize);
         mem->allocated = 1;
     }
     else
@@ -338,6 +339,8 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
     }
     mem->threadsafe = threadsafe;
     iguana_memreset(mem);
+    if ( mem->totalsize == 0 )
+        printf("meminit.%s ILLEGAL STATE null size\n",mem->name), getchar();
     return(mem->ptr);
 }
 
@@ -387,7 +390,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
         }
 #endif
      //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
-    } else printf("error memalloc mem.%p %s alloc %ld used %ld alloc.%ld -> %s %p\n",mem,mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr), exit(-1);
+    } else printf("error memalloc mem.%p %s alloc %ld used %ld alloc.%ld -> %s %p\n",mem,mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr), getchar();//exit(-1);
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_unlock(&mem->mutex);
     return(ptr);
