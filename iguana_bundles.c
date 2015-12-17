@@ -787,7 +787,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             } else m = coin->chain->bundlesize;
         }
         prevbp = bp;
-        if ( dispflag != 0 && bp != 0 && bp->emitfinish == 0 )
+        if ( dispflag != 0 && bp != 0 && bp->emitfinish == 0 && m > 0 )
             printf("%s",iguana_bundledisp(coin,prevbp,bp,nextbp,m));
     }
     //if ( closestbundle >= 0 && (coin->closestbundle < 0 || coin->bundles[coin->closestbundle]->numrecv >= coin->chain->bundlesize) )
