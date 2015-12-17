@@ -764,12 +764,12 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         closestbundle = i;
                     }
                 }
-                //if (  i > (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
+                if (  i > (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
                     continue;
                 RTqsize = queue_size(&coin->blocksQ);
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
-                    if ( (block= bp->blocks[bundlei]) != 0 && block->ipbits != 0 )
+                    if ( (block= bp->blocks[bundlei]) != 0 )//&& block->ipbits != 0 )
                     {
                         m++;
                         //printf("hashes.%p numrecv.%d hdrs->n.%d qsize.%d\n",bp->blockhashes,bp->numrecv,bp->n,qsize);
