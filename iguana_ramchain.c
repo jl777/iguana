@@ -602,10 +602,17 @@ int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *me
     struct iguana_Uextra *Uextras; struct iguana_pkextra *pkextras; // onetime zero to nonzero
     struct iguana_account *accounts; // volatile
 };*/
-struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,void *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei)
+struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,void *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei,int32_t datalen)
 {
-    struct iguana_ramchain *ramchain;
+    struct iguana_ramchain *ramchain; struct iguana_memspace txmem; struct iguana_txblock *txdata = 0;
     ramchain = iguana_memalloc(mem,sizeof(*ramchain),1);
+    iguana_meminit(&txmem,"ramchaintxmem",ptr,datalen,0);
+    if ( (txdata= iguana_ramchainptrs(&ramchain->T,&ramchain->U,&ramchain->S,&ramchain->P,&ramchain->externalT,&txmem,0)) == 0 || ramchain->T == 0 || ramchain->U == 0 || ramchain->S == 0 || ramchain->P == 0 )
+    {
+        printf("iguana_ramchaininit: error getting txdataptrs\n");
+        return(0);
+    }
+    else printf("did ramchain init\n");
     return(ramchain);
 }
 

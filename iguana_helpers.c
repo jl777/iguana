@@ -185,12 +185,12 @@ struct iguana_fileitem *iguana_peerdirptrHT(struct iguana_info *coin,int32_t *nu
 struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,void *ptrs[],int32_t n,struct iguana_bundle *bp)
 {
     int32_t i; struct iguana_ramchain *ramchain=0,*ramchainB; struct iguana_block *block;
-    if ( ptrs[0] != 0 && (block= bp->blocks[0]) != 0 && (ramchain= iguana_ramchaininit(coin,mem,ptrs[0],bp->prevbundlehash2,block->prev_block,block->hash2,0)) != 0 )
+    if ( ptrs[0] != 0 && (block= bp->blocks[0]) != 0 && (ramchain= iguana_ramchaininit(coin,mem,ptrs[0],bp->prevbundlehash2,block->prev_block,block->hash2,0,block->txdatabits.datalen)) != 0 )
     {
         for (i=1; i<n; i++)
         {
             iguana_memreset(memB);
-            if ( ptrs[i] != 0 && (block= bp->blocks[i]) != 0 && (ramchainB= iguana_ramchaininit(coin,memB,ptrs[i],bp->prevbundlehash2,block->prev_block,block->hash2,i)) != 0 )
+            if ( ptrs[i] != 0 && (block= bp->blocks[i]) != 0 && (ramchainB= iguana_ramchaininit(coin,memB,ptrs[i],bp->prevbundlehash2,block->prev_block,block->hash2,i,block->txdatabits.datalen)) != 0 )
             {
                 if ( iguana_ramchainmerge(coin,mem,ramchain,memB,ramchainB) < 0 )
                 {
