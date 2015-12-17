@@ -742,11 +742,14 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                 {
                     numactive++;
                     remaining = (bp->estsize - bp->datasize);
-                    if ( remaining > 0 && (closest < 0 || remaining < closest) )
+                    if ( remaining > 0 && (closest < 0 || remaining <= closest) )
                     {
                         //printf("closest.[%d] %d -> R.%d (%d - %d)\n",closestbundle,(int)closest,(int)remaining,(int)bp->estsize,(int)bp->datasize);
-                        closest = remaining;
-                        closestbundle = i;
+                        if ( remaining != closest || (rand() % 10) < 3 )
+                        {
+                            closest = remaining;
+                            closestbundle = i;
+                        }
                     }
                 }
                 if ( numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )

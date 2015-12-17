@@ -592,6 +592,16 @@ int32_t iguana_ramchainmerge(struct iguana_info *coin,struct iguana_memspace *me
     return(0);
 }
 
+/*struct iguana_ramchain
+{
+    uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
+    uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
+    int32_t numblocks,hdrsi,bundleheight; bits256 prevhash2,firsthash2,lasthash2,nexthash2;
+    struct iguana_kvitem *txids,*pkhashes;
+    struct iguana_txid *T; struct iguana_unspent *U; struct iguana_spend *S; struct iguana_pkhash *P;
+    struct iguana_Uextra *Uextras; struct iguana_pkextra *pkextras; // onetime zero to nonzero
+    struct iguana_account *accounts; // volatile
+};*/
 struct iguana_ramchain *iguana_ramchaininit(struct iguana_info *coin,struct iguana_memspace *mem,void *ptr,bits256 prevbundlehash2,bits256 prevhash2,bits256 hash2,int32_t bundlei)
 {
     struct iguana_ramchain *ramchain;
