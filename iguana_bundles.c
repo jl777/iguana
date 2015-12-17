@@ -779,7 +779,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                     if ( bits256_nonz(hash2) > 0 )
                     {
                         //printf("hdrsi.%d qsize.%d bcount.%d check bundlei.%d bit.%d %.3f lag %.3f ave %.3f\n",bp->hdrsi,qsize,coin->bcount,bundlei,GETBIT(bp->recv,bundlei),bp->issued[bundlei],milliseconds() - bp->issued[bundlei],bp->avetime);
-                        if ( GETBIT(bp->recv,bundlei) == 0 )
+                        if ( GETBIT(bp->recv,bundlei) == 0 || (bp->blocks[bundlei] != 0 && bp->blocks[bundlei]->ipbits == 0) )
                         {
                             if ( bp->issued[bundlei] > SMALLVAL )
                                 numwaiting++;
@@ -879,7 +879,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                             if ( bp->issued[bundlei] > SMALLVAL )
                             {
                                 numissued++;
-                                if ( GETBIT(bp->recv,bundlei) != 0 )
+                                if ( GETBIT(bp->recv,bundlei) != 0 && bp->blocks[bundlei] != 0 && bp->blocks[bundlei]->ipbits != 0 )
                                 {
                                     flag++;
                                     numrecv++;
