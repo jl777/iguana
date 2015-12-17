@@ -92,7 +92,7 @@ void *_iguana_txdataptrHT(struct iguana_info *coin,struct iguana_mappedptr *M,ch
             if ( txdatabits.isdir == 0 )
                 return(&rawptr[sizeof(uint32_t)]);
             else printf("isdir set without IGUANA_MARKER.%x\n",IGUANA_MARKER);
-        } else printf("txdataptr: len.%d error [%d %d %d %d] (%d %d)\n",len,txdatabits.datalen,txdatabits.addrind,txdatabits.fpos,txdatabits.filecount,len == txdatabits.datalen,len < IGUANA_MAXPACKETSIZE);//, getchar();
+        } else printf("txdataptr.%s: len.%d error [%d %d %d %d] (%d %d)\n",fname,len,txdatabits.datalen,txdatabits.addrind,txdatabits.fpos,txdatabits.filecount,len == txdatabits.datalen,len < IGUANA_MAXPACKETSIZE);//, getchar();
     } //else printf("txdataptr.%s %p %ld vs %ld\n",M->fname,M->fileptr,M->allocsize,(txdatabits.fpos + txdatabits.datalen + sizeof(uint32_t)));
     return(0);
 }
@@ -237,9 +237,10 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             else
             {
                 printf("peerfileptr[%d] (%d %d %d %d) null bp.%p %d\n",i,txdatabits.addrind,txdatabits.filecount,txdatabits.fpos,txdatabits.datalen,bp,bp->hdrsi);
-                if ( 0 )
+                if ( 1 )
                 {
                     CLEARBIT(bp->recv,i);
+                    bp->issued[i] = 0;
                     memset(&block->txdatabits,0,sizeof(block->txdatabits));
                     block = 0;
                 }
