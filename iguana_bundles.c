@@ -769,7 +769,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                 RTqsize = queue_size(&coin->blocksQ);
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
                 {
-                    if ( (block= bp->blocks[bundlei]) != 0 )//&& block->ipbits != 0 )
+                    if ( (block= bp->blocks[bundlei]) != 0 && block->ipbits != 0 )
                     {
                         m++;
                         //printf("hashes.%p numrecv.%d hdrs->n.%d qsize.%d\n",bp->blockhashes,bp->numrecv,bp->n,qsize);
@@ -785,7 +785,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                                 numwaiting++;
                             if ( bp->issued[bundlei] == 0 || (qsize == 0 && coin->bcount > 100 && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
                             {
-                                if ( (i == lastbundle || i == coin->closestbundle || numactive <= coin->MAXBUNDLES) ) //RTqsize < maxwaiting && numwaiting < maxwaiting ||
+                                if ( RTqsize < maxwaiting && (i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting || numactive <= coin->MAXBUNDLES) )
                                 {
                                     char str[65];
                                     bits256_str(str,hash2);
