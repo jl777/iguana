@@ -317,11 +317,15 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
             mem->totalsize = totalsize;
             iguana_mempurge(mem);
         }
-        if ( mem->ptr == 0 && (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
+        if ( mem->ptr == 0 )
         {
-            printf("iguana_meminit: cant get %d bytes\n",(int32_t)totalsize);
-            exit(-1);
-            return(0);
+            if ( (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
+            {
+                printf("iguana_meminit: cant get %d bytes\n",(int32_t)totalsize);
+                exit(-1);
+                return(0);
+            }
+            mem->totalsize = totalsize;
         }
         //printf("meminit.(%s) %d\n",mem->name,(int32_t)totalsize);
         mem->allocated = 1;
