@@ -479,12 +479,12 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
                     if ( bp->n < coin->chain->bundlesize )
                         iguana_blockQ(coin,bp,n-1,blockhashes[n-1],1);
                     else iguana_blockQ(coin,bp,coin->chain->bundlesize-1,blockhashes[coin->chain->bundlesize-1],1);*/
-                    if ( bp->hdrsi < coin->bundlescount/2 )
+                    if ( bp->hdrsi < coin->bundlescount/4 )
                     {
                         printf("Q all of hdrs.%d\n",bp->hdrsi);
                         for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
                             if ( (block= iguana_blockfind(coin,blockhashes[i])) != 0 )
-                                iguana_blockQ(coin,bp,i,block->hash2,bp->hdrsi < coin->bundlescount/4);
+                                iguana_blockQ(coin,bp,i,block->hash2,bp->hdrsi < coin->bundlescount/8);
                     }
                     break;
                 }
