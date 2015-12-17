@@ -645,8 +645,8 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 lasti = i;
             } else lasti = i;
         }
-        if ( n == coin->chain->bundlesize-1 )
-            printf("bp.%d %d %d\n",bp->hdrsi,bp->bundleheight,lasti);
+        //if ( n == coin->chain->bundlesize-1 )
+        //    printf("bp.%d %d %d\n",bp->hdrsi,bp->bundleheight,lasti);
         bp->numrecv = n;
         bp->datasize = datasize;
         if ( n > 0 )

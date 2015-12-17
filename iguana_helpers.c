@@ -68,7 +68,7 @@ int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
 {
     struct iguana_txblock *ptrs[IGUANA_MAXBUNDLESIZE]; struct iguana_block *block;
-    char fname[1024]; FILE *fp; uint64_t estimatedsize = 0;
+    char fname[1024]; uint64_t estimatedsize = 0;
     int32_t i,maxrecv,addrind,flag,numdirs=0; struct iguana_ramchain *ramchain;
     flag = maxrecv = 0;
     for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
@@ -105,6 +105,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             iguana_ramchainsave(coin,ramchain);
             iguana_ramchainfree(coin,ramchain);
+            printf("ramchain saved\n");
             bp->emitfinish = (uint32_t)time(NULL);
          } else bp->emitfinish = 0;
         iguana_mempurge(mem);
@@ -112,15 +113,11 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             if ( coin->peers.active[addrind].ipbits != 0 )
             {
-                if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->bundlehash2) > 0 )
+                if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->bundlehash2) >= 0 )
                 {
-                    if ( (fp= fopen(fname,"rb")) != 0 )
-                    {
-                        fclose(fp);
-                        printf("remove.(%s)\n",fname);
-                        iguana_removefile(fname,0);
-                        coin->peers.numfiles--;
-                    }
+                    printf("remove.(%s)\n",fname);
+                    iguana_removefile(fname,0);
+                    coin->peers.numfiles--;
                 }
             }
         }
