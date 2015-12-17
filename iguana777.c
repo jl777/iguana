@@ -209,7 +209,7 @@ void iguana_coinloop(void *arg)
                         //        m++;
                         iguana_bundlestats(coin,str);
                         printf("%s.%-2d %s time %.2f files.%d\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.,coin->peers.numfiles);
-                        if ( (rand() % 10) == 0 )
+                        if ( (rand() % 100) == 0 )
                             myallocated(0,0);
                     }
                 }
@@ -218,7 +218,7 @@ void iguana_coinloop(void *arg)
         if ( flag == 0 )
         {
             //printf("IDLE\n");
-            //usleep(1000);
+            usleep(10000);
         }
     }
 }
