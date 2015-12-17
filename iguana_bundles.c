@@ -785,7 +785,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                                 numwaiting++;
                             if ( bp->issued[bundlei] == 0 || (qsize == 0 && coin->bcount > 100 && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
                             {
-                                if ( RTqsize < maxwaiting && (i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting || numactive <= coin->MAXBUNDLES) )
+                                if ( (i == lastbundle || i == coin->closestbundle || numactive <= coin->MAXBUNDLES) ) //RTqsize < maxwaiting && numwaiting < maxwaiting ||
                                 {
                                     char str[65];
                                     bits256_str(str,hash2);
