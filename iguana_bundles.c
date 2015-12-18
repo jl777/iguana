@@ -772,13 +772,14 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                     if ( bits256_nonz(hash2) > 0 )
                     {
                         //printf("hdrsi.%d qsize.%d bcount.%d check bundlei.%d bit.%d %.3f lag %.3f ave %.3f\n",bp->hdrsi,qsize,coin->bcount,bundlei,GETBIT(bp->recv,bundlei),bp->issued[bundlei],milliseconds() - bp->issued[bundlei],bp->avetime);
-                        if ( GETBIT(bp->recv,bundlei) == 0 )
+                        if ( (block= bp->blocks[bundlei]) == 0 || block->ipbits == 0 )
+                        //if ( GETBIT(bp->recv,bundlei) == 0 )
                         {
                             if ( bp->issued[bundlei] > SMALLVAL )
                                 numwaiting++;
-                            if ( bp->issued[bundlei] == 0 || (qsize == 0 && coin->bcount > 100 && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )
+                            if ( coin->numrecv > 380000 || bp->issued[bundlei] == 0 || milliseconds() > (bp->issued[bundlei] + bp->avetime*2) )//(qsize == 0 && coin->bcount > 100 && )) )
                             {
-                                if ( RTqsize < maxwaiting && (i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting || numactive <= coin->MAXBUNDLES) )
+                                if ( coin->numrecv > 380000 || (RTqsize < maxwaiting && (i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting || numactive <= coin->MAXBUNDLES)) )
                                 {
                                     char str[65];
                                     bits256_str(str,hash2);
@@ -893,6 +894,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,numrecv,numemit,coin->numemitted,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
     coin->activebundles = numactive;
     coin->estsize = estsize;
+    coin->numrecv = numrecv;
 }
 
 int32_t iguana_updatecounts(struct iguana_info *coin)

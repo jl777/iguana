@@ -455,7 +455,7 @@ struct iguana_info
     struct iguana_blocks blocks;
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
     int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,lastbundletime;
-    int32_t initialheight,mapflags,minconfirms; void *launched,*started;
+    int32_t initialheight,mapflags,minconfirms,numrecv; void *launched,*started;
 };
 
 // peers
