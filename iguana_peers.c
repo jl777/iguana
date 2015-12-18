@@ -533,9 +533,9 @@ void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,stru
             addr = &coin->peers.active[i];
             if ( addr->usock >= 0 || addr->pending != 0 || addr->ipbits == iA->ipbits || strcmp(ipaddr,addr->ipaddr) == 0 )
             {
-                printf("skip.(%s) usock.%d pending.%d ipbits.%x vs %x\n",addr->ipaddr,addr->usock,addr->pending,addr->ipbits,iA->ipbits);
+                //printf("skip.(%s) usock.%d pending.%d ipbits.%x vs %x\n",addr->ipaddr,addr->usock,addr->pending,addr->ipbits,iA->ipbits);
                 //portable_mutex_unlock(&coin->peers_mutex);
-                return(0);
+                continue;
             }
             if ( addr->ipbits == 0 )
             {
@@ -567,7 +567,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
     struct iguana_iAddr iA; struct iguana_kvitem item;
     if ( ipaddr != 0 )
     {
-        printf("%p Q possible peer.(%s)\n",coin,ipaddr);
+        //printf("%p Q possible peer.(%s)\n",coin,ipaddr);
         queue_enqueue("possibleQ",&coin->possibleQ,queueitem(ipaddr),1);
         return((uint32_t)time(NULL));
     }
@@ -580,7 +580,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
         return((uint32_t)time(NULL));
     }
 #endif
-    printf("check possible peer.(%s)\n",ipaddr);
+    //printf("check possible peer.(%s)\n",ipaddr);
     for (i=0; i<coin->MAXPEERS; i++)
         if ( strcmp(ipaddr,coin->peers.active[i].ipaddr) == 0 )
         {
