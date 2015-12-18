@@ -316,7 +316,6 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
     // filesystem.
     InitializeMessageQueue();
     pthread_create(&g_handle_message_thread, NULL, &HandleMessageThread, NULL);
-    pthread_create(&iguana_thread,NULL,&iguana,iguana_filestr(&allocsize,"iguana.conf"));
     nacl_io_init_ppapi(instance,g_get_browser_interface);
     umount("/");
     mount("", "/memfs", "memfs", 0, "");
@@ -330,6 +329,7 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
           "httpfs", /* filesystemtype */
           0,        /* mountflags */
           "");      /* data */
+    pthread_create(&iguana_thread,NULL,&iguana,iguana_filestr(&allocsize,"iguana.conf"));
     PostMessage("finished DidCreate\n");
     return PP_TRUE;
 }
