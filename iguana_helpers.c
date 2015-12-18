@@ -57,7 +57,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 iguana_meminit(&memB[i],"ramchainB",0,block->recvlen + 4096,0);
                 if ( (ptr= iguana_peertxdata(coin,&bundlei,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
                 {
-                    //if ( bundlei != i || ptr->block.bundlei != i )
+                    if ( bundlei != i || ptr->block.bundlei != i )
                         printf("peertxdata.%d bundlei.%d, i.%d block->bundlei.%d\n",bp->hdrsi,bundlei,i,ptr->block.bundlei);
                     ptrs[i] = &ramchains[i];
                     if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )

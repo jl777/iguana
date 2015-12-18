@@ -661,18 +661,18 @@ struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguan
     struct iguana_memspace txmem;
     memset(&txmem,0,sizeof(txmem));
     iguana_meminit(&txmem,"bramchain",txdata,txdata->datalen,0);
-    printf("ramchainset <- txdata.%p memptr.%p T.%d U.%d S.%d P.%d X.%d\n",txdata,txmem.ptr,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
+    //printf("ramchainset <- txdata.%p memptr.%p T.%d U.%d S.%d P.%d X.%d\n",txdata,txmem.ptr,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
     if ( iguana_ramchainptrs(&ramchain->T,&ramchain->U,&ramchain->S,&ramchain->P,&ramchain->externalT,&txmem,0) != txdata || ramchain->T == 0 || ramchain->U == 0 || ramchain->S == 0 || ramchain->P == 0 )
     {
         printf("iguana_ramchainset: cant set pointers txdata.%p\n",txdata);
         return(0);
     }
-   int32_t i;
-    for (i=0; i<344; i++)
-        printf("%02x ",((uint8_t *)txdata)[i]);
-    for (i=-1; i<2; i++)
-        printf("%016lx ",*(long *)((struct iguana_pkhash *)((long)txdata + txdata->pkoffset))[i].rmd160);
-    printf("datalen.%d T.%d U.%d S.%d P.%d X.%d | %d vs %d ramchain.%p txdata.%p\n",txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids,txdata->pkoffset,(int32_t)((long)ramchain->P - (long)txdata),ramchain,txdata);
+   //int32_t i;
+   // for (i=0; i<344; i++)
+   //     printf("%02x ",((uint8_t *)txdata)[i]);
+    //for (i=-1; i<2; i++)
+    //    printf("%016lx ",*(long *)((struct iguana_pkhash *)((long)txdata + txdata->pkoffset))[i].rmd160);
+    //printf("datalen.%d T.%d U.%d S.%d P.%d X.%d | %d vs %d ramchain.%p txdata.%p\n",txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids,txdata->pkoffset,(int32_t)((long)ramchain->P - (long)txdata),ramchain,txdata);
     ramchain->numunspents = txdata->numunspents;
     ramchain->numspends = txdata->numspends;
     ramchain->numpkinds = txdata->numpkinds;
