@@ -612,19 +612,20 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
     } else iguana_memalloc(mem,txdata->extralen,0);
     *Tptrp = iguana_memalloc(mem,sizeof(**Tptrp) * txdata->numtxids,rwflag);
     *Uptrp = iguana_memalloc(mem,sizeof(**Uptrp) * txdata->numunspents,rwflag);
-    *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * (txdata->numspends + 1),rwflag);
+    *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * txdata->numspends,rwflag);
     //printf("rwflag.%d ptr.%p alloctxdata.%p T.%d U.%d S.%d P.%d  pkoffset.%ld\n",rwflag,mem->ptr,txdata,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,mem->used);
     if ( externalTptrp != 0 )
     {
-        if ( txdata->pkoffset != (int32_t)mem->used )
+        if ( txdata->pkoffset < (int32_t)mem->used )
             printf("allocsize.%d size.%ld %p %s (T.%d U.%d S.%d P.%d X.%d) iguana_ramchainptrs pkoffset.%d != %ld numspends.%d\n",allocsize,sizeof(*txdata),txdata,bits256_str(str,txdata->block.hash2),txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids,txdata->pkoffset,mem->used,txdata->numspends), getchar();
+        mem->used = txdata->pkoffset;
         *Pptrp = iguana_memalloc(mem,sizeof(**Pptrp) * txdata->numpkinds,rwflag);
         *externalTptrp = iguana_memalloc(mem,txdata->numexternaltxids * sizeof(**externalTptrp),rwflag);
     }
     else
     {
         txdata->pkoffset = (int32_t)mem->used;
-        //printf("set pkoffset.%d\n",txdata->pkoffset);
+       // printf("set pkoffset.%d\n",txdata->pkoffset);
         *Pptrp = iguana_memalloc(mem,0,rwflag);
     }
     if ( 0 && rwflag == 0 )
