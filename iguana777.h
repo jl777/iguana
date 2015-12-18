@@ -391,7 +391,7 @@ struct iguana_txblock
     struct iguana_block block;
     uint32_t numtxids,numunspents,numspends,extralen,recvlen;
     // following set during second pass (still in peer context)
-    uint32_t numpkinds,numexternaltxids,datalen;
+    uint32_t numpkinds,numexternaltxids,datalen,pkoffset;
     uint8_t space[256]; // order: extra[], T, U, S, P, external txids
 };
 

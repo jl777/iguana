@@ -610,9 +610,18 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
     *Tptrp = iguana_memalloc(mem,sizeof(**Tptrp) * txdata->numtxids,rwflag);
     *Uptrp = iguana_memalloc(mem,sizeof(**Uptrp) * txdata->numunspents,rwflag);
     *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * txdata->numspends,rwflag);
-    *Pptrp = iguana_memalloc(mem,sizeof(**Pptrp) * txdata->numpkinds,rwflag);
     if ( externalTptrp != 0 )
+    {
+        if ( txdata->pkoffset != (int32_t)mem->used )
+            printf("iguana_ramchainptrs pkoffset.%d != %ld numspends.%d\n",txdata->pkoffset,mem->used,txdata->numspends), getchar();
+        *Pptrp = iguana_memalloc(mem,sizeof(**Pptrp) * txdata->numpkinds,rwflag);
         *externalTptrp = iguana_memalloc(mem,txdata->numexternaltxids * sizeof(**externalTptrp),rwflag);
+    }
+    else
+    {
+        txdata->pkoffset = (int32_t)mem->used;
+        *Pptrp = iguana_memalloc(mem,0,rwflag);
+    }
     if ( 0 && rwflag == 0 )
         printf("datalen.%d rwflag.%d origtxdat.%p allocsize.%d extralen.%d T.%d U.%d S.%d P.%d X.%p[%d]\n",(int32_t)mem->totalsize,rwflag,origtxdata,allocsize,extralen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,externalTptrp!=0?*externalTptrp:0,txdata->numexternaltxids);
     return(txdata);
@@ -646,12 +655,18 @@ struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguan
     struct iguana_memspace txmem;
     memset(&txmem,0,sizeof(txmem));
     iguana_meminit(&txmem,"bramchain",txdata,txdata->datalen,0);
+    printf("ramchainset <- txdata.%p memptr.%p\n",txdata,txmem.ptr);
     if ( iguana_ramchainptrs(&ramchain->T,&ramchain->U,&ramchain->S,&ramchain->P,&ramchain->externalT,&txmem,0) != txdata || ramchain->T == 0 || ramchain->U == 0 || ramchain->S == 0 || ramchain->P == 0 )
     {
         printf("iguana_ramchainset: cant set pointers txdata.%p\n",txdata);
         return(0);
     }
-    ramchain->numtxids = txdata->numtxids;
+   int32_t i;
+    for (i=0; i<344; i++)
+        printf("%02x ",((uint8_t *)txdata)[i]);
+    for (i=-1; i<2; i++)
+        printf("%016lx ",*(long *)((struct iguana_pkhash *)((long)txdata + txdata->pkoffset))[i].rmd160);
+    printf("datalen.%d T.%d U.%d S.%d P.%d X.%d | %d vs %d ramchain.%p txdata.%p\n",txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids,txdata->pkoffset,(int32_t)((long)ramchain->P - (long)txdata),ramchain,txdata);
     ramchain->numunspents = txdata->numunspents;
     ramchain->numspends = txdata->numspends;
     ramchain->numpkinds = txdata->numpkinds;
@@ -687,7 +702,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
 {
     uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids,i,j,k; uint64_t allocsize = 0;
     struct iguana_txid *tx;  struct iguana_account *acct; struct iguana_ramchain *ramchain,*item;
-    struct iguana_pkhash *p; struct iguana_unspent *u; struct iguana_kvitem *ptr;
+    struct iguana_pkhash *p,oldP; struct iguana_unspent *u; struct iguana_kvitem *ptr;
     bits256 txid; char str[65]; uint32_t txidind,unspentind,spendind,pkind; struct iguana_spend *s;
     numtxids = numunspents = numspends = numpkinds = 1;
     numexternaltxids = 0;
@@ -766,11 +781,12 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
                     u = &ramchain->U[unspentind];
                     *u = item->U[k];
                     u->txidind = txidind;
-                    if ( (ptr= iguana_hashfind(ramchain->pkhashes,item->P[item->U[k].pkind].rmd160,sizeof(item->P[item->U[k].pkind].rmd160))) == 0 )
+                    oldP = item->P[item->U[k].pkind];
+                    if ( (ptr= iguana_hashfind(ramchain->pkhashes,oldP.rmd160,sizeof(oldP.rmd160))) == 0 )
                     {
-                        pkind = numpkinds;
-                        p = &ramchain->P[numpkinds++];
-                        *p = item->P[item->U[k].pkind];
+                        pkind = numpkinds++;
+                        p = &ramchain->P[pkind];
+                        *p = oldP;
                         p->firstunspentind = unspentind;
                         if ( (ptr= iguana_hashsetHT(ramchain->pkhashes,0,p->rmd160,sizeof(p->rmd160),numpkinds)) == 0 )
                         {
@@ -778,6 +794,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
                             printf("fatal error adding pkhash\n");
                             return(0);
                         }
+                        printf("pkind.%d: %p %016lx <- %016lx\n",pkind,p,*(long *)p->rmd160,*(long *)oldP.rmd160);
                     } else pkind = ptr->hh.itemind;
                     u->pkind = pkind;
                     acct = &ramchain->accounts[pkind];
@@ -860,6 +877,9 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
             numspends += item->numspends;
         }
     }
+    for (i=0; i<numpkinds; i++)
+        printf("have pkind.%d: %p %016lx\n",i,&ramchain->P[i],*(long *)ramchain->P[i].rmd160);
+    printf("numpkinds.%d\n",numpkinds);
     memcpy(&ramchain->P[numpkinds],ramchain->pkextras,sizeof(*ramchain->pkextras) * numpkinds);
     ramchain->pkextras = (void *)&ramchain->P[numpkinds];
     memcpy(&ramchain->pkextras[numpkinds],ramchain->accounts,sizeof(*ramchain->accounts) * numpkinds);
@@ -870,9 +890,6 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
     ramchain->allocsize -= ((ramchain->numexternaltxids - numexternaltxids) * sizeof(*ramchain->externalT));
     ramchain->numpkinds = numpkinds;
     ramchain->numexternaltxids = numexternaltxids;
-    for (i=0; i<numpkinds; i++)
-        printf("%08x ",*(int32_t *)&ramchain->P[i]);
-    printf("numpkinds.%d\n",numpkinds);
     /*vupdate_sha256(ramchain->lhashes[IGUANA_LHASH_UNSPENT].bytes,&ramchain->states[IGUANA_LHASH_UNSPENT],(void *)ramchain->U,sizeof(*ramchain->U)*ramchain->numunspents);
     vupdate_sha256(ramchain->lhashes[IGUANA_LHASH_ACCOUNTS].bytes,&ramchain->states[IGUANA_LHASH_ACCOUNTS],(void *)acct,sizeof(*acct));
     vupdate_sha256(ramchain->lhashes[IGUANA_LHASH_SPENDS].bytes,&ramchain->states[IGUANA_LHASH_SPENDS],(void *)ramchain->S,sizeof(*ramchain->S)*);

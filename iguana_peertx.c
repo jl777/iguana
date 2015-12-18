@@ -80,10 +80,10 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
             if ( (ptr= iguana_hashfind(pkhashes,rmd160,sizeof(rmd160))) == 0 )
             {
                 memcpy(P[numpkinds].rmd160,rmd160,sizeof(rmd160));
-                if ( (ptr= iguana_hashsetPT(pkhashes,hashmem,P[numpkinds].rmd160,sizeof(P[numpkinds].rmd160),numpkinds)) == 0 )
+                if ( (ptr= iguana_hashsetPT(pkhashes,hashmem,&P[numpkinds],sizeof(P[numpkinds].rmd160),numpkinds)) == 0 )
                     printf("fatal error adding pkhash\n"), exit(-1);
+                //printf("%016lx new pkind.%d pkoffset.%d %d\n",*(long *)rmd160,numpkinds,txdata->pkoffset,(int32_t)((long)&P[numpkinds] - (long)txdata));
                 numpkinds++;
-                //printf("%08x new pkind.%d\n",*(int32_t *)rmd160,numpkinds);
             }
             u->value = tx->vouts[j].value, u->txidind = txidind;
             u->pkind = ptr->hh.itemind;
@@ -91,15 +91,17 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
             // prevunspentind requires having accts, so that waits for third pass
         }
     }
+    //printf("reallocP.%p -> ",P);
     if ( (txdata->numpkinds= numpkinds) > 0 )
         P = iguana_memalloc(txmem,sizeof(*P) * numpkinds,0);
+    //printf("%p\n",P);
     externalT = iguana_memalloc(txmem,0,1);
     txidind = 0;
     for (i=numvins=numexternal=0; i<txn_count; i++,txidind++)
     {
         tx = &txarray[i];
         t = &T[txidind];
-        t->firstvin = spendind, t->numvins = tx->tx_in;
+        t->firstvin = spendind;
         for (j=0; j<tx->tx_in; j++)
         {
             script = tx->vins[j].script, scriptlen = tx->vins[j].scriptlen;
@@ -130,6 +132,7 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
             } //else printf("vout.%x\n",s->vout);
             // prevspendind requires having accts, so that waits for third pass
         }
+        t->numvins = numvins;
     }
     if ( (txdata->numexternaltxids= numexternal) > 0 )
         externalT = iguana_memalloc(txmem,sizeof(*externalT) * numexternal,0);
@@ -394,6 +397,8 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     fwrite(&fpos,1,sizeof(fpos),fp);
                 } else printf("error with bundlei.%d vs %d\n",bundlei,coin->chain->bundlesize);
                 fclose(fp);
+                //for (i=0; i<txdata->numpkinds; i++)
+                //    printf("%016lx ",*(long *)((struct iguana_pkhash *)((long)txdata + txdata->pkoffset))[i].rmd160);
                 //printf("datalen.%d T.%d U.%d S.%d P.%d X.%d\n",txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
                 //printf("create.(%s) %d\n",fname,coin->peers.numfiles);
             }
