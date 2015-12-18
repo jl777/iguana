@@ -27,7 +27,7 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *str,bits256 *orighash2,bi
         if ( memcmp(newhash2.bytes,orighash2,sizeof(bits256)) != 0 )
         {
             char str2[65],str3[65];
-            bits256_str(str2,*orighash2), bits256_str(str2,newhash2);
+            bits256_str(str2,*orighash2), bits256_str(str3,newhash2);
             printf("iguana_hash2set overwrite [%s] %s with %s\n",str,str2,str3);
             if ( strcmp(str,"firstblockhash2") == 0 )
                 getchar();

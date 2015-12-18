@@ -26,33 +26,6 @@ int32_t iguana_peerfname(struct iguana_info *coin,char *fname,uint32_t ipbits,bi
     return(bundlei);
 }
 
-struct iguana_ramchain *iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *ptrs[],int32_t n,struct iguana_bundle *bp)
-{
-    int32_t i; struct iguana_ramchain *ramchain=0; struct iguana_block *block;
-    if ( ptrs[0] != 0 && (block= bp->blocks[0]) != 0 && (ramchain= iguana_ramchaininit(coin,mem,ptrs[0],bp->prevbundlehash2,block->prev_block,block->hash2,bp->hdrsi,0,ptrs[0]->datalen)) != 0 )
-    {
-        for (i=1; i<n; i++)
-        {
-            if ( ptrs[i] != 0 )
-            {
-                if ( iguana_ramchainmerge(coin,mem,ramchain,ptrs[i]) < 0 )
-                {
-                    printf("error merging ramchain.%s hdrsi.%d at ptrs[%d]\n",coin->symbol,bp->hdrsi,i);
-                    iguana_ramchainfree(coin,ramchain);
-                    return(0);
-                }
-            }
-            else
-            {
-                printf("error generating ramchain.%s hdrsi.%d for ptrs[%d]\n",coin->symbol,bp->hdrsi,i);
-                iguana_ramchainfree(coin,ramchain);
-                return(0);
-            }
-        }
-    }
-    return(ramchain);
-}
-
 int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *fname,bits256 hash2)
 {
     FILE *fp; int32_t bundlei;
@@ -67,25 +40,32 @@ int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr
 
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
 {
-    struct iguana_txblock *ptrs[IGUANA_MAXBUNDLESIZE]; struct iguana_block *block;
-    char fname[1024]; uint64_t estimatedsize = 0;
+    struct iguana_txblock *ptr; struct iguana_ramchain *ptrs[IGUANA_MAXBUNDLESIZE],*ramchains;
+    struct iguana_block *block; char fname[1024]; uint64_t estimatedsize = 0;
     int32_t i,maxrecv,addrind,flag,numdirs=0; struct iguana_ramchain *ramchain;
     flag = maxrecv = 0;
+    memset(ptrs,0,sizeof(ptrs));
+    ramchains = mycalloc('p',coin->chain->bundlesize,sizeof(*ramchains));
     for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
     {
         if ( (block= bp->blocks[i]) != 0 )
         {
-            if ( memcmp(block->hash2.bytes,coin->chain->genesis_hashdata,sizeof(bits256)) == 0 )
-                ptrs[i] = (struct iguana_txblock *)coin->chain->genesis_hashdata, flag++;
-            else
+            //if ( memcmp(block->hash2.bytes,coin->chain->genesis_hashdata,sizeof(bits256)) == 0 )
+            //    ptrs[i] = (struct iguana_txblock *)coin->chain->genesis_hashdata, flag++;
+            //else
             {
                 iguana_meminit(&memB[i],"ramchainB",0,block->recvlen + 4096,0);
-                if ( (ptrs[i]= iguana_peertxdata(coin,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
+                if ( (ptr= iguana_peertxdata(coin,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
                 {
-                    if ( block->recvlen > maxrecv )
-                        maxrecv = block->recvlen;
-                    estimatedsize += block->recvlen;
-                    flag++;
+                    ptrs[i] = &ramchains[i];
+                    if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )
+                    {
+                        ptrs[i]->firsti = 0;
+                        if ( block->recvlen > maxrecv )
+                            maxrecv = block->recvlen;
+                        estimatedsize += block->recvlen;
+                        flag++;
+                    } else printf("error setting ramchain.%d\n",i);
                 }
                 else
                 {
@@ -99,16 +79,14 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     if ( flag == i )
     {
-        iguana_meminit(mem,"bundleHT",0,estimatedsize + IGUANA_MAXPACKETSIZE,0);
         printf(">>>>>>>>> start MERGE.(%ld) i.%d flag.%d estimated.%ld maxrecv.%d\n",(long)mem->totalsize,i,flag,(long)estimatedsize,maxrecv);
-        if ( (ramchain= iguana_bundlemergeHT(coin,mem,ptrs,i,bp)) != 0 )
+        if ( (ramchain= iguana_ramchainmergeHT(coin,mem,ptrs,i,bp)) != 0 )
         {
             iguana_ramchainsave(coin,ramchain);
-            iguana_ramchainfree(coin,ramchain);
+            iguana_ramchainfree(coin,mem,ramchain);
             printf("ramchain saved\n");
             bp->emitfinish = (uint32_t)time(NULL);
          } else bp->emitfinish = 0;
-        iguana_mempurge(mem);
         for (addrind=0; addrind<IGUANA_MAXPEERS; addrind++)
         {
             if ( coin->peers.active[addrind].ipbits != 0 )
@@ -129,6 +107,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
         iguana_mempurge(&memB[i]);
+    myfree(ramchains,coin->chain->bundlesize * sizeof(*ramchains));
     return(flag);
 }
 

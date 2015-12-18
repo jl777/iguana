@@ -366,7 +366,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
     if ( mem->availptrs == mem->numptrs && mem->used > (mem->totalsize >> 1) )
         iguana_memreset(mem);
 #endif
-    if ( (mem->used + size) < mem->totalsize )
+    if ( (mem->used + size) <= mem->totalsize )
     {
         ptr = (void *)((uint64_t)mem->ptr + (uint64_t)mem->used);
         mem->used += size;
@@ -390,7 +390,7 @@ void *iguana_memalloc(struct iguana_memspace *mem,long size,int32_t clearflag)
         }
 #endif
      //printf(">>>>>>>>> USED.%s alloc %ld used %ld alloc.%ld -> %s %p\n",mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr);
-    } else printf("error memalloc mem.%p %s alloc %ld used %ld alloc.%ld -> %s %p\n",mem,mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr), getchar();//exit(-1);
+    } else printf("error memalloc mem.%p %s alloc %ld used %ld totalsize.%ld -> %s %p\n",mem,mem->name,size,(long)mem->used,(long)mem->totalsize,mem->name,ptr), getchar();//exit(-1);
     //if ( mem->threadsafe != 0 )
     //    portable_mutex_unlock(&mem->mutex);
     return(ptr);

@@ -51,10 +51,10 @@ struct iguana_kvitem *iguana_hashsetPT(struct iguana_kvitem *hashtable,struct ig
 
 struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen)
 {
-    struct iguana_txid *T,*t; struct iguana_unspent *U,*u; struct iguana_spend *S,*s; struct iguana_pkhash *P;
-    bits256 *externalT; struct iguana_kvitem *txids,*pkhashes,*ptr;
+    struct iguana_txid *T,*t; struct iguana_unspent *U,*u; struct iguana_spend *S,*s;
+    bits256 *externalT; struct iguana_kvitem *txids,*pkhashes,*ptr; struct iguana_pkhash *P;
     struct iguana_memspace *txmem,*hashmem; struct iguana_msgtx *tx; struct iguana_txblock *txdata = 0;
-    int32_t i,j,numvins,numvouts,numexternal,numpkinds,scriptlen,sequence,spend_unspentind;
+    int32_t i,j,numvins,numvouts,numexternal,numpkinds,scriptlen,sequence;
     uint32_t txidind,unspentind,spendind,pkind; uint8_t *script,rmd160[20];
     txmem = &addr->TXDATA, hashmem = &addr->HASHMEM;
     txids = pkhashes = 0;
@@ -83,6 +83,7 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
                 if ( (ptr= iguana_hashsetPT(pkhashes,hashmem,P[numpkinds].rmd160,sizeof(P[numpkinds].rmd160),numpkinds)) == 0 )
                     printf("fatal error adding pkhash\n"), exit(-1);
                 numpkinds++;
+                //printf("%08x new pkind.%d\n",*(int32_t *)rmd160,numpkinds);
             }
             u->value = tx->vouts[j].value, u->txidind = txidind;
             u->pkind = ptr->hh.itemind;
@@ -91,7 +92,7 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
         }
     }
     if ( (txdata->numpkinds= numpkinds) > 0 )
-        P = iguana_memalloc(txmem,sizeof(*P)*numpkinds,0);
+        P = iguana_memalloc(txmem,sizeof(*P) * numpkinds,0);
     externalT = iguana_memalloc(txmem,0,1);
     txidind = 0;
     for (i=numvins=numexternal=0; i<txn_count; i++,txidind++)
@@ -99,29 +100,44 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
         tx = &txarray[i];
         t = &T[txidind];
         t->firstvin = spendind, t->numvins = tx->tx_in;
-        for (j=0; j<tx->tx_in; j++,numvins++,spendind++)
+        for (j=0; j<tx->tx_in; j++)
         {
             script = tx->vins[j].script, scriptlen = tx->vins[j].scriptlen;
             s = &S[spendind];
             if ( (sequence= tx->vins[j].sequence) != (uint32_t)-1 )
                 s->diffsequence = 1;
-            spend_unspentind = -1;
-            if ( (ptr= iguana_hashfind(txids,tx->vins[j].prev_hash.bytes,sizeof(bits256))) != 0 )
-                spend_unspentind = ptr->hh.itemind;
-            else
+            s->vout = tx->vins[j].prev_vout;
+            if ( s->vout != 0xffff )
             {
-                spend_unspentind = (txdata->numunspents + numexternal);
-                externalT[numexternal++] = tx->vins[j].prev_hash;
-            }
-            if ( spend_unspentind >= 0 && spend_unspentind < (txdata->numunspents + numexternal) )
-                s->unspentind = ((spend_unspentind << 16) | tx->vins[j].prev_vout);
+                if ( (ptr= iguana_hashfind(txids,tx->vins[j].prev_hash.bytes,sizeof(bits256))) != 0 )
+                {
+                    if ( (s->spendtxidind= ptr->hh.itemind) >= txdata->numtxids )
+                    {
+                        s->external = 1;
+                        s->spendtxidind -= txdata->numtxids;
+                    }
+                }
+                else
+                {
+                    s->external = 1;
+                    externalT[numexternal] = tx->vins[j].prev_hash;
+                    iguana_hashsetPT(txids,hashmem,externalT[numexternal].bytes,sizeof(externalT[numexternal]),txdata->numtxids + numexternal);
+                    s->spendtxidind = numexternal++;
+                }
+                spendind++;
+                numvins++;
+                //printf("spendind.%d\n",spendind);
+            } //else printf("vout.%x\n",s->vout);
             // prevspendind requires having accts, so that waits for third pass
         }
     }
     if ( (txdata->numexternaltxids= numexternal) > 0 )
         externalT = iguana_memalloc(txmem,sizeof(*externalT) * numexternal,0);
     txdata->datalen = (int32_t)txmem->used;
-    if ( numvins != txdata->numspends || numvouts != txdata->numunspents || i != txdata->numtxids )
+    txdata->numspends = numvins;
+    txdata->numpkinds = numpkinds;
+    //printf("%p datalen.%d T.%d U.%d S.%d P.%d X.%d\n",txdata,txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
+    if ( numvouts != txdata->numunspents || i != txdata->numtxids )
     {
         printf("counts mismatch: numvins %d != %d txdata->numvins || numvouts %d != %d txdata->numvouts || i %d != %d txdata->numtxids\n",numvins,txdata->numspends,numvouts,txdata->numunspents,i,txdata->numtxids);
         exit(-1);
@@ -139,7 +155,7 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
         if ( (rand() % 10000) == 0 )
             printf("[%.3f] %.0f/%.0f recvlen vs datalen\n",recvsum/datasum,recvsum,datasum);
     }
-    //memcpy(origtxdata,txdata,sizeof(*origtxdata));
+    //printf("numpkinds.%d numspends.%d\n",txdata->numpkinds,txdata->numspends);
     return(txdata);
 }
 
@@ -378,6 +394,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     fwrite(&fpos,1,sizeof(fpos),fp);
                 } else printf("error with bundlei.%d vs %d\n",bundlei,coin->chain->bundlesize);
                 fclose(fp);
+                //printf("datalen.%d T.%d U.%d S.%d P.%d X.%d\n",txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
                 //printf("create.(%s) %d\n",fname,coin->peers.numfiles);
             }
             req->datalen = txdata->datalen;
@@ -429,3 +446,4 @@ struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,char *fname,st
     } else printf("bundlei.%d\n",bundlei);
     return(txdata);
 }
+

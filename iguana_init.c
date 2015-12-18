@@ -649,7 +649,7 @@ int32_t iguana_validateramchain(struct iguana_info *coin,int64_t *netp,uint64_t 
                 }
                 for (i=0; i<m; i++,spendind++)
                 {
-                    if ( (u= coin->S[spendind].unspentind) > 0 && u < coin->latest.dep.numunspents )
+                    if ( (u= coin->S[spendind].spendtxidind) > 0 && u < coin->latest.dep.numunspents )
                         debits += coin->U[u].value;
                     else
                     {
