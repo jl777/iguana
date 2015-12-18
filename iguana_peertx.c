@@ -54,7 +54,7 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
     struct iguana_txid *T,*t; struct iguana_unspent *U,*u; struct iguana_spend *S,*s;
     bits256 *externalT; struct iguana_kvitem *txids,*pkhashes,*ptr; struct iguana_pkhash *P;
     struct iguana_memspace *txmem,*hashmem; struct iguana_msgtx *tx; struct iguana_txblock *txdata = 0;
-    int32_t i,j,numvins,numvouts,numexternal,numpkinds,scriptlen,sequence;
+    int32_t i,j,numvins,numvouts,numexternal,numpkinds,scriptlen,sequence; char str[65];
     uint32_t txidind,unspentind,spendind,pkind; uint8_t *script,rmd160[20];
     txmem = &addr->TXDATA, hashmem = &addr->HASHMEM;
     txids = pkhashes = 0;
@@ -139,7 +139,7 @@ struct iguana_txblock *iguana_peerramchainPT(struct iguana_info *coin,struct igu
     txdata->datalen = (int32_t)txmem->used;
     txdata->numspends = numvins;
     txdata->numpkinds = numpkinds;
-    //printf("%p datalen.%d T.%d U.%d S.%d P.%d X.%d\n",txdata,txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
+    printf("%s datalen.%d T.%d U.%d S.%d P.%d X.%d\n",bits256_str(str,txdata->block.hash2),txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
     if ( numvouts != txdata->numunspents || i != txdata->numtxids )
     {
         printf("counts mismatch: numvins %d != %d txdata->numvins || numvouts %d != %d txdata->numvouts || i %d != %d txdata->numtxids\n",numvins,txdata->numspends,numvouts,txdata->numunspents,i,txdata->numtxids);
