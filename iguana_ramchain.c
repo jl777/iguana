@@ -667,7 +667,7 @@ struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguan
 int32_t iguana_ramchaintxid(struct iguana_info *coin,bits256 *txidp,struct iguana_ramchain *ramchain,struct iguana_spend *s)
 {
     memset(txidp,0,sizeof(*txidp));
-    printf("s.%p ramchaintxid vout.%x spendtxidind.%d numexternals.%d isext.%d numspendinds.%d\n",s,s->vout,s->spendtxidind,ramchain->numexternaltxids,s->external,ramchain->numspends);
+    //printf("s.%p ramchaintxid vout.%x spendtxidind.%d numexternals.%d isext.%d numspendinds.%d\n",s,s->vout,s->spendtxidind,ramchain->numexternaltxids,s->external,ramchain->numspends);
     if ( s->vout == 0xffff )
         return(0);
     if ( s->external != 0 && s->spendtxidind < ramchain->numexternaltxids )
@@ -801,7 +801,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
                 tx = &ramchain->T[j];
                 for (k=item->firsti; k<tx->numvins; k++)
                 {
-                    printf("item.%p [%d] X.%p i.%d j.%d k.%d txidind.%d/%d spendind.%d/%d s->txidind.%d/v%d\n",item,item->numexternaltxids,item->externalT,i,j,k,txidind,ramchain->numtxids,spendind,ramchain->numspends,item->S[k].spendtxidind,item->S[k].vout);
+                    //printf("item.%p [%d] X.%p i.%d j.%d k.%d txidind.%d/%d spendind.%d/%d s->txidind.%d/v%d\n",item,item->numexternaltxids,item->externalT,i,j,k,txidind,ramchain->numtxids,spendind,ramchain->numspends,item->S[k].spendtxidind,item->S[k].vout);
                     if ( iguana_ramchaintxid(coin,&txid,item,&item->S[k]) < 0 )
                     {
                         printf("error getting txid\n");
@@ -870,6 +870,9 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
     ramchain->allocsize -= ((ramchain->numexternaltxids - numexternaltxids) * sizeof(*ramchain->externalT));
     ramchain->numpkinds = numpkinds;
     ramchain->numexternaltxids = numexternaltxids;
+    for (i=0; i<numpkinds; i++)
+        printf("%08x ",*(int32_t *)&ramchain->P[i]);
+    printf("numpkinds.%d\n",numpkinds);
     /*vupdate_sha256(ramchain->lhashes[IGUANA_LHASH_UNSPENT].bytes,&ramchain->states[IGUANA_LHASH_UNSPENT],(void *)ramchain->U,sizeof(*ramchain->U)*ramchain->numunspents);
     vupdate_sha256(ramchain->lhashes[IGUANA_LHASH_ACCOUNTS].bytes,&ramchain->states[IGUANA_LHASH_ACCOUNTS],(void *)acct,sizeof(*acct));
     vupdate_sha256(ramchain->lhashes[IGUANA_LHASH_SPENDS].bytes,&ramchain->states[IGUANA_LHASH_SPENDS],(void *)ramchain->S,sizeof(*ramchain->S)*);
