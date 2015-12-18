@@ -42,7 +42,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
 {
     struct iguana_txblock *ptr; struct iguana_ramchain *ptrs[IGUANA_MAXBUNDLESIZE],*ramchains;
     struct iguana_block *block; char fname[1024]; uint64_t estimatedsize = 0;
-    int32_t i,maxrecv,addrind,flag,numdirs=0; struct iguana_ramchain *ramchain;
+    int32_t i,maxrecv,addrind,flag,bundlei,numdirs=0; struct iguana_ramchain *ramchain;
     flag = maxrecv = 0;
     memset(ptrs,0,sizeof(ptrs));
     ramchains = mycalloc('p',coin->chain->bundlesize,sizeof(*ramchains));
@@ -55,8 +55,10 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             //else
             {
                 iguana_meminit(&memB[i],"ramchainB",0,block->recvlen + 4096,0);
-                if ( (ptr= iguana_peertxdata(coin,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
+                if ( (ptr= iguana_peertxdata(coin,&bundlei,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
                 {
+                    //if ( bundlei != i || ptr->block.bundlei != i )
+                        printf("peertxdata.%d bundlei.%d, i.%d block->bundlei.%d\n",bp->hdrsi,bundlei,i,ptr->block.bundlei);
                     ptrs[i] = &ramchains[i];
                     if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )
                     {

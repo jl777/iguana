@@ -603,28 +603,32 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
     mem->alignflag = sizeof(uint32_t);
     if ( (txdata= iguana_memalloc(mem,allocsize,0)) == 0 )
         return(0);
+    //printf("ptr.%p alloctxdata.%p T.%d U.%d S.%d P.%d\n",mem->ptr,txdata,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds);
     extralen = (origtxdata != 0) ? origtxdata->extralen : txdata->extralen;
     if ( origtxdata != 0 )
+    {
+        //printf("copy %d bytes from %p to %p extralen.%d size.%ld  T.%d U.%d S.%d P.%d \n",allocsize,origtxdata,txdata,extralen,sizeof(*txdata),txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds);
         memcpy(txdata,origtxdata,allocsize);
-    else iguana_memalloc(mem,txdata->extralen,0);
+    } else iguana_memalloc(mem,txdata->extralen,0);
     *Tptrp = iguana_memalloc(mem,sizeof(**Tptrp) * txdata->numtxids,rwflag);
     *Uptrp = iguana_memalloc(mem,sizeof(**Uptrp) * txdata->numunspents,rwflag);
-    *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * txdata->numspends,rwflag);
+    *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * (txdata->numspends + 1),rwflag);
+    //printf("rwflag.%d ptr.%p alloctxdata.%p T.%d U.%d S.%d P.%d  pkoffset.%ld\n",rwflag,mem->ptr,txdata,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,mem->used);
     if ( externalTptrp != 0 )
     {
         if ( txdata->pkoffset != (int32_t)mem->used )
-            printf("%s (T.%d U.%d S.%d P.%d X.%d) iguana_ramchainptrs pkoffset.%d != %ld numspends.%d\n",bits256_str(str,txdata->block.hash2),txdata->numtxids,txdata->numunspents,txdata->numpkinds,txdata->numpkinds,txdata->numexternaltxids,txdata->pkoffset,mem->used,txdata->numspends), getchar();
+            printf("allocsize.%d size.%ld %p %s (T.%d U.%d S.%d P.%d X.%d) iguana_ramchainptrs pkoffset.%d != %ld numspends.%d\n",allocsize,sizeof(*txdata),txdata,bits256_str(str,txdata->block.hash2),txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids,txdata->pkoffset,mem->used,txdata->numspends), getchar();
         *Pptrp = iguana_memalloc(mem,sizeof(**Pptrp) * txdata->numpkinds,rwflag);
         *externalTptrp = iguana_memalloc(mem,txdata->numexternaltxids * sizeof(**externalTptrp),rwflag);
     }
     else
     {
         txdata->pkoffset = (int32_t)mem->used;
+        //printf("set pkoffset.%d\n",txdata->pkoffset);
         *Pptrp = iguana_memalloc(mem,0,rwflag);
     }
     if ( 0 && rwflag == 0 )
         printf("datalen.%d rwflag.%d origtxdat.%p allocsize.%d extralen.%d T.%d U.%d S.%d P.%d X.%p[%d]\n",(int32_t)mem->totalsize,rwflag,origtxdata,allocsize,extralen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,externalTptrp!=0?*externalTptrp:0,txdata->numexternaltxids);
-    *origtxdata = *txdata;
     return(txdata);
 }
 
@@ -656,7 +660,7 @@ struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguan
     struct iguana_memspace txmem;
     memset(&txmem,0,sizeof(txmem));
     iguana_meminit(&txmem,"bramchain",txdata,txdata->datalen,0);
-    printf("ramchainset <- txdata.%p memptr.%p\n",txdata,txmem.ptr);
+    printf("ramchainset <- txdata.%p memptr.%p T.%d U.%d S.%d P.%d X.%d\n",txdata,txmem.ptr,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
     if ( iguana_ramchainptrs(&ramchain->T,&ramchain->U,&ramchain->S,&ramchain->P,&ramchain->externalT,&txmem,0) != txdata || ramchain->T == 0 || ramchain->U == 0 || ramchain->S == 0 || ramchain->P == 0 )
     {
         printf("iguana_ramchainset: cant set pointers txdata.%p\n",txdata);
