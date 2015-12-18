@@ -216,8 +216,7 @@ void iguana_helper(void *arg)
         {
             for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
             {
-                coin = &Coins[i];
-                if ( coin->launched != 0 )
+                if ( (coin= Coins[i]) != 0 && coin->launched != 0 )
                     flag += iguana_rpctest(coin);
             }
             if ( flag == 0 )

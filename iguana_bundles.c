@@ -777,7 +777,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         {
                             if ( bp->issued[bundlei] > SMALLVAL )
                                 numwaiting++;
-                            if ( bp->issued[bundlei] == 0 || milliseconds() > (bp->issued[bundlei] + bp->avetime*2) )//(qsize == 0 && coin->bcount > 100 && )) )
+                            if ( bp->issued[bundlei] == 0 || (qsize == 0 && milliseconds() > (bp->issued[bundlei] + bp->avetime*2)) )//(coin->bcount > 100 && )) )
                             {
                                 if ( (RTqsize < maxwaiting && (i == lastbundle || i == coin->closestbundle || numwaiting < maxwaiting || numactive <= coin->MAXBUNDLES)) )
                                 {

@@ -9,7 +9,7 @@
 
 // ALL globals must be here!
 const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "BitcoinDark", "129" } };
-struct iguana_info Coins[64];
+struct iguana_info *Coins[64];
 int USE_JAY,IGUANA_NUMHELPERS = 4;
 queue_t helperQ;
 

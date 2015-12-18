@@ -470,7 +470,7 @@ void iguana_startconnection(void *arg)
         printf("iguana_startconnection nullptrs addr.%p coin.%p\n",addr,coin);
         return;
     }
-    //printf("startconnection.(%s)\n",addr->ipaddr);
+    printf("startconnection.(%s)\n",addr->ipaddr);
     if ( strcmp(coin->name,addr->coinstr) != 0 )
     {
         printf("iguana_startconnection.%s mismatched coin.%p (%s) vs (%s)\n",addr->ipaddr,coin,coin->symbol,addr->coinstr);
@@ -523,7 +523,7 @@ void iguana_startconnection(void *arg)
 void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,struct iguana_kvitem *item,uint64_t args,void *key,void *value,int32_t valuesize)
 {
     struct iguana_iAddr *iA = value; char ipaddr[64]; int32_t i; struct iguana_peer *addr = 0;
-    if ( iA->ipbits != 0 && iguana_numthreads(coin,1 << IGUANA_CONNTHREAD) < IGUANA_MAXCONNTHREADS )//&& iA->status != IGUANA_PEER_READY && iA->status != IGUANA_PEER_CONNECTING )
+    if ( iA != 0 && iA->ipbits != 0 && iguana_numthreads(coin,1 << IGUANA_CONNTHREAD) < IGUANA_MAXCONNTHREADS )//&& iA->status != IGUANA_PEER_READY && iA->status != IGUANA_PEER_CONNECTING )
     {
         //printf("%x\n",iA->ipbits);
         expand_ipbits(ipaddr,iA->ipbits);
@@ -533,6 +533,7 @@ void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,stru
             addr = &coin->peers.active[i];
             if ( addr->usock >= 0 || addr->pending != 0 || addr->ipbits == iA->ipbits || strcmp(ipaddr,addr->ipaddr) == 0 )
             {
+                printf("skip.(%s) usock.%d pending.%d ipbits.%x vs %x\n",addr->ipaddr,addr->usock,addr->pending,addr->ipbits,iA->ipbits);
                 //portable_mutex_unlock(&coin->peers_mutex);
                 return(0);
             }
@@ -545,7 +546,7 @@ void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,stru
         //portable_mutex_unlock(&coin->peers_mutex);
         if ( addr != 0 )
         {
-            //printf("status.%d addr.%p possible peer.(%s) (%s).%x %u threads %d %d %d %d\n",iA->status,addr,ipaddr,addr->ipaddr,addr->ipbits,addr->pending,iguana_numthreads(0),iguana_numthreads(1),iguana_numthreads(2),iguana_numthreads(3));
+            printf("status.%d addr.%p possible peer.(%s) (%s).%x %u threads %d %d %d %d\n",iA->status,addr,ipaddr,addr->ipaddr,addr->ipbits,addr->pending,iguana_numthreads(coin,0),iguana_numthreads(coin,1),iguana_numthreads(coin,2),iguana_numthreads(coin,3));
             iA->status = IGUANA_PEER_CONNECTING;
             if ( iguana_rwiAddrind(coin,1,iA,item->hh.itemind) > 0 )
             {
@@ -554,6 +555,9 @@ void *iguana_kvconnectiterator(struct iguana_info *coin,struct iguanakv *kv,stru
             }
         } else printf("no open peer slots left\n");
     }
+    else if ( iA != 0 )
+        printf("iA->ipbits %d, %d iguana_numthreads(coin,1 << IGUANA_CONNTHREAD)\n",iA->ipbits,iguana_numthreads(coin,1 << IGUANA_CONNTHREAD));
+    else printf("connector null iA\n");
     return(0);
 }
  
@@ -563,7 +567,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
     struct iguana_iAddr iA; struct iguana_kvitem item;
     if ( ipaddr != 0 )
     {
-        //printf("%p Q possible peer.(%s)\n",coin,ipaddr);
+        printf("%p Q possible peer.(%s)\n",coin,ipaddr);
         queue_enqueue("possibleQ",&coin->possibleQ,queueitem(ipaddr),1);
         return((uint32_t)time(NULL));
     }
@@ -576,7 +580,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
         return((uint32_t)time(NULL));
     }
 #endif
-    //printf("check possible peer.(%s)\n",ipaddr);
+    printf("check possible peer.(%s)\n",ipaddr);
     for (i=0; i<coin->MAXPEERS; i++)
         if ( strcmp(ipaddr,coin->peers.active[i].ipaddr) == 0 )
         {
@@ -593,7 +597,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
             {
                 if ( (ind= iguana_ipbits2ind(coin,&iA,ipbits,1)) > 0 && iA.status != IGUANA_PEER_CONNECTING && iA.status != IGUANA_PEER_READY )
                 {
-                    //printf("valid ipaddr.(%s)\n",ipaddr);
+                    printf("valid ipaddr.(%s) MAXPEERS.%d\n",ipaddr,coin->MAXPEERS);
                     if ( (iA.lastconnect == 0 || iA.lastkilled == 0) || (iA.numconnects > 0 && iA.lastconnect > (now - IGUANA_RECENTPEER)) || iA.lastkilled < now-600 )
                     {
                         iA.status = IGUANA_PEER_ELIGIBLE;

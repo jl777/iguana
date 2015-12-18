@@ -28,13 +28,14 @@ struct iguana_info *iguana_coin(const char *symbol)
                 break;
         for (; i<sizeof(Coins)/sizeof(*Coins); i++)
         {
-            if ( Coins[i].symbol[0] == 0 )
+            if ( Coins[i] == 0 )
             {
-                memset(&Coins[i],0,sizeof(Coins[i]));
-                printf("iguana_coin.(new) -> %p\n",&Coins[i]);
-                return(&Coins[i]);
+                Coins[i] = mycalloc('c',1,sizeof(*Coins[i]));
+                //memset(Coins[i],0,sizeof(*Coins[i]));
+                printf("iguana_coin.(new) -> %p\n",Coins[i]);
+                return(Coins[i]);
             } return(0);
-            printf("i.%d (%s) vs name.(%s)\n",i,Coins[i].name,symbol);
+            printf("i.%d (%s) vs name.(%s)\n",i,Coins[i]->name,symbol);
         }
     }
     else
@@ -43,9 +44,11 @@ struct iguana_info *iguana_coin(const char *symbol)
         {
             if ( Hardcoded_coins[i][0] == 0 )
                 break;
-            coin = &Coins[i];
             if ( strcmp(symbol,Hardcoded_coins[i][0]) == 0 )
             {
+                if ( Coins[i] == 0 )
+                    Coins[i] = mycalloc('c',1,sizeof(*Coins[i]));
+                coin = Coins[i];
                 if ( coin->chain == 0 )
                 {
                     strcpy(coin->name,Hardcoded_coins[i][1]);
@@ -130,8 +133,8 @@ char *iguana_genericjson(char *method,cJSON *json)
         array = cJSON_CreateArray();
         for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
         {
-            if ( Coins[i].symbol[0] != 0 )
-                jaddistr(array,Coins[i].symbol);
+            if ( Coins[i] != 0 && Coins[i]->symbol[0] != 0 )
+                jaddistr(array,Coins[i]->symbol);
         }
         jadd(retjson,"coins",array);
         return(jprint(retjson,1));
@@ -142,8 +145,8 @@ char *iguana_genericjson(char *method,cJSON *json)
         array = cJSON_CreateArray();
         for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
         {
-            if ( Coins[i].symbol[0] != 0 )
-                jaddi(array,iguana_peersjson(&Coins[i]));
+            if ( Coins[i] != 0 && Coins[i]->symbol[0] != 0 )
+                jaddi(array,iguana_peersjson(Coins[i]));
         }
         jadd(retjson,"allpeers",array);
         return(jprint(retjson,1));
@@ -410,8 +413,8 @@ void iguana_main(void *arg)
     {
         flag = 0;
         for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
-            if ( Coins[i].symbol[0] != 0 )
-                flag += iguana_processjsonQ(&Coins[i]);
+            if ( Coins[i] != 0 && Coins[i]->symbol[0] != 0 )
+                flag += iguana_processjsonQ(Coins[i]);
         if ( flag == 0 )
             usleep(100000);
     }
