@@ -521,7 +521,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         //|| ( && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
         for (r=0; r<coin->bundlescount; r++)
         {
-            i = (r + addr->addrind) & coin->bundlescount;
+            i = (r + addr->addrind) % coin->bundlescount;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 && bp->blockhashes != 0 )
             {
                 for (j=0; j<coin->chain->bundlesize && j<bp->n; j++)
