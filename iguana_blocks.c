@@ -517,17 +517,22 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
     if ( (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
         //char str[65];
-        struct iguana_bundle *bp; int32_t i,j; struct iguana_block *block; double millis = milliseconds();
+        struct iguana_bundle *bp; int32_t i,r,j; struct iguana_block *block; double millis = milliseconds();
         //|| ( && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
-        for (i=0; i<coin->bundlescount; i++)
+        for (r=0; r<coin->bundlescount; r++)
         {
+            i = (r + addr->addrind) & coin->bundlescount;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 && bp->blockhashes != 0 )
             {
                 for (j=0; j<coin->chain->bundlesize && j<bp->n; j++)
                 {
-                    if ( (block= bp->blocks[j]) == 0 && GETBIT(bp->recv,j) == 0 && (bp->issued[j] == 0 || millis > bp->issued[j]+1000) )
+                    if ( (block= bp->blocks[j]) == 0 && (bp->issued[j] == 0 || millis > bp->issued[j]+1000) )
                     {
-                        hash2 = bp->blockhashes[j];
+                        if ( j == 0 )
+                            hash2 = bp->bundlehash2;
+                        else if ( j == 1 )
+                            hash2 = bp->firstblockhash2;
+                        else hash2 = bp->blockhashes[j];
                         if ( bits256_nonz(hash2) > 0 )
                         {
                             init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
@@ -536,7 +541,11 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                                 iguana_send(coin,addr,serialized,datalen);
                                 addr->pendblocks++;
                                 addr->pendtime = (uint32_t)time(NULL);
-                                //printf("%p %s %s issue.%d %d lag.%.3f\n",block,addr->ipaddr,bits256_str(str,hash2),bp->hdrsi,j,milliseconds()-millis);
+                                if ( j < 2 )
+                                {
+                                    char str[65];
+                                    printf("%p %s %s issue.%d %d lag.%.3f\n",block,addr->ipaddr,bits256_str(str,hash2),bp->hdrsi,j,milliseconds()-millis);
+                                }
                                 bp->issued[j] = milliseconds();
                                 SETBIT(bp->recv,j);
                                 return(1);
