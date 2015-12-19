@@ -521,7 +521,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         //char str[65];
         struct iguana_bundle *bp; int32_t i,r,j,incr,endi; struct iguana_block *block; double millis = milliseconds();
         //|| ( && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
-        if ( (addr->ipbits & 1) == 0 )
+        if ( 1 || (addr->ipbits & 1) == 0 )
             i = 0, endi = coin->bundlescount, incr = 1;
         else i = coin->bundlescount - 1, endi = -1, incr = -1;
         for (; i!=endi; i+=incr)
