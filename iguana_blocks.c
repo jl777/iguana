@@ -528,7 +528,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                 for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
                 {
                     j = (addr->addrind*8 + r) % bp->n;
-                    if ( (block= bp->blocks[j]) == 0 && (bp->issued[j] == 0 || millis > bp->issued[j]+bp->avetime) )
+                    if ( (block= bp->blocks[j]) == 0 && (bp->issued[j] == 0 || millis > bp->issued[j]+5000+bp->avetime) )
                     {
                         if ( j == 0 )
                             hash2 = bp->bundlehash2;
