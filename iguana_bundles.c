@@ -492,15 +492,6 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
     return(req);
 }
 
-void iguana_gotdata(struct iguana_info *coin,struct iguana_peer *addr,int32_t height,bits256 hash2)
-{
-    if ( addr != 0 && height > addr->height && height < coin->longestchain )
-    {
-        iguana_set_iAddrheight(coin,addr->ipbits,height);
-        addr->height = height;
-    }
-}
-
 struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,int32_t datalen,int32_t *newhwmp)
 {
     struct iguana_bundle *bp; int32_t bundlei; struct iguana_block *block; double duration = 0.;

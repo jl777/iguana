@@ -340,7 +340,7 @@ int32_t iguana_rwblockhash(int32_t rwflag,uint8_t *serialized,uint32_t *nVersion
 
 void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgversion *vers)
 {
-    uint8_t serialized[sizeof(struct iguana_msghdr)]; bits256 zero;
+    uint8_t serialized[sizeof(struct iguana_msghdr)];
     //printf("gotversion from %s\n",addr->ipaddr);
     if ( (vers->nServices & NODE_NETWORK) == 0 )
         printf("other node.(%s) doesnt relay\n",addr->ipaddr);
@@ -350,8 +350,7 @@ void iguana_gotversion(struct iguana_info *coin,struct iguana_peer *addr,struct 
         addr->relayflag = vers->relayflag;
         addr->height = vers->nStartingHeight;
         addr->relayflag = 1;
-        memset(&zero,0,sizeof(zero));
-        iguana_gotdata(coin,addr,addr->height,zero);
+        iguana_gotdata(coin,addr,addr->height);
         iguana_queue_send(coin,addr,serialized,"verack",0,0,0);
         //iguana_send_ping(coin,addr);
     } else printf("nServices.%llx nonce.%llu invalid version message from.(%s)\n",(long long)vers->nServices,(long long)vers->nonce,addr->ipaddr);
@@ -370,7 +369,7 @@ int32_t iguana_send_version(struct iguana_info *coin,struct iguana_peer *addr,ui
 	msg.nonce = coin->instance_nonce;
 	sprintf(msg.strSubVer,"/Satoshi:0.11.99/");
 	msg.nStartingHeight = coin->blocks.hwmheight;
-    iguana_set_iAddrheight(coin,addr->ipbits,msg.nStartingHeight);
+    iguana_gotdata(coin,addr,msg.nStartingHeight);
     len = iguana_rwversion(1,&serialized[sizeof(struct iguana_msghdr)],&msg,addr->ipaddr);
     return(iguana_queue_send(coin,addr,serialized,"version",len,0,1));
 }

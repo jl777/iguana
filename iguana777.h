@@ -344,7 +344,12 @@ struct iguanakv
     uint8_t *space;
 };
 
-struct iguana_iAddr { uint32_t ipbits,ind,lastkilled,numkilled,lastconnect,numconnects; int32_t status,height; };
+struct iguana_iAddr
+{
+    UT_hash_handle hh; uint32_t ipbits;
+    uint32_t lastkilled,lastconnect;
+    int32_t status,height,numkilled,numconnects;
+};
 
 // iguana blocks
 struct iguana_block
@@ -439,7 +444,8 @@ struct iguana_info
     int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle,numemitted;
     uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,firstblock,lastpossible,bundlescount;
     struct iguana_chain *chain;
-    struct iguanakv *iAddrs,*txids,*spends,*unspents,*pkhashes;
+    struct iguana_iAddr *iAddrs;
+    struct iguanakv *txids,*spends,*unspents,*pkhashes;
     struct iguana_txid *T;
     struct iguana_unspent *U; struct iguana_Uextra *Uextras;
     struct iguana_spend *S; struct iguana_Sextra *Sextras;
@@ -465,11 +471,11 @@ void iguana_peersloop(void *arg);
 int32_t iguana_queue_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *serialized,char *cmd,int32_t len,int32_t getdatablock,int32_t forceflag);
 uint32_t iguana_ipbits2ind(struct iguana_info *coin,struct iguana_iAddr *iA,uint32_t ipbits,int32_t createflag);
 uint32_t iguana_rwiAddrind(struct iguana_info *coin,int32_t rwflag,struct iguana_iAddr *iA,uint32_t ind);
-uint32_t iguana_rwipbits_status(struct iguana_info *coin,int32_t rwflag,uint32_t ipbits,int32_t *statusp);
+//uint32_t iguana_rwipbits_status(struct iguana_info *coin,int32_t rwflag,uint32_t ipbits,int32_t *statusp);
 void iguana_connections(void *arg);
 uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr);
-int32_t iguana_set_iAddrheight(struct iguana_info *coin,uint32_t ipbits,int32_t height);
-struct iguana_peer *iguana_choosepeer(struct iguana_info *coin);
+//int32_t iguana_set_iAddrheight(struct iguana_info *coin,uint32_t ipbits,int32_t height);
+//struct iguana_peer *iguana_choosepeer(struct iguana_info *coin);
 void iguana_initpeer(struct iguana_info *coin,struct iguana_peer *addr,uint32_t ipbits);
 void iguana_startconnection(void *arg);
 void iguana_shutdownpeers(struct iguana_info *coin,int32_t forceflag);
@@ -514,6 +520,7 @@ void *iguana_kvensure(struct iguana_info *coin,struct iguanakv *kv,uint32_t ind)
 //struct iguanakv *iguana_stateinit(struct iguana_info *coin,int32_t flags,char *coinstr,char *subdir,char *name,int32_t keyoffset,int32_t keysize,int32_t HDDvaluesize,int32_t RAMvaluesize,int32_t inititems,int32_t (*verifyitem)(struct iguana_info *coin,void *key,void *value,int32_t itemind,int32_t itemsize),int32_t (*inititem)(struct iguana_info *coin,struct iguanakv *kv,void *key,void *value,int32_t itemind,int32_t itemsize,int32_t numitems));
 //int32_t iguana_kvtruncate(struct iguana_info *coin,struct iguanakv *kv,uint32_t maxitemind);
 int32_t iguana_kvdisp(struct iguana_info *coin,struct iguanakv *kv);
+int32_t portable_truncate(char *fname,long filesize);
 
 // ramchain
 int64_t iguana_verifyaccount(struct iguana_info *coin,struct iguana_account *acct,uint32_t pkind);
@@ -562,7 +569,7 @@ int32_t iguana_chainheight(struct iguana_info *coin,struct iguana_block *block);
 
 uint32_t iguana_syncs(struct iguana_info *coin);
 //void iguana_audit(struct iguana_info *coin);
-void iguana_gotdata(struct iguana_info *coin,struct iguana_peer *addr,int32_t height,bits256 hash2);
+void iguana_gotdata(struct iguana_info *coin,struct iguana_peer *addr,int32_t height);
 void iguana_mergeblock(struct iguana_block *dest,struct iguana_prevdep *destlp,struct iguana_block *block,struct iguana_prevdep *srclp);
 //int32_t iguana_avail(struct iguana_info *coin,int32_t height,int32_t n);
 int64_t iguana_balance(struct iguana_info *coin,uint64_t *creditsp,uint64_t *debitsp,int32_t *nump,uint32_t *unspents,long max,struct iguana_pkhash *P,uint32_t pkind);
@@ -708,5 +715,6 @@ int32_t iguana_peerfname(struct iguana_info *coin,char *fname,uint32_t ipbits,bi
 struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,int32_t *bundleip,char *fname,struct iguana_memspace *mem,uint32_t ipbits,bits256 hash2);
 int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *fname,bits256 hash2);
 struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata);
+void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA);
 
 #endif

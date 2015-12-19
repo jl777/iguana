@@ -76,7 +76,7 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
     printf("genesis.(%s) len.%d hash.%s\n",chain->genesis_hex,(int32_t)sizeof(msg.H),str);
     iguana_convblock(&block,&msg,hash2,0);
     coin->latest.dep.numtxids = block.numvouts = 1;
-    iguana_gotdata(coin,0,0,hash2);
+    iguana_gotdata(coin,0,0);
     if ( (ptr= iguana_blockhashset(coin,0,hash2,100)) != 0 )
         ptr->mainchain = 1, ptr->height = 0, coin->blocks.recvblocks = coin->blocks.issuedblocks = 1;
     iguana_chainextend(coin,hash2,&block,&L);
@@ -307,7 +307,7 @@ void iguana_initpeer(struct iguana_info *coin,struct iguana_peer *addr,uint32_t 
     addr->ipbits = ipbits;
     addr->usock = -1;
     expand_ipbits(addr->ipaddr,addr->ipbits);
-    addr->pending = (uint32_t)time(NULL);
+    //addr->pending = (uint32_t)time(NULL);
     strcpy(addr->symbol,coin->symbol);
     strcpy(addr->coinstr,coin->name);
     iguana_initQ(&addr->sendQ,"addrsendQ");
@@ -474,7 +474,7 @@ uint32_t iguana_syncs(struct iguana_info *coin)
         char str[65];
         bits256_str(str,coin->LEDGER.snapshot.ledgerhash);
         printf("-> syncs %s ledgerhashes.%d\n",str,height);
-        iguana_syncmap(&coin->iAddrs->M,0);
+        //iguana_syncmap(&coin->iAddrs->M,0);
         iguana_syncmap(&coin->blocks.db->M,0);
         iguana_syncmap(&coin->unspents->M,0);
         iguana_syncmap(&coin->unspents->M2,0);
@@ -972,8 +972,8 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
         initialheight = coin->chain->bundlesize*10;
     //coin->R.maprecvdata = ((mapflags & IGUANA_MAPRECVDATA) != 0);
     iguana_recvalloc(coin,initialheight);
-    coin->iAddrs = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPEERITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"iAddrs",0,sizeof(uint32_t),sizeof(struct iguana_iAddr),sizeof(struct iguana_iAddr),10000,iguana_verifyiAddr,iguana_initiAddr,0,0,0,0,1);
-    
+    //coin->iAddrs = iguana_stateinit(coin,IGUANA_ITEMIND_DATA|((mapflags&IGUANA_MAPPEERITEMS)!=0)*IGUANA_MAPPED_ITEM,symbol,symbol,"iAddrs",0,sizeof(uint32_t),sizeof(struct iguana_iAddr),sizeof(struct iguana_iAddr),10000,iguana_verifyiAddr,iguana_initiAddr,0,0,0,0,1);
+
     coin->longestchain = 1;
     coin->blocks.hwmheight = 1;//iguana_lookahead(coin,&hash2,0);
     if ( 0 )

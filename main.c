@@ -12,6 +12,7 @@ const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "Bitco
 struct iguana_info *Coins[64];
 int USE_JAY,IGUANA_NUMHELPERS = 4;
 queue_t helperQ;
+static int32_t initflag;
 
 void *iguana(void *arg)
 {
@@ -22,6 +23,8 @@ void *iguana(void *arg)
 #else
         arg = 0;//"{\"coins\":[{\"name\":\"BTCD\",\"maxpeers\":128,\"initialheight\":400000,\"services\":1,\"peers\":[\"127.0.0.1\"]}]}";
 #endif
+    while ( initflag == 0 )
+        sleep(1);
     PostMessage("iguana start.(%s)\n",(char *)arg);
     iguana_main(arg);
     return(0);
@@ -316,6 +319,7 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
     // filesystem.
     InitializeMessageQueue();
     pthread_create(&g_handle_message_thread, NULL, &HandleMessageThread, NULL);
+    pthread_create(&iguana_thread,NULL,&iguana,iguana_filestr(&allocsize,"iguana.conf"));
     nacl_io_init_ppapi(instance,g_get_browser_interface);
     umount("/");
     mount("", "/memfs", "memfs", 0, "");
@@ -329,8 +333,8 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
           "httpfs", /* filesystemtype */
           0,        /* mountflags */
           "");      /* data */
-    pthread_create(&iguana_thread,NULL,&iguana,iguana_filestr(&allocsize,"iguana.conf"));
     PostMessage("finished DidCreate\n");
+    initflag = 1;
     return PP_TRUE;
 }
 
@@ -625,6 +629,7 @@ int main(int argc, const char * argv[])
     if ( argc < 2 )
         jsonstr = 0;
     else jsonstr = (char *)argv[1];
+    initflag = 1;
     printf("main\n");
     iguana(jsonstr);
     return 0;

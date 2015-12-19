@@ -404,7 +404,7 @@ void iguana_main(void *arg)
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTC\",\"active\":1}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"BTCD\",\"active\":1}");
 #endif
     }
     if ( arg != 0 )

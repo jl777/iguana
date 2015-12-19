@@ -140,7 +140,7 @@ void *iguana_kviAddriterator(struct iguana_info *coin,struct iguanakv *kv,struct
 
 uint32_t iguana_updatemetrics(struct iguana_info *coin)
 {
-    char fname[512],tmpfname[512],oldfname[512]; int32_t i; struct iguana_peer *addr; FILE *fp;
+    char fname[512],tmpfname[512],oldfname[512]; int32_t i; struct iguana_peer *addr; FILE *fp; struct iguana_iAddr iA;
     iguana_peermetrics(coin);
     sprintf(fname,"%s_peers.txt",coin->symbol);
     sprintf(oldfname,"%s_oldpeers.txt",coin->symbol);
@@ -151,7 +151,12 @@ uint32_t iguana_updatemetrics(struct iguana_info *coin)
             if ( (addr= coin->peers.ranked[i]) != 0 )
                 fprintf(fp,"%s\n",addr->ipaddr);
         portable_mutex_lock(&coin->peers_mutex);
-        iguana_kviterate(coin,coin->iAddrs,(uint64_t)(long)fp,iguana_kviAddriterator);
+        for (i=0; i<coin->numiAddrs; i++)
+        {
+            if ( iguana_rwiAddrind(coin,1,&iA,i) > 0 )
+                iguana_iAddriterator(coin,&iA);
+        }
+        //iguana_kviterate(coin,coin->iAddrs,(uint64_t)(long)fp,iguana_kviAddriterator);
         portable_mutex_unlock(&coin->peers_mutex);
         if ( ftell(fp) > iguana_filesize(fname) )
         {
@@ -180,6 +185,7 @@ void iguana_coinloop(void *arg)
         }
     }
     coin = coins[0];
+    iguana_rwiAddrind(coin,0,0,0);
     iguana_possible_peer(coin,"127.0.0.1");
     while ( 1 )
     {
