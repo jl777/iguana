@@ -458,10 +458,9 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
     if ( bits256_nonz(hash2) == 0 )
     {
         printf("cant queue zerohash bundlei.%d\n",bundlei);
-        getchar();
         return(-1);
     }
-    if ( priority != 0 || (block= bp->blocks[bundlei]) == 0 )
+    if ( priority != 0 || bp == 0 || (block= bp->blocks[bundlei]) == 0 )
     {
         if ( priority != 0 )
             str = "priorityQ", Q = &coin->priorityQ;
@@ -517,7 +516,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         limit = 1;
     else if ( limit > coin->MAXPENDING )
         limit = coin->MAXPENDING;
-    while ( (req= queue_dequeue(&coin->priorityQ,0)) != 0 || (addr->pendblocks < limit && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
+    if ( (req= queue_dequeue(&coin->priorityQ,0)) != 0 || (addr->pendblocks < limit && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
     {
         hash2 = req->hash2;
         height = req->height;
@@ -526,13 +525,13 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
             //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
             myfree(req,sizeof(*req));
         }
-        else if ( req->bp != 0 && req->bundlei >= 0 && GETBIT(req->bp->recv,req->bundlei) == 0 )
+        else if ( req->bp == 0 || (req->bp != 0 && req->bundlei >= 0 && GETBIT(req->bp->recv,req->bundlei) == 0) )
         {
             init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
             if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
             {
                 if ( 0 && queue_size(&coin->priorityQ) > 0 )
-                    printf("%s %s BLOCK.%d:%d bit.%d qsizes.(p%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
+                    printf("%s %s BLOCK.%d:%d bit.%d Q.(%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
                 iguana_send(coin,addr,serialized,datalen);
                 addr->pendblocks++;
                 addr->pendtime = (uint32_t)time(NULL);
@@ -549,6 +548,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
 
 void iguana_copyblock(struct iguana_info *coin,struct iguana_block *block,struct iguana_block *origblock)
 {
+    block->hash2 = origblock->hash2;
     block->prev_block = origblock->prev_block;
     block->merkle_root = origblock->merkle_root;
     if ( block->timestamp == 0 )

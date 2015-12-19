@@ -443,7 +443,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     fseek(fp,bundlei * sizeof(bundlei),SEEK_SET);
                     //printf("bundlei[%d] <- fpos.%d\n",bundlei,fpos);
                     fwrite(&fpos,1,sizeof(fpos),fp);
-                } else printf("error with bundlei.%d vs %d\n",bundlei,coin->chain->bundlesize);
+                } else printf("error saving with bundlei.%d vs %d\n",bundlei,coin->chain->bundlesize);
                 fclose(fp);
                 //for (i=0; i<txdata->numpkinds; i++)
                 //    printf("%016lx ",*(long *)((struct iguana_pkhash *)((long)txdata + txdata->pkoffset))[i].rmd160);

@@ -140,7 +140,7 @@ void *iguana_kviAddriterator(struct iguana_info *coin,struct iguanakv *kv,struct
 
 uint32_t iguana_updatemetrics(struct iguana_info *coin)
 {
-    char fname[512],tmpfname[512],oldfname[512]; int32_t i; struct iguana_peer *addr; FILE *fp; struct iguana_iAddr iA;
+    char fname[512],tmpfname[512],oldfname[512]; int32_t i; struct iguana_peer *addr; FILE *fp;
     iguana_peermetrics(coin);
     sprintf(fname,"%s_peers.txt",coin->symbol);
     sprintf(oldfname,"%s_oldpeers.txt",coin->symbol);
@@ -150,14 +150,15 @@ uint32_t iguana_updatemetrics(struct iguana_info *coin)
         for (i=0; i<coin->peers.numranked; i++)
             if ( (addr= coin->peers.ranked[i]) != 0 )
                 fprintf(fp,"%s\n",addr->ipaddr);
-        portable_mutex_lock(&coin->peers_mutex);
+        /*portable_mutex_lock(&coin->peers_mutex);
         for (i=0; i<coin->numiAddrs; i++)
         {
             if ( iguana_rwiAddrind(coin,1,&iA,i) > 0 )
                 iguana_iAddriterator(coin,&iA);
         }
+        printf("iguana_iAddriterator iterated.%d\n",coin->numiAddrs);
         //iguana_kviterate(coin,coin->iAddrs,(uint64_t)(long)fp,iguana_kviAddriterator);
-        portable_mutex_unlock(&coin->peers_mutex);
+        portable_mutex_unlock(&coin->peers_mutex);*/
         if ( ftell(fp) > iguana_filesize(fname) )
         {
             printf("new peers.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
@@ -171,7 +172,8 @@ uint32_t iguana_updatemetrics(struct iguana_info *coin)
 
 void iguana_coinloop(void *arg)
 {
-    int32_t flag,i,n; char str[1024]; uint32_t now,lastdisp = 0; struct iguana_info *coin,**coins = arg;
+    struct iguana_info *coin,**coins = arg;
+    struct iguana_bundle *bp; int32_t flag,i,n; bits256 zero; char str[1024]; uint32_t now,lastdisp = 0;
     n = (int32_t)(long)coins[0];
     coins++;
     printf("begin coinloop[%d]\n",n);
@@ -187,6 +189,9 @@ void iguana_coinloop(void *arg)
     coin = coins[0];
     iguana_rwiAddrind(coin,0,0,0);
     iguana_possible_peer(coin,"127.0.0.1");
+    memset(zero.bytes,0,sizeof(zero));
+    if ( (bp= iguana_bundlecreate(coin,*(bits256 *)coin->chain->genesis_hashdata,zero)) != 0 )
+        bp->bundleheight = 0;
     while ( 1 )
     {
         flag = 0;
@@ -214,7 +219,7 @@ void iguana_coinloop(void *arg)
                         //    if ( GETBIT(coin->havehash,j) != 0 )
                         //        m++;
                         iguana_bundlestats(coin,str);
-                        printf("%s.%-2d %s time %.2f files.%d\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.,coin->peers.numfiles);
+                        printf("%s.%-2d %s time %.2f files.%d Q.%d %d\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.,coin->peers.numfiles,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
                         if ( (rand() % 100) == 0 )
                             myallocated(0,0);
                     }
@@ -254,7 +259,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
-        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*8;
+        coin->MAXPENDING = _IGUANA_MAXPENDING;//(strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*8;
     if ( (coin->MAXBUNDLES= maxbundles) <= 0 )
         coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*64;
     coin->myservices = services;
