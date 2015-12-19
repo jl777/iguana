@@ -546,7 +546,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                                 iguana_send(coin,addr,serialized,datalen);
                                 addr->pendblocks++;
                                 addr->pendtime = (uint32_t)time(NULL);
-                                if ( (rand() % 1000) == 0 )
+                                if ( (rand() % 10000) == 0 )
                                 {
                                     char str[65];
                                     printf("%p %s %s issue.%d %d lag.%.3f\n",block,addr->ipaddr,bits256_str(str,hash2),bp->hdrsi,j,milliseconds()-millis);
