@@ -519,16 +519,15 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
     if ( (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
         //char str[65];
-        struct iguana_bundle *bp; int32_t i,r,j,incr; struct iguana_block *block; double millis = milliseconds();
+        struct iguana_bundle *bp; int32_t i,r,j; struct iguana_block *block; double millis = milliseconds();
         //|| ( && (req= queue_dequeue(&coin->blocksQ,0)) != 0) )
-        incr = 1;//(coin->bundlescount / (coin->peers.numranked + 1))/2 + 1;
-        for (r=0; r<coin->bundlescount; r++)
+        for (i=0; i<coin->bundlescount; i++)
         {
-            i = r;//(r + incr*addr->addrind) % coin->bundlescount;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 && bp->blockhashes != 0 )
             {
-                for (j=0; j<coin->chain->bundlesize && j<bp->n; j++)
+                for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
                 {
+                    j = (addr->addrind*8 + r) % bp->n;
                     if ( (block= bp->blocks[j]) == 0 && (bp->issued[j] == 0 || millis > bp->issued[j]+bp->avetime) )
                     {
                         if ( j == 0 )
