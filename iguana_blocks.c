@@ -512,10 +512,10 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
             hashstr = 0;
         }
     }
-    if ( (limit= addr->recvblocks) > coin->MAXPENDING )
+    //if ( (limit= addr->recvblocks) > coin->MAXPENDING )
         limit = coin->MAXPENDING;
 //if ( limit < 1 )
-        limit = 1;
+   //     limit = 1;
     if ( (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
         //char str[65];
