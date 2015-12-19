@@ -340,7 +340,7 @@ struct iguana_block *iguana_recvblockhdr(struct iguana_info *coin,struct iguana_
                     iguana_bundleblockadd(coin,prevbp,*bundleip,block->hash2);
                 }
             }
-            if ( prevbundlei == coin->chain->bundlesize-1 )
+            if ( 0 && prevbundlei == coin->chain->bundlesize-1 )
             {
                 bits256 zero;
                 memset(zero.bytes,0,sizeof(zero));
@@ -633,7 +633,7 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
             else threshold = bp->avetime * 2;
         } else threshold = bp->avetime * 5;
         lasti = -1;
-        for (i=0; i<coin->chain->bundlesize; i++)
+        for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
         {
             hash2 = iguana_bundleihash2(coin,bp,i);
             if ( bits256_nonz(hash2) == 0 )
