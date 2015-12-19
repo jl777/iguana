@@ -404,11 +404,11 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                     {
                         if ( (newbp= iguana_bundlefind(coin,&newbundlei,blockhashes[j],IGUANA_SEARCHBUNDLE)) == 0 )
                         {
-                            iguana_blockQ(coin,newbp,0,blockhashes[j],1);
+                            //iguana_blockQ(coin,newbp,0,blockhashes[j],1);
                             if ( j < bp->n-1 )
                             {
                                 newbp = iguana_bundlecreate(coin,blockhashes[j],blockhashes[j+1]);
-                                iguana_blockQ(coin,newbp,1,blockhashes[j+1],1);
+                                //iguana_blockQ(coin,newbp,1,blockhashes[j+1],1);
                             }
                             else newbp = iguana_bundlecreate(coin,blockhashes[j],zero);
                             if ( newbp != 0 )
@@ -667,14 +667,18 @@ int32_t iguana_bundlecheck(struct iguana_info *coin,struct iguana_bundle *bp,int
                 } else */
                 n++;
             }
-            else if ( priorityflag != 0 && qsize == 0 && (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
+            else if ( priorityflag != 0 && qsize == 0 )//&& (bp->issued[i] == 0 || milliseconds() > (bp->issued[i] + threshold)) )
             {
+                iguana_blockQ(coin,bp,i,hash2,1);
                 if ( (rand() % 1000) == 0 )
                     printf("priorityQ submit threshold %.3f [%d].%d\n",threshold,bp->hdrsi,i);
-                CLEARBIT(bp->recv,i);
-                bp->issued[i] = milliseconds();
-                iguana_blockQ(coin,bp,i,hash2,priorityflag);
-                bp->blocks[i] = 0;
+                if ( bp->blocks[i] == 0 || bp->blocks[i]->ipbits == 0 )
+                {
+                    //CLEARBIT(bp->recv,i);
+                    //bp->issued[i] = 0;//milliseconds();
+                    //iguana_blockQ(coin,bp,i,hash2,1);
+                    //bp->blocks[i] = 0;
+                }
                 lasti = i;
             } else lasti = i;
         }
@@ -778,7 +782,8 @@ int32_t iguana_issueloop(struct iguana_info *coin)
             nextbp = (i < coin->bundlescount-1) ? coin->bundles[i+1] : 0;
             if ( bp->emitfinish == 0 )
             {
-                iguana_bundlecheck(coin,bp,numactive == 0 || i == coin->closestbundle || i == lastbundle);
+                //iguana_bundlecheck(coin,bp,numactive == 0 || i == coin->closestbundle || i == lastbundle);
+                iguana_bundlecheck(coin,bp,i == coin->closestbundle);
                 if ( bp->numrecv > 3 || numactive == 0 )
                 {
                     numactive++;
@@ -790,7 +795,7 @@ int32_t iguana_issueloop(struct iguana_info *coin)
                         closestbundle = i;
                     }
                 }
-                if (  i < (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
+                //if (  i < (coin->numemitted+coin->MAXPENDING) && numactive >= coin->MAXPENDING && i != coin->closestbundle && i != lastbundle )
                     continue;
                 RTqsize = queue_size(&coin->blocksQ);
                 for (bundlei=0; bundlei<bp->n && bundlei<coin->chain->bundlesize; bundlei++)
