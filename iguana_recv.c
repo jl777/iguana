@@ -223,8 +223,8 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
     if ( origblock == 0 )
         return(0);
     block = iguana_blockhashset(coin,-1,origblock->hash2,1);
-    return(0);
-  *blockp = block;
+    //return(0);
+    *blockp = block;
     if ( block != 0 )
     {
         if ( bits256_nonz(origblock->prev_block) > 0 )
