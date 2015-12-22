@@ -257,6 +257,12 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 block->havebundle = 1;
                 iguana_hash2set(coin,"blockadd",bp,block->bundlei,block->hash2);
             }
+            else if ( bundlei == coin->chain->bundlesize-1 )
+            {
+                char str[65]; printf("CREATE new bundle.%s\n",bits256_str(str,origblock->hash2));
+                iguana_blockQ(coin,0,-1,origblock->hash2,1);
+                iguana_bundlecreate(coin,&bundlei,bp->ramchain.bundleheight + coin->chain->bundlesize,origblock->hash2);
+            }
         } else { char str[65]; printf("can find.(%s)\n",bits256_str(str,origblock->hash2)); }
         if ( block->havebundle != 0 && block->hdrsi < coin->bundlescount )
         {
