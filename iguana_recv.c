@@ -511,7 +511,7 @@ int32_t iguana_updatecounts(struct iguana_info *coin)
 
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
-    int32_t newhwm = 0,h,flag = 0; struct iguana_block *next,*block;
+    int32_t newhwm = 0,h,lflag,flag = 0; struct iguana_block *next,*block;
 //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
 //printf("iguana_updatecounts\n");
@@ -522,27 +522,33 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
     //flag += iguana_issueloop(coin);
     //if ( newhwm != 0 )
     //    flag += iguana_lookahead(coin,&hash2,coin->blocks.hwmheight);
-    h = coin->blocks.hwmchain.height / coin->chain->bundlesize;
-    if ( (block= iguana_blockfind(coin,coin->blocks.hwmchain.hash2)) != 0 )
+    lflag = 1;
+    while ( lflag != 0 )
     {
-        block->mainchain = 1;
-        if ( block->height == coin->blocks.hwmchain.height )
+        lflag = 0;
+        h = coin->blocks.hwmchain.height / coin->chain->bundlesize;
+        if ( (block= iguana_blockfind(coin,coin->blocks.hwmchain.hash2)) != 0 )
         {
-            //iguana_blocksetheights(coin,block);
-            if ( (next= block->hh.next) != 0 )
+            block->mainchain = 1;
+            if ( block->height == coin->blocks.hwmchain.height )
             {
-                //printf("have next\n");
-                if ( memcmp(next->prev_block.bytes,block->hash2.bytes,sizeof(bits256)) == 0 )
+                //iguana_blocksetheights(coin,block);
+                if ( (next= block->hh.next) != 0 )
                 {
-                    _iguana_chainlink(coin,next);
-                } //else printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
-            }
-        } else printf("height mismatch %d != %d\n",block->height,coin->blocks.hwmchain.height);
-        //printf("extend next block.%s\n",bits256_str(str,block->hash2));
-    } else { char str[65]; printf("iguana_processrecv cant find.(%s)\n",bits256_str(str,coin->blocks.hwmchain.hash2)); }
-    if ( h != coin->blocks.hwmchain.height / coin->chain->bundlesize )
-        iguana_savehdrs(coin);
-    else if ( coin->backstop != coin->blocks.hwmchain.height+1 && (block= iguana_blockptr(coin,coin->blocks.hwmchain.height+1)) != 0 && block->recvlen == 0 )
+                    //printf("have next\n");
+                    if ( memcmp(next->prev_block.bytes,block->hash2.bytes,sizeof(bits256)) == 0 )
+                    {
+                        if ( _iguana_chainlink(coin,next) != 0 )
+                            lflag++;
+                    } //else printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
+                }
+            } else printf("height mismatch %d != %d\n",block->height,coin->blocks.hwmchain.height);
+            //printf("extend next block.%s\n",bits256_str(str,block->hash2));
+        } else { char str[65]; printf("iguana_processrecv cant find.(%s)\n",bits256_str(str,coin->blocks.hwmchain.hash2)); }
+        if ( h != coin->blocks.hwmchain.height / coin->chain->bundlesize )
+            iguana_savehdrs(coin);
+    }
+    if ( coin->backstop != coin->blocks.hwmchain.height+1 && (block= iguana_blockptr(coin,coin->blocks.hwmchain.height+1)) != 0 && block->recvlen == 0 )
     {
         coin->backstop = coin->blocks.hwmchain.height+1;
         //printf("backstop.%d\n",coin->backstop);
