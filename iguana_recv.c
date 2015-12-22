@@ -115,6 +115,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
     if ( req->datalen == 0 )
         req->datalen = recvlen;
     req->block = txdata->block;
+    req->ipbits = txdata->block.ipbits;
     req->block.txn_count = req->numtx = txdata->block.txn_count;
     coin->recvcount++;
     coin->recvtime = (uint32_t)time(NULL);
