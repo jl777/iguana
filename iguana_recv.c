@@ -283,6 +283,8 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     struct iguana_bundle *bp=0; char str[65]; int32_t bundlei = -2; struct iguana_block *block; double duration;
     //iguana_chainextend(coin,origblock);
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
+    if ( block != origblock )
+        iguana_blockcopy(coin,block,origblock);
     if ( bp != 0 && bundlei >= 0 )
     {
         if ( bundlei == 1 && bp->numhashes < bp->n )
