@@ -15,6 +15,7 @@
 
 #include "iguana777.h"
 
+// threadsafe
 int32_t iguana_rwnum(int32_t rwflag,uint8_t *serialized,int32_t len,void *endianedp)
 {
     int32_t i; uint64_t x;
@@ -274,7 +275,7 @@ int32_t iguana_rwblock(int32_t rwflag,bits256 *hash2p,uint8_t *serialized,struct
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->H.bits),&msg->H.bits);
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->H.nonce),&msg->H.nonce);
     *hash2p = bits256_doublesha256(blockhash,serialized,len);
-    //printf("len.%d: block version.%d timestamp.%u bits.%x nonce.%u prev.(%s) %llx blockhash.(%s) %llx\n",len,msg->H.version,msg->H.timestamp,msg->H.bits,msg->H.nonce,bits256_str(msg->H.prev_block),(long long)msg->H.merkle_root.txid,blockhash,(long long)hash2p->txid);
+    //printf("len.%d: block version.%d timestamp.%u bits.%x nonce.%u prev.(%s) %llx blockhash.(%s) %llx\n",len,msg->H.version,msg->H.timestamp,msg->H.bits,msg->H.nonce,bits256_str(str,msg->H.prev_block),(long long)msg->H.merkle_root.txid,blockhash,(long long)hash2p->txid);
     if ( rwflag != 0 )
         x = msg->txn_count;
     len += iguana_rwvarint(rwflag,&serialized[len],&x);
@@ -368,7 +369,7 @@ int32_t iguana_send_version(struct iguana_info *coin,struct iguana_peer *addr,ui
 	msg.nTime = (int64_t)time(NULL);
 	msg.nonce = coin->instance_nonce;
 	sprintf(msg.strSubVer,"/Satoshi:0.11.99/");
-	msg.nStartingHeight = coin->blocks.hwmheight;
+	msg.nStartingHeight = coin->blocks.hwmchain.height;
     iguana_gotdata(coin,addr,msg.nStartingHeight);
     len = iguana_rwversion(1,&serialized[sizeof(struct iguana_msghdr)],&msg,addr->ipaddr);
     return(iguana_queue_send(coin,addr,serialized,"version",len,0,1));
@@ -479,7 +480,7 @@ int32_t iguana_getdata(struct iguana_info *coin,uint8_t *serialized,int32_t type
 
 int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_memspace *rawmem,struct iguana_memspace *txmem,struct iguana_memspace *hashmem,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
 {
-    int32_t height,i,retval,srvmsg,bloom,intvectors,len= -100; uint64_t nonce,x; uint32_t type; bits256 hash2;
+    int32_t i,retval,srvmsg,bloom,intvectors,len= -100; uint64_t nonce,x; uint32_t type; bits256 hash2;
     bloom = intvectors = srvmsg = -1;
     if ( addr != 0 )
     {
@@ -553,25 +554,15 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
     }
     else if ( strcmp(H->command,"headers") == 0 )
     {
-        struct iguana_msgblock msg; struct iguana_block *blocks; uint32_t n; struct iguana_prevdep L;
+        struct iguana_msgblock msg; struct iguana_block *blocks; uint32_t n;
         len = iguana_rwvarint32(0,data,&n);
         if ( n <= IGUANA_MAXINV )
         {
             blocks = mycalloc('i',1,sizeof(*blocks) * n);
-            height = -1;
-            memset(&L,0,sizeof(L));
             for (i=0; i<n; i++)
             {
                 len += iguana_rwblock(0,&hash2,&data[len],&msg);
-                if ( i == 0 )
-                    height = iguana_setchainvars(coin,&L,hash2,msg.H.bits,msg.H.prev_block,msg.txn_count);
-                iguana_convblock(&blocks[i],&msg,hash2,height);//firsttxidind,firstvout,firstvin,PoW);
-                if ( L.numtxids > 0 )
-                {
-                    height++;
-                    L.numtxids += blocks[i].txn_count;
-                    L.PoW += PoW_from_compact(blocks[i].bits,coin->chain->unitval);
-                }
+                iguana_blockconv(&blocks[i],&msg,hash2,-1);
             }
             //printf("GOT HEADERS n.%d len.%d\n",n,len);
             iguana_gotheadersM(coin,addr,blocks,n);
@@ -674,11 +665,6 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     n = 1;
                 }
                 blockhashes[n++] = hash;
-                //init_hexbytes_noT(hashstr,hash.bytes,sizeof(hash));
-                //queue_enqueue("blocksQ",&coin->blocksQ,queueitem(hashstr),1);
-                //if ( i == x-2 )
-                //    queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(hashstr),1);
-                //printf("iv.%d %d of %d: block.%llx len.%d %s\n",intvectors,i,(int32_t)x,(long long)hash.txid,len,bits256_str(hash));
             }
             else if ( type == MSG_FILTERED_BLOCK )
                 printf("iv.%d %d of %d: merkle.%llx\n",intvectors,i,(int32_t)x,(long long)hash.txid);

@@ -46,6 +46,7 @@ struct iguana_kvitem *iguana_hashsetHT(struct iguana_kvitem *hashtable,struct ig
     return(ptr);
 }
 
+#ifdef oldway
 uint32_t iguana_txidind(struct iguana_info *coin,uint32_t *firstvoutp,uint32_t *firstvinp,bits256 txid)
 {
     struct iguana_txid tx; uint32_t itemind = 0;
@@ -496,6 +497,7 @@ int32_t ramchain_parsetx(struct iguana_info *coin,int64_t *miningp,int64_t *tota
         printf("numvins.%d or numvouts.%d overflow\n",numvins,numvouts), getchar();
     return(-1);
 }
+#endif
 
 int32_t iguana_parseblock(struct iguana_info *coin,struct iguana_block *block,struct iguana_msgtx *tx,int32_t numtx)
 {
@@ -716,7 +718,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
     {
         if ( (item= ramchains[i]) == 0 )
         {
-            printf("iguana_ramchaininit null hdrsi.%d txdatas[%d]\n",bp->hdrsi,i);
+            printf("iguana_ramchaininit null hdrsi.%d txdatas[%d]\n",bp->ramchain.hdrsi,i);
             return(0);
         }
         numtxids += item->numtxids, numunspents += item->numunspents, numspends += item->numspends;
@@ -739,7 +741,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
     ramchain->numtxids = numtxids, ramchain->numunspents = numunspents;
     ramchain->numspends = numspends, ramchain->numpkinds = numpkinds;
     ramchain->numexternaltxids = numexternaltxids;
-    ramchain->hdrsi = bp->hdrsi, ramchain->bundleheight = bp->bundleheight, ramchain->numblocks = n;
+    ramchain->hdrsi = bp->ramchain.hdrsi, ramchain->bundleheight = bp->ramchain.bundleheight, ramchain->numblocks = n;
     ramchain->prevbundlehash2 = bp->prevbundlehash2, ramchain->nextbundlehash2 = bp->nextbundlehash2;
     ramchain->hash2 = ramchains[0]->hash2;
     ramchain->prevhash2 = ramchains[0]->prevhash2, ramchain->lasthash2 = ramchains[n-1]->hash2;
@@ -761,7 +763,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
     }
     ramchain->allocsize = allocsize;
     ramchain->firsti = 1;
-    printf("Allocated %s for bp %d\n",mbstr(str,allocsize),bp->bundleheight);
+    printf("Allocated %s for bp %d\n",mbstr(str,allocsize),bp->ramchain.bundleheight);
     txidind = unspentind = numtxids = spendind = numunspents = numspends = numpkinds = ramchain->firsti;
     numexternaltxids = 0;
     for (i=0; i<n; i++)

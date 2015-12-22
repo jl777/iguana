@@ -15,13 +15,14 @@
 
 #include "iguana777.h"
 
+// threadsafe
 int32_t iguana_peerfname(struct iguana_info *coin,char *fname,uint32_t ipbits,bits256 hash2)
 {
-    struct iguana_bundle *bp; int32_t bundlei; char str[65];
+    struct iguana_bundle *bp = 0; int32_t bundlei; char str[65];
     if ( ipbits == 0 )
         printf("illegal ipbits.%d\n",ipbits), getchar();
-    if ( (bp= iguana_bundlesearch(coin,&bundlei,hash2)) != 0 )
-        hash2 = bp->bundlehash2;
+    if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,hash2)) != 0 )
+        hash2 = bp->hashes[0];
     sprintf(fname,"tmp/%s/%s.peer%08x",coin->symbol,bits256_str(str,hash2),ipbits);
     return(bundlei);
 }
@@ -38,6 +39,36 @@ int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr
     return(bundlei);
 }
 
+void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
+{
+    struct iguana_helper *ptr;
+    ptr = mycalloc('i',1,sizeof(*ptr));
+    ptr->allocsize = sizeof(*ptr);
+    ptr->coin = coin;
+    ptr->bp = bp, ptr->hdrsi = bp->ramchain.hdrsi;
+    ptr->type = 'E';
+    printf("%s EMIT.%d[%d] emitfinish.%u\n",coin->symbol,ptr->hdrsi,bp->n,bp->emitfinish);
+    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
+}
+
+void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr)
+{
+    struct iguana_helper *ptr;
+    if ( time(NULL) > addr->lastflush+3 )
+    {
+        ptr = mycalloc('i',1,sizeof(*ptr));
+        ptr->allocsize = sizeof(*ptr);
+        ptr->coin = coin;
+        ptr->addr = addr;
+        ptr->type = 'F';
+        //printf("FLUSH.%s %u lag.%d\n",addr->ipaddr,addr->lastflush,(int32_t)(time(NULL)-addr->lastflush));
+        addr->lastflush = (uint32_t)time(NULL);
+        queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
+    }
+}
+
+// helper threads: NUM_HELPERS
+
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
 {
     struct iguana_txblock *ptr; struct iguana_ramchain *ptrs[IGUANA_MAXBUNDLESIZE],*ramchains;
@@ -48,7 +79,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     ramchains = mycalloc('p',coin->chain->bundlesize,sizeof(*ramchains));
     for (i=0; i<bp->n && i<coin->chain->bundlesize; i++)
     {
-        if ( (block= bp->blocks[i]) != 0 )
+        if ( (block= iguana_blockfind(coin,bp->hashes[i])) != 0 )
         {
             //if ( memcmp(block->hash2.bytes,coin->chain->genesis_hashdata,sizeof(bits256)) == 0 )
             //    ptrs[i] = (struct iguana_txblock *)coin->chain->genesis_hashdata, flag++;
@@ -58,7 +89,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 if ( (ptr= iguana_peertxdata(coin,&bundlei,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
                 {
                     if ( bundlei != i || ptr->block.bundlei != i )
-                        printf("peertxdata.%d bundlei.%d, i.%d block->bundlei.%d\n",bp->hdrsi,bundlei,i,ptr->block.bundlei);
+                        printf("peertxdata.%d bundlei.%d, i.%d block->bundlei.%d\n",bp->ramchain.hdrsi,bundlei,i,ptr->block.bundlei);
                     ptrs[i] = &ramchains[i];
                     if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )
                     {
@@ -71,7 +102,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 }
                 else
                 {
-                    printf("error (%s) hdrs.%d ptr[%d]\n",fname,bp->hdrsi,i);
+                    printf("error (%s) hdrs.%d ptr[%d]\n",fname,bp->ramchain.hdrsi,i);
                     CLEARBIT(bp->recv,i);
                     bp->issued[i] = 0;
                     block = 0;
@@ -93,7 +124,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             if ( coin->peers.active[addrind].ipbits != 0 )
             {
-                if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->bundlehash2) >= 0 )
+                if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->hashes[0]) >= 0 )
                 {
                     //printf("remove.(%s)\n",fname);
                     //iguana_removefile(fname,0);
@@ -111,45 +142,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         iguana_mempurge(&memB[i]);
     myfree(ramchains,coin->chain->bundlesize * sizeof(*ramchains));
     return(flag);
-}
-
-void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
-{
-    struct iguana_helper *ptr;
-    ptr = mycalloc('i',1,sizeof(*ptr));
-    ptr->allocsize = sizeof(*ptr);
-    ptr->coin = coin;
-    ptr->bp = bp, ptr->hdrsi = bp->hdrsi;
-    ptr->type = 'E';
-    printf("%s EMIT.%d[%d] emitfinish.%u\n",coin->symbol,ptr->hdrsi,bp->n,bp->emitfinish);
-    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
-}
-
-/*void iguana_txdataQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp,long fpos,int32_t datalen)
-{
-    struct iguana_helper *ptr;
-    ptr = mycalloc('i',1,sizeof(*ptr));
-    ptr->allocsize = sizeof(*ptr);
-    ptr->coin = coin;
-    ptr->addr = addr, ptr->fp = fp, ptr->fpos = fpos, ptr->datalen = datalen;
-    ptr->type = 'T';
-    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
-}*/
-
-void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr)
-{
-    struct iguana_helper *ptr;
-    if ( time(NULL) > addr->lastflush+3 )
-    {
-        ptr = mycalloc('i',1,sizeof(*ptr));
-        ptr->allocsize = sizeof(*ptr);
-        ptr->coin = coin;
-        ptr->addr = addr;
-        ptr->type = 'F';
-        //printf("FLUSH.%s %u lag.%d\n",addr->ipaddr,addr->lastflush,(int32_t)(time(NULL)-addr->lastflush));
-        addr->lastflush = (uint32_t)time(NULL);
-        queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
-    }
 }
 
 int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_helper *ptr)

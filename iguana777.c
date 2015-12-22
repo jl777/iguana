@@ -17,13 +17,6 @@
 #include "iguana777.h"
 //static const bits256 bits256_zero;
 
-int32_t iguana_needhdrs(struct iguana_info *coin)
-{
-    if ( coin->longestchain == 0 || coin->blocks.hashblocks < coin->longestchain-coin->chain->bundlesize )
-        return(1);
-    else return(0);
-}
-
 void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
 {
     //coin->emitbits = myrealloc('W',coin->emitbits,coin->emitbits==0?0:coin->blocks.maxbits/coin->chain->bundlesize+1,numitems/coin->chain->bundlesize+1);
@@ -110,7 +103,7 @@ int32_t iguana_peermetrics(struct iguana_info *coin)
         if ( i > 0 )
         {
             coin->peers.avemetric = (sum / i);
-            if ( i >= (coin->MAXPEERS - 3) && slowest != 0 )
+            if ( i >= (coin->MAXPEERS - 1) && slowest != 0 )
             {
                 printf("prune slowest peer.(%s) numranked.%d\n",slowest->ipaddr,n);
                 slowest->dead = 1;
@@ -150,15 +143,6 @@ uint32_t iguana_updatemetrics(struct iguana_info *coin)
         for (i=0; i<coin->peers.numranked; i++)
             if ( (addr= coin->peers.ranked[i]) != 0 )
                 fprintf(fp,"%s\n",addr->ipaddr);
-        /*portable_mutex_lock(&coin->peers_mutex);
-        for (i=0; i<coin->numiAddrs; i++)
-        {
-            if ( iguana_rwiAddrind(coin,1,&iA,i) > 0 )
-                iguana_iAddriterator(coin,&iA);
-        }
-        printf("iguana_iAddriterator iterated.%d\n",coin->numiAddrs);
-        //iguana_kviterate(coin,coin->iAddrs,(uint64_t)(long)fp,iguana_kviAddriterator);
-        portable_mutex_unlock(&coin->peers_mutex);*/
         if ( ftell(fp) > iguana_filesize(fname) )
         {
             printf("new peers.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
@@ -173,7 +157,8 @@ uint32_t iguana_updatemetrics(struct iguana_info *coin)
 void iguana_coinloop(void *arg)
 {
     struct iguana_info *coin,**coins = arg;
-    struct iguana_bundle *bp; int32_t flag,i,n; bits256 zero; char str[1024]; uint32_t now,lastdisp = 0;
+    struct iguana_bundle *bp; int32_t flag,i,n,bundlei; bits256 zero; char str[1024];
+    uint32_t now,lastdisp = 0;
     n = (int32_t)(long)coins[0];
     coins++;
     printf("begin coinloop[%d]\n",n);
@@ -190,8 +175,8 @@ void iguana_coinloop(void *arg)
     iguana_rwiAddrind(coin,0,0,0);
     iguana_possible_peer(coin,"127.0.0.1");
     memset(zero.bytes,0,sizeof(zero));
-    if ( (bp= iguana_bundlecreate(coin,*(bits256 *)coin->chain->genesis_hashdata,zero)) != 0 )
-        bp->bundleheight = 0;
+    if ( (bp= iguana_bundlecreate(coin,&bundlei,0,*(bits256 *)coin->chain->genesis_hashdata)) != 0 )
+        bp->ramchain.bundleheight = 0;
     while ( 1 )
     {
         flag = 0;
@@ -207,7 +192,7 @@ void iguana_coinloop(void *arg)
                     if ( now > coin->peers.lastmetrics+60 )
                         coin->peers.lastmetrics = iguana_updatemetrics(coin); // ranks peers
                     flag += iguana_processrecv(coin);
-                    if ( 0 && coin->blocks.parsedblocks < coin->blocks.hwmheight-coin->chain->minconfirms )
+                    if ( 0 && coin->blocks.parsedblocks < coin->blocks.hwmchain.height-coin->chain->minconfirms )
                     {
                         if ( iguana_updateramchain(coin) != 0 )
                             iguana_syncs(coin), flag++; // merge ramchain fragments into full ramchain
@@ -226,10 +211,10 @@ void iguana_coinloop(void *arg)
                 }
             }// bp block needs mutex
         }
-        if ( flag == 0 )
+        //if ( flag == 0 )
         {
             //printf("IDLE\n");
-            usleep(10000);
+            usleep(1000);
         }
     }
 }
