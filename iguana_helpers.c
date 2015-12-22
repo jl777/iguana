@@ -119,19 +119,19 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             iguana_ramchainfree(coin,mem,ramchain);
             printf("ramchain saved\n");
             bp->emitfinish = (uint32_t)time(NULL);
-        } else bp->emitfinish = 0;
-        for (addrind=0; addrind<IGUANA_MAXPEERS; addrind++)
-        {
-            if ( coin->peers.active[addrind].ipbits != 0 )
+            for (addrind=0; addrind<IGUANA_MAXPEERS; addrind++)
             {
-                if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->hashes[0]) >= 0 )
+                if ( coin->peers.active[addrind].ipbits != 0 )
                 {
-                    //printf("remove.(%s)\n",fname);
-                    //iguana_removefile(fname,0);
-                    coin->peers.numfiles--;
+                    if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->hashes[0]) >= 0 )
+                    {
+                        //printf("remove.(%s)\n",fname);
+                        iguana_removefile(fname,0);
+                        coin->peers.numfiles--;
+                    }
                 }
             }
-        }
+        } else bp->emitfinish = 0;
     }
     else
     {
