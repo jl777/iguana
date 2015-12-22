@@ -269,9 +269,9 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
     {
         for (i=0; i<n; i++)
         {
-            printf("i.%d of %d bundleset\n",i,n);
+            fprintf(stderr,"i.%d of %d bundleset\n",i,n);
             iguana_bundleset(coin,&block,&bundlei,&blocks[i]);
-            printf("i.%d of %d iguana_chainextend\n",i,n);
+            fprintf(stderr,"i.%d of %d iguana_chainextend\n",i,n);
             iguana_chainextend(coin,&blocks[i]);
         }
     }
