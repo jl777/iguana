@@ -53,10 +53,13 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
         printf("illegal height.%d when max.%d\n",height,coin->blocks.maxbits);
         return(0);
     }
-    //portable_mutex_lock(&coin->blocks_mutex);
+    portable_mutex_lock(&coin->blocks_mutex);
     HASH_FIND(hh,coin->blocks.hash,&hash2,sizeof(hash2),block);
     if ( block != 0 )
+    {
+        portable_mutex_unlock(&coin->blocks_mutex);
         return(block);
+    }
     if ( createflag > 0 )
     {
         block = mycalloc('y',1,sizeof(*block));
@@ -64,7 +67,7 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
         block->hh.itemind = height, block->height = -1;
         HASH_ADD(hh,coin->blocks.hash,hash2,sizeof(hash2),block);
         block->hh.next = block->hh.prev = 0;
-        if ( 0 && bits256_nonz(block->prev_block) > 0 )
+        if ( bits256_nonz(block->prev_block) > 0 )
         {
             HASH_FIND(hh,coin->blocks.hash,&block->prev_block,sizeof(block->prev_block),prev);
             if ( prev != 0 )
@@ -81,7 +84,7 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
                 printf("%s height.%d search error %p != %p\n",str,height,block,tmp);
         }
     }
-    //portable_mutex_unlock(&coin->blocks_mutex);
+    portable_mutex_unlock(&coin->blocks_mutex);
     return(block);
 }
 
