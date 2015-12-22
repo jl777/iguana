@@ -53,7 +53,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
         addr->lastblockrecv = (uint32_t)time(NULL);
         addr->recvblocks += 1.;
         addr->recvtotal += recvlen;
-        if ( (txdata= iguana_blockramchainPT(coin,addr,origtxdata,txarray,origtxdata->block.txn_count,data,recvlen)) != 0 && 0 )
+        if ( (txdata= iguana_blockramchainPT(coin,addr,origtxdata,txarray,origtxdata->block.txn_count,data,recvlen)) != 0 )
         {
             txdata->block.ipbits = addr->ipbits;
             fpos = 0;
