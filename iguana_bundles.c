@@ -494,7 +494,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     if ( queue_size(&coin->blocksQ) == 0 )
         iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
-    dispflag = 1;//(rand() % 100) == 0;
+    dispflag = (rand() % 100) == 0;
     numbundles = numdone = numrecv = numhashes = numissued = numemit = numactive = 0;
     for (i=0; i<coin->bundlescount; i++)
     {
@@ -551,11 +551,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             totalrecv += numrecv;
         }
     }
-    if ( dispflag != 0 )
-    {
-        char str2[65];
-        sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,numemit,coin->numemitted,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
-    }
+    char str2[65];
+    sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,numemit,coin->numemitted,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
     coin->activebundles = numactive;
     coin->estsize = estsize;
     coin->numrecv = totalrecv;
