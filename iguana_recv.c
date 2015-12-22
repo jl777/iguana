@@ -82,7 +82,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 fseek(fp,0,SEEK_END);
                 fpos = (int32_t)ftell(fp);
                 txdata->block.bundlei = bundlei;
-                //printf("%s fpos.%d: bundlei.%d datalen.%d\n",fname,fpos,bundlei,txdata->datalen);
+                printf("%s fpos.%d: bundlei.%d datalen.%d\n",fname,fpos,bundlei,txdata->datalen);
                 fwrite(&bundlei,1,sizeof(bundlei),fp);
                 fwrite(&txdata->block.hash2,1,sizeof(txdata->block.hash2),fp);
                 fwrite(&txdata->datalen,1,sizeof(txdata->datalen),fp);
