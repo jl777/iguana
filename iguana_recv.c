@@ -218,8 +218,11 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_block **blockp,int32_t *bundleip,struct iguana_block *origblock)
 {
     struct iguana_block *block,*prev; struct iguana_bundle *bp = 0; int32_t bundlei = -2;
+    fprintf(stderr,"a");
     block = iguana_blockhashset(coin,-1,origblock->hash2,1);
+    fprintf(stderr,"b");
     *blockp = block;
+    fprintf(stderr,"z");
     if ( block != 0 )
     {
         fprintf(stderr,"A");
