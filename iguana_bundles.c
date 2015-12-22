@@ -489,11 +489,12 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
-    int32_t i,checki,bundlei,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
+    int32_t i,dispflag,checki,bundlei,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
     struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0; char fname[1024];
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     if ( queue_size(&coin->blocksQ) == 0 )
         iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
+    dispflag = (rand() % 100) == 0;
     numbundles = numdone = numrecv = numhashes = numissued = numemit = numactive = 0;
     for (i=0; i<coin->bundlescount; i++)
     {
@@ -532,6 +533,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 bp->estsize = ((uint64_t)datasize * bp->n) / numrecv;
                 estsize += bp->estsize;
                 numactive++;
+                if ( dispflag != 0 )
+                    printf("(%d %d) ",i,bp->numrecv);
                 if ( numrecv > bp->n*.98 )
                 {
                     if ( numrecv > bp->n-3 )
@@ -543,8 +546,11 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             totalrecv += numrecv;
         }
     }
-    char str2[65];
-    sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,numemit,coin->numemitted,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
+    if ( dispflag != 0 )
+    {
+        char str2[65];
+        sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,numemit,coin->numemitted,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
+    }
     coin->activebundles = numactive;
     coin->estsize = estsize;
     coin->numrecv = totalrecv;
