@@ -305,7 +305,7 @@ struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,int32_t *bundl
                                 iguana_memreset(mem);
                             } //else printf("SUCCESS txdata.%s bundlei.%d fpos.%d S.%d\n",bits256_str(str,txdata->block.hash2),bundlei,fpos,txdata->numspends);
                         } else printf("peertxdata error allocating txdata\n");
-                    } else printf("peertxdata datalen %d vs %ld\n",datalen,mem->totalsize - mem->used - 4);
+                    } else printf("mismatch peertxdata datalen %d vs %ld totalsize %ld\n",datalen,mem->totalsize - mem->used - 4,(long)mem->totalsize);
                 } else printf("peertxdata hash mismatch %s != %s\n",bits256_str(str,hash2),bits256_str(str2,checkhash2));
             } else printf("peertxdata bundlei.%d != checki.%d, fpos.%d ftell.%ld\n",bundlei,checki,fpos,ftell(fp));
             fclose(fp);

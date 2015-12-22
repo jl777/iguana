@@ -515,6 +515,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     numissued++;
                     if ( block->ipbits != 0 )
                     {
+                        iguana_memreset(&coin->blockMEM);
                         if ( iguana_peertxdata(coin,&checki,fname,&coin->blockMEM,block->ipbits,block->hash2) != 0 && checki == bundlei )
                             datasize += block->recvlen;
                         else block->recvlen = block->ipbits = 0;
