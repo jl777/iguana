@@ -187,7 +187,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
     }
     if ( num > coin->chain->bundlesize+1 )
         num = coin->chain->bundlesize+1;
-    //char str[65]; printf("got %d iguana_recvblockhashes %d:%d %s\n",num,bp==0?-1:bp->ramchain.bundleheight,bundlei,bits256_str(str,blockhashes[1]));
+    char str[65]; printf("got %d iguana_recvblockhashes %d:%d %s\n",num,bp==0?-1:bp->ramchain.bundleheight,bundlei,bits256_str(str,blockhashes[1]));
+    return(req);
     for (i=0; i<num; i++)
     {
         block = 0;
