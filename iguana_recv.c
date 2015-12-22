@@ -343,8 +343,14 @@ int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // sin
     while ( flag < 1 && (req= queue_dequeue(&coin->bundlesQ,0)) != 0 )
     {
         //printf("%s bundlesQ.%p type.%c n.%d\n",req->addr != 0 ? req->addr->ipaddr : "0",req,req->type,req->n);
-if ( req->type == 'H' && req->blocks != 0 )
-    myfree(req->blocks,sizeof(*req->blocks) * req->n), req->blocks = 0;
+        if ( req->type == 'H' ) // blockhdrs (doesnt have txn_count!)
+        {
+            if ( (req= iguana_recvblockhdrs(coin,req,req->blocks,req->n,newhwmp)) != 0 )
+            {
+                if ( req->blocks != 0 )
+                    myfree(req->blocks,sizeof(*req->blocks) * req->n), req->blocks = 0;
+            }
+        }
 if ( req->hashes != 0 )
     myfree(req->hashes,sizeof(*req->hashes) * req->n), req->hashes = 0;
 myfree(req,req->allocsize);
