@@ -448,7 +448,8 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     {
                         if ( _iguana_chainlink(coin,next) != 0 )
                             lflag++;
-                    } //else printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
+                        else printf("chainlink error for %d\n",coin->blocks.hwmchain.height+1);
+                    } else printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
                 }
             } else printf("height mismatch %d != %d\n",block->height,coin->blocks.hwmchain.height);
             //printf("extend next block.%s\n",bits256_str(str,block->hash2));
@@ -456,7 +457,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
         if ( h != coin->blocks.hwmchain.height / coin->chain->bundlesize )
             iguana_savehdrs(coin);
     }
-    if ( (block= iguana_blockptr(coin,coin->blocks.hwmchain.height+1)) != 0 && (coin->backstop != coin->blocks.hwmchain.height+1 || time(NULL) > coin->backstoptime+3 || block->recvlen == 0) ) //
+    if ( (block= iguana_blockptr(coin,coin->blocks.hwmchain.height+1)) != 0 && (coin->backstop != coin->blocks.hwmchain.height+1 || time(NULL) > coin->backstoptime || block->recvlen == 0) ) //
     {
         //if ( time(NULL) > coin->backstoptime+3 )
             printf("backstop.%d time.%u recvlen.%d\n",coin->backstop,coin->backstoptime,block->recvlen);
@@ -589,7 +590,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
             init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
             if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
             {
-                if ( 0 && queue_size(&coin->priorityQ) > 0 )
+                //if ( 0 && queue_size(&coin->priorityQ) > 0 )
                     printf("%s %s BLOCK.%d:%d bit.%d Q.(%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->ramchain.hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
                 iguana_send(coin,addr,serialized,datalen);
                 coin->numemitted++;
