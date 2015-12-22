@@ -502,13 +502,13 @@ int32_t iguana_updatecounts(struct iguana_info *coin)
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
     int32_t newhwm = 0,h,flag = 0; struct iguana_block *next,*block;
-printf("process bundlesQ\n");
+//printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
-printf("iguana_updatecounts\n");
+//printf("iguana_updatecounts\n");
     flag += iguana_updatecounts(coin);
-printf("iguana_reqhdrs\n");
+//printf("iguana_reqhdrs\n");
     flag += iguana_reqhdrs(coin);
-printf("iguana_issueloop\n");
+//printf("iguana_issueloop\n");
     //flag += iguana_issueloop(coin);
     //if ( newhwm != 0 )
     //    flag += iguana_lookahead(coin,&hash2,coin->blocks.hwmheight);
