@@ -290,171 +290,6 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bund
     return(0);
 }
 
-/*struct iguana_block *iguana_blockadd(struct iguana_info *coin,struct iguana_bundle **bpp,int32_t *bundleip,struct iguana_block *origblock)
-{
-    struct iguana_block *checkblock,*block = 0; char str[65]; struct iguana_bundle *bp = *bpp;
-    int32_t setval,checki,bundlei,bundleheight,bundlesize = coin->chain->bundlesize;
-    bundlei = *bundleip;
-    *bundleip = -2;
-    *bpp = 0;
-    if ( origblock == 0 )
-        return(0);
-    //iguana_blockhashset(coin,-1,origblock->prev_block,1);
-    if ( bits256_nonz(origblock->hash2) > 0 && (block= iguana_blockhashset(coin,-1,origblock->hash2,1)) != 0 )
-    {
-        //printf("blockadd.(%s) -> %d (%s)\n",bits256_str(str,origblock->prev_block),block->height,bits256_str(str2,origblock->hash2));
-        if ( bits256_nonz(block->prev_block) == 0 )
-            iguana_blockcopy(coin,block,origblock);
-        if ( (bp= *bpp) == 0 )
-        {
-            if ( (bp= iguana_bundlefind(coin,bpp,&bundlei,block->hash2)) == 0 )
-            {
-                *bpp = 0, bundlei = -2;
-                //printf("a bundlefind.(%s) -> bundlei.%d\n",bits256_str(str,block->hash2),*bundleip);
-                if ( (bp= iguana_bundlefind(coin,bpp,&bundlei,block->prev_block)) == 0 )
-                {
-                    //iguana_chainheight(coin,block);
-                    //printf("a prev bundlefind.(%s) -> bundlei.%d ht.%d\n",bits256_str(str,block->prev_block),*bundleip,block->height);
-                     *bpp = 0;
-                    *bundleip = -2;
-                    return(block);
-                }
-                else
-                {
-                    if ( *bundleip == bundlesize-1 )
-                    {
-                        printf("b prev bundlefind.(%s) -> bundlei.%d\n",bits256_str(str,block->prev_block),*bundleip);
-                        bundleheight = (bp->ramchain.bundleheight >= 0) ? (bp->ramchain.bundleheight + bundlesize) : -1;
-                        printf("autocreateA: bundleheight.%d\n",bundleheight);
-                        bundlei = -2;
-                        *bpp = bp = iguana_bundlecreate(coin,&bundlei,bundleheight,block->hash2);
-                        *bpp = 0;
-                        *bundleip = -2;
-                        return(block);
-                    }
-                    else if ( bundlei < coin->chain->bundlesize-1 )
-                    {
-                        bundlei++;
-                        if ( bp->n <= bundlei )
-                            bp->n = bundlei+1;
-                        iguana_hash2set(coin,"add",bp,bundlei,block->hash2);
-                        //printf("found prev.%s -> bundlei.%d\n",bits256_str(str,block->prev_block),bundlei);
-                    }
-                }
-            }
-            else
-            {
-               // printf("found bp.%p bundlei.%d\n",bp,bundlei);
-            }
-        }
-        else if ( bundlei < -1 )
-        {
-            bp = iguana_bundlefind(coin,bpp,&bundlei,block->hash2);
-            printf("c bundlefind.(%s) -> bundlei.%d\n",bits256_str(str,block->hash2),bundlei);
-        } else printf("last case bundleip %d\n",bundlei);
-        *bpp = bp;
-        *bundleip = bundlei;
-        //printf("bundlei.%d for %s\n",bundlei,bits256_str(str,block->hash2));
-        if ( memcmp(bp->hashes[bundlei].bytes,block->hash2.bytes,sizeof(bits256)) != 0 )
-            printf("honk? find error %s\n",bits256_str(str,bp->hashes[bundlei])), getchar();
-        if ( bp == 0 || bundlei < -1 )
-        {
-            printf("%s null bp? %p or illegal bundlei.%d block.%p\n",bits256_str(str,block->hash2),bp,bundlei,block);
-            return(block);
-        }
-        if ( (setval= iguana_bundlehash2add(coin,&checkblock,bp,bundlei,block->hash2)) == 0 && checkblock == block )
-        {
-            if ( bp->blocks[bundlei] != 0 )
-            {
-                if ( bp->blocks[bundlei] != block )
-                    printf("blockadd: error blocks[%d] %p %d != %d %p\n",bundlei,bp->blocks[bundlei],bp->blocks[bundlei]->height,block->height,block);
-            } else bp->blocks[bundlei] = block;
-            //iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
-            //printf("setval.%d bp.%p bundlei.%d\n",setval,bp,bundlei);
-        }
-        else if ( setval > 0 )
-        {
-            if ( bundlei == bundlesize )
-            {
-                bundleheight = (bp->ramchain.bundleheight >= 0) ? (bp->ramchain.bundleheight + bundlesize) : -1;
-                printf("autocreate: bundleheight.%d\n",bundleheight);
-                iguana_bundlecreate(coin,&checki,bundleheight,block->hash2);
-            }
-            printf("setval.%d bundlei.%d\n",setval,bundlei);
-        } else printf("blockadd: error.%d adding hash2, checkblock.%p vs %p\n",setval,checkblock,block);
-        //printf("bundleblockadd.[%d] of %d <- %s setval.%d %p\n",bundlei,bp->n,bits256_str(str,block->hash2),setval,block);
-    } else printf("bundleblockadd: block.%p error\n",block);
-    return(block);
-}
-
-struct iguana_block *iguana_bundleblockadd(struct iguana_info *coin,struct iguana_bundle **bpp,int32_t *bundleip,struct iguana_block *origblock)
-{
-    struct iguana_block *block,*retblock; int32_t i,oldhwm; struct iguana_bundle *bp;
-    bits256 *hash2p,hash2; char str[65]; struct iguana_bloominds bit;
-    oldhwm = coin->blocks.hwmchain.height;
-    *bpp = 0, *bundleip = -2;
-    if ( (retblock= iguana_blockadd(coin,bpp,bundleip,origblock)) != 0 )
-    {
-        block = retblock;
-        //iguana_chainextend(coin,block);
-        if ( block->height >= 0 && (hash2p= iguana_blockhashptr(coin,coin->blocks.hashblocks)) != 0 )
-            *hash2p = block->hash2;
-        if ( oldhwm != coin->blocks.hwmchain.height )
-        {
-            if ( oldhwm < coin->blocks.hashblocks )
-                coin->blocks.hashblocks = oldhwm;
-            while ( coin->blocks.hashblocks < coin->blocks.hwmchain.height && (hash2p= iguana_blockhashptr(coin,coin->blocks.hashblocks)) != 0 )
-            {
-                hash2 = *hash2p;
-                if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 )
-                {
-                    if ( hash2p == 0 )
-                    {
-                        printf("iguana_bundleblockadd B cant find coin->blocks.hashblocks %d\n",coin->blocks.hashblocks);
-                        break;
-                    }
-                    *hash2p = hash2;
-                    for (i=0; i<coin->bundlescount; i++)
-                    {
-                        if ( (bp= coin->bundles[i]) != 0 )
-                        {
-                            if ( coin->blocks.hashblocks >= bp->ramchain.bundleheight && coin->blocks.hashblocks < bp->ramchain.bundleheight+bp->n )
-                            {
-                                bit = iguana_calcbloom(block->hash2);
-                                if ( iguana_bloomfind(coin,&bp->bloom,0,bit) < 0 )
-                                    iguana_bloomset(coin,&bp->bloom,0,bit);
-                                break;
-                            }
-                        }
-                    }
-                    //printf("ht.%d %s %p\n",block->height,bits256_str(str,hash2),hash2p);
-                    bp = 0;
-                    *bundleip = -2;
-                    iguana_blockadd(coin,&bp,bundleip,block);
-                    bp = 0;
-                    *bundleip = -2;
-                    if ( iguana_bundlefind(coin,&bp,bundleip,block->hash2) == 0 )
-                    {
-                        printf("iguana_bundleblockadd A cant find just added.%s bundlei.%d\n",bits256_str(str,hash2),*bundleip);
-                        bp = 0;
-                        *bundleip = -2;
-                        iguana_bundlefind(coin,&bp,bundleip,block->hash2);
-                        break;
-                    }
-                    coin->blocks.hashblocks++;
-                    block = 0;
-                }
-                else
-                {
-                    //printf("break loop block.%p %s coin->blocks.hashblocks %d vs %d\n",block,bits256_str(str,hash2),coin->blocks.hashblocks,coin->blocks.hwmheight);
-                    break;
-                }
-            }
-        }
-    } else printf("iguana_bundleblockadd returns null\n");
-    return(retblock);
-}*/
-
 char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,struct iguana_bundle *bp,struct iguana_bundle *nextbp,int32_t m)
 {
     static char line[1024];
@@ -552,8 +387,11 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             totalrecv += numrecv;
         }
     }
-    char str2[65];
-    sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,numemit,coin->numemitted,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
+    if ( dispflag != 0 )
+    {
+        char str2[65];
+        sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,numemit,coin->numemitted,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
+    }
     coin->activebundles = numactive;
     coin->estsize = estsize;
     coin->numrecv = totalrecv;

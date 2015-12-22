@@ -365,7 +365,7 @@ int32_t iguana_rpctest(struct iguana_info *coin)
 {
     static int32_t testi,good,bad;
     char *retjsonstr,jsonstr[4096],checkstr[sizeof(jsonstr)]; // should be big enough
-    if ( (rand() % 1000) < 999 ) // if no test active, just return 0
+    //if ( (rand() % 1000) < 999 ) // if no test active, just return 0
         return(0);
     if ( iguana_rpctestvector(coin,checkstr,jsonstr,sizeof(jsonstr),testi++) > 0 )
     {
