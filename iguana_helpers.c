@@ -126,8 +126,8 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                     if ( iguana_peerfile_exists(coin,&coin->peers.active[addrind],fname,bp->hashes[0]) >= 0 )
                     {
                         //printf("remove.(%s)\n",fname);
-                        iguana_removefile(fname,0);
-                        coin->peers.numfiles--;
+                        //iguana_removefile(fname,0);
+                        //coin->peers.numfiles--;
                     }
                 }
             }
