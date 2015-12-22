@@ -535,6 +535,11 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 numactive++;
                 if ( dispflag != 0 )
                     printf("(%d %d) ",i,bp->numrecv);
+                if ( bp->numrecv == bp->n && bp->emitfinish == 0 )
+                {
+                    bp->emitfinish = 1;
+                    iguana_emitQ(coin,bp);
+                }
                 if ( numrecv > bp->n*.98 )
                 {
                     if ( numrecv > bp->n-3 )
