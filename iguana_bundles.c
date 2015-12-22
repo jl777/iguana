@@ -324,6 +324,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
+    static uint32_t lastdisp;
     int32_t i,dispflag,checki,bundlei,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
     struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0; char fname[1024];
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
@@ -387,10 +388,11 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             totalrecv += numrecv;
         }
     }
-    if ( dispflag != 0 )
+    if ( time(NULL) > lastdisp+10 )
     {
         char str2[65];
         sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,numemit,coin->numemitted,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
+        lastdisp = (uint32_t)time(NULL);
     }
     coin->activebundles = numactive;
     coin->estsize = estsize;
