@@ -258,13 +258,13 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             } else fprintf(stderr,"g");
         } else { char str[65]; printf("can find.(%s)\n",bits256_str(str,origblock->hash2)); }
         fprintf(stderr,"G");
-        if ( block->havebundle != 0 )
+        if ( block->havebundle != 0 && block->hdrsi < coin->bundlescount )
         {
             fprintf(stderr,"H");
             bundlei = block->bundlei;
             bp = coin->bundles[block->hdrsi];
         }
-        //printf("iguana_recvblock (%s) %d %d[%d] %p\n",bits256_str(str,block->hash2),block->havebundle,block->hdrsi,bundlei,bp);
+        char str[65]; printf("iguana_recvblock (%s) %d %d[%d] %p\n",bits256_str(str,block->hash2),block->havebundle,block->hdrsi,bundlei,bp);
     }
     *bundleip = bundlei;
     return(bp);
