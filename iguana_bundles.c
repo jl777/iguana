@@ -494,7 +494,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     if ( queue_size(&coin->blocksQ) == 0 )
         iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
-    dispflag = (rand() % 100) == 0;
+    dispflag = 1;//(rand() % 100) == 0;
     numbundles = numdone = numrecv = numhashes = numissued = numemit = numactive = 0;
     for (i=0; i<coin->bundlescount; i++)
     {
