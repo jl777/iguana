@@ -220,7 +220,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_block **blockp,int32_t *bundleip,struct iguana_block *origblock)
 {
     struct iguana_block *block,*prev; struct iguana_bundle *bp = 0; int32_t bundlei = -2;
-    if ( origblock == 0 )
+    //if ( origblock == 0 )
         return(0);
     block = iguana_blockhashset(coin,-1,origblock->hash2,1);
     *blockp = block;
