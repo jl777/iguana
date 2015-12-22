@@ -460,7 +460,8 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
     {
         coin->backstop = coin->blocks.hwmchain.height+1;
         coin->backstoptime = (uint32_t)time(NULL);
-        //printf("backstop.%d\n",coin->backstop);
+        if ( time(NULL) > coin->backstoptime+3 )
+            printf("backstop.%d\n",coin->backstop);
         iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,block->hash2,1);
     }
     return(flag);
