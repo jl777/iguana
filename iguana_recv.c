@@ -456,11 +456,11 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
         if ( h != coin->blocks.hwmchain.height / coin->chain->bundlesize )
             iguana_savehdrs(coin);
     }
-    if ( coin->backstop != coin->blocks.hwmchain.height+1 && (block= iguana_blockptr(coin,coin->blocks.hwmchain.height+1)) != 0 && (time(NULL) > coin->backstoptime+3 || block->recvlen == 0) )
+    if ( (block= iguana_blockptr(coin,coin->blocks.hwmchain.height+1)) != 0 && (time(NULL) > coin->backstoptime+3 || block->recvlen == 0) ) // coin->backstop != coin->blocks.hwmchain.height+1 &&
     {
         coin->backstop = coin->blocks.hwmchain.height+1;
         coin->backstoptime = (uint32_t)time(NULL);
-        if ( time(NULL) > coin->backstoptime+3 )
+        //if ( time(NULL) > coin->backstoptime+3 )
             printf("backstop.%d\n",coin->backstop);
         iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,block->hash2,1);
     }
