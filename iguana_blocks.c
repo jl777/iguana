@@ -64,7 +64,7 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
         block->hh.itemind = height, block->height = -1;
         HASH_ADD(hh,coin->blocks.hash,hash2,sizeof(hash2),block);
         block->hh.next = block->hh.prev = 0;
-        if ( bits256_nonz(block->prev_block) > 0 )
+        if ( 0 && bits256_nonz(block->prev_block) > 0 )
         {
             HASH_FIND(hh,coin->blocks.hash,&block->prev_block,sizeof(block->prev_block),prev);
             if ( prev != 0 )
