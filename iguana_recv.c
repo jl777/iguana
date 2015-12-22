@@ -101,7 +101,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 {
                     struct iguana_txblock *checktxdata; struct iguana_memspace checkmem; int32_t checkbundlei;
                     memset(&checkmem,0,sizeof(checkmem));
-                    iguana_meminit(&checkmem,"checkmem",0,txdata->block.recvlen + 4096,0);
+                    iguana_meminit(&checkmem,"checkmem",0,txdata->datalen + 4096,0);
                     if ( 0 && (checktxdata= iguana_peertxdata(coin,&checkbundlei,fname,&checkmem,addr->ipbits,txdata->block.hash2)) != 0 )
                     {
                         printf("check datalen.%d bundlei.%d T.%d U.%d S.%d P.%d X.%d\n",checktxdata->datalen,checkbundlei,checktxdata->numtxids,checktxdata->numunspents,checktxdata->numspends,checktxdata->numpkinds,checktxdata->numexternaltxids);
