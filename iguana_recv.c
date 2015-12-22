@@ -98,6 +98,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
                 //    printf("%016lx ",*(long *)((struct iguana_pkhash *)((long)txdata + txdata->pkoffset))[i].rmd160);
                 //printf("create.(%s) %d ",fname,bundlei,coin->peers.numfiles);
                 //printf("bundlei.%d datalen.%d T.%d U.%d S.%d P.%d X.%d\n",bundlei,txdata->datalen,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,txdata->numexternaltxids);
+                if ( 0 )
                 {
                     struct iguana_txblock *checktxdata; struct iguana_memspace checkmem; int32_t checkbundlei;
                     memset(&checkmem,0,sizeof(checkmem));
