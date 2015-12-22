@@ -309,7 +309,7 @@ struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,int32_t *bundl
                 } else printf("peertxdata hash mismatch %s != %s\n",bits256_str(str,hash2),bits256_str(str2,checkhash2));
             } else printf("peertxdata bundlei.%d != checki.%d, fpos.%d ftell.%ld\n",bundlei,checki,fpos,ftell(fp));
             fclose(fp);
-        } else printf("cant find file\n");
+        } else printf("cant find file.(%s)\n",fname);
     } //else printf("bundlei.%d\n",bundlei);
     *bundleip = bundlei;
     return(txdata);
