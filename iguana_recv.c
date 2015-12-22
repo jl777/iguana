@@ -187,8 +187,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
     }
     if ( num > coin->chain->bundlesize+1 )
         num = coin->chain->bundlesize+1;
-    char str[65]; printf("got %d iguana_recvblockhashes %d:%d %s\n",num,bp==0?-1:bp->ramchain.bundleheight,bundlei,bits256_str(str,blockhashes[1]));
-    return(req);
+    //char str[65]; printf("got %d iguana_recvblockhashes %d:%d %s\n",num,bp==0?-1:bp->ramchain.bundleheight,bundlei,bits256_str(str,blockhashes[1]));
+    //return(req);
     for (i=0; i<num; i++)
     {
         block = 0;
@@ -220,7 +220,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_block **blockp,int32_t *bundleip,struct iguana_block *origblock)
 {
     struct iguana_block *block,*prev; struct iguana_bundle *bp = 0; int32_t bundlei = -2;
-    //if ( origblock == 0 )
+    if ( origblock == 0 )
         return(0);
     block = iguana_blockhashset(coin,-1,origblock->hash2,1);
     *blockp = block;
@@ -343,6 +343,9 @@ int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // sin
     while ( flag < 1 && (req= queue_dequeue(&coin->bundlesQ,0)) != 0 )
     {
         printf("%s bundlesQ.%p type.%c n.%d\n",req->addr != 0 ? req->addr->ipaddr : "0",req,req->type,req->n);
+myfree(req,req->allocsize);
+return(1);
+        
         if ( req->type == 'B' ) // one block with all txdata
             req = iguana_recvblock(coin,req->addr,req,&req->block,req->numtx,req->datalen,newhwmp);
         else if ( req->type == 'H' ) // blockhdrs (doesnt have txn_count!)
