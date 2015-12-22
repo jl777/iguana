@@ -219,7 +219,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_block **blockp,int32_t *bundleip,struct iguana_block *origblock)
 {
     struct iguana_block *block,*prev; struct iguana_bundle *bp = 0; int32_t bundlei = -2;
-    if ( origblock == 0 )
+    //if ( origblock == 0 )
         return(0);
     block = iguana_blockhashset(coin,-1,origblock->hash2,1);
     *blockp = block;
@@ -259,7 +259,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             bundlei = block->bundlei;
             bp = coin->bundles[block->hdrsi];
         }
-        char str[65]; printf("iguana_recvblock (%s) %d %d[%d] %p\n",bits256_str(str,block->hash2),block->havebundle,block->hdrsi,bundlei,bp);
+        //char str[65]; printf("iguana_recvblock (%s) %d %d[%d] %p\n",bits256_str(str,block->hash2),block->havebundle,block->hdrsi,bundlei,bp);
     }
     *bundleip = bundlei;
     return(bp);
