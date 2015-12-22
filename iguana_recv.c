@@ -600,7 +600,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
     char *hashstr=0,hexstr[65]; bits256 hash2; uint32_t now; int32_t limit,height=-1,datalen,flag = 0;
-    struct iguana_block *block; struct iguana_blockreq *req=0;
+    struct iguana_blockreq *req=0;
     now = (uint32_t)time(NULL);
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
     {
@@ -644,7 +644,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                 {
                     j = (addr->addrind*3 + r) % bp->n;
                     hash2 = bp->hashes[j];
-                    if ( (block= iguana_blockfind(coin,hash2)) != 0 && block->recvlen == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                    if ( GETBIT(bp->recv,j) == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
                     {
                         init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
                         if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
@@ -659,7 +659,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                                 printf(" %s %s issue.%d %d lag.%d\n",addr->ipaddr,bits256_str(str,hash2),bp->ramchain.hdrsi,j,now-bp->issued[j]);
                             }
                             bp->issued[j] = (uint32_t)time(NULL);
-                            SETBIT(bp->recv,j);
+                            //SETBIT(bp->recv,j);
                             return(1);
                         } else printf("MSG_BLOCK null datalen.%d\n",datalen);
                     } //else printf("null hash\n");
@@ -671,7 +671,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
     {
         hash2 = req->hash2;
         height = req->height;
-        if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && (block= iguana_blockfind(coin,req->bp->hashes[req->bundlei])) != 0 && block->ipbits != 0 )
+        if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && GETBIT(req->bp->recv,req->bundlei) != 0 )
         {
             //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
             myfree(req,sizeof(*req));
