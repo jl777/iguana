@@ -244,7 +244,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 void iguana_coinloop(void *arg)
 {
     struct iguana_info *coin,**coins = arg;
-    struct iguana_bundle *bp; int32_t flag,i,j,n,bundlei; bits256 zero; char str[1024];
+    struct iguana_bundle *bp; int32_t flag,i,n,bundlei; bits256 zero; char str[1024];
     uint32_t now,lastdisp = 0;
     n = (int32_t)(long)coins[0];
     coins++;
@@ -273,10 +273,7 @@ void iguana_coinloop(void *arg)
             {
                 now = (uint32_t)time(NULL);
                 if ( now > coin->lastpossible )
-                {
-                    for (j=0; j<10; j++)
-                        coin->lastpossible = iguana_possible_peer(coin,0); // tries to connect to new peers
-                }
+                    coin->lastpossible = iguana_possible_peer(coin,0); // tries to connect to new peers
                 if ( coin->active != 0 )
                 {
                     if ( now > coin->peers.lastmetrics+6 )
