@@ -736,5 +736,6 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *debugstr,struct iguana_bu
 struct iguana_block *_iguana_chainlink(struct iguana_info *coin,struct iguana_block *newblock);
 int32_t iguana_hashfree(struct iguana_kvitem *hashtable,int32_t freeitem);
 int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp); // single threaded
+int32_t iguana_ramchainverifyPT(struct iguana_info *coin,struct iguana_ramchain *ramchain);
 
 #endif

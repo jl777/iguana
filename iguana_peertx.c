@@ -307,14 +307,19 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
     if ( iguana_peertxsave(coin,&hdrsi,&bundlei,fname,addr,txdata) == txdata )
     {
         int32_t checki; struct iguana_txblock *checktx; struct iguana_ramchain R,*ptr = &R;
-        if ( 0 && (checktx= iguana_peertxdata(coin,&checki,fname,txmem,addr->ipbits,txdata->block.hash2)) != 0 && checki == bundlei )
+        if ( 1 && (checktx= iguana_peertxdata(coin,&checki,fname,txmem,addr->ipbits,txdata->block.hash2)) != 0 && checki == bundlei )
         {
             if ( iguana_ramchainset(coin,ptr,checktx) == ptr )
             {
-                char str[65]; int32_t j;
-                for (j=0; j<ptr->numpkinds; j++)
-                    init_hexbytes_noT(str,ptr->P[j].rmd160,20), printf("[%d %s] ",j,str);
-                printf("check ramchain.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptr->hash2),bundlei,ptr->numtxids,ptr->numunspents,ptr->numspends,ptr->numpkinds);
+                char str[65]; int32_t j,err;
+                ptr->txids = addr->txids;
+                ptr->pkhashes = addr->pkhashes;
+                if ( (err= iguana_ramchainverifyPT(coin,ptr)) != 0 )
+                {
+                    for (j=0; j<ptr->numpkinds; j++)
+                        init_hexbytes_noT(str,ptr->P[j].rmd160,20), printf("[%d %s] ",j,str);
+                    printf("check err.%d ramchain.%s bundlei.%d T.%d U.%d S.%d P.%d\n",err,bits256_str(str,ptr->hash2),bundlei,ptr->numtxids,ptr->numunspents,ptr->numspends,ptr->numpkinds);
+                }
             }
         }
     }
@@ -481,10 +486,11 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 //printf("received txdata.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptr->block.hash2),bundlei,ptr->numtxids,ptr->numunspents,ptr->numspends,ptr->numpkinds);
                 if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )
                 {
-                    //char str[65]; int32_t j;
-                    //for (j=0; j<ptrs[i]->numpkinds; j++)
-                    //    init_hexbytes_noT(str,ptrs[i]->P[j].rmd160,20), printf("%s ",str);
-                    //printf("conv ramchain.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptrs[i]->hash2),bundlei,ptrs[i]->numtxids,ptrs[i]->numunspents,ptrs[i]->numspends,ptrs[i]->numpkinds);
+                    char str[65]; int32_t j,err;
+                    for (j=0; j<ptrs[i]->numpkinds; j++)
+                        init_hexbytes_noT(str,ptrs[i]->P[j].rmd160,20), printf("%s ",str);
+                    err = iguana_ramchainverifyPT(coin,ptrs[i]);
+                    printf("conv err.%d ramchain.%s bundlei.%d T.%d U.%d S.%d P.%d\n",err,bits256_str(str,ptrs[i]->hash2),bundlei,ptrs[i]->numtxids,ptrs[i]->numunspents,ptrs[i]->numspends,ptrs[i]->numpkinds);
                     ptrs[i]->firsti = 0;
                     if ( block->recvlen > maxrecv )
                         maxrecv = block->recvlen;
