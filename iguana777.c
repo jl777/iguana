@@ -166,7 +166,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
     int32_t i,n = 0; struct iguana_bundle *bp; char hashstr[65];
     if ( iguana_needhdrs(coin) > 0 && queue_size(&coin->hdrsQ) == 0 )
     {
-        //if ( coin->zcount++ > 100 )
+        if ( coin->zcount++ > 10 )
         {
             for (i=0; i<coin->bundlescount; i++)
             {
@@ -228,6 +228,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+                    if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
                     printf("BACKSTOP.%d avetime %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,coin->avetime,coin->backstopmillis,lag);
                 }
                 else if ( bits256_nonz(next->prev_block) > 0 )
@@ -243,7 +244,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 void iguana_coinloop(void *arg)
 {
     struct iguana_info *coin,**coins = arg;
-    struct iguana_bundle *bp; int32_t flag,i,n,bundlei; bits256 zero; char str[1024];
+    struct iguana_bundle *bp; int32_t flag,i,j,n,bundlei; bits256 zero; char str[1024];
     uint32_t now,lastdisp = 0;
     n = (int32_t)(long)coins[0];
     coins++;
@@ -272,10 +273,13 @@ void iguana_coinloop(void *arg)
             {
                 now = (uint32_t)time(NULL);
                 if ( now > coin->lastpossible )
-                    coin->lastpossible = iguana_possible_peer(coin,0); // tries to connect to new peers
+                {
+                    for (j=0; j<10; j++)
+                        coin->lastpossible = iguana_possible_peer(coin,0); // tries to connect to new peers
+                }
                 if ( coin->active != 0 )
                 {
-                    if ( now > coin->peers.lastmetrics+60 )
+                    if ( now > coin->peers.lastmetrics+6 )
                         coin->peers.lastmetrics = iguana_updatemetrics(coin); // ranks peers
                     flag += iguana_processrecv(coin);
                     if ( 0 && coin->blocks.parsedblocks < coin->blocks.hwmchain.height-coin->chain->minconfirms )
