@@ -421,7 +421,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         else i = coin->bundlescount - 1, endi = 0, incr = -1;
         for (k=0; k<coin->bundlescount; k++)
         {
-            i = (addr->addrind + k) % coin->bundlescount;
+            i = (addr->ipbits + k) % coin->bundlescount;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
                 for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
