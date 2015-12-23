@@ -169,7 +169,7 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
     *Tptrp = iguana_memalloc(mem,sizeof(**Tptrp) * txdata->numtxids,rwflag);
     *Uptrp = iguana_memalloc(mem,sizeof(**Uptrp) * txdata->numunspents,rwflag);
     *Sptrp = iguana_memalloc(mem,sizeof(**Sptrp) * txdata->numspends,rwflag);
-    //printf("rwflag.%d ptr.%p alloctxdata.%p T.%d U.%d S.%d P.%d  pkoffset.%ld\n",rwflag,mem->ptr,txdata,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,mem->used);
+    printf("rwflag.%d ptr.%p alloctxdata.%p T.%d U.%d S.%d P.%d  pkoffset.%ld X.%d\n",rwflag,mem->ptr,txdata,txdata->numtxids,txdata->numunspents,txdata->numspends,txdata->numpkinds,mem->used,txdata->numexternaltxids);
     if ( externalTptrp != 0 )
     {
         if ( txdata->pkoffset < (int32_t)mem->used )

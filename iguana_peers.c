@@ -308,7 +308,7 @@ int32_t pp_connect(char *hostname,uint16_t port)
     int result = connect(sock,(struct sockaddr *)&addr,addrlen);
     if ( result != 0 )
     {
-        printf("connect() failed: %s sock.%d\n",strerror(errno),sock);
+        printf("connect(%s) port.%d failed: %s sock.%d. this is normal, just means the IP address didnt respond\n",hostname,port,strerror(errno),sock);
         close(sock);
         return -1;
     }
