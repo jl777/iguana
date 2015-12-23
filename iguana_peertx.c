@@ -306,6 +306,7 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
     }
     if ( iguana_peertxsave(coin,&hdrsi,&bundlei,fname,addr,txdata) == txdata )
     {
+#ifdef __APPLE__
         int32_t checki; struct iguana_txblock *checktx; struct iguana_ramchain R,*ptr = &R;
         if ( 1 && (checktx= iguana_peertxdata(coin,&checki,fname,txmem,addr->ipbits,txdata->block.hash2)) != 0 && checki == bundlei )
         {
@@ -322,6 +323,7 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
                 }
             }
         }
+#endif
     }
     //printf("free addrtables %p %p\n",addr->txids,addr->pkhashes);
     //iguana_hashfree(addr->txids,0);
@@ -484,7 +486,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 ptrs[i] = &ramchains[i];
                 //char str[65];
                 //printf("received txdata.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptr->block.hash2),bundlei,ptr->numtxids,ptr->numunspents,ptr->numspends,ptr->numpkinds);
-#ifdef __APPLE__
                 if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )
                 {
                     char str[65]; int32_t err;
@@ -498,7 +499,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                     estimatedsize += block->recvlen;
                     flag++;
                 } else printf("error setting ramchain.%d\n",i);
-#endif
             }
             else
             {
