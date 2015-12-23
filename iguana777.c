@@ -230,9 +230,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
                     //if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
                         printf("BACKSTOP.%d avetime %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,coin->avetime,coin->backstopmillis,lag);
-                    for (j=2; j<100; j++)
-                        iguana_blockQ(coin,0,coin->blocks.hwmchain.height+j,iguana_blockhash(coin,coin->blocks.hwmchain.height+j),1);
-                }
+                 }
                 else if ( bits256_nonz(next->prev_block) > 0 )
                     printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
             }
