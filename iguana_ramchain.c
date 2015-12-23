@@ -377,11 +377,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
     
     iguana_meminit(mem,"ramchain",0,allocsize,0);
     mem->alignflag = sizeof(uint32_t);
-    if ( (ramchain= iguana_memalloc(mem,sizeof(*ramchain),1)) == 0 )
-    {
-        iguana_mempurge(mem);
-        return(0);
-    }
+    ramchain= &bp->ramchain; //iguana_memalloc(mem,sizeof(*ramchain),1)) == 0 )
     ramchain->numblocks = numblocks;
     ramchain->numtxids = numtxids, ramchain->numunspents = numunspents;
     ramchain->numspends = numspends, ramchain->numpkinds = numpkinds;

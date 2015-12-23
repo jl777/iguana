@@ -64,7 +64,7 @@ int32_t iguana_peermetrics(struct iguana_info *coin)
 {
     int32_t i,ind,n; double *sortbuf,sum; uint32_t now; struct iguana_peer *addr,*slowest = 0;
     //printf("peermetrics\n");
-    sortbuf = mycalloc('M',coin->MAXPEERS,sizeof(double)*2);
+    sortbuf = mycalloc('s',coin->MAXPEERS,sizeof(double)*2);
     coin->peers.mostreceived = 0;
     now = (uint32_t)time(NULL);
     for (i=n=0; i<coin->MAXPEERS; i++)

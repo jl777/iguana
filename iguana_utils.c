@@ -320,7 +320,7 @@ void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t to
         } //else printf("mem->ptr.%p mem->totalsize %ld\n",mem->ptr,(long)mem->totalsize);
         if ( mem->ptr == 0 )
         {
-            if ( (mem->ptr= mycalloc('M',1,totalsize)) == 0 )
+            if ( (mem->ptr= mycalloc(name[0],1,totalsize)) == 0 )
             {
                 printf("iguana_meminit: cant get %d bytes\n",(int32_t)totalsize);
                 exit(-1);
