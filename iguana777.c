@@ -197,7 +197,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
 
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
-    int32_t newhwm = 0,h,j,lflag,flag = 0; struct iguana_block *next,*block;
+    int32_t newhwm = 0,h,lflag,flag = 0; struct iguana_block *next,*block;
     //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
