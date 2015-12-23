@@ -93,8 +93,10 @@ typedef unsigned char uint8_t;
 #endif
 
 /* initial number of buckets */
-#define HASH_INITIAL_NUM_BUCKETS 32      /* initial number of buckets        */
+#ifndef HASH_INITIAL_NUM_BUCKETS_LOG2
 #define HASH_INITIAL_NUM_BUCKETS_LOG2 5  /* lg2 of initial number of buckets */
+#endif
+#define HASH_INITIAL_NUM_BUCKETS (1<<HASH_INITIAL_NUM_BUCKETS_LOG2)      /* initial number of buckets        */
 #define HASH_BKT_CAPACITY_THRESH 10      /* expand when bucket count reaches */
 
 /* calculate the element whose hash handle address is hhe */
