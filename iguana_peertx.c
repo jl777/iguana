@@ -266,6 +266,7 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
     txdata->numspends = numvins;
     txdata->numpkinds = numpkinds;
     txdata->numpkinds = txn_count;
+    txdata->block.ipbits = addr->ipbits;
     //char str[65],buf[9999];
     //for (j=buf[0]=0; j<numpkinds; j++)
     //    init_hexbytes_noT(str,P[j].rmd160,20), sprintf(buf+strlen(buf),"(%d %s) ",j,str);

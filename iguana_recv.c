@@ -53,6 +53,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
         addr->lastblockrecv = (uint32_t)time(NULL);
         addr->recvblocks += 1.;
         addr->recvtotal += recvlen;
+        origtxdata->block.ipbits = addr->ipbits;
         if ( (txdata= iguana_blockramchainPT(coin,addr,origtxdata,txarray,origtxdata->block.txn_count,data,recvlen)) != 0 )
         {
             txdata->block.ipbits = addr->ipbits;
@@ -420,7 +421,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
         else i = coin->bundlescount - 1, endi = 0, incr = -1;
         for (k=0; k<coin->bundlescount; k++)
         {
-            i = (addr->ipbits + k) % coin->bundlescount;
+            i = (addr->addrind + k) % coin->bundlescount;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
                 for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
