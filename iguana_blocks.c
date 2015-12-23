@@ -265,6 +265,8 @@ struct iguana_block *_iguana_chainlink(struct iguana_info *coin,struct iguana_bl
             block->PoW = PoW_from_compact(block->bits,coin->chain->unitval), height = 0;
         else if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
         {
+            if ( memcmp(prev->hash2.bytes,coin->blocks.hwmchain.hash2.bytes,sizeof(bits256)) == 0 )
+                prev->mainchain = 1;
             if ( prev->valid != 0 && prev->mainchain != 0 && prev->height >= 0 )
             {
                 prevPoW = prev->PoW;
