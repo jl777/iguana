@@ -140,7 +140,7 @@ int32_t iguana_hashfree(struct iguana_kvitem *hashtable,int32_t delitem)
     {
         HASH_ITER(hh,hashtable,item,tmp)
         {
-            //printf("hashdelete.%p allocsize.%d itemind.%d\n",item,item->allocsize,item->hh.itemind);
+            //printf("hashdelete.%p allocsize.%d itemind.%d delitem.%d\n",item,item->allocsize,item->hh.itemind,delitem);
             if ( delitem != 0 )
                 HASH_DEL(hashtable,item);
             if ( item->allocsize != 0 )

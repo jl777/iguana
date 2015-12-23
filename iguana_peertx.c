@@ -315,8 +315,8 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
         }
     }
     //printf("free addrtables %p %p\n",addr->txids,addr->pkhashes);
-    iguana_hashfree(addr->txids,0);
-    iguana_hashfree(addr->pkhashes,0);
+    //iguana_hashfree(addr->txids,0);
+    //iguana_hashfree(addr->pkhashes,0);
    // printf("numpkinds.%d numspends.%d\n",txdata->numpkinds,txdata->numspends);
     return(txdata);
 }
