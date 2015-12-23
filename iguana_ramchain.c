@@ -433,7 +433,7 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
                         s->spendtxidind = numexternaltxids++;
                         spendind++;
                     }
-                    else printf("numexternaltxids.%d >= ramchain numexternaltxids.%d\n",numexternaltxids,ramchain->numexternaltxids);
+                    //else printf("numexternaltxids.%d >= ramchain numexternaltxids.%d\n",numexternaltxids,ramchain->numexternaltxids);
                 }
             }
             // iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } iguana_Uextra { uint32_t spendind; }
