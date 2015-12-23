@@ -523,7 +523,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
             //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
             myfree(req,sizeof(*req));
         }
-        else if ( req->bp == 0 || (req->bp != 0 && req->bundlei >= 0 && GETBIT(req->bp->recv,req->bundlei) == 0) )
+        else if ( req->bp == 0 || (req->bp != 0 && req->bundlei >= 0) )//&& GETBIT(req->bp->recv,req->bundlei) == 0) )
         {
             init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
             if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
