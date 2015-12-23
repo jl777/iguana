@@ -228,7 +228,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
-                    if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
+                    //if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
                         printf("BACKSTOP.%d avetime %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,coin->avetime,coin->backstopmillis,lag);
                 }
                 else if ( bits256_nonz(next->prev_block) > 0 )
