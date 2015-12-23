@@ -18,7 +18,7 @@
 #include <stdint.h>
 
 #define IGUANA_MAXPENDHDRS 1
-#define _IGUANA_MAXPENDING 1    //64
+#define _IGUANA_MAXPENDING 3    //64
 #define _IGUANA_MAXBUNDLES 8 
 #define IGUANA_MAXACTIVEBUNDLES 64
 #define IGUANA_MAXFILES 4096
