@@ -15,6 +15,7 @@
 
 #define uthash_malloc(size) iguana_memalloc(mem,size,1)
 #define uthash_free iguana_stub
+#define HASH_BLOOM 16
 
 #include "iguana777.h"
 void iguana_stub(void *ptr,int size) { printf("uthash_free ptr.%p %d\n",ptr,size); }
