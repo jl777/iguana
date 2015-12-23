@@ -186,6 +186,7 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
     struct iguana_bundle *bp = 0;
     if ( iguana_bundlefind(coin,&bp,&bundlei,origtxdata->block.hash2) == 0 )
         return(0);
+    SETBIT(bp->recv,bundlei);
     txmem = &addr->TXDATA, hashmem = &addr->HASHMEM;
     iguana_memreset(txmem), iguana_memreset(hashmem);
     addr->txids = addr->pkhashes = 0;
