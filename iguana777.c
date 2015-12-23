@@ -172,7 +172,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( bp->numhashes < bp->n && time(NULL) > bp->issuetime+3 )//&& coin->numpendings < coin->MAXBUNDLES )
+                    if ( bp->numhashes < bp->n && bp->ramchain.bundleheight+bp->n < coin->longestchain && time(NULL) > bp->issuetime+3 )//&& coin->numpendings < coin->MAXBUNDLES )
                     {
                         printf("hdrsi.%d numhashes.%d:%d needhdrs.%d qsize.%d zcount.%d\n",i,bp->numhashes,bp->n,iguana_needhdrs(coin),queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )
@@ -330,7 +330,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
-        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*128;
+        coin->MAXPENDING = _IGUANA_MAXPENDING;//(strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*128;
     if ( (coin->MAXBUNDLES= maxbundles) <= 0 )
         coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*64;
     coin->myservices = services;
