@@ -201,8 +201,8 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
     //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
-    lflag = 1*0;
-    //while ( lflag != 0 )
+    lflag = 1;
+    while ( lflag != 0 )
     {
         lflag = 0;
         h = coin->blocks.hwmchain.height / coin->chain->bundlesize;

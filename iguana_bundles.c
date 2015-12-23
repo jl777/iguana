@@ -325,7 +325,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
     static uint32_t lastdisp;
-    int32_t i,dispflag,checki,bundlei,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
+    int32_t i,dispflag,checki,bundlei,minrequests,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
     struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0; char fname[1024];
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     if ( queue_size(&coin->blocksQ) == 0 )
@@ -336,6 +336,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     {
         if ( (bp= coin->bundles[i]) != 0 )
         {
+            minrequests = 100;
             bp->numhashes = 0;
             numbundles++;
             if ( bp->numrecv >= bp->n )
@@ -344,6 +345,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             {
                 if ( bits256_nonz(bp->hashes[bundlei]) == 0 )
                     continue;
+                if ( bp->requests[bundlei] < minrequests )
+                    minrequests = bp->requests[bundlei];
                 bp->numhashes++;
                 if ( (block= iguana_blockfind(coin,bp->hashes[bundlei])) != 0 && block->recvlen != 0 )
                 {
@@ -360,6 +363,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 else if ( bp->issued[bundlei] > SMALLVAL )
                     numissued++;
             }
+            bp->minrequests = minrequests;
             numhashes += bp->numhashes;
             bp->numrecv = numrecv;
             bp->datasize = datasize;

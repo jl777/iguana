@@ -424,9 +424,9 @@ struct iguana_bundle
     struct queueitem DL; struct iguana_info *coin;
     struct iguana_block block;
     struct iguana_bloom16 bloom;
-    uint32_t issuetime,hdrtime,emitfinish,issued[IGUANA_MAXBUNDLESIZE+1]; int32_t numhashes,numissued,numrecv,n;
+    uint32_t issuetime,hdrtime,emitfinish,issued[IGUANA_MAXBUNDLESIZE+1]; int32_t minrequests,numhashes,numissued,numrecv,n;
     double avetime,threshold,metric; uint64_t datasize,estsize;
-    uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1];
+    uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1],requests[IGUANA_MAXBUNDLESIZE+1];
     //struct iguana_block *prevblock,*blocks[IGUANA_MAXBUNDLESIZE],*nextblock;
     bits256 prevbundlehash2,hashes[IGUANA_MAXBUNDLESIZE+1],nextbundlehash2;
     struct iguana_ramchain ramchain;

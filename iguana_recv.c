@@ -256,6 +256,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         iguana_blockcopy(coin,block,origblock);
     if ( bp != 0 && bundlei >= 0 )
     {
+        printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->ramchain.hdrsi,bp->requests[bundlei]);
         if ( bundlei == 1 && bp->numhashes < bp->n )
         {
             bits256_str(str,block->prev_block);
@@ -425,7 +426,7 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                 {
                     j = (addr->addrind*3 + r) % bp->n;
                     hash2 = bp->hashes[j];
-                    if ( GETBIT(bp->recv,j) == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                    if ( bp->requests[j] <= bp->minrequests && GETBIT(bp->recv,j) == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
                     {
                         init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
                         if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
@@ -440,6 +441,8 @@ int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr)
                                 printf(" %s %s issue.%d %d lag.%d\n",addr->ipaddr,bits256_str(str,hash2),bp->ramchain.hdrsi,j,now-bp->issued[j]);
                             }
                             bp->issued[j] = (uint32_t)time(NULL);
+                            if ( bp->requests[j] < 100 )
+                                bp->requests[j]++;
                             //SETBIT(bp->recv,j);
                             return(1);
                         } else printf("MSG_BLOCK null datalen.%d\n",datalen);
