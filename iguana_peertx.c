@@ -43,7 +43,7 @@ struct iguana_kvitem *iguana_hashsetPT(struct iguana_peer *addr,int32_t selector
     {
         if ( addr->HASHMEM.totalsize != 0 )
             ptr = iguana_memalloc(mem,allocsize,1);
-        else ptr = mycalloc('p',1,allocsize), ptr->allocsize = allocsize;
+        else ptr = mycalloc('p',1,allocsize);//, ptr->allocsize = allocsize;
         if ( ptr == 0 )
             printf("fatal alloc error in hashset\n"), exit(-1);
         //printf("%s ptr.%p allocsize.%d key.%p keylen.%d itemind.%d\n",addr->ipaddr,ptr,allocsize,key,keylen,itemind);

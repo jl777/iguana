@@ -282,7 +282,7 @@ struct msgcounts { uint32_t version,verack,getaddr,addr,inv,getdata,notfound,get
 
 struct iguana_fileitem { bits256 hash2; struct iguana_txdatabits txdatabits; };
 
-struct iguana_kvitem { UT_hash_handle hh; uint16_t allocsize; uint8_t keyvalue[]; } __attribute__((packed));
+struct iguana_kvitem { UT_hash_handle hh; uint8_t keyvalue[]; } __attribute__((packed));
 
 struct iguana_peer
 {
