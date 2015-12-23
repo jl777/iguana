@@ -496,6 +496,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     if ( flag == i )
     {
         printf("numpkinds >>>>>>>>> start MERGE.(%ld) i.%d flag.%d estimated.%ld maxrecv.%d\n",(long)mem->totalsize,i,flag,(long)estimatedsize,maxrecv);
+        bp->emitfinish = (uint32_t)time(NULL);
         if ( 0 && (ramchain= iguana_ramchainmergeHT(coin,mem,ptrs,i,bp)) != 0 )
         {
             iguana_ramchainsave(coin,ramchain);
