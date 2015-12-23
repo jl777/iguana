@@ -296,7 +296,7 @@ struct iguana_peer
     double recvblocks,recvtotal;
     int64_t allocated,freed;
     struct msgcounts msgcounts; FILE *fp; int32_t filecount,addrind;
-    struct iguana_memspace RAWMEM,TXDATA; struct iguana_kvitem *txids,*pkhashes;
+    struct iguana_memspace RAWMEM,TXDATA,HASHMEM; struct iguana_kvitem *txids,*pkhashes;
     struct iguana_fileitem *filehash2; int32_t numfilehash2,maxfilehash2;
 #ifdef IGUANA_PEERALLOC
     struct iguana_memspace *SEROUT[128];
