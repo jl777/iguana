@@ -555,7 +555,9 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
             if ( (bp= ptr->bp) != 0 )
             {
                 bp->emitfinish = (uint32_t)time(NULL);
+#ifdef __APPLE__
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp) == 0 )
+#endif
                     coin->numemitted++;
             }
             //printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
