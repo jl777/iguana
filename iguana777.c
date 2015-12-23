@@ -223,11 +223,12 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
             else if ( 1 )
             {
                 double lag = milliseconds() - coin->backstopmillis;
-                if ( (coin->backstop != coin->blocks.hwmchain.height+1 || lag > 10*coin->avetime) && next->recvlen == 0 )
+                if ( (coin->backstop != coin->blocks.hwmchain.height+1 || lag > 3*coin->avetime) && next->recvlen == 0 )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+                    // clear recvlens
                     //if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
                         printf("BACKSTOP.%d avetime %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,coin->avetime,coin->backstopmillis,lag);
                  }
