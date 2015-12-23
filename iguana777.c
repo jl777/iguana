@@ -220,7 +220,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     lflag++;
                 else printf("chainlink error for %d\n",coin->blocks.hwmchain.height+1);
             }
-            else if ( 0 )
+            else if ( 1 )
             {
                 double lag = milliseconds() - coin->backstopmillis;
                 if ( (coin->backstop != coin->blocks.hwmchain.height+1 || lag > 5*coin->avetime) && next->recvlen == 0 )
