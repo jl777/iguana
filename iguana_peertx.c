@@ -187,6 +187,7 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
     if ( iguana_bundlefind(coin,&bp,&bundlei,origtxdata->block.hash2) == 0 )
         return(0);
     txmem = &addr->TXDATA, hashmem = &addr->HASHMEM;
+    iguana_memreset(txmem), iguana_memreset(hashmem);
     addr->txids = addr->pkhashes = 0;
     //printf("iguana_blockramchainPT recvlen.%d txn_count.%d height.%d + %d\n",recvlen,txn_count,bp->ramchain.bundleheight,bundlei);
     if ( (txdata= iguana_ramchainptrs(&T,&U,&S,&P,0,txmem,origtxdata)) == 0 || T == 0 || U == 0 || S == 0 || P == 0 )
@@ -304,7 +305,6 @@ struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct ig
     if ( iguana_peertxsave(coin,&hdrsi,&bundlei,fname,addr,txdata) == txdata )
     {
         int32_t checki; struct iguana_txblock *checktx; struct iguana_ramchain R,*ptr = &R;
-        iguana_memreset(txmem);
         if ( 0 && (checktx= iguana_peertxdata(coin,&checki,fname,txmem,addr->ipbits,txdata->block.hash2)) != 0 && checki == bundlei )
         {
             if ( iguana_ramchainset(coin,ptr,checktx) == ptr )
