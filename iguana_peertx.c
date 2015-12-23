@@ -19,7 +19,7 @@
 #define HASH_INITIAL_NUM_BUCKETS_LOG2 8
 
 #include "iguana777.h"
-void iguana_stub(void *ptr,int size) { printf("uthash_free ptr.%p %d\n",ptr,size); }
+void iguana_stub(void *ptr,int size) { }//printf("uthash_free ptr.%p %d\n",ptr,size); }
 
 #define iguana_hashfind(coin,selector,key) iguana_hashsetPT(coin,selector,key,-1)
 
