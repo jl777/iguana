@@ -463,45 +463,40 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         if ( (block= iguana_blockfind(coin,bp->hashes[i])) != 0 )
         {
-            //if ( memcmp(block->hash2.bytes,coin->chain->genesis_hashdata,sizeof(bits256)) == 0 )
-            //    ptrs[i] = (struct iguana_txblock *)coin->chain->genesis_hashdata, flag++;
-            //else
+            iguana_meminit(&memB[i],"ramchainB",0,block->recvlen + 4096,0);
+            if ( (ptr= iguana_peertxdata(coin,&bundlei,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
             {
-                iguana_meminit(&memB[i],"ramchainB",0,block->recvlen + 4096,0);
-                if ( (ptr= iguana_peertxdata(coin,&bundlei,fname,&memB[i],block->ipbits,block->hash2)) != 0 )
+                if ( bundlei != i || ptr->block.bundlei != i )
+                    printf("peertxdata.%d bundlei.%d, i.%d block->bundlei.%d\n",bp->ramchain.hdrsi,bundlei,i,ptr->block.bundlei);
+                ptrs[i] = &ramchains[i];
+                //char str[65];
+                //printf("received txdata.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptr->block.hash2),bundlei,ptr->numtxids,ptr->numunspents,ptr->numspends,ptr->numpkinds);
+                if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )
                 {
-                    if ( bundlei != i || ptr->block.bundlei != i )
-                        printf("peertxdata.%d bundlei.%d, i.%d block->bundlei.%d\n",bp->ramchain.hdrsi,bundlei,i,ptr->block.bundlei);
-                    ptrs[i] = &ramchains[i];
-                    //char str[65];
-                    //printf("received txdata.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptr->block.hash2),bundlei,ptr->numtxids,ptr->numunspents,ptr->numspends,ptr->numpkinds);
-                    if ( iguana_ramchainset(coin,ptrs[i],ptr) == ptrs[i] )
-                    {
-                        //char str[65]; int32_t j;
-                        //for (j=0; j<ptrs[i]->numpkinds; j++)
-                        //    init_hexbytes_noT(str,ptrs[i]->P[j].rmd160,20), printf("%s ",str);
-                        //printf("conv ramchain.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptrs[i]->hash2),bundlei,ptrs[i]->numtxids,ptrs[i]->numunspents,ptrs[i]->numspends,ptrs[i]->numpkinds);
-                        ptrs[i]->firsti = 0;
-                        if ( block->recvlen > maxrecv )
-                            maxrecv = block->recvlen;
-                        estimatedsize += block->recvlen;
-                        flag++;
-                    } else printf("error setting ramchain.%d\n",i);
-                }
-                else
-                {
-                    printf("error (%s) hdrs.%d ptr[%d]\n",fname,bp->ramchain.hdrsi,i);
-                    CLEARBIT(bp->recv,i);
-                    bp->issued[i] = 0;
-                    block = 0;
-                }
+                    //char str[65]; int32_t j;
+                    //for (j=0; j<ptrs[i]->numpkinds; j++)
+                    //    init_hexbytes_noT(str,ptrs[i]->P[j].rmd160,20), printf("%s ",str);
+                    //printf("conv ramchain.%s bundlei.%d T.%d U.%d S.%d P.%d\n",bits256_str(str,ptrs[i]->hash2),bundlei,ptrs[i]->numtxids,ptrs[i]->numunspents,ptrs[i]->numspends,ptrs[i]->numpkinds);
+                    ptrs[i]->firsti = 0;
+                    if ( block->recvlen > maxrecv )
+                        maxrecv = block->recvlen;
+                    estimatedsize += block->recvlen;
+                    flag++;
+                } else printf("error setting ramchain.%d\n",i);
+            }
+            else
+            {
+                printf("error (%s) hdrs.%d ptr[%d]\n",fname,bp->ramchain.hdrsi,i);
+                CLEARBIT(bp->recv,i);
+                bp->issued[i] = 0;
+                block = 0;
             }
         }
     }
     if ( flag == i )
     {
         printf("numpkinds >>>>>>>>> start MERGE.(%ld) i.%d flag.%d estimated.%ld maxrecv.%d\n",(long)mem->totalsize,i,flag,(long)estimatedsize,maxrecv);
-        if ( (ramchain= iguana_ramchainmergeHT(coin,mem,ptrs,i,bp)) != 0 )
+        if ( 0 && (ramchain= iguana_ramchainmergeHT(coin,mem,ptrs,i,bp)) != 0 )
         {
             iguana_ramchainsave(coin,ramchain);
             iguana_ramchainfree(coin,mem,ramchain);
