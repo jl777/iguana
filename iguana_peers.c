@@ -470,6 +470,9 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                     coin->totalrecv += len, coin->totalpackets++;
                     //printf("next iter.(%s) numreferrals.%d numpings.%d\n",addr->ipaddr,addr->numreferrals,addr->numpings);
                 }
+                iguana_mempurge(&addr->RAWMEM);
+                iguana_mempurge(&addr->TXDATA);
+                iguana_mempurge(&addr->HASHMEM);
             } else printf("header error from %s\n",addr->ipaddr);
             if ( buf != _buf )
                 myfree(buf,len);
