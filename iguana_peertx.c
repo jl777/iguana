@@ -657,7 +657,7 @@ struct iguana_ramchain *iguana_ramchain_map(struct iguana_info *coin,struct igua
         ramchain->data = (void *)((long)ptr + fpos);
         ramchain->filesize = (long)filesize;
         ramchain->ROflag = 1;
-        //printf("ptr.%p %p mapped P[%d] fpos.%d + %ld -> %ld vs %ld\n",ptr,ramchain->data,(int32_t)ramchain->data->Poffset,(int32_t)fpos,(long)ramchain->data->allocsize,(long)(fpos + ramchain->data->allocsize),filesize);
+        printf("ptr.%p %p mapped P[%d] fpos.%d + %ld -> %ld vs %ld\n",ptr,ramchain->data,(int32_t)ramchain->data->Poffset,(int32_t)fpos,(long)ramchain->data->allocsize,(long)(fpos + ramchain->data->allocsize),filesize);
         if ( iguana_ramchain_size(ramchain) != ramchain->data->allocsize || fpos+ramchain->data->allocsize > filesize )
         {
             printf("iguana_ramchain_map.(%s) size mismatch %ld vs %ld vs filesize.%ld\n",fname,(long)iguana_ramchain_size(ramchain),(long)ramchain->data->allocsize,(long)filesize);
@@ -672,8 +672,8 @@ struct iguana_ramchain *iguana_ramchain_map(struct iguana_info *coin,struct igua
         {
             if ( allocextras != 0 )
                 iguana_ramchain_extras(ramchain,hashmem);
-            return(ramchain);
         }
+        return(ramchain);
     } else printf("iguana_ramchain_map.(%s) cant map file\n",fname);
     return(0);
 }
