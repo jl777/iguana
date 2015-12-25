@@ -643,8 +643,8 @@ int32_t iguana_ramchain_cmp(struct iguana_ramchain *A,struct iguana_ramchain *B,
             {
                 if ( memcmp(&Ua[i],&Ub[i],sizeof(Ua[i])) != 0 )
                     return(-3);
-                if ( memcmp(&U2a[i],&U2b[i],sizeof(U2a[i])) != 0 )
-                    return(-4);
+                //if ( memcmp(&U2a[i],&U2b[i],sizeof(U2a[i])) != 0 )
+                 //   return(-4);
             }
             for (i=A->data->firsti; i<A->data->numspends; i++)
                 if ( memcmp(&Sa[i],&Sb[i],sizeof(Sa[i])) != 0 )
@@ -653,8 +653,8 @@ int32_t iguana_ramchain_cmp(struct iguana_ramchain *A,struct iguana_ramchain *B,
             {
                 if ( memcmp(&Pa[i],&Pb[i],sizeof(Pa[i])) != 0 )
                     return(-6);
-                if ( memcmp(&P2a[i],&P2b[i],sizeof(P2a[i])) != 0 )
-                    return(-7);
+                //if ( memcmp(&P2a[i],&P2b[i],sizeof(P2a[i])) != 0 )
+                //    return(-7);
                 //if ( memcmp(&ACCTa[i],&ACCTb[i],sizeof(ACCTa[i])) != 0 )
                 //    return(-8);
             }
