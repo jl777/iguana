@@ -507,15 +507,17 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = coin->MAXPENDING;
     if ( limit < 1 )
         limit = 1;
-    if ( (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
+    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
-        struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,j; double metric,bestmetric = -1.;
-        refbundlei = (addr->ipbits % (coin->bundlescount+1));
+        struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,diff,j; double metric,bestmetric = -1.;
+        refbundlei = (rand() % coin->bundlescount);
         for (i=0; i<coin->bundlescount; i++)
         {
+            if ( (diff= (i - refbundlei)) < 0 )
+                diff = -diff;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
-                metric = (1 + (i - refbundlei) * (i - refbundlei)) * (1. + bp->metric);
+                metric = (1 + diff * (1. + bp->metric));
                 //printf("%f ",bp->metric);
                 if ( bestmetric < 0. || metric < bestmetric )
                     bestmetric = metric, bestbp = bp;
