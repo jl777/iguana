@@ -297,7 +297,8 @@ int32_t pp_connect(char *hostname,uint16_t port)
     memcpy(&addr.sin_addr.s_addr, hostent->h_addr_list[0], hostent->h_length);
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        printf("socket() failed: %s errno.%d", strerror(errno),errno);
+        if ( errno != ETIMEDOUT )
+            printf("socket() failed: %s errno.%d", strerror(errno),errno);
         return -1;
     }
     opt = 1;
