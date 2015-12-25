@@ -166,13 +166,13 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
     int32_t i,n = 0; struct iguana_bundle *bp; char hashstr[65];
     if ( iguana_needhdrs(coin) > 0 && queue_size(&coin->hdrsQ) == 0 )
     {
-        if ( coin->zcount++ > 10 )
+        if ( coin->zcount++ > 1 )
         {
             for (i=0; i<coin->bundlescount; i++)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( bp->numhashes < bp->n && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+30 )//&& coin->numpendings < coin->MAXBUNDLES )
+                    if ( bp->numhashes < bp->n && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )//&& coin->numpendings < coin->MAXBUNDLES )
                     {
                         printf("hdrsi.%d numhashes.%d:%d needhdrs.%d qsize.%d zcount.%d\n",i,bp->numhashes,bp->n,iguana_needhdrs(coin),queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )

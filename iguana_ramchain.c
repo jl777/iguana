@@ -467,3 +467,4 @@ struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct i
     return(ramchain);*/
     return(0);
 }
+

@@ -163,8 +163,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
             }
             if ( i == coin->chain->bundlesize )
             {
-                char str[65]; printf("ACREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,blockhashes[i]));
-                iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,blockhashes[i]);
+                //char str[65]; printf("ACREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,blockhashes[i]));
+                //iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,blockhashes[i]);
                 iguana_blockQ(coin,0,-1,blockhashes[i],1);
             }
             else if ( i < coin->chain->bundlesize )

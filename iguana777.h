@@ -353,9 +353,13 @@ struct iguana_ledger
 
 // ramchain append only structs -> canonical 32bit inds and ledgerhashes
 struct iguana_txid { bits256 txid; uint32_t txidind,firstvout,firstvin; uint16_t numvouts,numvins; } __attribute__((packed));
-//struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } __attribute__((packed));
-struct iguana_unspent20 { uint64_t value:63,p2sh:1; uint8_t rmd160[20]; } __attribute__((packed));
-struct iguana_spend256 { bits256 prevhash2; uint16_t prevout,hdrsi:14,p2sh:1,diffsequence:1; } __attribute__((packed)); // dont need nextspend
+
+struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } __attribute__((packed));
+struct iguana_unspent20 { uint64_t value:63,p2sh:1; uint32_t txidind; uint8_t rmd160[20]; } __attribute__((packed));
+
+struct iguana_spend256 { bits256 prevhash2; uint16_t prevout,hdrsi:15,diffsequence:1; } __attribute__((packed));
+struct iguana_spend { uint32_t spendtxidind,prevspendind; uint16_t prevout,hdrsi:14,external:1,diffsequence:1; } __attribute__((packed));
+
 struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind,flags; } __attribute__((packed));
 
 // one zero to non-zero write (unless reorg)
