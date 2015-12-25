@@ -47,17 +47,21 @@ void _iguana_blocklink(struct iguana_info *coin,struct iguana_block *prev,struct
 
 struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height,bits256 hash2,int32_t createflag)
 {
+    static int depth;
     struct iguana_block *block,*prev;
-    if ( height > coin->blocks.maxbits )
+    if ( height > coin->blocks.maxbits || depth != 0 )
     {
-        printf("illegal height.%d when max.%d\n",height,coin->blocks.maxbits);
+        printf("illegal height.%d when max.%d, depth.%d\n",height,coin->blocks.maxbits,depth);
+        exit(1);
         return(0);
     }
+    depth++;
     //portable_mutex_lock(&coin->blocks_mutex);
     HASH_FIND(hh,coin->blocks.hash,&hash2,sizeof(hash2),block);
     if ( block != 0 )
     {
         //portable_mutex_unlock(&coin->blocks_mutex);
+        depth--;
         return(block);
     }
     if ( createflag > 0 )
@@ -85,6 +89,7 @@ struct iguana_block *iguana_blockhashset(struct iguana_info *coin,int32_t height
         }
     }
     //portable_mutex_unlock(&coin->blocks_mutex);
+    depth--;
     return(block);
 }
 
@@ -97,10 +102,10 @@ bits256 *iguana_blockhashptr(struct iguana_info *coin,int32_t height)
         {
             if ( (bp= coin->bundles[i]) != 0 )
             {
-                if ( height >= bp->ramchain.bundleheight && height < bp->ramchain.bundleheight+bp->n )
+                if ( height >= bp->bundleheight && height < bp->bundleheight+bp->n )
                 {
-                    hashptr = &bp->hashes[height - bp->ramchain.bundleheight];
-                    //printf("i.%d hashptr.%p height.%d vs (%d %d)\n",i,hashptr,height,bp->ramchain.bundleheight,bp->ramchain.bundleheight+bp->n);
+                    hashptr = &bp->hashes[height - bp->bundleheight];
+                    //printf("i.%d hashptr.%p height.%d vs (%d %d)\n",i,hashptr,height,bp->bundleheight,bp->bundleheight+bp->n);
                     return(hashptr);
                 }
             }

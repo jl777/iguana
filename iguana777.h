@@ -284,42 +284,12 @@ struct iguana_fileitem { bits256 hash2; struct iguana_txdatabits txdatabits; };
 
 struct iguana_kvitem { UT_hash_handle hh; uint8_t keyvalue[]; } __attribute__((packed));
 
-struct iguana_peer
-{
-    struct queueitem DL;
-    queue_t sendQ;
-    struct iguana_msgaddress A;
-    char ipaddr[64],lastcommand[16],coinstr[16],symbol[16];
-    uint64_t pingnonce,totalsent,totalrecv; double pingtime,sendmillis,pingsum,getdatamillis;
-    uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime,lastflush;
-    int32_t dead,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
-    double recvblocks,recvtotal;
-    int64_t allocated,freed;
-    struct msgcounts msgcounts; FILE *fp; int32_t filecount,addrind;
-    struct iguana_memspace RAWMEM,TXDATA,HASHMEM; struct iguana_kvitem *txids,*pkhashes;
-    struct iguana_fileitem *filehash2; int32_t numfilehash2,maxfilehash2;
-#ifdef IGUANA_PEERALLOC
-    struct iguana_memspace *SEROUT[128];
-#endif
-};
-
-struct iguana_peers
-{
-    bits256 lastrequest;
-    struct iguana_peer active[IGUANA_MAXPEERS],*ranked[IGUANA_MAXPEERS],*localaddr;
-    struct iguana_thread *peersloop,*recvloop,*acceptloop;
-    double topmetrics[IGUANA_MAXPEERS],avemetric;
-    uint32_t numranked,mostreceived,shuttingdown,lastpeer,lastmetrics,numconnected;
-    int32_t numfiles;
-};
-
 /*struct iguana_prevdep
 {
     double PoW; // yes I know this is not consensus safe, it is used only for approximations locally
     uint64_t supply;
     uint32_t numtxids,numunspents,numspends,numpkinds;
-} __attribute__((packed));*/
-
+} __attribute__((packed));
 
 struct iguanakv
 {
@@ -335,7 +305,7 @@ struct iguanakv
     int32_t numkeys,dispflag,flags,incr,numitems,numvalid,maxitemind;
     uint32_t iteruarg; int32_t iterarg;
     uint8_t *space;
-};
+};*/
 
 struct iguana_iAddr
 {
@@ -384,7 +354,7 @@ struct iguana_ledger
 // ramchain append only structs -> canonical 32bit inds and ledgerhashes
 struct iguana_txid { bits256 txid; uint32_t txidind,firstvout,firstvin; uint16_t numvouts,numvins; } __attribute__((packed));
 struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } __attribute__((packed));
-struct iguana_spend { uint32_t prevspendind,spendtxidind; uint16_t vout,hdrsi:14,external:1,diffsequence:1; } __attribute__((packed)); // dont need nextspend
+struct iguana_spend256 { bits256 prevhash2; uint16_t prevout,hdrsi:14,external:1,diffsequence:1; } __attribute__((packed)); // dont need nextspend
 struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind,flags; } __attribute__((packed));
 
 // one zero to non-zero write (unless reorg)
@@ -403,18 +373,58 @@ struct iguana_txblock
     uint8_t space[256]; // order: extra[], T, U, S, P, external txids
 };
 
+struct iguana_ramchaindata
+{
+    int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,U2offset,P2offset,Aoffset,Xoffset;
+    bits256 firsthash2,lasthash2;
+    int32_t numblocks,height,firsti,hdrsi;
+    uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
+    uint8_t data[];
+};
+
 struct iguana_ramchain
 {
     uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
+    long filesize; void *fileptr;
     bits256 lhashes[IGUANA_NUMAPPENDS],ledgerhash; struct sha256_vstate states[IGUANA_NUMAPPENDS];
-    uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
-    int32_t numblocks,hdrsi,bundleheight,firsti; uint64_t allocsize;
-    bits256 prevbundlehash2,prevhash2,hash2,lasthash2,nextbundlehash2;
+    uint32_t txidind,unspentind,spendind,pkind,externalind;
+    int32_t numblocks,hdrsi,height,ROflag; //uint64_t allocsize;
+    struct iguana_memspace *hashmem;
     struct iguana_kvitem *txids,*pkhashes;
-    bits256 *externalT;
-    struct iguana_txid *T; struct iguana_unspent *U; struct iguana_spend *S; struct iguana_pkhash *P;
-    struct iguana_Uextra *Uextras; struct iguana_pkextra *pkextras; // onetime zero to nonzero
-    struct iguana_account *accounts; // volatile
+    struct iguana_ramchaindata *data;
+    struct iguana_account *A,*roA; struct iguana_Uextra *U2,*roU2; struct iguana_pkextra *P2,*roP2;
+};
+
+struct iguana_peer
+{
+    struct queueitem DL;
+    queue_t sendQ;
+    struct iguana_msgaddress A;
+    char ipaddr[64],lastcommand[16],coinstr[16],symbol[16];
+    uint64_t pingnonce,totalsent,totalrecv; double pingtime,sendmillis,pingsum,getdatamillis;
+    uint32_t lastcontact,sendtime,ready,startsend,startrecv,pending,ipbits,lastgotaddr,lastblockrecv,pendtime,lastflush;
+    int32_t dead,addrind,usock,protover,relayflag,numpackets,numpings,ipv6,height,rank,pendhdrs,pendblocks,recvhdrs;
+    double recvblocks,recvtotal;
+    int64_t allocated,freed;
+    struct msgcounts msgcounts;
+    //FILE *fp; int32_t filecount,addrind;
+    struct iguana_memspace RAWMEM,TXDATA,HASHMEM;
+    struct iguana_ramchain ramchain;
+    //struct iguana_kvitem *txids,*pkhashes;
+    struct iguana_fileitem *filehash2; int32_t numfilehash2,maxfilehash2;
+#ifdef IGUANA_PEERALLOC
+    struct iguana_memspace *SEROUT[128];
+#endif
+};
+
+struct iguana_peers
+{
+    bits256 lastrequest;
+    struct iguana_peer active[IGUANA_MAXPEERS],*ranked[IGUANA_MAXPEERS],*localaddr;
+    struct iguana_thread *peersloop,*recvloop,*acceptloop;
+    double topmetrics[IGUANA_MAXPEERS],avemetric;
+    uint32_t numranked,mostreceived,shuttingdown,lastpeer,lastmetrics,numconnected;
+    int32_t numfiles;
 };
 
 struct iguana_bloom16 { uint8_t hash2bits[65536 / 8]; };
@@ -425,8 +435,10 @@ struct iguana_bundle
     struct iguana_block block;
     struct iguana_bloom16 bloom;
     uint32_t issuetime,hdrtime,emitfinish,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
-    int32_t minrequests,numhashes,numissued,numrecv,n;
+    int32_t minrequests,numhashes,numissued,numrecv,n,hdrsi,bundleheight;
     double avetime,threshold,metric; uint64_t datasize,estsize;
+    long fpos[IGUANA_MAXBUNDLESIZE+1];
+    uint32_t ipbits[IGUANA_MAXBUNDLESIZE+1];
     uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1],requests[IGUANA_MAXBUNDLESIZE+1];
     //struct iguana_block *prevblock,*blocks[IGUANA_MAXBUNDLESIZE],*nextblock;
     bits256 prevbundlehash2,hashes[IGUANA_MAXBUNDLESIZE+1],nextbundlehash2;
@@ -705,7 +717,7 @@ struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount
 
 void iguana_peerfilename(struct iguana_info *coin,char *fname,uint32_t addrind,uint32_t filecount);
 
-struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata);
+struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend256 **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata);
 
 int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain);
 int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain);
@@ -723,7 +735,7 @@ struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,int32_t *bundl
 int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *fname,bits256 hash2);
 struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata);
 void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA);
-struct iguana_txblock *iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen);
+long iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen);
 int32_t iguana_bundlehash2add(struct iguana_info *coin,struct iguana_block **blockp,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2);
 struct iguana_block *iguana_bundleblockadd(struct iguana_info *coin,struct iguana_bundle **bpp,int32_t *bundleip,struct iguana_block *origblock);
 int32_t iguana_chainextend(struct iguana_info *coin,struct iguana_block *newblock);
@@ -737,5 +749,6 @@ struct iguana_block *_iguana_chainlink(struct iguana_info *coin,struct iguana_bl
 int32_t iguana_hashfree(struct iguana_kvitem *hashtable,int32_t freeitem);
 int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp); // single threaded
 int32_t iguana_ramchainverifyPT(struct iguana_info *coin,struct iguana_ramchain *ramchain);
+void *map_file(char *fname,long *filesizep,int32_t enablewrite);
 
 #endif

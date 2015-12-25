@@ -190,8 +190,8 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                             {
                                 char str[65];
                                 bits256_str(str,bundlehash2);
-                                printf("add bundle.%d:%d (%s) %p\n",bundleheight,bp->ramchain.hdrsi,str,bp);
-                                bp->ramchain.bundleheight = bundleheight;
+                                printf("add bundle.%d:%d (%s) %p\n",bundleheight,bp->hdrsi,str,bp);
+                                bp->bundleheight = bundleheight;
                                 flag = 0;
                             }
                         }
@@ -208,7 +208,7 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                                 char str[65],str2[65];
                                 bits256_str(str,bundlehash2);
                                 bits256_str(str2,hash2);
-                                printf("add bundle.%d:%d (%s) %s %p\n",bundleheight,bp->ramchain.hdrsi,str,str2,bp);
+                                printf("add bundle.%d:%d (%s) %s %p\n",bundleheight,bp->hdrsi,str,str2,bp);
                                 flag = 0;
                             }
                         }

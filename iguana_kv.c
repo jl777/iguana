@@ -425,7 +425,7 @@ void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace
     return(ptr);
 }
 
-
+#ifdef oldway
 void *iguana_kvfixiterator(struct iguana_info *coin,struct iguanakv *kv,struct iguana_kvitem *item,uint64_t args,void *key,void *value,int32_t valuesize)
 {
     int64_t offset = (int64_t)args;
@@ -976,3 +976,5 @@ int32_t iguana_kvdisp(struct iguana_info *coin,struct iguanakv *kv)
     printf("iguana_kvdisp.(%s) n.%d items\n",kv->name,n);
     return(n);
 }
+#endif
+

@@ -172,14 +172,14 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( bp->numhashes < bp->n && bp->ramchain.bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+30 )//&& coin->numpendings < coin->MAXBUNDLES )
+                    if ( bp->numhashes < bp->n && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+30 )//&& coin->numpendings < coin->MAXBUNDLES )
                     {
                         printf("hdrsi.%d numhashes.%d:%d needhdrs.%d qsize.%d zcount.%d\n",i,bp->numhashes,bp->n,iguana_needhdrs(coin),queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )
                             coin->numpendings++;
                         char str[65];
                         bits256_str(str,bp->hashes[0]);
-                        printf("(%s %d).%d ",str,bp->ramchain.bundleheight,i);
+                        printf("(%s %d).%d ",str,bp->bundleheight,i);
                         init_hexbytes_noT(hashstr,bp->hashes[0].bytes,sizeof(bits256));
                         queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(hashstr),1);
                         n++;
@@ -232,7 +232,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     //if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
                         printf("BACKSTOP.%d avetime %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,coin->avetime,coin->backstopmillis,lag);
                  }
-                else if ( bits256_nonz(next->prev_block) > 0 )
+                else if ( 0 && bits256_nonz(next->prev_block) > 0 )
                     printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
             }
         }
@@ -264,7 +264,7 @@ void iguana_coinloop(void *arg)
     iguana_possible_peer(coin,"127.0.0.1");
     memset(zero.bytes,0,sizeof(zero));
     if ( (bp= iguana_bundlecreate(coin,&bundlei,0,*(bits256 *)coin->chain->genesis_hashdata)) != 0 )
-        bp->ramchain.bundleheight = 0;
+        bp->bundleheight = 0;
     while ( 1 )
     {
         flag = 0;
@@ -285,15 +285,12 @@ void iguana_coinloop(void *arg)
                         if ( iguana_updateramchain(coin) != 0 )
                             iguana_syncs(coin), flag++; // merge ramchain fragments into full ramchain
                     }
-                    if ( now > lastdisp )
+                    if ( now > lastdisp+10 )
                     {
                         lastdisp = (uint32_t)now;
-                        //for (j=m=0; j<coin->longestchain; j++)
-                        //    if ( GETBIT(coin->havehash,j) != 0 )
-                        //        m++;
                         iguana_bundlestats(coin,str);
                         printf("%s.%-2d %s time %.2f files.%d Q.%d %d\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.,coin->peers.numfiles,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
-                        if ( (rand() % 100) == 0 )
+                        //if ( (rand() % 100) == 0 )
                             myallocated(0,0);
                     }
                 }

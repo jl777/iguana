@@ -385,13 +385,7 @@ void iguana_main(void *arg)
             coinargs = jsonstr;
     }
     if ( IGUANA_NUMHELPERS == 0 )
-    {
-#ifdef __linux__
-        IGUANA_NUMHELPERS = 4;
-#else
         IGUANA_NUMHELPERS = 1;
-#endif
-    }
     for (i=0; i<IGUANA_NUMHELPERS; i++)
     {
         sprintf(helperstr,"{\"name\":\"helper.%d\"}",i);

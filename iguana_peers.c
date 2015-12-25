@@ -297,7 +297,7 @@ int32_t pp_connect(char *hostname,uint16_t port)
     memcpy(&addr.sin_addr.s_addr, hostent->h_addr_list[0], hostent->h_length);
     int sock = socket(AF_INET, SOCK_STREAM, 0);
     if (sock < 0) {
-        printf("socket() failed: %s", strerror(errno));
+        printf("socket() failed: %s errno.%d", strerror(errno),errno);
         return -1;
     }
     opt = 1;
@@ -308,7 +308,8 @@ int32_t pp_connect(char *hostname,uint16_t port)
     int result = connect(sock,(struct sockaddr *)&addr,addrlen);
     if ( result != 0 )
     {
-        printf("connect(%s) port.%d failed: %s sock.%d. this is normal, just means the IP address didnt respond\n",hostname,port,strerror(errno),sock);
+        if ( errno != ECONNREFUSED )
+            printf("connect(%s) port.%d failed: %s sock.%d. errno.%d\n",hostname,port,strerror(errno),sock,errno);
         close(sock);
         return -1;
     }
@@ -450,13 +451,13 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                 //printf("addr->dead.%u\n",addr->dead);
                 if ( strcmp(H.command,"block") == 0 || strcmp(H.command,"tx") == 0 )
                 {
-                    //printf("Init %s memory %p %p %p\n",addr->ipaddr,addr->RAWMEM.ptr,addr->TXDATA.ptr,addr->HASHMEM.ptr);
                     if ( addr->RAWMEM.ptr == 0 )
                         iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE,0);
                     if ( addr->TXDATA.ptr == 0 )
                         iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE,0);
                     if ( addr->HASHMEM.ptr == 0 )
                         iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,IGUANA_MAXPACKETSIZE*16,0);
+                    //printf("Init %s memory %p %p %p\n",addr->ipaddr,addr->RAWMEM.ptr,addr->TXDATA.ptr,addr->HASHMEM.ptr);
                 }
                 if ( iguana_parser(coin,addr,&addr->RAWMEM,&addr->TXDATA,&addr->HASHMEM,&H,buf,len) < 0 || addr->dead != 0 )
                 {
@@ -949,8 +950,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                 usleep(1000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
     }
-    if ( addr->fp != 0 )
-        fflush(addr->fp);
+    //if ( addr->fp != 0 )
+    //    fclose(addr->fp);
     iguana_iAkill(coin,addr,addr->dead != 0);
     printf("finish dedicatedloop.%s\n",addr->ipaddr);
     myfree(buf,bufsize);
