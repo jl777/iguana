@@ -398,7 +398,7 @@ void iguana_main(void *arg)
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"maxpeers\":32,\"coin\":\"BTC\",\"active\":1}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"maxpeers\":128,\"coin\":\"BTC\",\"active\":1}");
 #endif
     }
     if ( arg != 0 )
