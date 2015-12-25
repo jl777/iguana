@@ -924,6 +924,7 @@ void iguana_ramchain_disp(struct iguana_ramchain *ramchain)
 {
     RAMCHAIN_PTRS; int32_t j; uint32_t txidind,unspentind,spendind; struct iguana_txid *tx; char str[65];
     _iguana_ramchain_setptrs(ramchain,&T,&U,&U2,&S,&P,&P2,&A,&X);
+    printf("disp\n");
     if ( ramchain->data != 0 )
     {
         unspentind = spendind = ramchain->data->firsti;
@@ -945,7 +946,7 @@ void iguana_ramchain_disp(struct iguana_ramchain *ramchain)
 // helper threads: NUM_HELPERS
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
 {
-    struct iguana_ramchain R,*mapchain; int32_t i,bundlei,firsti = 1;
+    struct iguana_ramchain R,*mapchain; int32_t bundlei,firsti = 1;
     for (bundlei=0; bundlei<bp->n; bundlei++)
     {
         memset(&R,0,sizeof(R));
@@ -953,7 +954,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             iguana_ramchain_link(mapchain,bp->hashes[bundlei],bp->hashes[bundlei],bp->hdrsi,bp->bundleheight+bundlei,1,firsti,1);
             iguana_ramchain_free(mapchain,0);
-        }
+        } else printf("map error hdrs.%d:%d\n",bp->hdrsi,bundlei);
     }
 /*    struct iguana_txblock *ptr; struct iguana_ramchain *ptrs[IGUANA_MAXBUNDLESIZE],*ramchains;
     struct iguana_block *block; char fname[1024]; uint64_t estimatedsize = 0;

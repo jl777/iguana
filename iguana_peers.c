@@ -43,7 +43,7 @@ struct iguana_iAddr *_iguana_hashset(struct iguana_info *coin,uint32_t ipbits,in
                 HASH_FIND(hh,coin->iAddrs,&ipbits,sizeof(ipbits),tmp);
                 if ( tmp != ptr )
                     printf("%s itemind.%d search error %p != %p\n",str,itemind,ptr,tmp);
-                else printf("%p added.(%s) ind.%d:%d %p tmp.%p %x\n",coin->iAddrs,str,itemind,ptr->hh.itemind,ptr,tmp,ipbits);
+                //else printf("%p added.(%s) ind.%d:%d %p tmp.%p %x\n",coin->iAddrs,str,itemind,ptr->hh.itemind,ptr,tmp,ipbits);
             }
         }
         else ptr->hh.itemind = itemind;
