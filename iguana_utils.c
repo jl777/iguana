@@ -52,15 +52,15 @@ long myallocated(uint8_t type,long change)
 
 void *mycalloc(uint8_t type,int32_t n,long itemsize)
 {
-    static portable_mutex_t MEMmutex;
+    //static portable_mutex_t MEMmutex;
     struct allocitem *item; int64_t allocsize = ((uint64_t)n * itemsize);
     if ( type == 0 && n == 0 && itemsize == 0 )
     {
-        portable_mutex_init(&MEMmutex);
+        //portable_mutex_init(&MEMmutex);
         myfree(mycalloc('t',1024,1024 * 32),1024*1024*32);
         return(0);
     }
-    portable_mutex_lock(&MEMmutex);
+    //portable_mutex_lock(&MEMmutex);
     myallocated(type,allocsize);
     while ( (item= calloc(1,sizeof(struct allocitem) + allocsize)) == 0 )
     {
@@ -71,7 +71,7 @@ void *mycalloc(uint8_t type,int32_t n,long itemsize)
     //printf("calloc origptr.%p retptr.%p size.%ld\n",item,(void *)(long)item + sizeof(*item),allocsize);
     item->allocsize = (uint32_t)allocsize;
     item->type = type;
-    portable_mutex_unlock(&MEMmutex);
+    //portable_mutex_unlock(&MEMmutex);
     return((void *)(long)item + sizeof(*item));
 }
 
