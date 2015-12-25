@@ -925,7 +925,10 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
                         iguana_ramchain_link(&R,origtxdata->block.hash2,origtxdata->block.hash2,bp->hdrsi,bp->bundleheight+bundlei,bundlei,1,firsti,1);
                     }
                     if ( (err= iguana_ramchain_cmp(ramchain,&R,0)) != 0 )
+                    {
+                        bp->fpos[bundlei] = -1;
                         printf("error.%d comparing REMAP ramchains\n",err);
+                    }
                     else if ( 1 )
                     {
                         iguana_ramchain_extras(&R,0);
