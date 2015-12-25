@@ -924,7 +924,6 @@ void iguana_ramchain_disp(struct iguana_ramchain *ramchain)
 {
     RAMCHAIN_PTRS; int32_t j; uint32_t txidind,unspentind,spendind; struct iguana_txid *tx; char str[65];
     _iguana_ramchain_setptrs(ramchain,&T,&U,&U2,&S,&P,&P2,&A,&X);
-    printf("disp\n");
     if ( ramchain->data != 0 )
     {
         unspentind = spendind = ramchain->data->firsti;
@@ -953,6 +952,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         if ( (mapchain= iguana_ramchain_map(coin,&R,0,bp->ipbits[bundlei],bp->hashes[bundlei],bundlei,bp->fpos[bundlei],1)) != 0 )
         {
             iguana_ramchain_link(mapchain,bp->hashes[bundlei],bp->hashes[bundlei],bp->hdrsi,bp->bundleheight+bundlei,1,firsti,1);
+            iguana_ramchain_disp(mapchain);
             iguana_ramchain_free(mapchain,0);
         } else printf("map error hdrs.%d:%d\n",bp->hdrsi,bundlei);
     }
@@ -1056,7 +1056,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp) == 0 )
 //#endif
                     coin->numemitted++;
-            }
+            } else printf("error missing bp in emit\n");
             //printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
             if ( coin->MAXBUNDLES > IGUANA_MAXACTIVEBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
                 coin->MAXBUNDLES--;
