@@ -353,7 +353,8 @@ struct iguana_ledger
 
 // ramchain append only structs -> canonical 32bit inds and ledgerhashes
 struct iguana_txid { bits256 txid; uint32_t txidind,firstvout,firstvin; uint16_t numvouts,numvins; } __attribute__((packed));
-struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } __attribute__((packed));
+//struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } __attribute__((packed));
+struct iguana_unspent20 { uint64_t value:63,p2h:1; uint8_t rmd160[20]; } __attribute__((packed));
 struct iguana_spend256 { bits256 prevhash2; uint16_t prevout,hdrsi:14,external:1,diffsequence:1; } __attribute__((packed)); // dont need nextspend
 struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind,flags; } __attribute__((packed));
 
@@ -717,7 +718,7 @@ struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount
 
 void iguana_peerfilename(struct iguana_info *coin,char *fname,uint32_t addrind,uint32_t filecount);
 
-struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend256 **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata);
+struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent20 **Uptrp,struct iguana_spend256 **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata);
 
 int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain);
 int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain);

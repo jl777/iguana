@@ -153,7 +153,7 @@ int32_t iguana_hashfree(struct iguana_kvitem *hashtable,int32_t delitem)
     return(n);
 }
 
-struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent **Uptrp,struct iguana_spend256 **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata)
+struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct iguana_unspent20 **Uptrp,struct iguana_spend256 **Sptrp,struct iguana_pkhash **Pptrp,bits256 **externalTptrp,struct iguana_memspace *mem,struct iguana_txblock *origtxdata)
 {
     char str[65]; struct iguana_txblock *txdata; int32_t allocsize,extralen,rwflag = (origtxdata != 0);
     iguana_memreset(mem);
