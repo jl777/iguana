@@ -920,9 +920,41 @@ void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
     queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
 }
 
+void iguana_ramchain_disp(struct iguana_ramchain *ramchain)
+{
+    RAMCHAIN_PTRS; int32_t j; uint32_t txidind,unspentind,spendind; struct iguana_txid *tx; char str[65];
+    _iguana_ramchain_setptrs(ramchain,&T,&U,&U2,&S,&P,&P2,&A,&X);
+    if ( ramchain->data != 0 )
+    {
+        unspentind = spendind = ramchain->data->firsti;
+        for (txidind=ramchain->data->firsti; txidind<ramchain->data->numtxids; txidind++)
+        {
+            tx = &T[txidind];
+            for (j=0; j<tx->numvins; j++, spendind++)
+                printf("%s/v%d ",bits256_str(str,S[spendind].prevhash2),S[spendind].prevout);
+            for (j=0; j<tx->numvouts; j++,unspentind++)
+            {
+                init_hexbytes_noT(str,U[unspentind].rmd160,20);
+                printf("(%.8f %s) ",dstr(U[unspentind].value),str);
+            }
+            printf("txid.[%d] %s (%d:%d %d:%d)\n",txidind,bits256_str(str,tx->txid),tx->firstvout,tx->numvouts,tx->firstvin,tx->numvins);
+        }
+    }
+}
+
 // helper threads: NUM_HELPERS
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
 {
+    struct iguana_ramchain R,*mapchain; int32_t i,bundlei,firsti = 1;
+    for (bundlei=0; bundlei<bp->n; bundlei++)
+    {
+        memset(&R,0,sizeof(R));
+        if ( (mapchain= iguana_ramchain_map(coin,&R,0,bp->ipbits[bundlei],bp->hashes[bundlei],bundlei,bp->fpos[bundlei],1)) != 0 )
+        {
+            iguana_ramchain_link(mapchain,bp->hashes[bundlei],bp->hashes[bundlei],bp->hdrsi,bp->bundleheight+bundlei,1,firsti,1);
+            iguana_ramchain_free(mapchain,0);
+        }
+    }
 /*    struct iguana_txblock *ptr; struct iguana_ramchain *ptrs[IGUANA_MAXBUNDLESIZE],*ramchains;
     struct iguana_block *block; char fname[1024]; uint64_t estimatedsize = 0;
     int32_t i,maxrecv,addrind,flag,bundlei,numdirs=0; struct iguana_ramchain *ramchain;
@@ -1013,15 +1045,15 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
     }
     else*/ if ( ptr->type == 'E' )
     {
-        //printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
+        printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
         if ( (coin= ptr->coin) != 0 )
         {
             if ( (bp= ptr->bp) != 0 )
             {
                 bp->emitfinish = (uint32_t)time(NULL);
-#ifdef __APPLE__
+//#ifdef __APPLE__
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp) == 0 )
-#endif
+//#endif
                     coin->numemitted++;
             }
             //printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
