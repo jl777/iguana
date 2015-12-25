@@ -897,7 +897,7 @@ long iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *addr,st
                 {
                     //printf("mapped Soffset.%ld\n",(long)mapchain->data->Soffset);
                     iguana_ramchain_link(&R,origtxdata->block.hash2,origtxdata->block.hash2,bp->hdrsi,bp->bundleheight+bundlei,1,firsti,1);
-                    if ( 1 )
+                    if ( 0 )
                     {
                         if ( (err= iguana_ramchain_cmp(ramchain,mapchain,0)) != 0 )
                             printf("error.%d comparing ramchains\n",err);
