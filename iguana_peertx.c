@@ -1076,7 +1076,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         if ( (mapchain= iguana_ramchain_map(coin,&R,0,bp->ipbits[bundlei],bp->hashes[bundlei],bundlei,bp->fpos[bundlei],1)) != 0 )
         {
             iguana_ramchain_link(mapchain,bp->hashes[bundlei],bp->hashes[bundlei],bp->hdrsi,bp->bundleheight+bundlei,1,firsti,1);
-            iguana_ramchain_disp(mapchain);
+            //iguana_ramchain_disp(mapchain);
             iguana_ramchain_free(mapchain,0);
         } else printf("map error hdrs.%d:%d\n",bp->hdrsi,bundlei);
     }
