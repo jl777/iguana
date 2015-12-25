@@ -634,7 +634,7 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp);
 void iguana_gotheadersM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *blocks,int32_t n);
 //struct iguana_bundle *iguana_bundleinit(struct iguana_info *coin,int32_t height,bits256 hash2);
 void iguana_emittxdata(struct iguana_info *coin,struct iguana_bundle *bp);
-int32_t iguana_pollQs(struct iguana_info *coin,struct iguana_peer *addr);
+int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr);
 int32_t iguana_avail(struct iguana_info *coin,int32_t height,int32_t n);
 int32_t iguana_updatebundles(struct iguana_info *coin);
 //void **iguana_recvblockptrp(struct iguana_info *coin,int32_t *blockip,int32_t height);

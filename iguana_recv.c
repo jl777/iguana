@@ -418,14 +418,14 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
             else if ( 1 )
             {
                 double lag = milliseconds() - coin->backstopmillis;
-                if ( (coin->backstop != coin->blocks.hwmchain.height+1 || lag > coin->avetime) )//&& next->recvlen == 0 )
+                if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > coin->avetime) )//&& next->recvlen == 0 )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
                     // clear recvlens
                     //if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
-                    //if ( (rand() % 100) == 0 )
+                    if ( (rand() % 100) == 0 )
                         printf("BACKSTOP.%d avetime %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,coin->avetime,coin->backstopmillis,lag);
                 }
                 else if ( 0 && bits256_nonz(next->prev_block) > 0 )
@@ -437,3 +437,148 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
     }
     return(flag);
 }
+
+struct iguana_blockreq { struct queueitem DL; bits256 hash2,*blockhashes; struct iguana_bundle *bp; int32_t n,height,bundlei; };
+int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2,int32_t priority)
+{
+    queue_t *Q; char *str; struct iguana_blockreq *req; struct iguana_block *block;
+    if ( bits256_nonz(hash2) == 0 )
+    {
+        printf("cant queue zerohash bundlei.%d\n",bundlei);
+        return(-1);
+    }
+    if ( priority != 0 || bp == 0 || (block= iguana_blockfind(coin,bp->hashes[bundlei])) == 0 || block->ipbits == 0 )
+    {
+        if ( priority != 0 )
+            str = "priorityQ", Q = &coin->priorityQ;
+        else str = "blocksQ", Q = &coin->blocksQ;
+        if ( Q != 0 )
+        {
+            req = mycalloc('r',1,sizeof(*req));
+            req->hash2 = hash2;
+            req->bp = bp;
+            req->bundlei = bundlei;
+            if ( bp != 0 && bundlei >= 0 && bundlei < bp->n )
+            {
+                bp->issued[bundlei] = milliseconds();
+                if ( bp->bundleheight >= 0 )
+                    req->height = (bp->bundleheight + bundlei);
+            }
+            char str[65];
+            bits256_str(str,hash2);
+            if ( 0 && (bundlei % 250) == 0 )
+                printf("%s %d %s recv.%d numranked.%d qsize.%d\n",str,req->height,str,coin->blocks.recvblocks,coin->peers.numranked,queue_size(Q));
+            queue_enqueue(str,Q,&req->DL,0);
+            return(1);
+        } else printf("null Q\n");
+    } //else printf("queueblock skip priority.%d bundlei.%d\n",bundlei,priority);
+    return(0);
+}
+
+int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
+{
+    uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
+    char *hashstr=0,hexstr[65]; bits256 hash2; uint32_t now; struct iguana_blockreq *req=0;
+    int32_t limit,refbundlei,height=-1,datalen,flag = 0;
+    now = (uint32_t)time(NULL);
+    if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
+    {
+        //printf("%s check hdrsQ\n",addr->ipaddr);
+        if ( (hashstr= queue_dequeue(&coin->hdrsQ,1)) != 0 )
+        {
+            if ( (datalen= iguana_gethdrs(coin,serialized,coin->chain->gethdrsmsg,hashstr)) > 0 )
+            {
+                decode_hex(hash2.bytes,sizeof(hash2),hashstr);
+                if ( bits256_nonz(hash2) > 0 )
+                {
+                    //printf("%s request hdr.(%s)\n",addr!=0?addr->ipaddr:"local",hashstr);
+                    iguana_send(coin,addr,serialized,datalen);
+                    addr->pendhdrs++;
+                    flag++;
+                }
+                free_queueitem(hashstr);
+                return(flag);
+            } else printf("datalen.%d from gethdrs\n",datalen);
+            free_queueitem(hashstr);
+            hashstr = 0;
+        }
+    }
+    if ( (limit= addr->recvblocks) > coin->MAXPENDING )
+        limit = coin->MAXPENDING;
+    if ( limit < 1 )
+        limit = 1;
+    if ( (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
+    {
+        struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,j; double metric,bestmetric = -1.;
+        refbundlei = (addr->ipbits % (coin->bundlescount+1));
+        for (i=0; i<coin->bundlescount; i++)
+        {
+            if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
+            {
+                metric = sqrt(1 + (i - refbundlei) * (i - refbundlei)) * (1. + bp->metric);
+                //printf("%f ",bp->metric);
+                if ( bestmetric < 0. || metric < bestmetric )
+                    bestmetric = metric, bestbp = bp;
+            }
+        }
+        if ( (bp= bestbp) != 0 && bp->emitfinish == 0 )
+        {
+            printf("%.15f ref.%d addrind.%d bestbp.%d\n",bestmetric,refbundlei,addr->addrind,bp->hdrsi);
+            for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
+            {
+                j = (addr->addrind*3 + r) % bp->n;
+                hash2 = bp->hashes[j];
+                if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                {
+                    init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
+                    if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
+                    {
+                        iguana_send(coin,addr,serialized,datalen);
+                        coin->numemitted++;
+                        addr->pendblocks++;
+                        addr->pendtime = (uint32_t)time(NULL);
+                        if ( 0 && (rand() % 1000) == 0 )
+                        {
+                            char str[65];
+                            printf(" %s %s issue.%d %d lag.%d\n",addr->ipaddr,bits256_str(str,hash2),bp->hdrsi,j,now-bp->issued[j]);
+                        }
+                        bp->issued[j] = (uint32_t)time(NULL);
+                        if ( bp->requests[j] < 100 )
+                            bp->requests[j]++;
+                        return(1);
+                    } else printf("MSG_BLOCK null datalen.%d\n",datalen);
+                } //else printf("null hash\n");
+            }
+        }
+    }
+    if ( req != 0 )
+    {
+        hash2 = req->hash2;
+        height = req->height;
+        if ( 0 && req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n && req->bundlei < coin->chain->bundlesize && req->bp->recvlens[req->bundlei] != 0 )
+        {
+            //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
+            myfree(req,sizeof(*req));
+        }
+        else if ( req->bp == 0 || (req->bp != 0 && req->bundlei >= 0) )//&& GETBIT(req->bp->recv,req->bundlei) == 0) )
+        {
+            init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
+            if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
+            {
+                if ( 0 && queue_size(&coin->priorityQ) > 0 )
+                    printf("%s %s BLOCK.%d:%d bit.%d Q.(%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
+                iguana_send(coin,addr,serialized,datalen);
+                coin->numemitted++;
+                addr->pendblocks++;
+                addr->pendtime = (uint32_t)time(NULL);
+                if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n )
+                    req->bp->issued[req->bundlei] = milliseconds();
+                flag++;
+                myfree(req,sizeof(*req));
+                return(flag);
+            } else printf("error constructing request %s.%d\n",hexstr,height);
+        }
+    }
+    return(flag);
+}
+

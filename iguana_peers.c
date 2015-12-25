@@ -939,7 +939,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                 fds.fd = addr->usock;
                 fds.events |= POLLOUT;
                 if ( poll(&fds,1,timeout) > 0 )
-                    flag += iguana_pollQs(coin,addr);
+                    flag += iguana_pollQsPT(coin,addr);
             }
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
                 usleep(1000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
