@@ -456,7 +456,7 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                     if ( addr->TXDATA.ptr == 0 )
                         iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE,0);
                     if ( addr->HASHMEM.ptr == 0 )
-                        iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,IGUANA_MAXPACKETSIZE*16,0);
+                        iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,256,0);//IGUANA_MAXPACKETSIZE*16,0);
                     //printf("Init %s memory %p %p %p\n",addr->ipaddr,addr->RAWMEM.ptr,addr->TXDATA.ptr,addr->HASHMEM.ptr);
                 }
                 if ( iguana_parser(coin,addr,&addr->RAWMEM,&addr->TXDATA,&addr->HASHMEM,&H,buf,len) < 0 || addr->dead != 0 )
