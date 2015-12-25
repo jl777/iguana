@@ -194,13 +194,13 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
 int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain)
 {
     FILE *fp; char fname[1024],str[65];
-    sprintf(fname,"DB/%s/%s.%d",coin->symbol,bits256_str(str,ramchain->data->firsthash2),ramchain->hdrsi);
+    sprintf(fname,"DB/%s/%s.%d",coin->symbol,bits256_str(str,ramchain->H.data->firsthash2),ramchain->H.hdrsi);
     if ( (fp= fopen(fname,"wb")) != 0 )
     {
-        fwrite(ramchain,1,ramchain->data->allocsize,fp);
+        fwrite(ramchain,1,ramchain->H.data->allocsize,fp);
         fclose(fp);
     }
-    printf("ramchainsave.%s %d[%d] %s\n",coin->symbol,ramchain->hdrsi,ramchain->numblocks,mbstr(str,ramchain->data->allocsize));
+    printf("ramchainsave.%s %d[%d] %s\n",coin->symbol,ramchain->H.hdrsi,ramchain->numblocks,mbstr(str,ramchain->H.data->allocsize));
     return(0);
 }
 

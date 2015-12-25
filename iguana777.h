@@ -387,16 +387,23 @@ struct iguana_ramchaindata
     uint8_t data[];
 };
 
+//bits256 lhashes[IGUANA_NUMAPPENDS],ledgerhash; struct sha256_vstate states[IGUANA_NUMAPPENDS];
+//uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
+//
+//
+
+struct iguana_ramchain_hdr
+{
+    uint32_t txidind,unspentind,spendind; uint16_t hdrsi,bundlei:15,ROflag;
+    struct iguana_ramchaindata *data;
+};
+
 struct iguana_ramchain
 {
-    uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
-    long filesize; void *fileptr;
-    bits256 lhashes[IGUANA_NUMAPPENDS],ledgerhash; struct sha256_vstate states[IGUANA_NUMAPPENDS];
-    uint32_t txidind,unspentind,spendind,pkind,externalind;
-    int32_t numblocks,hdrsi,height,ROflag; //uint64_t allocsize;
-    struct iguana_memspace *hashmem;
+    struct iguana_ramchain_hdr H;
+    uint32_t numblocks,pkind,externalind,height;
     struct iguana_kvitem *txids,*pkhashes;
-    struct iguana_ramchaindata *data;
+    struct iguana_memspace *hashmem; long filesize; void *fileptr;
     struct iguana_account *A,*roA; struct iguana_Uextra *U2,*roU2; struct iguana_pkextra *P2,*roP2;
 };
 
