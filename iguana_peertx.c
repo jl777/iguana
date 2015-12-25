@@ -725,7 +725,7 @@ long iguana_blockramchainPT(struct iguana_info *coin,struct iguana_peer *addr,st
         return(-1);
     iguana_ramchain_link(ramchain,origtxdata->block.hash2,origtxdata->block.hash2,bp->hdrsi,bp->bundleheight+bundlei,1,firsti,0);
     _iguana_ramchain_setptrs(ramchain,&T,&U,&U2,&S,&P,&P2,&A,&X);
-    if ( T == 0 || U == 0 || S == 0 || P == 0 || X == 0 || A == 0 || U2 == 0 || P2 == 0 )
+    if ( T == 0 || U == 0 || S == 0 || P == 0 )//|| X == 0 || A == 0 || U2 == 0 || P2 == 0 )
     {
         printf("fatal error getting txdataptrs\n");
         return(-1);
