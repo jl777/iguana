@@ -316,7 +316,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     coin = iguana_coin(symbol);
     coin->launched = launched;
     if ( (coin->MAXPEERS= maxpeers) <= 0 )
-        coin->MAXPEERS = (strcmp(symbol,"BTC") == 0) ? 128 : 32;
+        coin->MAXPEERS = (strcmp(symbol,"BTC") == 0) ? 77 : 32;
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
