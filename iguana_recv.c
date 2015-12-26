@@ -530,7 +530,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 diff = -diff;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
-                metric = (1 + diff * diff * diff * (1. + bp->metric)) / (i*i + 1);
+                metric = (1 + diff * (1. + bp->metric)) / (i + 1);
                 //printf("%f ",bp->metric);
                 if ( bestmetric < 0. || metric < bestmetric )
                     bestmetric = metric, bestbp = bp;
@@ -538,7 +538,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         }
         if ( (bp= bestbp) != 0 && bp->emitfinish == 0 )
         {
-            //printf("%.15f ref.%d addrind.%d bestbp.%d\n",bestmetric,refbundlei,addr->addrind,bp->hdrsi);
+            printf("%.15f ref.%d addrind.%d bestbp.%d\n",bestmetric,refbundlei,addr->addrind,bp->hdrsi);
             for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
             {
                 j = (addr->addrind*3 + r) % bp->n;
