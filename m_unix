@@ -1,2 +1,2 @@
-gcc -o iguana *.c -lssl -lcrypto -lpthread -lcurl -lm
+gcc -O2 -o iguana *.c -lssl -lcrypto -lpthread -lcurl -lm
 echo it should have created iguana, which can be run with ./iguana
