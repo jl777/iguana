@@ -995,7 +995,7 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
                 ramchain->H.ROflag = 0;
                 flag = 1;
                 memset(&R,0,sizeof(R));
-                if ( (mapchain= iguana_ramchain_map(coin,&R,0,addr->ipbits,origtxdata->block.hash2,bundlei,bp->fpos[bundlei],1)) != 0 )
+                if ( 0 && (mapchain= iguana_ramchain_map(coin,&R,0,addr->ipbits,origtxdata->block.hash2,bundlei,bp->fpos[bundlei],1)) != 0 )
                 {
                     //printf("mapped Soffset.%ld\n",(long)mapchain->data->Soffset);
                     iguana_ramchain_link(&R,origtxdata->block.hash2,origtxdata->block.hash2,bp->hdrsi,bp->bundleheight+bundlei,bundlei,1,firsti,1);
