@@ -493,7 +493,7 @@ struct iguana_info
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
     int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,backstoptime,lastbundletime,numsent;
     double backstopmillis;
-    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop; void *launched,*started;
+    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,totalrecv; void *launched,*started;
     uint64_t bloomsearches,bloomhits,bloomfalse,collisions; uint8_t blockspace[IGUANA_MAXPACKETSIZE + 8192]; struct iguana_memspace blockMEM;
 };
 

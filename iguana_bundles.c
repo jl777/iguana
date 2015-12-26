@@ -396,6 +396,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             totalrecv += numrecv;
         }
     }
+    coin->totalrecv = totalrecv;
     if ( time(NULL) > lastdisp+10 )
     {
         char str2[65];
