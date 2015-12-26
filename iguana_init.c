@@ -155,7 +155,7 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
         //printf("parse line.(%s) maxpeers.%d\n",line,coin->MAXPEERS);
         if ( iter == 0 )
         {
-            if ( m < coin->MAXPEERS && m < 77.7 )
+            if ( m < coin->MAXPEERS && m < 128 )
             {
                 addr = &coin->peers.active[m++];
                 iguana_initpeer(coin,addr,(uint32_t)calc_ipbits(line));
