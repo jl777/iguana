@@ -14,7 +14,7 @@ int32_t USE_JAY;
 queue_t helperQ;
 static int32_t initflag;
 #ifdef __linux__
-int32_t IGUANA_NUMHELPERS = 1;
+int32_t IGUANA_NUMHELPERS = 3;
 #else
 int32_t IGUANA_NUMHELPERS = 1;
 #endif
