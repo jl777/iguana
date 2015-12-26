@@ -572,7 +572,7 @@ void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA)
         //printf("%x\n",iA->ipbits);
         expand_ipbits(ipaddr,iA->ipbits);
         //portable_mutex_lock(&coin->peers_mutex);
-        for (i=0; i<coin->MAXPEERS*1.5 && i<IGUANA_MAXPEERS; i++)
+        for (i=0; i<coin->MAXPEERS*2 && i<IGUANA_MAXPEERS; i++)
         {
             addr = &coin->peers.active[i];
             addr->addrind = i;
