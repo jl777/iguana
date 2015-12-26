@@ -572,7 +572,7 @@ void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA)
         //printf("%x\n",iA->ipbits);
         expand_ipbits(ipaddr,iA->ipbits);
         //portable_mutex_lock(&coin->peers_mutex);
-        for (i=0; i<coin->MAXPEERS*2 && i<IGUANA_MAXPEERS; i++)
+        for (i=0; i<coin->MAXPEERS && i<IGUANA_MAXPEERS; i++)
         {
             addr = &coin->peers.active[i];
             addr->addrind = i;
@@ -589,7 +589,7 @@ void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA)
             }
         }
         //portable_mutex_unlock(&coin->peers_mutex);
-        if ( i < coin->MAXPEERS*2 && i < IGUANA_MAXPEERS && addr != 0 )
+        if ( i < coin->MAXPEERS && i < IGUANA_MAXPEERS && addr != 0 )
         {
             //printf("status.%d addr.%p possible peer.(%s) (%s).%x %u threads %d %d %d %d\n",iA->status,addr,ipaddr,addr->ipaddr,addr->ipbits,addr->pending,iguana_numthreads(coin,0),iguana_numthreads(coin,1),iguana_numthreads(coin,2),iguana_numthreads(coin,3));
             if ( addr->pending == 0 && iA->status != IGUANA_PEER_CONNECTING )
