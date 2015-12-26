@@ -132,7 +132,7 @@ struct iguana_block *iguana_blockptr(struct iguana_info *coin,int32_t height)
 
 int32_t iguana_blockvalidate(struct iguana_info *coin,int32_t *validp,struct iguana_block *block)
 {
-    bits256 hash2; uint8_t serialized[sizeof(struct iguana_msgblock)];
+    bits256 hash2; uint8_t serialized[sizeof(struct iguana_msgblock) + 4096];
     *validp = 0;
     iguana_serialize_block(&hash2,serialized,block);
     *validp = (memcmp(hash2.bytes,block->hash2.bytes,sizeof(hash2)) == 0);

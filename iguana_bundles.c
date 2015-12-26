@@ -246,7 +246,7 @@ int32_t iguana_bundlehash2add(struct iguana_info *coin,struct iguana_block **blo
 
 struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bundleip,int32_t bundleheight,bits256 bundlehash2)
 {
-    char str[65]; struct iguana_bundle *bp = 0;
+    char str[65]; int32_t bundlei; struct iguana_bundle *bp = 0;
     if ( bits256_nonz(bundlehash2) > 0 )
     {
         bits256_str(str,bundlehash2);
@@ -268,6 +268,8 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bund
             bp->coin = coin;
             bp->avetime = coin->avetime * 2.;
             coin->bundles[coin->bundlescount] = bp;
+            for (bundlei=0; bundlei<bp->n; bundlei++)
+                bp->fpos[bundlei] = -1;
             *bundleip = 0;
             printf("ht.%d alloc.[%d] new hdrs.%s %p\n",bp->bundleheight,coin->bundlescount,str,bp);
             //if ( bits256_nonz(bundlehash2) > 0 )

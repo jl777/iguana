@@ -180,6 +180,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
                 bp->emitfinish = (uint32_t)time(NULL);
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp) == 0 )
                     coin->numemitted++;
+                else bp->emitfinish = 0;
             } else printf("error missing bp in emit\n");
             //printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
             if ( coin->MAXBUNDLES > IGUANA_MAXACTIVEBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )

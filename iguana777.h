@@ -354,13 +354,13 @@ struct iguana_ledger
 // ramchain append only structs -> canonical 32bit inds and ledgerhashes
 struct iguana_txid { bits256 txid; uint32_t txidind,firstvout,firstvin; uint16_t numvouts,numvins; } __attribute__((packed));
 
-struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } __attribute__((packed));
+struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; uint16_t hdrsi,vout; } __attribute__((packed));
 struct iguana_unspent20 { uint64_t value:63,p2sh:1; uint32_t txidind; uint8_t rmd160[20]; } __attribute__((packed));
 
 struct iguana_spend256 { bits256 prevhash2; uint32_t spendind:16,prevout:16,bundlei:16,hdrsi:15,diffsequence:1; } __attribute__((packed));
-struct iguana_spend { uint32_t spendtxidind,prevspendind; uint16_t prevout,hdrsi:14,external:1,diffsequence:1; } __attribute__((packed));
+struct iguana_spend { uint32_t spendtxidind,prevspendind; int16_t prevout; uint16_t bundlei:14,external:1,diffsequence:1; } __attribute__((packed));
 
-struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind,flags; } __attribute__((packed));
+struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind,flags:23,type:8,ps2h:1; } __attribute__((packed));
 
 // one zero to non-zero write (unless reorg)
 struct iguana_Uextra { uint32_t spendind; } __attribute__((packed)); // unspentind
@@ -401,7 +401,7 @@ struct iguana_ramchain_hdr
 struct iguana_ramchain
 {
     struct iguana_ramchain_hdr H;
-    uint32_t numblocks,pkind,externalind,height;
+    uint32_t numblocks:31,expanded:1,pkind,externalind,height;
     struct iguana_kvitem *txids,*pkhashes;
     struct iguana_memspace *hashmem; long filesize; void *fileptr;
     struct iguana_account *A,*roA; struct iguana_Uextra *U2,*roU2; struct iguana_pkextra *P2,*roP2;
@@ -447,7 +447,7 @@ struct iguana_bundle
     struct iguana_block block;
     struct iguana_bloom16 bloom;
     uint32_t issuetime,hdrtime,emitfinish,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
-    int32_t minrequests,numhashes,numissued,numrecv,n,hdrsi,bundleheight;
+    int32_t minrequests,numhashes,numissued,numrecv,n,hdrsi,bundleheight,numtxids,numspends,numunspents;
     double avetime,threshold,metric; uint64_t datasize,estsize;
     long fpos[IGUANA_MAXBUNDLESIZE+1];
     uint32_t ipbits[IGUANA_MAXBUNDLESIZE+1];
@@ -742,9 +742,9 @@ extern queue_t helperQ;
 extern const char *Hardcoded_coins[][3];
 void iguana_main(void *arg);
 extern struct iguana_info *Coins[64];
-int32_t iguana_peerfname(struct iguana_info *coin,int32_t *hdrsip,char *fname,uint32_t ipbits,bits256 hash2);
+int32_t iguana_peerfname(struct iguana_info *coin,int32_t *hdrsip,char *dirname,char *fname,uint32_t ipbits,bits256 hash2);
 struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,int32_t *bundleip,char *fname,struct iguana_memspace *mem,uint32_t ipbits,bits256 hash2);
-int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *fname,bits256 hash2);
+int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *dirname,char *fname,bits256 hash2);
 struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata);
 void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA);
 long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen);
