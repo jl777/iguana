@@ -560,8 +560,6 @@ void iguana_startconnection(void *arg)
         iguana_dedicatedloop(coin,addr);
 #endif
     }
-    //printf("%s ready.%u dead.%d numthreads.%d\n",addr->ipaddr,addr->ready,addr->dead,coin->numthreads);
-    //queue_enqueue("retryQ",&coin->peers.retryQ,&addr->DL);
 }
 
 void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA)
@@ -688,17 +686,8 @@ int32_t iguana_pollsendQ(struct iguana_info *coin,struct iguana_peer *addr)
         }
         else
         {
-//#ifdef IGUANA_DEDICATED_THREADS
             iguana_send(coin,addr,packet->serialized,packet->datalen);
-            //if ( packet->getdatablock > 0 )
-            //    iguana_setwaitstart(coin,packet->getdatablock);
             myfree(packet,sizeof(*packet) + packet->datalen);
-/*#else
-            addr->startsend = (uint32_t)time(NULL);
-            strcpy(addr->symbol,coin->symbol);
-            strcpy(addr->coinstr,coin->name);
-            iguana_launch("send_data",iguana_issue,packet,IGUANA_SENDTHREAD);
-#endif*/
             return(1);
         }
     }

@@ -310,7 +310,7 @@ int32_t iguana_rwblockhash(int32_t rwflag,uint8_t *serialized,uint32_t *nVersion
     int32_t i,len = 0;
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(*nVersionp),nVersionp);
     len += iguana_rwvarint32(rwflag,&serialized[len],varintp);
-    if ( *varintp < IGUANA_MAXLOCATORS-1 )
+    if ( *varintp < IGUANA_MAXBUNDLESIZE+1 )
     {
         for (i=0; i<*varintp; i++)
             len += iguana_rwbignum(rwflag,&serialized[len],sizeof(hashes[i]),hashes[i].bytes);
@@ -563,7 +563,7 @@ int32_t iguana_gentxarray(struct iguana_info *coin,struct iguana_memspace *mem,s
     return(len);
 }
 
-/*int32_t iguana_send_hashes(struct iguana_info *coin,char *command,struct iguana_peer *addr,bits256 stophash,bits256 *hashes,int32_t n)
+int32_t iguana_send_hashes(struct iguana_info *coin,char *command,struct iguana_peer *addr,bits256 stophash,bits256 *hashes,int32_t n)
 {
   	uint32_t len,nVersion,varint; int32_t retval = -1; uint8_t *serialized; long size;
     size = sizeof(struct iguana_msghdr) + sizeof(uint64_t) + 1 + sizeof(bits256)*(n+1);
@@ -577,7 +577,7 @@ int32_t iguana_gentxarray(struct iguana_info *coin,struct iguana_memspace *mem,s
         myfree(serialized,size);
     } else printf("iguana_send_hashes: unexpected n.%d\n",n);
     return(retval);
-}*/
+}
 
 int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_memspace *rawmem,struct iguana_memspace *txmem,struct iguana_memspace *hashmem,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
 {
@@ -780,7 +780,9 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
                     printf("n.%d != x.%d -> realloc blockhashes\n",n,(int32_t)x+1);
                     blockhashes = myrealloc('f',blockhashes,(int32_t)((x+1)*sizeof(*blockhashes)),n*sizeof(*blockhashes));
                 } // else printf("n.%d == x.%d\n",n,(int32_t)x);
-                iguana_gotblockhashesM(coin,addr,blockhashes,n), blockhashes = 0;
+                if ( 1 )
+                    iguana_gotblockhashesM(coin,addr,blockhashes,n), blockhashes = 0;
+                else iguana_send_hashes(coin,"getblocks",addr,blockhashes[0],&blockhashes[1],n);
             }
             if ( m > 0 )
             {
