@@ -511,7 +511,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                         if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
                         {
                             iguana_send(coin,addr,serialized,datalen);
-                            //coin->numemitted++;
+                            coin->numsent++;
                             addr->pendblocks++;
                             addr->pendtime = (uint32_t)time(NULL);
                             if ( 0 && (rand() % 1000) == 0 )
@@ -597,6 +597,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+                    coin->numsent++;
                     // clear recvlens
                     //if ( ((coin->blocks.hwmchain.height+1) % 100) == 0 )
                     if ( (rand() % 100) == 0 )

@@ -734,11 +734,13 @@ struct iguana_ramchain *iguana_ramchain_map(struct iguana_info *coin,struct igua
         {
             printf("iguana_ramchain_map.(%s) size mismatch %ld vs %ld vs filesize.%ld\n",fname,(long)iguana_ramchain_size(ramchain),(long)ramchain->H.data->allocsize,(long)filesize);
             munmap(ptr,filesize);
+            return(0);
         }
         else if ( memcmp(hash2.bytes,ramchain->H.data->firsthash2.bytes,sizeof(bits256)) != 0 )
         {
             printf("iguana_ramchain_map.(%s) hash2 mismatch %s vs %s\n",fname,bits256_str(str,hash2),bits256_str(str2,ramchain->H.data->firsthash2));
             munmap(ptr,filesize);
+            return(0);
         }
         else if ( ramchain->H.data->numblocks > 1 )
         {
@@ -1062,7 +1064,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
 {
     static int depth;
     RAMCHAIN_DESTDECLARE; struct iguana_ramchain R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
-    long allocsize; int32_t numpkinds,numexternaltxids,err,bundlei,firsti = 1;
+    long allocsize; int32_t numpkinds,numexternaltxids,err,bundlei,firsti = 1,retval = -1;
     numpkinds = bp->numunspents;
     numexternaltxids = bp->numspends;
     dest = &bp->ramchain;
@@ -1095,7 +1097,12 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 break;
             }
             iguana_ramchain_free(mapchain,1);
-        } else printf("map error hdrs.%d:%d\n",bp->hdrsi,bundlei);
+        }
+        else
+        {
+            printf("map error hdrs.%d:%d\n",bp->hdrsi,bundlei);
+            break;
+        }
     }
     //myfree(R,bp->n * sizeof(*R));
     iguana_ramchain_setsize(dest);
@@ -1103,12 +1110,16 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         if ( iguana_ramchain_save(coin,RAMCHAIN_DESTARG,0,bp->hashes[0],0) < 0 )
             printf("ERROR saving ramchain hdrsi.%d\n",bp->hdrsi);
-        else { char str[65]; printf("depth.%d ht.%d %s saved lag.%d elapsed.%ld\n",depth,bp->bundleheight,bits256_str(str,bp->hashes[0]),now-starttime,time(NULL)-now); }
+        else
+        {
+            char str[65]; printf("depth.%d ht.%d %s saved lag.%d elapsed.%ld\n",depth,bp->bundleheight,bits256_str(str,bp->hashes[0]),now-starttime,time(NULL)-now);
+            retval = 0;
+        }
     }
     iguana_ramchain_free(dest,1);
     iguana_mempurge(mem);
     depth--;
-    return(0);
+    return(retval);
 }
 
 struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchains[],int32_t n,struct iguana_bundle *bp)
