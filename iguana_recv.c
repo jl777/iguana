@@ -585,7 +585,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     lflag++;
                 else printf("chainlink error for %d\n",coin->blocks.hwmchain.height+1);
             }
-            else if ( 1 )
+            else if ( 0 )
             {
                 double threshold,lag = milliseconds() - coin->backstopmillis;
                 threshold = (10 + coin->longestchain - coin->blocks.hwmchain.height);
