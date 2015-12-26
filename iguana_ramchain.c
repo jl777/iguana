@@ -45,7 +45,7 @@ struct iguana_kvitem *iguana_hashsetPT(struct iguana_ramchain *ramchain,int32_t 
     {
         if ( ramchain->hashmem != 0 )
             ptr = iguana_memalloc(ramchain->hashmem,allocsize,1);
-        else ptr = mycalloc('p',1,allocsize);
+        else ptr = mycalloc('e',1,allocsize);
         if ( ptr == 0 )
             printf("fatal alloc error in hashset\n"), exit(-1);
         if ( 0 && ramchain->expanded && selector == 'T' )
@@ -1063,19 +1063,20 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     static int depth;
     RAMCHAIN_DESTDECLARE; struct iguana_ramchain *R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
     long allocsize; int32_t numpkinds,numexternaltxids,err,bundlei,firsti = 1;
-    depth++;
     numpkinds = bp->numunspents;
     numexternaltxids = bp->numspends;
     dest = &bp->ramchain;
+    printf("depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",depth,bp->bundleheight,now,starttime,now-starttime);
+    depth++;
     allocsize = sizeof(*dest) +
                 (bp->numtxids * sizeof(struct iguana_txid)) +
                 (bp->numunspents * (sizeof(struct iguana_unspent) + sizeof(struct iguana_Uextra))) +
                 (bp->numspends * sizeof(struct iguana_spend)) +
                 (numpkinds * (sizeof(struct iguana_pkhash) + sizeof(struct iguana_pkextra) + sizeof(struct iguana_account))) +
                 (numexternaltxids * sizeof(bits256));
-    iguana_meminit(mem,"ramchain",0,allocsize*2 + 4096,0);
+    iguana_meminit(mem,"ramchain",0,allocsize*3/2 + 4096,0);
     mem->alignflag = sizeof(uint32_t);
-    if ( iguana_ramchain_init(dest,mem,0,1,bp->numtxids*2,bp->numunspents*2,bp->numspends*2,0,0,1) == 0 )
+    if ( iguana_ramchain_init(dest,mem,0,1,bp->numtxids*3/2,bp->numunspents*3/2,bp->numspends*3/2,0,0,1) == 0 )
         return(-1);
     iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,0);
     _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
@@ -1090,7 +1091,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             if ( (err= iguana_ramchain_iterate(coin,dest,mapchain)) != 0 )
             {
                 printf("bundlesave err.%d hdrs.%d:%d\n",err,bp->hdrsi,bundlei);
-                iguana_ramchain_free(mapchain,0);
+                iguana_ramchain_free(mapchain,1);
                 break;
             }
             iguana_ramchain_free(mapchain,1);

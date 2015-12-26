@@ -511,7 +511,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                         if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
                         {
                             iguana_send(coin,addr,serialized,datalen);
-                            coin->numemitted++;
+                            //coin->numemitted++;
                             addr->pendblocks++;
                             addr->pendtime = (uint32_t)time(NULL);
                             if ( 0 && (rand() % 1000) == 0 )
@@ -546,7 +546,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 if ( 0 && queue_size(&coin->priorityQ) > 0 )
                     printf("%s %s BLOCK.%d:%d bit.%d Q.(%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
                 iguana_send(coin,addr,serialized,datalen);
-                coin->numemitted++;
+                //coin->numemitted++;
                 addr->pendblocks++;
                 addr->pendtime = (uint32_t)time(NULL);
                 if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n )
