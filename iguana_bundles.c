@@ -376,7 +376,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             {
                 bp->estsize = ((uint64_t)datasize * bp->n) / numrecv;
                 estsize += bp->estsize;
-                numactive++;
+                if ( bp->numhashes == bp->n )
+                    numactive++;
                 if ( dispflag != 0 )
                     printf("(%d %d) ",i,bp->numrecv);
                 if ( bp->numrecv == bp->n && bp->emitfinish == 0 )
