@@ -1066,7 +1066,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     numpkinds = bp->numunspents;
     numexternaltxids = bp->numspends;
     dest = &bp->ramchain;
-    printf("depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",depth,bp->bundleheight,now,starttime,now-starttime);
+    printf("E.%d depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",coin->numemitted,depth,bp->bundleheight,now,starttime,now-starttime);
     depth++;
     allocsize = sizeof(*dest) +
                 (bp->numtxids * sizeof(struct iguana_txid)) +
