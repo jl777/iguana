@@ -1023,7 +1023,7 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
                         bp->numunspents += ramchain->H.data->numunspents;
                         bp->numspends += ramchain->H.data->numspends;
                     }
-                    iguana_ramchain_free(&R,0);
+                    iguana_ramchain_free(&R,1);
                 }
             }
         } else printf("ramchain verification error.%d hdrsi.%d bundlei.%d\n",err,bp->hdrsi,bundlei);
@@ -1093,7 +1093,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 iguana_ramchain_free(mapchain,0);
                 break;
             }
-            iguana_ramchain_free(mapchain,0);
+            iguana_ramchain_free(mapchain,1);
         } else printf("map error hdrs.%d:%d\n",bp->hdrsi,bundlei);
     }
     myfree(R,bp->n * sizeof(*R));
