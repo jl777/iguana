@@ -513,15 +513,17 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
-        for (i=refbundlei=0; i<IGUANA_MAXPEERS; i++)
-        {
-            if ( addr->usock == coin->peers.active[i].usock )
-                break;
-            if ( coin->peers.active[i].usock >= 0 )
-                refbundlei++;
-        }
         if ( n*2 < coin->bundlescount )
-            refbundlei = ((addr->addrind*100) % coin->bundlescount);
+        {
+            for (i=refbundlei=0; i<IGUANA_MAXPEERS; i++)
+            {
+                if ( addr->usock == coin->peers.active[i].usock )
+                    break;
+                if ( coin->peers.active[i].usock >= 0 )
+                    refbundlei++;
+            }
+            printf("half done\n");
+        } else refbundlei = ((addr->addrind*100) % coin->bundlescount);
         for (i=0; i<coin->bundlescount; i++)
         {
             if ( (diff= (i - refbundlei)) < 0 )
