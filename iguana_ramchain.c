@@ -717,17 +717,22 @@ void iguana_ramchain_extras(struct iguana_ramchain *ramchain,struct iguana_memsp
 struct iguana_ramchain *iguana_ramchain_map(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_memspace *hashmem,uint32_t ipbits,bits256 hash2,int32_t bundlei,long fpos,int32_t allocextras)
 {
     int32_t checki,hdrsi; char fname[1024],str[65],str2[65]; long filesize; void *ptr;
-    if ( (checki= iguana_peerfname(coin,&hdrsi,ipbits==0?"DB":"tmp",fname,ipbits,hash2)) != bundlei || bundlei < 0 || bundlei >= coin->chain->bundlesize )
+    if ( ramchain->fileptr == 0 || ramchain->filesize <= 0 )
     {
-        printf("iguana_ramchain_map.(%s) illegal hdrsi.%d bundlei.%d\n",fname,hdrsi,bundlei);
-        return(0);
-    }
-    memset(ramchain,0,sizeof(*ramchain));
-    if ( (ptr= map_file(fname,&filesize,0)) != 0 )
-    {
+        if ( (checki= iguana_peerfname(coin,&hdrsi,ipbits==0?"DB":"tmp",fname,ipbits,hash2)) != bundlei || bundlei < 0 || bundlei >= coin->chain->bundlesize )
+        {
+            printf("iguana_ramchain_map.(%s) illegal hdrsi.%d bundlei.%d\n",fname,hdrsi,bundlei);
+            return(0);
+        }
+        memset(ramchain,0,sizeof(*ramchain));
+        if ( (ptr= map_file(fname,&filesize,0)) == 0 )
+            return(0);
         ramchain->fileptr = ptr;
-        ramchain->H.data = (void *)((long)ptr + fpos);
         ramchain->filesize = (long)filesize;
+    }
+    if ( ramchain->fileptr != 0 && ramchain->filesize > 0 )
+    {
+        ramchain->H.data = (void *)((long)ptr + fpos);
         ramchain->H.ROflag = 1;
         //printf("ptr.%p %p mapped P[%d] fpos.%d + %ld -> %ld vs %ld\n",ptr,ramchain->data,(int32_t)ramchain->data->Poffset,(int32_t)fpos,(long)ramchain->data->allocsize,(long)(fpos + ramchain->data->allocsize),filesize);
         if ( iguana_ramchain_size(ramchain) != ramchain->H.data->allocsize || fpos+ramchain->H.data->allocsize > filesize )
@@ -1093,6 +1098,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     for (bundlei=0; bundlei<bp->n; bundlei++)
     {
         //printf("ITER BUNDLEI.%d dest.%p txidind.%d\n",bundlei,dest,dest->H.txidind);
+        memset(&R,0,sizeof(R));
         if ( (mapchain= iguana_ramchain_map(coin,&R,0,bp->ipbits[bundlei],bp->hashes[bundlei],bundlei,bp->fpos[bundlei],1)) != 0 )
         {
             iguana_ramchain_link(mapchain,bp->hashes[bundlei],bp->hashes[bundlei],bp->hdrsi,bp->bundleheight+bundlei,bundlei,1,firsti,1);
