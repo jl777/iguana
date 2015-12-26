@@ -1027,6 +1027,12 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
                     }
                     iguana_ramchain_free(&R,1);
                 }
+                else
+                {
+                    bp->numtxids += ramchain->H.data->numtxids;
+                    bp->numunspents += ramchain->H.data->numunspents;
+                    bp->numspends += ramchain->H.data->numspends;
+                }
             }
         } else printf("ramchain verification error.%d hdrsi.%d bundlei.%d\n",err,bp->hdrsi,bundlei);
     }
