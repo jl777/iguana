@@ -1074,9 +1074,9 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (bp->numspends * sizeof(struct iguana_spend)) +
                 (numpkinds * (sizeof(struct iguana_pkhash) + sizeof(struct iguana_pkextra) + sizeof(struct iguana_account))) +
                 (numexternaltxids * sizeof(bits256));
-    iguana_meminit(mem,"ramchain",0,allocsize*3/2 + 4096,0);
+    iguana_meminit(mem,"ramchain",0,allocsize*2 + 4096,0);
     mem->alignflag = sizeof(uint32_t);
-    if ( iguana_ramchain_init(dest,mem,0,1,bp->numtxids*3/2,bp->numunspents*3/2,bp->numspends*3/2,0,0,1) == 0 )
+    if ( iguana_ramchain_init(dest,mem,0,1,bp->numtxids*2,bp->numunspents*2,bp->numspends*2,0,0,1) == 0 )
         return(-1);
     iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,0);
     _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
