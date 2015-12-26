@@ -371,7 +371,8 @@ void iguana_main(void *arg)
     ensure_directory("tmp");
     if ( jsonstr != 0 && (json= cJSON_Parse(jsonstr)) != 0 )
     {
-        IGUANA_NUMHELPERS = juint(json,"numhelpers");
+        if ( jobj(json,"numhelpers") != 0 )
+            IGUANA_NUMHELPERS = juint(json,"numhelpers");
         if ( (secret= jstr(json,"secret")) != 0 )
         {
             len = (int32_t)strlen(secret);
