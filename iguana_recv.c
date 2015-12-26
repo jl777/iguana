@@ -462,13 +462,13 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
     if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
         struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,diff,j,k,n; double metric,bestmetric = -1.;
-        if ( (addr->ipbits % 10) < 6 )
+        for (i=n=0; i<coin->bundlescount; i++)
+            if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
+                n++;
+        if ( n == coin->bundlescount || (addr->ipbits % 10) < 6 )
             refbundlei = (addr->ipbits % coin->bundlescount);
         else
         {
-            for (i=n=0; i<coin->bundlescount; i++)
-                if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
-                    n++;
             if ( n*2 < coin->bundlescount )
             {
                 for (i=refbundlei=0; i<IGUANA_MAXPEERS; i++)
