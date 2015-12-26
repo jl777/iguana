@@ -309,7 +309,7 @@ int32_t pp_connect(char *hostname,uint16_t port)
     int result = connect(sock,(struct sockaddr *)&addr,addrlen);
     if ( result != 0 )
     {
-        if ( errno != ECONNREFUSED )
+        if ( errno != ECONNRESET && errno != ENOTCONN && errno != ECONNREFUSED && errno != ETIMEDOUT && errno != EHOSTUNREACH )
             printf("connect(%s) port.%d failed: %s sock.%d. errno.%d\n",hostname,port,strerror(errno),sock,errno);
         close(sock);
         return -1;
