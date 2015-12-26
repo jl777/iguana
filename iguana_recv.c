@@ -509,7 +509,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = 1;
     if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
-        struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,diff,j,n; double metric,bestmetric = -1.;
+        struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,diff,j,k,n; double metric,bestmetric = -1.;
         if ( (addr->ipbits % 10) < 6 )
             refbundlei = (addr->ipbits % coin->bundlescount);
         else
@@ -541,33 +541,39 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     bestmetric = metric, bestbp = bp;
             }
         }
-        if ( (bp= bestbp) != 0 && bp->emitfinish == 0 )
+        if ( bestbp != 0 && bp->emitfinish == 0 )
         {
-            //printf("%.15f ref.%d addrind.%d bestbp.%d\n",bestmetric,refbundlei,addr->addrind,bp->hdrsi);
-            for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
+            for (k=0; k<coin->bundlescount; k++)
             {
-                j = (addr->addrind*3 + r) % bp->n;
-                hash2 = bp->hashes[j];
-                if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                i = (bestbp->hdrsi + k) % coin->bundlescount;
+                if ( (bp= coin->bundles[i]) == 0 || bp->emitfinish != 0 )
+                    continue;
+                //printf("%.15f ref.%d addrind.%d bestbp.%d\n",bestmetric,refbundlei,addr->addrind,bp->hdrsi);
+                for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
                 {
-                    init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
-                    if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
+                    j = (addr->addrind*3 + r) % bp->n;
+                    hash2 = bp->hashes[j];
+                    if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
                     {
-                        iguana_send(coin,addr,serialized,datalen);
-                        coin->numemitted++;
-                        addr->pendblocks++;
-                        addr->pendtime = (uint32_t)time(NULL);
-                        if ( 0 && (rand() % 1000) == 0 )
+                        init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
+                        if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
                         {
-                            char str[65];
-                            printf(" %s %s issue.%d %d lag.%d\n",addr->ipaddr,bits256_str(str,hash2),bp->hdrsi,j,now-bp->issued[j]);
-                        }
-                        bp->issued[j] = (uint32_t)time(NULL);
-                        if ( bp->requests[j] < 100 )
-                            bp->requests[j]++;
-                        return(1);
-                    } else printf("MSG_BLOCK null datalen.%d\n",datalen);
-                } //else printf("null hash\n");
+                            iguana_send(coin,addr,serialized,datalen);
+                            coin->numemitted++;
+                            addr->pendblocks++;
+                            addr->pendtime = (uint32_t)time(NULL);
+                            if ( 0 && (rand() % 1000) == 0 )
+                            {
+                                char str[65];
+                                printf(" %s %s issue.%d %d lag.%d\n",addr->ipaddr,bits256_str(str,hash2),bp->hdrsi,j,now-bp->issued[j]);
+                            }
+                            bp->issued[j] = (uint32_t)time(NULL);
+                            if ( bp->requests[j] < 100 )
+                                bp->requests[j]++;
+                            return(1);
+                        } else printf("MSG_BLOCK null datalen.%d\n",datalen);
+                    } //else printf("null hash\n");
+                }
             }
         }
     }
