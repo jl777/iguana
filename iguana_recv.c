@@ -517,7 +517,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
             if ( coin->peers.active[i].usock >= 0 )
                 refbundlei++;
         }
-        refbundlei = (addr->addrind % coin->bundlescount);
+        refbundlei = ((addr->addrind*100) % coin->bundlescount);
         for (i=0; i<coin->bundlescount; i++)
         {
             if ( (diff= (i - refbundlei)) < 0 )
