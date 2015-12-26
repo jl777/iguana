@@ -162,7 +162,8 @@ void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
     ptr->coin = coin;
     ptr->bp = bp, ptr->hdrsi = bp->hdrsi;
     ptr->type = 'E';
-    printf("%s EMIT.%d[%d] emitfinish.%u\n",coin->symbol,ptr->hdrsi,bp->n,bp->emitfinish);
+    ptr->starttime = (uint32_t)time(NULL);
+    //printf("%s EMIT.%d[%d] emitfinish.%u\n",coin->symbol,ptr->hdrsi,bp->n,bp->emitfinish);
     queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
 }
 
@@ -172,13 +173,13 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
     coin = ptr->coin, addr = ptr->addr;
     if ( ptr->type == 'E' )
     {
-        printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
+        //printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
         if ( (coin= ptr->coin) != 0 )
         {
             if ( (bp= ptr->bp) != 0 )
             {
                 bp->emitfinish = (uint32_t)time(NULL);
-                if ( iguana_bundlesaveHT(coin,mem,memB,bp) == 0 )
+                if ( iguana_bundlesaveHT(coin,mem,memB,bp,ptr->starttime) == 0 )
                     coin->numemitted++;
                 else bp->emitfinish = 0;
             } else printf("error missing bp in emit\n");

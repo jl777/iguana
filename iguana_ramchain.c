@@ -526,7 +526,7 @@ long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits
             fwrite(P2,sizeof(struct iguana_pkextra),rdata->numpkinds,fp);
             fwrite(A,sizeof(struct iguana_account),rdata->numpkinds,fp);
             fwrite(X,sizeof(bits256),rdata->numexternaltxids,fp);
-            printf("iguana_ramchain_save:  (%ld - %ld) diff.%ld vs %ld [%ld]\n",ftell(fp),(long)fpos,(long)(ftell(fp) - fpos),(long)rdata->allocsize,(long)(ftell(fp) - fpos) - (long)rdata->allocsize);
+            //printf("iguana_ramchain_save:  (%ld - %ld) diff.%ld vs %ld [%ld]\n",ftell(fp),(long)fpos,(long)(ftell(fp) - fpos),(long)rdata->allocsize,(long)(ftell(fp) - fpos) - (long)rdata->allocsize);
         }
         else
         {
@@ -708,7 +708,7 @@ void iguana_ramchain_extras(struct iguana_ramchain *ramchain,struct iguana_memsp
         ramchain->A = (hashmem != 0) ? iguana_memalloc(hashmem,sizeof(struct iguana_account) * ramchain->H.data->numpkinds,1) : mycalloc('p',ramchain->H.data->numpkinds,sizeof(struct iguana_account));
         ramchain->P2 = (hashmem != 0) ? iguana_memalloc(hashmem,sizeof(struct iguana_pkextra) * ramchain->H.data->numpkinds,1) : mycalloc('2',ramchain->H.data->numpkinds,sizeof(struct iguana_pkextra));
         ramchain->U2 = (hashmem != 0) ? iguana_memalloc(hashmem,sizeof(struct iguana_Uextra) * ramchain->H.data->numunspents,1) : mycalloc('3',ramchain->H.data->numunspents,sizeof(struct iguana_Uextra));
-        printf("iguana_ramchain_extras A.%p:%p U2.%p:%p P2.%p:%p\n",ramchain->A,ramchain->roA,ramchain->U2,ramchain->roU2,ramchain->P2,ramchain->roP2);
+        //printf("iguana_ramchain_extras A.%p:%p U2.%p:%p P2.%p:%p\n",ramchain->A,ramchain->roA,ramchain->U2,ramchain->roU2,ramchain->P2,ramchain->roP2);
         memcpy(ramchain->U2,ramchain->roU2,sizeof(*ramchain->U2) * ramchain->H.data->numunspents);
         memcpy(ramchain->P2,ramchain->roP2,sizeof(*ramchain->P2) * ramchain->H.data->numpkinds);
     }
@@ -1058,10 +1058,12 @@ void iguana_ramchain_disp(struct iguana_ramchain *ramchain)
 }
 
 // helper threads: NUM_HELPERS
-int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp) // helper thread
+int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp,uint32_t starttime) // helper thread
 {
-    RAMCHAIN_DESTDECLARE; struct iguana_ramchain *R,*mapchain,*dest;
+    static int depth;
+    RAMCHAIN_DESTDECLARE; struct iguana_ramchain *R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
     long allocsize; int32_t numpkinds,numexternaltxids,err,bundlei,firsti = 1;
+    depth++;
     numpkinds = bp->numunspents;
     numexternaltxids = bp->numspends;
     dest = &bp->ramchain;
@@ -1100,9 +1102,10 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         if ( iguana_ramchain_save(coin,RAMCHAIN_DESTARG,0,bp->hashes[0],0) < 0 )
             printf("ERROR saving ramchain hdrsi.%d\n",bp->hdrsi);
-        else { char str[65]; printf("ht.%d %s saved\n",bp->bundleheight,bits256_str(str,bp->hashes[0])); }
+        else { char str[65]; printf("depth.%d ht.%d %s saved lag.%d elapsed.%ld\n",depth,bp->bundleheight,bits256_str(str,bp->hashes[0]),now-starttime,time(NULL)-now); }
     }
     iguana_ramchain_free(dest,1);
+    depth--;
     return(0);
 }
 

@@ -587,8 +587,12 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
             }
             else if ( 1 )
             {
-                double lag = milliseconds() - coin->backstopmillis;
-                if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > .75*coin->avetime) )//&& next->recvlen == 0 )
+                double threshold,lag = milliseconds() - coin->backstopmillis;
+                threshold = (10 + coin->longestchain - coin->blocks.hwmchain.height);
+                if ( threshold < 1 )
+                    threshold = 1.;
+                threshold = coin->avetime * sqrt(threshold) * .01;
+                if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )//&& next->recvlen == 0 )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
