@@ -1061,7 +1061,7 @@ void iguana_ramchain_disp(struct iguana_ramchain *ramchain)
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp,uint32_t starttime) // helper thread
 {
     static int depth;
-    RAMCHAIN_DESTDECLARE; struct iguana_ramchain *R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
+    RAMCHAIN_DESTDECLARE; struct iguana_ramchain R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
     long allocsize; int32_t numpkinds,numexternaltxids,err,bundlei,firsti = 1;
     numpkinds = bp->numunspents;
     numexternaltxids = bp->numspends;
@@ -1081,11 +1081,11 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,0);
     _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
     iguana_ramchain_extras(dest,0);
-    R = mycalloc('s',bp->n,sizeof(*R));
+    //R = mycalloc('s',bp->n,sizeof(*R));
     for (bundlei=0; bundlei<bp->n; bundlei++)
     {
         //printf("ITER BUNDLEI.%d dest.%p txidind.%d\n",bundlei,dest,dest->H.txidind);
-        if ( (mapchain= iguana_ramchain_map(coin,&R[bundlei],0,bp->ipbits[bundlei],bp->hashes[bundlei],bundlei,bp->fpos[bundlei],1)) != 0 )
+        if ( (mapchain= iguana_ramchain_map(coin,&R,0,bp->ipbits[bundlei],bp->hashes[bundlei],bundlei,bp->fpos[bundlei],1)) != 0 )
         {
             iguana_ramchain_link(mapchain,bp->hashes[bundlei],bp->hashes[bundlei],bp->hdrsi,bp->bundleheight+bundlei,bundlei,1,firsti,1);
             if ( (err= iguana_ramchain_iterate(coin,dest,mapchain)) != 0 )
@@ -1097,7 +1097,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             iguana_ramchain_free(mapchain,1);
         } else printf("map error hdrs.%d:%d\n",bp->hdrsi,bundlei);
     }
-    myfree(R,bp->n * sizeof(*R));
+    //myfree(R,bp->n * sizeof(*R));
     iguana_ramchain_setsize(dest);
     if ( bundlei == bp->n )
     {
@@ -1106,6 +1106,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         else { char str[65]; printf("depth.%d ht.%d %s saved lag.%d elapsed.%ld\n",depth,bp->bundleheight,bits256_str(str,bp->hashes[0]),now-starttime,time(NULL)-now); }
     }
     iguana_ramchain_free(dest,1);
+    iguana_mempurge(mem);
     depth--;
     return(0);
 }

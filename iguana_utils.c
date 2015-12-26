@@ -31,7 +31,7 @@ long myallocated(uint8_t type,long change)
             if ( Type_allocated[i] != 0 )
             {
                 total += Type_allocated[i];
-                sprintf(buf+strlen(buf),"(%c %ld) ",i,(long)Type_allocated[i]);
+                sprintf(buf+strlen(buf),"(%c %s) ",i,mbstr(str,Type_allocated[i]));
             }
         }
         sprintf(buf + strlen(buf),"-> total %lld %s",(long long)total,mbstr(str,total));
