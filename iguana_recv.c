@@ -510,27 +510,32 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
     if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
         struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,diff,j,n; double metric,bestmetric = -1.;
-        for (i=n=0; i<coin->bundlescount; i++)
-            if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
-                n++;
-        if ( n*2 < coin->bundlescount )
+        if ( (addr->ipbits % 10) == 0 )
+            refbundlei = (addr->ipbits % coin->bundlescount);
+        else
         {
-            for (i=refbundlei=0; i<IGUANA_MAXPEERS; i++)
+            for (i=n=0; i<coin->bundlescount; i++)
+                if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
+                    n++;
+            if ( n*2 < coin->bundlescount )
             {
-                if ( addr->usock == coin->peers.active[i].usock )
-                    break;
-                if ( coin->peers.active[i].usock >= 0 )
-                    refbundlei++;
-            }
-            //printf("half done\n");
-        } else refbundlei = ((addr->addrind*100) % coin->bundlescount);
+                for (i=refbundlei=0; i<IGUANA_MAXPEERS; i++)
+                {
+                    if ( addr->usock == coin->peers.active[i].usock )
+                        break;
+                    if ( coin->peers.active[i].usock >= 0 )
+                        refbundlei++;
+                }
+                //printf("half done\n");
+            } else refbundlei = ((addr->addrind*100) % coin->bundlescount);
+        }
         for (i=0; i<coin->bundlescount; i++)
         {
             if ( (diff= (i - refbundlei)) < 0 )
                 diff = -diff;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
-                metric = (1 + diff * diff * (1. + bp->metric)) / (i + 1);
+                metric = (1 + diff * ((addr->addrind&1) == 0 ? 1 : diff) * (1. + bp->metric)) / (i + 1);
                 //printf("%f ",bp->metric);
                 if ( bestmetric < 0. || metric < bestmetric )
                     bestmetric = metric, bestbp = bp;
