@@ -510,7 +510,14 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
     if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
         struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,diff,j; double metric,bestmetric = -1.;
-        refbundlei = (rand() % coin->bundlescount);
+        for (i=refbundlei=0; i<IGUANA_MAXPEERS; i++)
+        {
+            if ( addr->usock == coin->peers.active[i].usock )
+                break;
+            if ( coin->peers.active[i].usock >= 0 )
+                refbundlei++;
+        }
+        refbundlei %= coin->bundlescount;
         for (i=0; i<coin->bundlescount; i++)
         {
             if ( (diff= (i - refbundlei)) < 0 )
