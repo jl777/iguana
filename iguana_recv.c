@@ -282,7 +282,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                     duration = bp->avetime/10.;
                 else if ( duration > bp->avetime*10. )
                     duration = bp->avetime * 10.;
-                dxblend(&bp->avetime,duration,.9);
+                dxblend(&bp->avetime,duration,.99);
                 dxblend(&coin->avetime,bp->avetime,.9);
             }
             if ( bundlei >= 0 && bundlei < bp->n )
@@ -465,7 +465,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
-        if ( n >= coin->bundlescount-(coin->bundlescount>>4) || (addr->ipbits % 10) < 6 )
+        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 6 )
             refbundlei = (addr->ipbits % coin->bundlescount);
         else
         {
