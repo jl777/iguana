@@ -382,12 +382,13 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     bp->emitfinish = 1;
                     iguana_emitQ(coin,bp);
                 }
-                if ( numrecv > bp->n*.98 )
+                /*if ( numrecv > bp->n*.98 )
                 {
                     if ( numrecv > bp->n-3 )
                         bp->threshold = bp->avetime;
                     else bp->threshold = bp->avetime * 2;
-                } else bp->threshold = bp->avetime * 5;
+                } else*/
+                bp->threshold = bp->avetime * 5;
                 bp->metric = sqrt(bp->threshold * fabs((bp->n - bp->numrecv)) * sqrt(bp->estsize - bp->datasize)) / coin->chain->bundlesize;
             } else bp->threshold = 10000., bp->metric = 0.;
             totalrecv += numrecv;
