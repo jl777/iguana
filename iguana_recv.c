@@ -165,15 +165,14 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 {
                     if ( i < coin->chain->bundlesize )
                     {
-                        if ( iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]) < 0 )
+                        if ( i > 1 && iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]) < 0 )
                         {
                             if ( prev->mainchain == 0 )
                                 block->hh.prev = prev->hh.next = 0;
-                            if ( i != 0 )
-                                memset(bp->hashes[i].bytes,0,sizeof(bp->hashes[i]));
+                            memset(bp->hashes[i].bytes,0,sizeof(bp->hashes[i]));
                         }
                     }
-                    else if ( bp->bundleheight + coin->chain->bundlesize >= coin->bundlescount*coin->chain->bundlesize )
+                    else if ( 0 && bp->bundleheight + coin->chain->bundlesize >= coin->bundlescount*coin->chain->bundlesize )
                     {
                         char str[65]; printf("AUTOCREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,blockhashes[i]));
                         iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,blockhashes[i]);
@@ -275,7 +274,8 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
 
 struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,int32_t datalen,int32_t *newhwmp)
 {
-    struct iguana_bundle *bp=0; char str[65]; int32_t bundlei = -2; struct iguana_block *block; double duration;
+    struct iguana_bundle *bp=0; char str[65]; int32_t bundlei = -2;
+    bits256 hash2; struct iguana_block *block; double duration;
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
     if ( block != origblock )
         iguana_blockcopy(coin,block,origblock);
@@ -310,7 +310,9 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         if ( bp->bundleheight+bundlei == coin->blocks.hwmchain.height+1 )
         {
             printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
-            iguana_blockQ(coin,0,-1,iguana_blockhash(coin,coin->blocks.hwmchain.height+2),1);
+            hash2 = iguana_blockhash(coin,coin->blocks.hwmchain.height+2);
+            if ( bits256_nonz(hash2) > 0 )
+                iguana_blockQ(coin,0,-1,hash2,1);
         }
     }
     if ( block != 0 )
