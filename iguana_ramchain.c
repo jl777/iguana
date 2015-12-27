@@ -663,9 +663,9 @@ int32_t iguana_ramchain_verify(struct iguana_info *coin,struct iguana_ramchain *
 int32_t iguana_ramchain_free(struct iguana_ramchain *ramchain,int32_t deleteflag)
 {
     struct iguana_kvitem *item,*tmp;
-    if ( ramchain->H.ROflag != 0 && ramchain->hashmem == 0 )
+    if ( ramchain->H.ROflag != 0 )//&& ramchain->hashmem == 0 )
     {
-        //printf("Free A %p %p, U2, P2\n",ramchain->A,ramchain->roA);
+        printf("Free A %p %p, U2, P2\n",ramchain->A,ramchain->roA);
         if ( ramchain->A != ramchain->roA )
             myfree(ramchain->A,sizeof(*ramchain->A) * ramchain->H.data->numpkinds), ramchain->A = 0;
         if ( ramchain->U2 != ramchain->roU2 )
