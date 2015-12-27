@@ -1204,18 +1204,19 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             retval = 0;
         }
     }
-    printf("free dest\n");
+    printf("free dest hdrs.%d retval.%d\n",bp->hdrsi,retval);
     iguana_ramchain_free(dest,1);
-    printf("free iguana_bundlemapfree\n");
+    printf("free iguana_bundlemapfree hdrs.%d retval.%d\n",bp->hdrsi,retval);
     iguana_bundlemapfree(mem,ipbits,ptrs,filesizes,num,R,bp->n);
     depth--;
     if ( retval == 0 )
     {
-        printf("delete %d files\n",num);
+        printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
         for (j=0; j<num; j++)
             if ( 0 && iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) == 0 )
                 iguana_removefile(fname,0), coin->peers.numfiles--;
     }
+    printf("done hdrs.%d retval.%d\n",bp->hdrsi,retval);
     return(retval);
 }
 
