@@ -1114,7 +1114,12 @@ void iguana_bundlemapfree(struct iguana_memspace *mem,uint32_t *ipbits,void **pt
     if ( R != 0 )
     {
         for (j=0; j<n; j++)
+        {
+            printf("R[%d]\n",j);
+            R[j].fileptr = 0;
+            R[j].filesize = 0;
             iguana_ramchain_free(&R[j],1);
+        }
         myfree(R,n * sizeof(*R));
     }
     printf("iguana_mempurge\n");
