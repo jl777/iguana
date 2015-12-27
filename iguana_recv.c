@@ -281,7 +281,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         iguana_blockcopy(coin,block,origblock);
     if ( bp != 0 && bundlei >= 0 )
     {
-        if ( bp->requests[bundlei] > 55 )
+        if ( 0 && bp->requests[bundlei] > 2 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
         if ( bundlei == 1 && bp->numhashes < bp->n )
         {
@@ -526,7 +526,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
                     flag = 0;
-                    if ( (rand() % 1000) == 0 )
+                    if ( (rand() % 10000) == 0 )
                         flag = 1;
                     else if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 )
                         flag = 1;
