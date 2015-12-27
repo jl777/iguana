@@ -1100,20 +1100,27 @@ int32_t iguana_bundlefiles(struct iguana_info *coin,uint32_t *ipbits,void **ptrs
 void iguana_bundlemapfree(struct iguana_memspace *mem,uint32_t *ipbits,void **ptrs,long *filesizes,int32_t num,struct iguana_ramchain *R,int32_t n)
 {
     int32_t j;
+    printf("munmap\n");
     for (j=0; j<num; j++)
         if ( ptrs[j] != 0 && filesizes[j] != 0 )
             munmap(ptrs[j],filesizes[j]);
+    printf("free ptrs\n");
     myfree(ptrs,n * sizeof(*ptrs));
+    printf("free ipbits\n");
     myfree(ipbits,n * sizeof(*ipbits));
+    printf("free filesizes\n");
     myfree(filesizes,n * sizeof(*filesizes));
+    printf("free R\n");
     if ( R != 0 )
     {
         for (j=0; j<n; j++)
             iguana_ramchain_free(&R[j],1);
         myfree(R,n * sizeof(*R));
     }
+    printf("iguana_mempurge\n");
     if ( mem != 0 )
         iguana_mempurge(mem);
+    printf("done frees\n");
 }
 
 // helper threads: NUM_HELPERS
