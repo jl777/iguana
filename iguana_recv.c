@@ -612,7 +612,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 if ( threshold < 1 )
                     threshold = 1.;
                 threshold = coin->avetime * sqrt(threshold) * .00777;
-                if ( queue_size(&coin->blocksQ) == 0 || (coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold)) )//&& next->recvlen == 0 )
+                if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )//&& next->recvlen == 0 )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();

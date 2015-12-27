@@ -1070,10 +1070,9 @@ void iguana_ramchain_disp(struct iguana_ramchain *ramchain)
     }
 }
 
-int32_t iguana_bundlefiles(struct iguana_info *coin,struct iguana_bundle *bp)
+int32_t iguana_bundlefiles(struct iguana_info *coin,void *ptrs[IGUANA_MAXBUNDLESIZE],long filesizes[IGUANA_MAXBUNDLESIZE],struct iguana_bundle *bp)
 {
-    int32_t j,bundlei,num,hdrsi,checki; uint32_t ipbits[IGUANA_MAXBUNDLESIZE];
-    void *ptr; long filesize; char fname[1024];
+    int32_t j,bundlei,num,hdrsi,checki; uint32_t ipbits[IGUANA_MAXBUNDLESIZE]; char fname[1024];
     for (bundlei=num=0; bundlei<bp->n; bundlei++)
     {
         if ( num > 0 )
@@ -1084,14 +1083,15 @@ int32_t iguana_bundlefiles(struct iguana_info *coin,struct iguana_bundle *bp)
         } else j = 0;
         if ( j == num )
         {
-            ipbits[num++] = bp->ipbits[bundlei];
+            ipbits[num] = bp->ipbits[bundlei];
             if ( (checki= iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[bundlei])) != bundlei || bundlei < 0 || bundlei >= coin->chain->bundlesize )
             {
                 printf("iguana_ramchain_map.(%s) illegal hdrsi.%d bundlei.%d\n",fname,hdrsi,bundlei);
                 return(0);
             }
-            if ( (ptr= map_file(fname,&filesize,0)) == 0 )
+            if ( (ptrs[num]= map_file(fname,&filesizes[num],0)) == 0 )
                 return(0);
+            num++;
         }
     }
     return(num);
@@ -1101,9 +1101,10 @@ int32_t iguana_bundlefiles(struct iguana_info *coin,struct iguana_bundle *bp)
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp,uint32_t starttime) // helper thread
 {
     static int depth;
-    RAMCHAIN_DESTDECLARE; struct iguana_ramchain *R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
+    RAMCHAIN_DESTDECLARE; void *ptrs[IGUANA_MAXBUNDLESIZE]; long filesizes[IGUANA_MAXBUNDLESIZE];
+    struct iguana_ramchain *R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
     long allocsize; int32_t num,numpkinds,numexternaltxids,err,bundlei,firsti = 1,retval = -1;
-    //if ( (num= iguana_bundlefiles(coin,bp)) == 0 )
+    if ( (num= iguana_bundlefiles(coin,ptrs,filesizes,bp)) == 0 )
         return(0);
 
     
