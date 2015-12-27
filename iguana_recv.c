@@ -523,7 +523,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 {
                     j = (addr->addrind*3 + r) % bp->n;
                     hash2 = bp->hashes[j];
-                    if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                    if ( (rand() % 1000) == 0 || (bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold)) )
                     {
                         init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
                         if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
