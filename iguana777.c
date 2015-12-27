@@ -276,7 +276,7 @@ void iguana_coinloop(void *arg)
                         if ( iguana_updateramchain(coin) != 0 )
                             iguana_syncs(coin), flag++; // merge ramchain fragments into full ramchain
                     }
-                    if ( now > lastdisp+10 )
+                    if ( now > lastdisp+1 )
                     {
                         lastdisp = (uint32_t)now;
                         iguana_bundlestats(coin,str);
