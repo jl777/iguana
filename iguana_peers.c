@@ -782,7 +782,7 @@ void iguana_acceptloop(void *args)
     }
 }
 
-void iguana_recvloop(void *arg)
+/*void iguana_recvloop(void *arg)
 {
     int32_t i; uint8_t buf[32768]; struct iguana_info *coin = arg;
     while ( 1 )
@@ -807,7 +807,7 @@ void iguana_recvloop(void *arg)
             }
         } else printf("numsocks.%d nothing to receive\n",coin->numsocks);
     }
-}
+}*/
 
 #ifdef IGUANA_PEERALLOC
 void *iguana_peeralloc(struct iguana_info *coin,struct iguana_peer *addr,int32_t datalen)

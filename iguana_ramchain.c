@@ -1269,19 +1269,21 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     //printf("free dest hdrs.%d retval.%d\n",bp->hdrsi,retval);
     depth--;
     memset(&checkR,0,sizeof(checkR));
-    if ( 1 && (mapchain= iguana_ramchain_map(coin,&checkR,0,0,bp->hashes[0],0,0,1)) != 0 )
+    bundlei = 0;
+    iguana_memreset(&HASHMEM);
+    if ( 1 && (mapchain= iguana_ramchain_map(coin,&checkR,&HASHMEM,0,bp->hashes[0],bundlei,0,1)) != 0 )
     {
         iguana_ramchain_link(mapchain,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
-        iguana_ramchain_extras(mapchain,0);
+        iguana_ramchain_extras(mapchain,&HASHMEM);
         if ( (err= iguana_ramchain_iterate(coin,0,mapchain)) != 0 )
             printf("err.%d iterate mapped dest\n",err);
         else
         {
-            if ( (err= iguana_ramchain_cmp(mapchain,dest,0)) != 0 )
-                printf("err.%d cmp mapchain vs dest\n",err);
-            else printf("BUNDLE.%d iterated and compared\n",bp->bundleheight);
+            //if ( (err= iguana_ramchain_cmp(mapchain,dest,0)) != 0 )
+            //    printf("err.%d cmp mapchain vs dest\n",err);
+            //else printf("BUNDLE.%d iterated and compared\n",bp->bundleheight);
         }
-        iguana_ramchain_free(mapchain,1);
+        iguana_ramchain_free(mapchain,0);
     }
     iguana_ramchain_free(dest,0);
     //printf("free iguana_bundlemapfree hdrs.%d retval.%d\n",bp->hdrsi,retval);

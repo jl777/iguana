@@ -486,7 +486,7 @@ struct iguana_info
     struct iguana_counts latest;
     struct iguana_ledger LEDGER,loadedLEDGER;
 
-    struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
+    //struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     struct iguana_memspace TXMEM;
     queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,TerminateQ;
     double parsemillis,avetime; uint32_t Launched[8],Terminated[8];
