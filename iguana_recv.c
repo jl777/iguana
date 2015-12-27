@@ -531,9 +531,10 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
                     flag = 0;
-                    if ( (rand() % 10000) == 0 )
-                        flag = 1;
-                    else if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 )
+                    //if ( (rand() % 10000) == 0 )
+                    //    flag = 1;
+                    //else
+                    if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 )
                         flag = 1;
                     else if ( bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold )
                         flag = 1;
