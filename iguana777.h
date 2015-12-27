@@ -473,8 +473,8 @@ struct iguana_info
     char name[64],symbol[8];
     struct iguana_peers peers;
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
-    int64_t mining,totalfees,TMPallocated,MAXRECVCACHE,estsize,activebundles;
-    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,MAXMEM,active,closestbundle,numemitted;
+    int64_t mining,totalfees,TMPallocated,MAXRECVCACHE,MAXMEM,estsize,activebundles;
+    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle,numemitted;
     uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,firstblock,lastpossible,bundlescount;
     struct iguana_chain *chain;
     struct iguana_iAddr *iAddrs;
