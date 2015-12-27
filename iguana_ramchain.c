@@ -17,8 +17,8 @@
 #define uthash_malloc(size) ((ramchain->hashmem == 0) ? mycalloc('u',1,size) : iguana_memalloc(ramchain->hashmem,size,1))
 #define uthash_free(ptr,size) ((ramchain->hashmem == 0) ? myfree(ptr,size) : 0)
 
-#define HASH_BLOOM 16
-#define HASH_INITIAL_NUM_BUCKETS_LOG2 5
+//#define HASH_BLOOM 16
+//#define HASH_INITIAL_NUM_BUCKETS_LOG2 5
 
 #include "iguana777.h"
 //void iguana_stub(void *ptr,int size) { }//printf("uthash_free ptr.%p %d\n",ptr,size); }
@@ -1254,7 +1254,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
         iguana_ramchain_extras(dest,0);
-        if ( 0 && (err= iguana_ramchain_iterate(coin,0,dest)) != 0 )
+        if ( (err= iguana_ramchain_iterate(coin,0,dest)) != 0 )
             printf("err.%d iterate ",err);
         //else printf("BUNDLE.%d iterated\n",bp->bundleheight);
         iguana_ramchain_free(dest,1);
