@@ -1204,7 +1204,9 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             retval = 0;
         }
     }
+    printf("free dest\n");
     iguana_ramchain_free(dest,1);
+    printf("free iguana_bundlemapfree\n");
     iguana_bundlemapfree(mem,ipbits,ptrs,filesizes,num,R,bp->n);
     depth--;
     if ( retval == 0 )
