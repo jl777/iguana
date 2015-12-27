@@ -335,11 +335,6 @@ void curlhandle_free(void *curlhandle)
     curl_easy_cleanup(curlhandle);
 }
 
-char *iguana_rpc(struct iguana_info *coin,char *jsonstr)
-{
-    return(clonestr("{\"returned jsonstr might not be json for some calls, needs to be 100% backward compatible with BTC RPC\"}"));
-}
-
 int32_t iguana_rpctestvector(struct iguana_info *coin,char *checkstr,char *jsonstr,int32_t maxlen,int32_t testi)
 {
     int32_t len,checklen;
@@ -363,7 +358,7 @@ int32_t iguana_rpctestcheck(struct iguana_info *coin,char *jsonstr,char *retjson
 
 int32_t iguana_rpctest(struct iguana_info *coin)
 {
-    static int32_t testi,good,bad;
+/*    static int32_t testi,good,bad;
     char *retjsonstr,jsonstr[4096],checkstr[sizeof(jsonstr)]; // should be big enough
     //if ( (rand() % 1000) < 999 ) // if no test active, just return 0
         return(0);
@@ -375,6 +370,6 @@ int32_t iguana_rpctest(struct iguana_info *coin)
         else good++;
         free(retjsonstr);
         return(1); // indicates was active
-    }
+    }*/
     return(0);
 }

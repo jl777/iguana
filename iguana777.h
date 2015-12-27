@@ -16,7 +16,7 @@
 #ifndef iguana777_net_h
 #define iguana777_net_h
 #include <stdint.h>
-//#define IGUANA_DISABLEPEERS
+#define IGUANA_DISABLEPEERS
 
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 3    //64
@@ -763,5 +763,7 @@ int32_t iguana_hashfree(struct iguana_kvitem *hashtable,int32_t freeitem);
 int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp); // single threaded
 int32_t iguana_ramchainverifyPT(struct iguana_info *coin,struct iguana_ramchain *ramchain);
 void *map_file(char *fname,long *filesizep,int32_t enablewrite);
+void iguana_rpcloop(void *args);
+int32_t iguana_socket(int32_t bindflag,char *hostname,uint16_t port);
 
 #endif
