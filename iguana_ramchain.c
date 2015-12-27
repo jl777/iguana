@@ -1127,7 +1127,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     static int depth;
     RAMCHAIN_DESTDECLARE; void **ptrs,*ptr; long *filesizes,filesize; uint32_t *ipbits; char fname[1024];
     long allocsize; struct iguana_ramchain *R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
-    int32_t j,num,numtxids,numunspents,numspends,numpkinds,numexternaltxids,hdrsi,bundlei,firsti= 1,retval = -1;
+    int32_t err,j,num,numtxids,numunspents,numspends,numpkinds,numexternaltxids,hdrsi,bundlei,firsti= 1,retval = -1;
     R = mycalloc('s',bp->n,sizeof(*R));
     ptrs = mycalloc('w',bp->n,sizeof(*ptrs));
     ipbits = mycalloc('w',bp->n,sizeof(*ipbits));
@@ -1217,6 +1217,14 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     //printf("free iguana_bundlemapfree hdrs.%d retval.%d\n",bp->hdrsi,retval);
     iguana_bundlemapfree(mem,ipbits,ptrs,filesizes,num,R,bp->n);
     depth--;
+    if ( (dest= iguana_ramchain_map(coin,&bp->ramchain,0,0,bp->hashes[0],0,0,1)) != 0 )
+    {
+        iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
+        iguana_ramchain_extras(dest,0);
+        if ( (err= iguana_ramchain_iterate(coin,0,dest)) != 0 )
+            printf("err.%d iterate ",err);
+        iguana_ramchain_free(dest,1);
+    }
     if ( retval == 0 )
     {
         //printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
