@@ -392,7 +392,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                             else printf("error removing.(%s)\n",fname);
                         }
                     }
-                    printf("purged hdrsi.%d m.%d\n",bp->hdrsi,m);
+                    //printf("purged hdrsi.%d m.%d\n",bp->hdrsi,m);
                     bp->purgetime = (uint32_t)time(NULL);
                 }
             }
