@@ -138,7 +138,7 @@ void iguana_gotblockhashesM(struct iguana_info *coin,struct iguana_peer *addr,bi
 // main context, ie single threaded
 struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct iguana_bundlereq *req,bits256 *blockhashes,int32_t num)
 {
-    int32_t i,bundlei; struct iguana_block *block,*prev = 0; struct iguana_bundle *bp;
+    int32_t i,j,bundlei; struct iguana_block *block,*prev = 0; struct iguana_bundle *bp;
     bp = 0, bundlei = -2, iguana_bundlefind(coin,&bp,&bundlei,blockhashes[1]);
     if ( bp == 0 || bundlei != 1 || num <= 2 )
     {
@@ -177,6 +177,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                     {
                         char str[65]; printf("AUTOCREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,blockhashes[i]));
                         iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,blockhashes[i]);
+                        for (j=2; j<num; j++)
+                            iguana_blockQ(coin,bp,j,blockhashes[j],0);
                     }
                 }
                 else if ( prev->mainchain == 0 )
