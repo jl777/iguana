@@ -1222,7 +1222,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (numexternaltxids * sizeof(bits256));
     memset(&HASHMEM,0,sizeof(HASHMEM));
     hashsize = (numtxids + numpkinds) * 128 + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
-    iguana_meminit(&HASHMEM,"ramhashmem",&HASHMEM,hashsize + 4096,0);
+    iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
     iguana_meminit(mem,"ramchain",0,allocsize + 4096,0);
     mem->alignflag = sizeof(uint32_t);
     if ( iguana_ramchain_init(dest,mem,&HASHMEM,1,numtxids,numunspents,numspends,0,0,1) == 0 )
@@ -1232,6 +1232,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,0);
     _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
+    //char str[65]; printf("HASHMEM.total %s used.%ld dest.%p ptr.%p data.%p\n",mbstr(str,HASHMEM.totalsize),(long)HASHMEM.used,dest,HASHMEM.ptr,dest->H.data);
     iguana_ramchain_extras(dest,&HASHMEM);
     dest->H.txidind = dest->H.unspentind = dest->H.spendind = dest->pkind = dest->H.data->firsti;
     dest->externalind = 0;
