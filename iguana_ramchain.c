@@ -1250,7 +1250,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     iguana_bundlemapfree(mem,ipbits,ptrs,filesizes,num,R,bp->n);
     depth--;
     memset(&bp->ramchain,0,sizeof(bp->ramchain));
-    if ( 1 && (dest= iguana_ramchain_map(coin,&bp->ramchain,0,0,bp->hashes[0],0,0,1)) != 0 )
+    if ( 0 && (dest= iguana_ramchain_map(coin,&bp->ramchain,0,0,bp->hashes[0],0,0,1)) != 0 )
     {
         iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
         iguana_ramchain_extras(dest,0);
