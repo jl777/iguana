@@ -1269,13 +1269,18 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         iguana_ramchain_link(mapchain,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
         iguana_ramchain_extras(mapchain,0);
         if ( (err= iguana_ramchain_iterate(coin,0,mapchain)) != 0 )
-            printf("err.%d iterate ",err);
-        //else printf("BUNDLE.%d iterated\n",bp->bundleheight);
+            printf("err.%d iterate mapped dest\n",err);
+        else
+        {
+            if ( (err= iguana_ramchain_cmp(mapchain,dest,0)) != 0 )
+                printf("err.%d cmp mapchain vs dest\n",err);
+            else printf("BUNDLE.%d iterated and compared\n",bp->bundleheight);
+        }
         iguana_ramchain_free(mapchain,1);
     }
     if ( retval == 0 )
     {
-#ifdef __APPLE__
+//#ifdef __APPLE__
         //printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
         for (j=0; j<num; j++)
         {
@@ -1283,7 +1288,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 coin->peers.numfiles -= iguana_removefile(fname,0);
             else printf("error removing.(%s)\n",fname);
         }
-#endif
+//#endif
     }
     //printf("done hdrs.%d retval.%d\n",bp->hdrsi,retval);
     iguana_ramchain_free(dest,0);
