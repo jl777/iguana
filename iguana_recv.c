@@ -309,11 +309,13 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         }
         if ( bp->bundleheight+bundlei == coin->blocks.hwmchain.height+1 )
         {
-            if ( (rand() % 100) == 0 )
+            if ( (rand() % 10) == 0 )
+            {
                 printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
-            hash2 = iguana_blockhash(coin,coin->blocks.hwmchain.height+2);
-            if ( bits256_nonz(hash2) > 0 )
-                iguana_blockQ(coin,0,-1,hash2,1);
+                hash2 = iguana_blockhash(coin,coin->blocks.hwmchain.height+2);
+                if ( bits256_nonz(hash2) > 0 )
+                    iguana_blockQ(coin,0,-1,hash2,1);
+            }
         }
     }
     if ( block != 0 )
@@ -513,7 +515,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 diff = -diff;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
-                metric = (1 + diff * ((addr->addrind&1) == 0 ? 1 : diff) * (1. + bp->metric)) / (i + 1);
+                metric = (1 + diff * ((addr->addrind&1) == 0 ? 1 : diff) * (1. + bp->metric)) / (i*i + 1);
                 //printf("%f ",bp->metric);
                 if ( bestmetric < 0. || metric < bestmetric )
                     bestmetric = metric, bestbp = bp;
