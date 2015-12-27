@@ -1223,7 +1223,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (numpkinds * (sizeof(struct iguana_pkhash) + sizeof(struct iguana_pkextra) + sizeof(struct iguana_account))) +
                 (numexternaltxids * sizeof(bits256));
     memset(&HASHMEM,0,sizeof(HASHMEM));
-    hashsize = (numtxids + numpkinds) * 128 + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
+    hashsize = (numtxids + numpkinds) * 80 + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
     iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
     iguana_meminit(mem,"ramchain",0,allocsize + 4096,0);
     mem->alignflag = sizeof(uint32_t);
