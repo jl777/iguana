@@ -1216,9 +1216,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         iguana_bundlemapfree(mem,ipbits,ptrs,filesizes,num,R,bp->n);
         return(-1);
     }
-    iguana_bundlemapfree(0,ipbits,ptrs,filesizes,num,R,bp->n);
-    return(0);
-
     iguana_ramchain_link(dest,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,0);
     _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
     iguana_ramchain_extras(dest,0);
@@ -1237,7 +1234,10 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     iguana_ramchain_setsize(dest);
     //printf("DEST T.%d U.%d S.%d P.%d X.%d -> size.%ld\n",dest->H.data->numtxids,dest->H.data->numunspents,dest->H.data->numspends,dest->H.data->numpkinds,dest->H.data->numexternaltxids,(long)dest->H.data->allocsize);
-    if ( bundlei == bp->n )
+    iguana_bundlemapfree(0,ipbits,ptrs,filesizes,num,R,bp->n);
+    return(0);
+    
+   if ( bundlei == bp->n )
     {
         if ( iguana_ramchain_save(coin,RAMCHAIN_DESTARG,0,bp->hashes[0],0) < 0 )
             printf("ERROR saving ramchain hdrsi.%d\n",bp->hdrsi);
