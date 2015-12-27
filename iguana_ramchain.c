@@ -1223,7 +1223,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     dest->externalind = 0;
     for (bundlei=0; bundlei<bp->n; bundlei++)
     {
-        if ( (err= iguana_ramchain_iterate(coin,dest,&R[bundlei])) != 0 )
+        if ( 0 && (err= iguana_ramchain_iterate(coin,dest,&R[bundlei])) != 0 )
         {
             printf("error ramchain_iterate hdrs.%d bundlei.%d\n",bp->hdrsi,bundlei);
             break;
