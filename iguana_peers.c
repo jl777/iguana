@@ -534,9 +534,12 @@ void iguana_startconnection(void *arg)
         printf("iguana_startconnection.%s mismatched coin.%p (%s) vs (%s)\n",addr->ipaddr,coin,coin->symbol,addr->coinstr);
         return;
     }
+    if ( strcmp("127.0.0.1",addr->ipaddr) == 0 && (coin->myservices & NODE_NETWORK) != 0 )
+    {
+        printf("avoid self-loopback\n");
+        return;
+    }
     printf("startconnection.(%s) pending.%u usock.%d addrind.%d\n",addr->ipaddr,addr->pending,addr->usock,addr->addrind);
-    //if ( strcmp("127.0.0.1",addr->ipaddr) == 0 )
-    //    getchar();
     addr->pending = (uint32_t)time(NULL);
     if ( addr->usock < 0 )
         addr->usock = iguana_socket(0,addr->ipaddr,coin->chain->portp2p);
@@ -739,7 +742,7 @@ void iguana_acceptloop(void *args)
     socklen_t clilen; struct sockaddr_in cli_addr; uint32_t ipbits; int32_t bindsock;
     struct iguana_peer *addr; struct iguana_info *coin = args;
     bindsock = iguana_socket(1,"127.0.0.1",coin->chain->portp2p);
-    printf("iguana_bindloop 127.0.0.1:%d bind sock.%d\n",coin->chain->portrpc,bindsock);
+    printf("iguana_bindloop 127.0.0.1:%d bind sock.%d\n",coin->chain->portp2p,bindsock);
     while ( bindsock >= 0 )
     {
         ipbits = rand();
