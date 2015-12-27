@@ -1256,6 +1256,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         iguana_ramchain_extras(dest,0);
         if ( (err= iguana_ramchain_iterate(coin,0,dest)) != 0 )
             printf("err.%d iterate ",err);
+        else printf("BUNDLE.%d iterated\n",bp->bundleheight);
         iguana_ramchain_free(dest,1);
     }
     if ( retval == 0 && 0 )

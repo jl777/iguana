@@ -377,7 +377,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             if ( bp->emitfinish != 0 )
             {
                 numemit++;
-                if ( bp->purgetime == 0 && time(NULL) > bp->emitfinish+30 )
+                if ( bp->purgetime == 0 && time(NULL) > bp->emitfinish+300 )
                 {
                     char fname[1024]; int32_t hdrsi,m,j; uint32_t ipbits;
                     for (j=m=0; j<sizeof(coin->peers.active)/sizeof(*coin->peers.active); j++)
