@@ -1211,7 +1211,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         printf("delete %d files\n",num);
         for (j=0; j<num; j++)
-            if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) == 0 )
+            if ( 0 && iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) == 0 )
                 iguana_removefile(fname,0), coin->peers.numfiles--;
     }
     return(retval);
