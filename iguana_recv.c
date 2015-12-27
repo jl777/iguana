@@ -281,7 +281,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         iguana_blockcopy(coin,block,origblock);
     if ( bp != 0 && bundlei >= 0 )
     {
-        if ( bp->requests[bundlei] > 5 )
+        if ( bp->requests[bundlei] > 55 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
         if ( bundlei == 1 && bp->numhashes < bp->n )
         {
