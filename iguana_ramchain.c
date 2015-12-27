@@ -1215,6 +1215,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     numexternaltxids = numspends;
     dest = &bp->ramchain;
     //printf("E.%d depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",coin->numemitted,depth,bp->bundleheight,now,starttime,now-starttime);
+    depth++;
     allocsize = sizeof(*dest) +
                 (numtxids * sizeof(struct iguana_txid)) +
                 (numunspents * (sizeof(struct iguana_unspent) + sizeof(struct iguana_Uextra))) +
@@ -1223,16 +1224,15 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (numexternaltxids * sizeof(bits256));
     memset(&HASHMEM,0,sizeof(HASHMEM));
     hashsize = (numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
-    while ( 0 && depth > 0 && (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
-    {
-        char str[65],str2[65]; fprintf(stderr,"hdrs.%d wait for allocated %s < MAXMEM %s\n",bp->hdrsi,mbstr(str,x),mbstr(str2,coin->MAXMEM));
-        sleep(3);
-    }
-    depth++;
-    iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 65536,0);
+    iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
     iguana_meminit(mem,"ramchain",0,allocsize + 4096,0);
     mem->alignflag = sizeof(uint32_t);
     HASHMEM.alignflag = sizeof(uint32_t);
+    while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
+    {
+        char str[65],str2[65]; fprintf(stderr,"wait for allocated %s < MAXMEM %s\n",mbstr(str,x),mbstr(str2,coin->MAXMEM));
+        sleep(3);
+    }
     if ( iguana_ramchain_init(dest,mem,&HASHMEM,1,numtxids,numunspents,numspends,0,0,1) == 0 )
     {
         iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
@@ -1269,9 +1269,8 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     //printf("free dest hdrs.%d retval.%d\n",bp->hdrsi,retval);
     depth--;
-    iguana_ramchain_free(dest,0);
     memset(&checkR,0,sizeof(checkR));
-    if ( (mapchain= iguana_ramchain_map(coin,&checkR,0,0,bp->hashes[0],0,0,1)) != 0 )
+    if ( 1 && (mapchain= iguana_ramchain_map(coin,&checkR,0,0,bp->hashes[0],0,0,1)) != 0 )
     {
         iguana_ramchain_link(mapchain,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
         iguana_ramchain_extras(mapchain,0);
@@ -1281,14 +1280,14 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             if ( (err= iguana_ramchain_cmp(mapchain,dest,0)) != 0 )
                 printf("err.%d cmp mapchain vs dest\n",err);
+            else printf("BUNDLE.%d iterated and compared\n",bp->bundleheight);
         }
         iguana_ramchain_free(mapchain,1);
     }
-    iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
     if ( retval == 0 )
     {
 //#ifdef __APPLE__
-        printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
+        //printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
         for (j=0; j<num; j++)
         {
             if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) >= 0 )
@@ -1298,7 +1297,9 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
 //#endif
     }
     //printf("done hdrs.%d retval.%d\n",bp->hdrsi,retval);
+    iguana_ramchain_free(dest,0);
     //printf("free iguana_bundlemapfree hdrs.%d retval.%d\n",bp->hdrsi,retval);
+    iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
     return(retval);
 }
 
