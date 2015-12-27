@@ -24,18 +24,22 @@ long myallocated(uint8_t type,long change)
     static int64_t Total_allocated,HWM_allocated,Type_allocated[256];
     int32_t i; int64_t total = 0; char buf[2049],str[65];
     buf[0] = 0;
-    if ( type == 0 && change == 0 )
+    if ( type == 0 && change <= 0 )
     {
         for (i=0; i<256; i++)
         {
             if ( Type_allocated[i] != 0 )
             {
                 total += Type_allocated[i];
-                sprintf(buf+strlen(buf),"(%c %s) ",i,mbstr(str,Type_allocated[i]));
+                if ( change == 0 )
+                    sprintf(buf+strlen(buf),"(%c %s) ",i,mbstr(str,Type_allocated[i]));
             }
         }
-        sprintf(buf + strlen(buf),"-> total %lld %s",(long long)total,mbstr(str,total));
-        printf("%s\n",buf);
+        if ( change == 0 )
+        {
+            sprintf(buf + strlen(buf),"-> total %lld %s",(long long)total,mbstr(str,total));
+            printf("%s\n",buf);
+        }
     }
     else
     {

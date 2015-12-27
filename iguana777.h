@@ -26,7 +26,8 @@
 #define IGUANA_BUNDLELOOP 100
 
 #define IGUANA_MAPHASHTABLES 1
-#define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 4)
+#define IGUANA_DEFAULTRAM 4
+#define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 10)
 #define IGUANA_MAXBUNDLES (5000000 / 500)
 #define IGUANA_LOG2MAXPEERS 9
 #define IGUANA_LOG2PACKETSIZE 21
@@ -473,7 +474,7 @@ struct iguana_info
     struct iguana_peers peers;
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
     int64_t mining,totalfees,TMPallocated,MAXRECVCACHE,estsize,activebundles;
-    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle,numemitted;
+    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,MAXMEM,active,closestbundle,numemitted;
     uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,firstblock,lastpossible,bundlescount;
     struct iguana_chain *chain;
     struct iguana_iAddr *iAddrs;
