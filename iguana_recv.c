@@ -164,7 +164,15 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 else if ( prev->hh.next == block && block->hh.prev == prev )
                 {
                     if ( i < coin->chain->bundlesize )
-                        iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]);
+                    {
+                        if ( iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]) < 0 )
+                        {
+                            if ( prev->mainchain == 0 )
+                                block->hh.prev = prev->hh.next = 0;
+                            if ( i != 0 )
+                                memset(bp->hashes[i].bytes,0,sizeof(bp->hashes[i]));
+                        }
+                    }
                     else if ( bp->bundleheight + coin->chain->bundlesize >= coin->bundlescount*coin->chain->bundlesize )
                     {
                         char str[65]; printf("AUTOCREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,blockhashes[i]));

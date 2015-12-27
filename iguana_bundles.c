@@ -143,6 +143,7 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *debugstr,struct iguana_bu
         bits256_str(str2,*orighash2p), bits256_str(str3,newhash2);
         printf("ERRRO iguana_hash2set overwrite [%s] %s with %s\n",debugstr,str2,str3);
         getchar();
+        return(-1);
     }
     if ( isinside != 0 )
     {
@@ -202,28 +203,31 @@ int32_t iguana_bundlehash2add(struct iguana_info *coin,struct iguana_block **blo
                 printf("blockadd warning: %d[%d] <- %d[%d]\n",block->hdrsi,block->bundlei,bp->hdrsi,bundlei);
                 err |= 2;
             }
-            //char str[65]; printf(">>>>>>>>>>>>>> bundlehash2.(%s) ht.(%d %d)\n",bits256_str(str,hash2),bp->bundleheight,bundlei);
-            block->hdrsi = bp->hdrsi;
-            block->bundlei = bundlei;
-            block->havebundle = 1;
-            otherbp = 0;
-            if ( (otherbp= iguana_bundlefind(coin,&otherbp,&otherbundlei,hash2)) != 0 || (bundlei % (bundlesize-1)) == 0)
+            else
             {
-                if ( bundlei == 0 && (otherbundlei == -2 || otherbundlei == bundlesize-1) )
+                //char str[65]; printf(">>>>>>>>>>>>>> bundlehash2.(%s) ht.(%d %d)\n",bits256_str(str,hash2),bp->bundleheight,bundlei);
+                block->hdrsi = bp->hdrsi;
+                block->bundlei = bundlei;
+                block->havebundle = 1;
+                otherbp = 0;
+                if ( (otherbp= iguana_bundlefind(coin,&otherbp,&otherbundlei,hash2)) != 0 || (bundlei % (bundlesize-1)) == 0)
                 {
-                    if ( otherbp != 0 && iguana_hash2set(coin,"blockadd0_prev",bp,-1,otherbp->hashes[0]) != 0 )
-                        err |= 4;
-                    if ( otherbp != 0 && iguana_hash2set(coin,"blockadd0_next",otherbp,bundlesize,bp->hashes[0]) != 0 )
-                        err |= 8;
+                    if ( bundlei == 0 && (otherbundlei == -2 || otherbundlei == bundlesize-1) )
+                    {
+                        if ( otherbp != 0 && iguana_hash2set(coin,"blockadd0_prev",bp,-1,otherbp->hashes[0]) != 0 )
+                            err |= 4;
+                        if ( otherbp != 0 && iguana_hash2set(coin,"blockadd0_next",otherbp,bundlesize,bp->hashes[0]) != 0 )
+                            err |= 8;
+                    }
+                    else if ( bundlei == bundlesize-1 && (otherbundlei == -2 || otherbundlei == 0) )
+                    {
+                        if ( otherbp != 0 && iguana_hash2set(coin,"blockaddL_prev",otherbp,-1,bp->hashes[0]) != 0 )
+                            err |= 16;
+                        if ( otherbp != 0 && iguana_hash2set(coin,"blockaddL_next",bp,bundlesize,otherbp->hashes[0]) != 0 )
+                            err |= 32;
+                    }
+                    //else printf("blockadd warning: %d[%d] bloomfound %d[%d]\n",bp->hdrsi,bundlei,otherbp!=0?otherbp->hdrsi:-1,otherbundlei);
                 }
-                else if ( bundlei == bundlesize-1 && (otherbundlei == -2 || otherbundlei == 0) )
-                {
-                    if ( otherbp != 0 && iguana_hash2set(coin,"blockaddL_prev",otherbp,-1,bp->hashes[0]) != 0 )
-                        err |= 16;
-                    if ( otherbp != 0 && iguana_hash2set(coin,"blockaddL_next",bp,bundlesize,otherbp->hashes[0]) != 0 )
-                        err |= 32;
-                }
-                //else printf("blockadd warning: %d[%d] bloomfound %d[%d]\n",bp->hdrsi,bundlei,otherbp!=0?otherbp->hdrsi:-1,otherbundlei);
             }
         }
         else if ( setval == 1 )

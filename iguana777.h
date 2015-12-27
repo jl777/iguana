@@ -16,6 +16,7 @@
 #ifndef iguana777_net_h
 #define iguana777_net_h
 #include <stdint.h>
+#define IGUANA_DISABLEPEERS
 
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 3    //64

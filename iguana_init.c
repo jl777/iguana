@@ -188,10 +188,19 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
         {
             if ( m < coin->MAXPEERS && m < 77.7 )
             {
+                if ( m == 0 )
+                {
+                    addr = &coin->peers.active[m++];
+                    iguana_initpeer(coin,addr,(uint32_t)calc_ipbits("127.0.0.1"));
+                    printf("call initpeer.(%s)\n",addr->ipaddr);
+                    iguana_launch(coin,"connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
+                }
+#ifndef IGUANA_DISABLEPEERS
                 addr = &coin->peers.active[m++];
                 iguana_initpeer(coin,addr,(uint32_t)calc_ipbits(line));
                 printf("call initpeer.(%s)\n",addr->ipaddr);
                 iguana_launch(coin,"connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
+#endif
             }
         }
         else
@@ -273,6 +282,11 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
         //iguana_audit(coin);
         iguana_syncs(coin);
     }*/
+    if ( (coin->myservices & NODE_NETWORK) != 0 )
+    {
+        printf("MYSERVICES.%llx\n",(long long)coin->myservices);
+        coin->peers.acceptloop = iguana_launch(coin,"acceptloop",iguana_acceptloop,coin,IGUANA_PERMTHREAD);
+    }
     coin->firstblock = coin->blocks.parsedblocks + 1;
     for (iter=0; iter<2; iter++)
     {
@@ -290,7 +304,6 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
 #endif
     if ( 0 && (coin->MAXBUNDLES= coin->bundlescount / 4) < _IGUANA_MAXBUNDLES )
         coin->MAXBUNDLES = _IGUANA_MAXBUNDLES;
-    //coin->peers.acceptloop = iguana_launch("acceptloop",iguana_acceptloop,coin,IGUANA_PERMTHREAD);
     //coin->peers.recvloop = iguana_launch("recvloop",iguana_recvloop,coin,IGUANA_PERMTHREAD);
     iguana_genesis(coin,coin->chain);
     printf("started.%s\n",coin->symbol);

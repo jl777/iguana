@@ -52,7 +52,7 @@ struct iguana_info *iguana_coin(const char *symbol)
                 if ( coin->chain == 0 )
                 {
                     strcpy(coin->name,Hardcoded_coins[i][1]);
-                    coin->myservices = atoi(Hardcoded_coins[i][2]);
+                    //coin->myservices = atoi(Hardcoded_coins[i][2]);
                     strcpy(coin->symbol,symbol);
                     coin->chain = iguana_chainfind(coin->symbol);
                     iguana_initcoin(coin);
@@ -395,11 +395,11 @@ void iguana_main(void *arg)
     }
     if ( coinargs != 0 )
         iguana_launch(iguana_coin("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
-    else
+    else if ( 1 )
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"maxpeers\":64,\"coin\":\"BTCD\",\"active\":1}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"services\":0,\"maxpeers\":64,\"coin\":\"BTCD\",\"active\":1}");
 #endif
     }
     if ( arg != 0 )
