@@ -1234,7 +1234,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     iguana_ramchain_setsize(dest);
     //printf("DEST T.%d U.%d S.%d P.%d X.%d -> size.%ld\n",dest->H.data->numtxids,dest->H.data->numunspents,dest->H.data->numspends,dest->H.data->numpkinds,dest->H.data->numexternaltxids,(long)dest->H.data->allocsize);
-    iguana_bundlemapfree(0,ipbits,ptrs,filesizes,num,R,bp->n);
+    iguana_bundlemapfree(mem,ipbits,ptrs,filesizes,num,R,bp->n);
     return(0);
     
     if ( bundlei == bp->n )
