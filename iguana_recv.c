@@ -281,7 +281,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         iguana_blockcopy(coin,block,origblock);
     if ( bp != 0 && bundlei >= 0 )
     {
-        if ( bp->requests[bundlei] > 2 )
+        if ( bp->requests[bundlei] > 5 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
         if ( bundlei == 1 && bp->numhashes < bp->n )
         {
@@ -612,7 +612,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 if ( threshold < 1 )
                     threshold = 1.;
                 threshold = coin->avetime * sqrt(threshold) * .00777;
-                if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )//&& next->recvlen == 0 )
+                if ( queue_size(&coin->blocksQ) == 0 || (coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold)) )//&& next->recvlen == 0 )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
