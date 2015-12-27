@@ -1229,7 +1229,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         sleep(3);
     }
     depth++;
-    iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
+    iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 65536,0);
     iguana_meminit(mem,"ramchain",0,allocsize + 4096,0);
     mem->alignflag = sizeof(uint32_t);
     HASHMEM.alignflag = sizeof(uint32_t);
