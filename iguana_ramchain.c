@@ -1275,7 +1275,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     if ( (mapchain= iguana_ramchain_map(coin,&checkR,&HASHMEM,0,bp->hashes[0],0,0,1)) != 0 )
     {
         iguana_ramchain_link(mapchain,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
-        iguana_ramchain_extras(mapchain,0);
+        iguana_ramchain_extras(mapchain,&HASHMEM);
         if ( (err= iguana_ramchain_iterate(coin,0,mapchain)) != 0 )
             printf("err.%d iterate mapped dest\n",err);
         else
