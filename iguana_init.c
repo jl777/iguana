@@ -89,6 +89,7 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
     iguana_gotdata(coin,0,0);
     if ( (ptr= iguana_blockhashset(coin,0,hash2,1)) != 0 )
     {
+        ptr->mainchain = 1;
         iguana_blockcopy(coin,ptr,&block);
         if ( (height= iguana_chainextend(coin,ptr)) == 0 )
         {
@@ -176,7 +177,7 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
 void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
 {
     int32_t j,k,m,c,height,flag,bundlei,bundleheight = -1; char checkstr[1024],line[1024]; bits256 zero;
-    struct iguana_peer *addr; struct iguana_bundle *bp; bits256 hash2,bundlehash2;
+    struct iguana_peer *addr; struct iguana_bundle *bp; bits256 hash2,bundlehash2; struct iguana_block *block;
     m = flag = 0;
     memset(&zero,0,sizeof(zero));
     while ( fgets(line,sizeof(line),fp) > 0 )
@@ -232,6 +233,8 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                                 bits256_str(str,bundlehash2);
                                 printf("add bundle.%d:%d (%s) %p\n",bundleheight,bp->hdrsi,str,bp);
                                 bp->bundleheight = bundleheight;
+                                if ( (block= iguana_blockfind(coin,bundlehash2)) != 0 )
+                                    block->mainchain = 1;
                                 flag = 0;
                             }
                         }
@@ -249,6 +252,10 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                                 bits256_str(str,bundlehash2);
                                 bits256_str(str2,hash2);
                                 printf("add bundle.%d:%d (%s) %s %p\n",bundleheight,bp->hdrsi,str,str2,bp);
+                                if ( (block= iguana_blockfind(coin,bundlehash2)) != 0 )
+                                    block->mainchain = 1;
+                                if ( (block= iguana_blockfind(coin,hash2)) != 0 )
+                                    block->mainchain = 1;
                                 flag = 0;
                             }
                         }
