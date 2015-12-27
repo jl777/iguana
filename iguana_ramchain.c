@@ -1100,32 +1100,25 @@ int32_t iguana_bundlefiles(struct iguana_info *coin,uint32_t *ipbits,void **ptrs
 void iguana_bundlemapfree(struct iguana_memspace *mem,uint32_t *ipbits,void **ptrs,long *filesizes,int32_t num,struct iguana_ramchain *R,int32_t n)
 {
     int32_t j;
-    printf("munmap\n");
     for (j=0; j<num; j++)
         if ( ptrs[j] != 0 && filesizes[j] != 0 )
             munmap(ptrs[j],filesizes[j]);
-    printf("free ptrs\n");
     myfree(ptrs,n * sizeof(*ptrs));
-    printf("free ipbits\n");
     myfree(ipbits,n * sizeof(*ipbits));
-    printf("free filesizes\n");
     myfree(filesizes,n * sizeof(*filesizes));
-    printf("free R\n");
     if ( R != 0 )
     {
         for (j=0; j<n; j++)
         {
-            printf("R[%d]\n",j);
+            //printf("R[%d]\n",j);
             R[j].fileptr = 0;
             R[j].filesize = 0;
             iguana_ramchain_free(&R[j],1);
         }
         myfree(R,n * sizeof(*R));
     }
-    printf("iguana_mempurge\n");
     if ( mem != 0 )
         iguana_mempurge(mem);
-    printf("done frees\n");
 }
 
 // helper threads: NUM_HELPERS
@@ -1216,19 +1209,19 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             retval = 0;
         }
     }
-    printf("free dest hdrs.%d retval.%d\n",bp->hdrsi,retval);
+    //printf("free dest hdrs.%d retval.%d\n",bp->hdrsi,retval);
     iguana_ramchain_free(dest,1);
-    printf("free iguana_bundlemapfree hdrs.%d retval.%d\n",bp->hdrsi,retval);
+    //printf("free iguana_bundlemapfree hdrs.%d retval.%d\n",bp->hdrsi,retval);
     iguana_bundlemapfree(mem,ipbits,ptrs,filesizes,num,R,bp->n);
     depth--;
     if ( retval == 0 )
     {
         printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
         for (j=0; j<num; j++)
-            if ( 0 && iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) == 0 )
+            if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) == 0 )
                 iguana_removefile(fname,0), coin->peers.numfiles--;
     }
-    printf("done hdrs.%d retval.%d\n",bp->hdrsi,retval);
+    //printf("done hdrs.%d retval.%d\n",bp->hdrsi,retval);
     return(retval);
 }
 
