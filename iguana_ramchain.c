@@ -1271,19 +1271,18 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     depth--;
     iguana_ramchain_free(dest,0);
     memset(&checkR,0,sizeof(checkR));
-    iguana_memreset(&HASHMEM);
-    if ( (mapchain= iguana_ramchain_map(coin,&checkR,&HASHMEM,0,bp->hashes[0],0,0,1)) != 0 )
+    if ( (mapchain= iguana_ramchain_map(coin,&checkR,0,0,bp->hashes[0],0,0,1)) != 0 )
     {
         iguana_ramchain_link(mapchain,bp->hashes[0],bp->hashes[bp->n-1],bp->hdrsi,bp->bundleheight,0,bp->n,firsti,1);
-        iguana_ramchain_extras(mapchain,&HASHMEM);
+        iguana_ramchain_extras(mapchain,0);
         if ( (err= iguana_ramchain_iterate(coin,0,mapchain)) != 0 )
             printf("err.%d iterate mapped dest\n",err);
         else
         {
-            //if ( (err= iguana_ramchain_cmp(mapchain,dest,0)) != 0 )
-            //    printf("err.%d cmp mapchain vs dest\n",err);
+            if ( (err= iguana_ramchain_cmp(mapchain,dest,0)) != 0 )
+                printf("err.%d cmp mapchain vs dest\n",err);
         }
-        iguana_ramchain_free(mapchain,0);
+        iguana_ramchain_free(mapchain,1);
     }
     iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
     if ( retval == 0 )
