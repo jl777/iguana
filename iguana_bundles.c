@@ -402,7 +402,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
         }
     }
     coin->blocksrecv = totalrecv;
-    if ( time(NULL) > lastdisp+1000 )
+    if ( time(NULL) > lastdisp+10 )
     {
         char str2[65];
         sprintf(str,"N[%d] d.%d p.%d g.%d A.%d h.%d i.%d r.%d E.%d:%d M.%d long.%d est.%d %s",coin->bundlescount,numdone,coin->numpendings,numbundles,numactive,numhashes,numissued,totalrecv,coin->numemitted,coin->numsent,coin->blocks.hwmchain.height,coin->longestchain,coin->MAXBUNDLES,mbstr(str2,estsize));
