@@ -653,7 +653,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
         return((uint32_t)time(NULL));
     }
 #endif
-    printf("check possible peer.(%s)\n",ipaddr);
+    //printf("check possible peer.(%s)\n",ipaddr);
     for (i=0; i<coin->MAXPEERS; i++)
         if ( strcmp(ipaddr,coin->peers.active[i].ipaddr) == 0 )
         {
@@ -680,7 +680,7 @@ uint32_t iguana_possible_peer(struct iguana_info *coin,char *ipaddr)
                                 printf("error updating status for (%s) ind.%d\n",ipaddr,iA->hh.itemind);
                             iguana_iAddriterator(coin,iA);
                         } else printf("ignore.(%s) lastconnect.%u lastkilled.%u numconnects.%d\n",ipaddr,iA->lastconnect,iA->lastkilled,iA->numconnects);
-                    } else printf("skip.(%s) ind.%d status.%d\n",ipaddr,iA->hh.itemind,iA->status);
+                    } //else printf("skip.(%s) ind.%d status.%d\n",ipaddr,iA->hh.itemind,iA->status);
                 } else printf("cant find (%s) which should have been created\n",ipaddr);
             } else printf("reject ipaddr.(%s)\n",ipaddr);
         }
@@ -739,10 +739,11 @@ int32_t iguana_pollrecv(struct iguana_info *coin,struct iguana_peer *addr,uint8_
 
 void iguana_acceptloop(void *args)
 {
-    socklen_t clilen; struct sockaddr_in cli_addr; uint32_t ipbits; int32_t bindsock;
+    socklen_t clilen; struct sockaddr_in cli_addr; uint32_t ipbits; uint16_t port; int32_t bindsock;
     struct iguana_peer *addr; struct iguana_info *coin = args;
-    bindsock = iguana_socket(1,"127.0.0.1",coin->chain->portp2p);
-    printf("iguana_bindloop 127.0.0.1:%d bind sock.%d\n",coin->chain->portp2p,bindsock);
+    port = coin->chain->portp2p;
+    bindsock = iguana_socket(1,"127.0.0.1",port);
+    printf("iguana_bindloop 127.0.0.1:%d bind sock.%d\n",port,bindsock);
     while ( bindsock >= 0 )
     {
         ipbits = rand();
@@ -753,7 +754,7 @@ void iguana_acceptloop(void *args)
         }
         listen(bindsock,64);
         clilen = sizeof(cli_addr);
-        printf("ACCEPT (%s:%d) on sock.%d\n","127.0.0.1",coin->chain->portrpc,bindsock);
+        printf("ACCEPT (%s:%d) on sock.%d\n","127.0.0.1",port,bindsock);
         addr->usock = accept(bindsock,(struct sockaddr *)&cli_addr,&clilen);
         if ( addr->usock < 0 )
         {
