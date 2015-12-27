@@ -665,7 +665,7 @@ int32_t iguana_ramchain_free(struct iguana_ramchain *ramchain,int32_t deleteflag
     struct iguana_kvitem *item,*tmp;
     if ( ramchain->H.ROflag != 0 )//&& ramchain->hashmem == 0 )
     {
-        printf("Free A %p %p, U2, P2\n",ramchain->A,ramchain->roA);
+        //printf("Free A %p %p, U2, P2\n",ramchain->A,ramchain->roA);
         if ( ramchain->A != ramchain->roA )
             myfree(ramchain->A,sizeof(*ramchain->A) * ramchain->H.data->numpkinds), ramchain->A = 0;
         if ( ramchain->U2 != ramchain->roU2 )
@@ -847,7 +847,10 @@ int32_t iguana_ramchain_iterate(struct iguana_info *coin,struct iguana_ramchain 
         _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
     _iguana_ramchain_setptrs(RAMCHAIN_PTRS);
     if ( (rdata= ramchain->H.data) == 0 )
+    {
+        printf("iguana_ramchain_iterate cant iterate without data\n");
         return(-1);
+    }
     ramchain->H.ROflag = 1;
     ramchain->H.unspentind = ramchain->H.spendind = ramchain->pkind = rdata->firsti;
     ramchain->externalind = 0;
@@ -891,7 +894,7 @@ int32_t iguana_ramchain_iterate(struct iguana_info *coin,struct iguana_ramchain 
                     if ( iguana_ramchain_addunspent20(coin,RAMCHAIN_ARG,value,rmd160,-20,tx->txid,j) == 0 )
                         return(-4);
                 }
-                if ( dest != 0 )
+                if ( 0 && dest != 0 )
                 {
                     if ( iguana_ramchain_addunspent(coin,RAMCHAIN_DESTARG,value,rdata->hdrsi,rmd160,j) == 0 )
                         return(-5);
@@ -935,7 +938,7 @@ int32_t iguana_ramchain_iterate(struct iguana_info *coin,struct iguana_ramchain 
                 if ( iguana_ramchain_addspend256(coin,RAMCHAIN_ARG,prevhash,prevout,0,0,sequence,rdata->hdrsi,bundlei) == 0 )
                     return(-8);
             }
-            if ( dest != 0 )
+            if ( 0 && dest != 0 )
             {
                 if ( iguana_ramchain_addspend(coin,RAMCHAIN_DESTARG,prevhash,prevout,sequence,rdata->hdrsi,bundlei) == 0 )
                     return(-9);
