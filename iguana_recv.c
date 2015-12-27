@@ -479,7 +479,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = 1;
     if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
-        struct iguana_bundle *bp,*bestbp = 0; int32_t i,r,diff,j,k,n; double metric,bestmetric = -1.;
+        struct iguana_bundle *bp,*bestbp = 0; int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
@@ -523,7 +523,16 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 {
                     j = (addr->addrind*3 + r) % bp->n;
                     hash2 = bp->hashes[j];
-                    if ( (rand() % 1000) == 0 || (bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && bits256_nonz(hash2) > 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold)) )
+                    if ( bits256_nonz(hash2) == 0 )
+                        continue;
+                    flag = 0;
+                    if ( (rand() % 1000) == 0 )
+                        flag = 1;
+                    else if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 )
+                        flag = 1;
+                    else if ( bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold )
+                        flag = 1;
+                    if ( flag != 0 )
                     {
                         init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
                         if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
