@@ -1221,8 +1221,11 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     {
         //printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
         for (j=0; j<num; j++)
+        {
             if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) >= 0 )
-                iguana_removefile(fname,0), coin->peers.numfiles--;
+                coin->peers.numfiles -= iguana_removefile(fname,0);
+            else printf("error removing.(%s)\n",fname);
+        }
     }
     //printf("done hdrs.%d retval.%d\n",bp->hdrsi,retval);
     return(retval);

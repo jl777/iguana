@@ -447,7 +447,7 @@ struct iguana_bundle
     struct queueitem DL; struct iguana_info *coin;
     struct iguana_block block;
     struct iguana_bloom16 bloom;
-    uint32_t issuetime,hdrtime,emitfinish,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
+    uint32_t issuetime,hdrtime,emitfinish,purgetime,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
     int32_t minrequests,numhashes,numissued,numrecv,n,hdrsi,bundleheight,numtxids,numspends,numunspents;
     double avetime,threshold,metric; uint64_t datasize,estsize;
     long fpos[IGUANA_MAXBUNDLESIZE+1];
@@ -704,7 +704,7 @@ uint64_t iguana_filesize(char *fname);
 int32_t iguana_compare_files(char *fname,char *fname2);
 int64_t iguana_copyfile(char *fname,char *fname2,int32_t cmpflag);
 int32_t iguana_renamefile(char *fname,char *newname);
-void iguana_removefile(char *fname,int32_t scrubflag);
+int32_t iguana_removefile(char *fname,int32_t scrubflag);
 void *iguana_filestr(int64_t *allocsizep,char *fname);
 
 double milliseconds(void);

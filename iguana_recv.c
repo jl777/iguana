@@ -165,7 +165,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 {
                     if ( i < coin->chain->bundlesize )
                     {
-                        if ( i > 1 && iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]) < 0 )
+                        if ( iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]) < 0 )
                         {
                             if ( prev->mainchain == 0 )
                                 block->hh.prev = prev->hh.next = 0;

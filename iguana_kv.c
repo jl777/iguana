@@ -61,7 +61,7 @@ int32_t iguana_renamefile(char *fname,char *newfname)
     return(system(cmd));
 }
 
-void iguana_removefile(char *fname,int32_t scrubflag)
+int32_t iguana_removefile(char *fname,int32_t scrubflag)
 {
     FILE *fp;
     char cmdstr[1024];
@@ -82,7 +82,9 @@ void iguana_removefile(char *fname,int32_t scrubflag)
         sprintf(cmdstr,"%s %s",OS_rmstr(),fname);
         if ( system(iguana_compatible_path(cmdstr)) != 0 )
             printf("error deleting file.(%s)\n",cmdstr);
+        else return(1);
     }
+    return(0);
 }
 
 uint64_t iguana_filesize(char *fname)

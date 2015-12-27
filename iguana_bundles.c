@@ -134,7 +134,7 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *debugstr,struct iguana_bu
     if ( bits256_nonz(newhash2) == 0 || (orighash2p= iguana_bundleihash2p(coin,&isinside,bp,bundlei)) == 0 )
     {
         printf("iguana_hash2set warning: bundlei.%d newhash2.%s orighash2p.%p\n",bundlei,bits256_str(str,newhash2),orighash2p);
-        getchar();
+        //getchar();
         return(-1);
     }
     if ( bits256_nonz(*orighash2p) > 0 && memcmp(newhash2.bytes,orighash2p,sizeof(bits256)) != 0 )
@@ -375,7 +375,24 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             bp->numrecv = numrecv;
             bp->datasize = datasize;
             if ( bp->emitfinish != 0 )
+            {
                 numemit++;
+                if ( bp->purgetime == 0 && time(NULL) > bp->emitfinish+30 )
+                {
+                    char fname[1024]; int32_t hdrsi,m,j; uint32_t ipbits;
+                    for (j=m=0; j<sizeof(coin->peers.active)/sizeof(*coin->peers.active); j++)
+                    {
+                        if ( (ipbits= coin->peers.active[j].ipbits) != 0 )
+                        {
+                            if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits,bp->hashes[0]) >= 0 )
+                                coin->peers.numfiles -= iguana_removefile(fname,0), m++;
+                            else printf("error removing.(%s)\n",fname);
+                        }
+                    }
+                    printf("purged hdrsi.%d m.%d\n",bp->hdrsi,m);
+                    bp->purgetime = (uint32_t)time(NULL);
+                }
+            }
             else if ( numrecv > 0 )
             {
                 bp->estsize = ((uint64_t)datasize * bp->n) / numrecv;
