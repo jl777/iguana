@@ -1143,7 +1143,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     RAMCHAIN_DESTDECLARE; void **ptrs,*ptr; long *filesizes,filesize; uint32_t *ipbits; char fname[1024];
     long allocsize; struct iguana_ramchain *R,*mapchain,*dest; uint32_t now = (uint32_t)time(NULL);
     int32_t err,j,num,numtxids,numunspents,numspends,numpkinds,numexternaltxids,hdrsi,bundlei,firsti= 1,retval = -1;
-    return(0);
     R = mycalloc('s',bp->n,sizeof(*R));
     ptrs = mycalloc('w',bp->n,sizeof(*ptrs));
     ipbits = mycalloc('w',bp->n,sizeof(*ipbits));
@@ -1153,6 +1152,8 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         iguana_bundlemapfree(0,ipbits,ptrs,filesizes,num,R,bp->n);
         return(-1);
     }
+    iguana_bundlemapfree(0,ipbits,ptrs,filesizes,num,R,bp->n);
+    return(0);
     for (bundlei=numtxids=numunspents=numspends=0; bundlei<bp->n; bundlei++)
     {
         mapchain = &R[bundlei];
