@@ -164,7 +164,7 @@ uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_
         {
             P[pkind].flags = flags;
             P[pkind].firstunspentind = unspentind;
-            printf("%p P[%d] <- firstunspent.%d\n",&P[pkind],pkind,unspentind);
+            //printf("%p P[%d] <- firstunspent.%d\n",&P[pkind],pkind,unspentind);
             memcpy(P[pkind].rmd160,rmd160,sizeof(P[pkind].rmd160));
         }
         if ( (ptr= iguana_hashsetPT(ramchain,'P',&P[pkind],pkind)) == 0 )
