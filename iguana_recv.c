@@ -309,7 +309,8 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         }
         if ( bp->bundleheight+bundlei == coin->blocks.hwmchain.height+1 )
         {
-            printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
+            if ( (rand() % 100) == 0 )
+                printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
             hash2 = iguana_blockhash(coin,coin->blocks.hwmchain.height+2);
             if ( bits256_nonz(hash2) > 0 )
                 iguana_blockQ(coin,0,-1,hash2,1);

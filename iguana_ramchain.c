@@ -1180,7 +1180,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     numpkinds = numunspents;
     numexternaltxids = numspends;
     dest = &bp->ramchain;
-    printf("E.%d depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",coin->numemitted,depth,bp->bundleheight,now,starttime,now-starttime);
+    //printf("E.%d depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",coin->numemitted,depth,bp->bundleheight,now,starttime,now-starttime);
     depth++;
     allocsize = sizeof(*dest) +
                 (numtxids * sizeof(struct iguana_txid)) +
@@ -1216,7 +1216,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     depth--;
     if ( retval == 0 )
     {
-        printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
+        //printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
         for (j=0; j<num; j++)
             if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) == 0 )
                 iguana_removefile(fname,0), coin->peers.numfiles--;
