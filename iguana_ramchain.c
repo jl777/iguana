@@ -1224,15 +1224,15 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (numexternaltxids * sizeof(bits256));
     memset(&HASHMEM,0,sizeof(HASHMEM));
     hashsize = (numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
-    iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
-    iguana_meminit(mem,"ramchain",0,allocsize + 4096,0);
-    mem->alignflag = sizeof(uint32_t);
-    HASHMEM.alignflag = sizeof(uint32_t);
     while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
     {
         char str[65],str2[65]; fprintf(stderr,"wait for allocated %s < MAXMEM %s\n",mbstr(str,x),mbstr(str2,coin->MAXMEM));
         sleep(3);
     }
+    iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
+    iguana_meminit(mem,"ramchain",0,allocsize + 4096,0);
+    mem->alignflag = sizeof(uint32_t);
+    HASHMEM.alignflag = sizeof(uint32_t);
     if ( iguana_ramchain_init(dest,mem,&HASHMEM,1,numtxids,numunspents,numspends,0,0,1) == 0 )
     {
         iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
