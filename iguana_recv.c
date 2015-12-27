@@ -307,6 +307,11 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 //bp->numrecv++;
             }
         }
+        if ( bp->bundleheight+bundlei == coin->blocks.hwmchain.height+1 )
+        {
+            printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
+            iguana_blockQ(coin,0,-1,iguana_blockhash(coin,coin->blocks.hwmchain.height+2),1);
+        }
     }
     if ( block != 0 )
     {
