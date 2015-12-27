@@ -1285,10 +1285,11 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         }
         iguana_ramchain_free(mapchain,0);
     }
+    iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
     if ( retval == 0 )
     {
 //#ifdef __APPLE__
-        //printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
+        printf("delete %d files hdrs.%d retval.%d\n",num,bp->hdrsi,retval);
         for (j=0; j<num; j++)
         {
             if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits[j],bp->hashes[0]) >= 0 )
@@ -1299,7 +1300,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     //printf("done hdrs.%d retval.%d\n",bp->hdrsi,retval);
     //printf("free iguana_bundlemapfree hdrs.%d retval.%d\n",bp->hdrsi,retval);
-    iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
     return(retval);
 }
 
