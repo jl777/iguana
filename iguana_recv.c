@@ -491,7 +491,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
-        if ( n >= coin->bundlescount-(coin->bundlescount>>2) || (addr->ipbits % 10) < 6 )
+        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 5 )
             refbundlei = (addr->ipbits % coin->bundlescount);
         else
         {
@@ -627,7 +627,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 threshold = (10 + coin->longestchain - coin->blocksrecv);
                 if ( threshold < 1 )
                     threshold = 1.;
-                threshold = coin->avetime * sqrt(threshold) * .000777;
+                threshold = coin->avetime * sqrt(threshold) * .00777;
                 if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )//&& next->recvlen == 0 )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
