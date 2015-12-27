@@ -1215,7 +1215,6 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     numexternaltxids = numspends;
     dest = &bp->ramchain;
     //printf("E.%d depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",coin->numemitted,depth,bp->bundleheight,now,starttime,now-starttime);
-    depth++;
     allocsize = sizeof(*dest) +
                 (numtxids * sizeof(struct iguana_txid)) +
                 (numunspents * (sizeof(struct iguana_unspent) + sizeof(struct iguana_Uextra))) +
@@ -1224,15 +1223,16 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (numexternaltxids * sizeof(bits256));
     memset(&HASHMEM,0,sizeof(HASHMEM));
     hashsize = (numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
+    while ( depth > 0 && (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
+    {
+        char str[65],str2[65]; fprintf(stderr,"hdrs.%d wait for allocated %s < MAXMEM %s\n",bp->hdrsi,mbstr(str,x),mbstr(str2,coin->MAXMEM));
+        sleep(3);
+    }
+    depth++;
     iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
     iguana_meminit(mem,"ramchain",0,allocsize + 4096,0);
     mem->alignflag = sizeof(uint32_t);
     HASHMEM.alignflag = sizeof(uint32_t);
-    while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
-    {
-        char str[65],str2[65]; fprintf(stderr,"wait for allocated %s < MAXMEM %s\n",mbstr(str,x),mbstr(str2,coin->MAXMEM));
-        sleep(3);
-    }
     if ( iguana_ramchain_init(dest,mem,&HASHMEM,1,numtxids,numunspents,numspends,0,0,1) == 0 )
     {
         iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
