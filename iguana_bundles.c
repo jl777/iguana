@@ -385,7 +385,10 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         if ( (ipbits= coin->peers.active[j].ipbits) != 0 )
                         {
                             if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits,bp->hashes[0]) >= 0 )
-                                coin->peers.numfiles -= iguana_removefile(fname,0), m++;
+                            {
+                                if ( iguana_removefile(fname,0) > 0 )
+                                    coin->peers.numfiles--, m++;
+                            }
                             else printf("error removing.(%s)\n",fname);
                         }
                     }
