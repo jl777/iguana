@@ -214,7 +214,7 @@ void iguana_helper(void *arg)
     while ( 1 )
     {
         flag = 0;
-        while ( (ptr= queue_dequeue(&helperQ,0)) != 0 )
+        if ( myallocated(0,-1) < coin->MAXMEM && (ptr= queue_dequeue(&helperQ,0)) != 0 )
         {
             iguana_helpertask(fp,&MEM,MEMB,ptr);
             myfree(ptr,ptr->allocsize);
