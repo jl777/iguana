@@ -331,8 +331,8 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
     static uint32_t lastdisp;
-    int32_t i,dispflag,bundlei,minrequests,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
-    struct iguana_bundle *bp;  int64_t datasize,estsize = 0;
+    int32_t i,dispflag,bundlei,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
+    struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0;
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     if ( queue_size(&coin->blocksQ) == 0 )
         iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
@@ -347,10 +347,24 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             numbundles++;
             if ( bp->numrecv >= bp->n )
                 numdone++;
+            missing = -1;
             for (numrecv=datasize=bundlei=0; bundlei<bp->n; bundlei++)
             {
                 if ( bits256_nonz(bp->hashes[bundlei]) == 0 )
+                {
+                    if ( missing < 0 )
+                        missing = bundlei;
                     continue;
+                }
+                if ( missing >= 0 && missing < bp->n )
+                {
+                    if ( (block= iguana_blockfind(coin,bp->hashes[bundlei])) != 0 && bits256_nonz(block->prev_block) > 0 )
+                    {
+                        iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
+                        printf("issue missing hdrs.%d:%d\n",bp->hdrsi,bundlei);
+                        missing = bp->n;
+                    }
+                }
                 if ( bp->requests[bundlei] < minrequests )
                     minrequests = bp->requests[bundlei];
                 bp->numhashes++;
