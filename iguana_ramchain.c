@@ -450,6 +450,33 @@ int64_t iguana_ramchain_init(struct iguana_ramchain *ramchain,struct iguana_mems
     return(offset);
 }
 
+int64_t iguana_hashmemsize(uint32_t numtxids,uint32_t numunspents,uint32_t numspends,uint32_t numpkinds,uint32_t numexternaltxids)
+{
+    return((numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra)));
+}
+
+int64_t iguana_memsize(int32_t expanded,uint32_t numtxids,uint32_t numunspents,uint32_t numspends,uint32_t numpkinds,uint32_t numexternaltxids)
+{
+    int64_t offset = sizeof(struct iguana_ramchaindata);
+    offset += (sizeof(struct iguana_txid) * numtxids);
+    if ( expanded != 0 )
+    {
+        offset += (sizeof(struct iguana_unspent) * numunspents);
+        offset += (sizeof(struct iguana_spend) * numspends);
+        offset += (sizeof(struct iguana_pkhash) * numpkinds);
+        offset += (sizeof(struct iguana_Uextra) * numunspents);
+        offset += (sizeof(struct iguana_pkextra) * numpkinds);
+        offset += (sizeof(struct iguana_account) * numpkinds);
+        offset += (sizeof(bits256) * numexternaltxids);
+    }
+    else
+    {
+        offset += (sizeof(struct iguana_unspent20) * numunspents);
+        offset += (sizeof(struct iguana_spend256) * numspends);
+    }
+    return(offset);
+}
+
 int64_t iguana_ramchain_size(struct iguana_ramchain *ramchain)
 {
     struct iguana_ramchaindata *rdata; int64_t offset = sizeof(struct iguana_ramchaindata);
@@ -1154,8 +1181,8 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     static int depth;
     RAMCHAIN_DESTDECLARE; void **ptrs,*ptr; long *filesizes,filesize; uint32_t *ipbits; char fname[1024];
     long allocsize; struct iguana_ramchain *R,*mapchain,*dest,checkR; uint32_t now = (uint32_t)time(NULL);
-    int32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids; long x;
-    struct iguana_memspace HASHMEM; int32_t err,j,num,hashsize,hdrsi,bundlei,firsti= 1,retval = -1;
+    int32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids; int64_t hashsize,x;
+    struct iguana_memspace HASHMEM; int32_t err,j,num,hdrsi,bundlei,firsti= 1,retval = -1;
     R = mycalloc('s',bp->n,sizeof(*R));
     ptrs = mycalloc('w',bp->n,sizeof(*ptrs));
     ipbits = mycalloc('w',bp->n,sizeof(*ipbits));
@@ -1223,7 +1250,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (numpkinds * (sizeof(struct iguana_pkhash) + sizeof(struct iguana_pkextra) + sizeof(struct iguana_account))) +
                 (numexternaltxids * sizeof(bits256));
     memset(&HASHMEM,0,sizeof(HASHMEM));
-    hashsize = (numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
+    hashsize = iguana_hashmemsize(numtxids,numunspents,numspends,numpkinds,numexternaltxids);
     while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
     {
         char str[65],str2[65]; fprintf(stderr,"ht.%d wait for allocated %s < MAXMEM %s | elapsed %.2f minutes\n",bp->bundleheight,mbstr(str,myallocated(0,-1)),mbstr(str2,coin->MAXMEM),(double)(time(NULL)-coin->starttime)/60.);
