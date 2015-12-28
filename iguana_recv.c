@@ -146,7 +146,7 @@ void iguana_blocklink(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
         prev->hh.next = block;
     else if ( prev->hh.next == block && block->hh.prev == prev )
     {
-        if ( bundlei < coin->chain->bundlesize )
+        /*if ( bundlei < coin->chain->bundlesize )
         {
             if ( bp != 0 && iguana_bundlehash2add(coin,0,bp,bundlei,block->hash2) < 0 )
             {
@@ -162,7 +162,7 @@ void iguana_blocklink(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
             iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,block->hash2);
             //for (j=2; j<bp->n; j++)
             //    iguana_blockQ(coin,bp,j,bp->hashes[j],0);
-        }
+        }*/
     }
     else if ( prev->mainchain == 0 )
         block->hh.prev = prev->hh.next = 0;
@@ -684,7 +684,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 threshold = (10 + coin->longestchain - coin->blocksrecv);
                 if ( threshold < 1 )
                     threshold = 1.;
-                threshold = coin->avetime * sqrt(threshold) * .000777;
+                threshold = 1000;//coin->avetime * sqrt(threshold) * .000777;
                 if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
