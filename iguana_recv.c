@@ -628,9 +628,6 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
                     flag = 0;
-                    //if ( (rand() % 10000) == 0 )
-                    //    flag = 1;
-                    //else
                     if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+13) )
                         flag = 1;
                     if ( flag != 0 )
@@ -639,7 +636,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                         if ( (datalen= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
                         {
                             iguana_send(coin,addr,serialized,datalen);
-                            coin->numsent++;
+                            coin->numreqsent++;
                             addr->pendblocks++;
                             addr->pendtime = (uint32_t)time(NULL);
                             if ( 1 && (rand() % 1000) == 0 )
@@ -676,7 +673,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 if ( 0 && queue_size(&coin->priorityQ) > 0 )
                     printf("%s %s BLOCK.%d:%d bit.%d Q.(%d %d)\n",addr->ipaddr,hexstr,req->bp!=0?req->bp->hdrsi:-1,req->bundlei,req->bp!=0?GETBIT(req->bp->recv,req->bundlei):-1,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
                 iguana_send(coin,addr,serialized,datalen);
-                coin->numsent++;
+                coin->numreqsent++;
                 addr->pendblocks++;
                 addr->pendtime = (uint32_t)time(NULL);
                 if ( (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n )
@@ -707,7 +704,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
         if ( (next= iguana_blockfind(coin,iguana_blockhash(coin,coin->blocks.hwmchain.height+1))) != 0 )
         {
             _iguana_chainlink(coin,next);
-            if ( (coin->blocks.hwmchain.height+1 < coin->longestchain && coin->backstop != coin->blocks.hwmchain.height+1) || milliseconds() > coin->backstopmillis+coin->blocks.hwmchain.height/10 )
+            if ( (coin->blocks.hwmchain.height+1 < coin->longestchain && coin->backstop != coin->blocks.hwmchain.height+1) || milliseconds() > coin->backstopmillis+1000 )
             {
                 coin->backstop = coin->blocks.hwmchain.height+1;
                 coin->backstophash2 = next->hash2;

@@ -494,7 +494,7 @@ struct iguana_info
     portable_mutex_t peers_mutex,blocks_mutex;
     struct iguana_blocks blocks;
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
-    int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,backstoptime,lastbundletime,numsent;
+    int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,backstoptime,lastbundletime,numreqsent;
     double backstopmillis; bits256 backstophash2;
     int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,blocksrecv; void *launched,*started;
     uint64_t bloomsearches,bloomhits,bloomfalse,collisions; uint8_t blockspace[IGUANA_MAXPACKETSIZE + 8192]; struct iguana_memspace blockMEM;
