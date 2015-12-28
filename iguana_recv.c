@@ -354,6 +354,12 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
             if ( bits256_nonz(hash2) > 0 && (ptr= iguana_blockfind(coin,hash2)) != 0 && ptr->ipbits == 0 )
             {
                 //printf("AUTONEXT.%d\n",block->height+1);
+                if ( prev->height == coin->blocks.hwmchain.height )
+                {
+                    coin->backstop = coin->blocks.hwmchain.height+1;
+                    coin->backstophash2 = hash2;
+                    coin->backstopmillis = milliseconds();
+                }
                 iguana_blockQ(coin,0,-1,hash2,0);
             }
         }
@@ -390,7 +396,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 //bp->numrecv++;
             }
         }
-        if ( bp->bundleheight+bundlei == coin->blocks.hwmchain.height+1 )
+        if ( 0 && bp->bundleheight+bundlei == coin->blocks.hwmchain.height+1 )
         {
             _iguana_chainlink(coin,block);
             //if ( (rand() % 10) == 0 )
