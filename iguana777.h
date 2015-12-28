@@ -325,6 +325,7 @@ struct iguana_block
     uint32_t bundlei:11,hdrsi:21,recvlen:24,havebundle:1,tbd:7;
     uint16_t numvouts,numvins,pad,txn_count:14,mainchain:1,valid:1;
     UT_hash_handle hh;
+    void *rawdata;
 } __attribute__((packed));
 
 struct iguana_counts

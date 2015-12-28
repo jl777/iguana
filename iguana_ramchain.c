@@ -1000,7 +1000,9 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
     RAMCHAIN_DECLARE; long fsize; void *ptr; struct iguana_ramchain R,*mapchain,*ramchain = &addr->ramchain;
     struct iguana_msgtx *tx; int32_t i,j,firsti=1,err,flag,bundlei = -2; struct iguana_bundle *bp = 0;
     if ( iguana_bundlefind(coin,&bp,&bundlei,origtxdata->block.hash2) == 0 )
+    {
         return(-1);
+    }
     if ( bp->fpos[bundlei] >= 0 )
         return(bp->fpos[bundlei]);
     SETBIT(bp->recv,bundlei);
