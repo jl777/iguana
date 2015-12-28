@@ -318,8 +318,8 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
             bp = iguana_bundleset(coin,&block,&bundlei,&blocks[i]);
             if ( bundlei == 1 )
                 iguana_blockQ(coin,0,-1,blocks[i].hash2,1);
-            //else if ( bp != 0 && bp->hdrsi < IGUANA_MAXACTIVEBUNDLES )
-            //    iguana_blockQ(coin,0,-1,blocks[i].hash2,0);
+            else if ( bp != 0 && bp->hdrsi < IGUANA_MAXACTIVEBUNDLES )
+                iguana_blockQ(coin,0,-1,blocks[i].hash2,0);
 
             //fprintf(stderr,"i.%d of %d iguana_chainextend\n",i,n);
             //iguana_chainextend(coin,&blocks[i]);
