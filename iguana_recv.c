@@ -396,7 +396,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 if ( bits256_nonz(hash2) > 0 )
                 {
                     printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
-                    iguana_blockQ(coin,0,-1,hash2,1);
+                    iguana_blockQ(coin,0,-1,hash2,0);
                 }
             }
         }
@@ -708,7 +708,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 coin->backstop = coin->blocks.hwmchain.height+1;
                 coin->backstophash2 = next->hash2;
                 coin->backstopmillis = milliseconds();
-                iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+                iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,0);
                 //char str[65]; printf("BACKSTOP.%d %s\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2));
             }
         }
@@ -747,7 +747,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstophash2 = next->hash2;
                     coin->backstopmillis = milliseconds();
-                    iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+                    iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,0);
                     // clear recvlens
                     //if ( (rand() % 100) == 0 )
                     {
