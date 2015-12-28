@@ -258,7 +258,7 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bund
         {
             if ( bp->bundleheight >= 0 && bp->bundleheight != (bundleheight - *bundleip) )
                 printf("bundlecreate warning: bp->bundleheight %d != %d (bundleheight %d - %d bundlei)\n",bp->bundleheight,(bundleheight - *bundleip),bundleheight,*bundleip);
-            if ( bp->numhashes < bp->n && bp->emitfinish == 0 && time(NULL) > bp->hdrtime+10 )
+            if ( bp->numhashes < bp->n )
                 queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);
             return(bp);
         }

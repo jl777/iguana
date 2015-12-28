@@ -285,7 +285,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
             coin->longestchain = bp->bundleheight+bundlei;
         if ( bp->requests[bundlei] > 2 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
-        if ( 0 && bundlei == 1 && bp->numhashes < bp->n )
+        if ( bundlei == 1 && bp->numhashes < bp->n )
         {
             bits256_str(str,block->prev_block);
             queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);
@@ -464,7 +464,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
     char *hashstr=0,hexstr[65]; bits256 hash2; uint32_t now; struct iguana_blockreq *req=0;
-    int32_t limit,refbundlei,height=-1,datalen,flag = 0;
+    struct iguana_bundle *bp,*bestbp = 0; int32_t limit,refbundlei,bundlei,height=-1,datalen,flag = 0;
     now = (uint32_t)time(NULL);
     if ( addr->pendhdrs < IGUANA_MAXPENDHDRS ) //iguana_needhdrs(coin) != 0 &&
     {
@@ -474,9 +474,10 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
             if ( (datalen= iguana_gethdrs(coin,serialized,coin->chain->gethdrsmsg,hashstr)) > 0 )
             {
                 decode_hex(hash2.bytes,sizeof(hash2),hashstr);
-                if ( bits256_nonz(hash2) > 0 )
+                bp = 0, bundlei = -2, iguana_bundlefind(coin,&bp,&bundlei,hash2);
+                if ( bp != 0 && bp->emitfinish == 0 && bits256_nonz(hash2) > 0 )
                 {
-                    //printf("%s request hdr.(%s)\n",addr!=0?addr->ipaddr:"local",hashstr);
+                    printf("%s request hdr.(%s)\n",addr!=0?addr->ipaddr:"local",hashstr);
                     iguana_send(coin,addr,serialized,datalen);
                     addr->pendhdrs++;
                     flag++;
@@ -494,7 +495,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = 1;
     if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
-        struct iguana_bundle *bp,*bestbp = 0; int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
+        int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;

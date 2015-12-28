@@ -980,8 +980,11 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
                 usleep(50000);//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
-        if ( addr->rank > coin->MAXPEERS && (rand() % 100) == 0 )
+        if ( coin->isRT != 0 && addr->rank > coin->MAXPEERS && (rand() % 100) == 0 )
+        {
+            printf("isRT and low rank.%d\n",addr->rank);
             addr->dead = 1;
+        }
     }
     //if ( addr->fp != 0 )
     //    fclose(addr->fp);
