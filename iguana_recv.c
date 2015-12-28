@@ -377,17 +377,17 @@ int32_t iguana_processbundlesQ(struct iguana_info *coin,int32_t *newhwmp) // sin
     return(flag);
 }
 
-int32_t iguana_needhdrs(struct iguana_info *coin)
+/*int32_t iguana_needhdrs(struct iguana_info *coin)
 {
     if ( coin->longestchain == 0 || coin->blocks.hashblocks < coin->longestchain-coin->chain->bundlesize )
         return(1);
     else return(0);
-}
+}*/
 
 int32_t iguana_reqhdrs(struct iguana_info *coin)
 {
     int32_t i,n = 0; struct iguana_bundle *bp; char hashstr[65];
-    if ( iguana_needhdrs(coin) > 0 && queue_size(&coin->hdrsQ) == 0 )
+    if ( queue_size(&coin->hdrsQ) == 0 ) //iguana_needhdrs(coin) > 0 &&
     {
         if ( coin->zcount++ > 1 )
         {
@@ -395,11 +395,11 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+30 )
+                    if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+60 )
                         continue;
                     if ( bp->emitfinish == 0 && bp->bundleheight <= coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )//&& coin->numpendings < coin->MAXBUNDLES ) &&
                     {
-                        printf("LAG.%ld hdrsi.%d numhashes.%d:%d needhdrs.%d qsize.%d zcount.%d\n",time(NULL)-bp->hdrtime,i,bp->numhashes,bp->n,iguana_needhdrs(coin),queue_size(&coin->hdrsQ),coin->zcount);
+                        printf("LAG.%ld hdrsi.%d numhashes.%d:%d qsize.%d zcount.%d\n",time(NULL)-bp->hdrtime,i,bp->numhashes,bp->n,queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )
                             coin->numpendings++;
                         char str[65];
@@ -463,7 +463,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
     char *hashstr=0,hexstr[65]; bits256 hash2; uint32_t now; struct iguana_blockreq *req=0;
     int32_t limit,refbundlei,height=-1,datalen,flag = 0;
     now = (uint32_t)time(NULL);
-    if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
+    if ( addr->pendhdrs < IGUANA_MAXPENDHDRS ) //iguana_needhdrs(coin) != 0 &&
     {
         //printf("%s check hdrsQ\n",addr->ipaddr);
         if ( (hashstr= queue_dequeue(&coin->hdrsQ,1)) != 0 )
