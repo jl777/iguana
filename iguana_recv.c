@@ -316,6 +316,8 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
         {
             //fprintf(stderr,"i.%d of %d bundleset\n",i,n);
             bp = iguana_bundleset(coin,&block,&bundlei,&blocks[i]);
+            if ( block != 0 && memcmp(block->prev_block.bytes,coin->blocks.hwmchain.hash2.bytes,sizeof(bits256)) == 0 )
+                _iguana_chainlink(coin,block);
             if ( bundlei == 1 )
                 iguana_blockQ(coin,0,-1,blocks[i].hash2,1);
             else if ( bp != 0 && bp->hdrsi < IGUANA_MAXACTIVEBUNDLES )
