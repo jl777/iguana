@@ -285,7 +285,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
             coin->longestchain = bp->bundleheight+bundlei;
         if ( bp->requests[bundlei] > 2 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
-        if ( bundlei == 1 && bp->numhashes < bp->n )
+        if ( 0 && bundlei == 1 && bp->numhashes < bp->n )
         {
             bits256_str(str,block->prev_block);
             queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);
@@ -395,12 +395,12 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( bp->bundleheight < coin->longestchain-coin->chain->bundlesize )
-                        gap = 30;
+                    if ( i == coin->bundlescount-1 && coin->longestchain/coin->chain->bundlesize != i )
+                        gap = 1;
                     else gap = 60;
-                    if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+gap )
+                    if ( bp->emitfinish != 0 || bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+gap )
                         continue;
-                    if ( bp->emitfinish == 0 && bp->bundleheight <= coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )//&& coin->numpendings < coin->MAXBUNDLES ) &&
+                    if ( bp->emitfinish == 0 && time(NULL) > bp->issuetime+gap )
                     {
                         printf("LAG.%ld hdrsi.%d numhashes.%d:%d qsize.%d zcount.%d\n",time(NULL)-bp->hdrtime,i,bp->numhashes,bp->n,queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )
