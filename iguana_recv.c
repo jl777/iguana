@@ -332,25 +332,25 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
     if ( block != origblock )
         iguana_blockcopy(coin,block,origblock);
-    if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
+    if ( memcmp(block->prev_block.bytes,coin->blocks.hwmchain.hash2.bytes,sizeof(bits256)) == 0 )
     {
-        if ( 0 && prev->mainchain != 0 )
-            printf("%s prev height.%d mainchain.%d\n",bits256_str(str,block->prev_block),prev->height,prev->mainchain);
+        _iguana_chainlink(coin,block);
+        iguana_bundleset(coin,&ptr,&tmp,block);
+        printf("HWMCHAIN %s height.%d\n",bits256_str(str,block->hash2),coin->blocks.hwmchain.height+1);
+    }
+    else if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
+    {
         if ( prev->mainchain != 0 && prev->height >= 0 )
         {
-            block->mainchain = 1, block->height = prev->height+1;
+            block->mainchain = 1;
+            block->height = prev->height+1;
             iguana_bundleset(coin,&ptr,&tmp,block);
-            if ( prev->height == coin->blocks.hwmchain.height )
-            {
-                _iguana_chainlink(coin,block);
-                printf("HWM RECEIVED prev+1 %p %d\n",ptr,block->height+1);
-            }
             hash2 = iguana_blockhash(coin,block->height+1);
             if ( bits256_nonz(hash2) == 0 && (ptr= block->hh.next) != 0 )
                 hash2 = ptr->hash2;
             if ( bits256_nonz(hash2) > 0 && (ptr= iguana_blockfind(coin,hash2)) != 0 && ptr->ipbits == 0 )
             {
-                //printf("AUTONEXT.%d\n",block->height+1);
+                printf("AUTONEXT.%d\n",block->height+1);
                 iguana_blockQ(coin,0,-1,hash2,1);
             }
         }
@@ -707,25 +707,40 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
             }
         }
     }
-    while ( lflag != 0 )
+    if ( (next= iguana_blockfind(coin,iguana_blockhash(coin,coin->blocks.hwmchain.height+1))) != 0 )
+    {
+        _iguana_chainlink(coin,next);
+        if ( coin->blocks.hwmchain.height+1 < coin->longestchain && coin->backstop != coin->blocks.hwmchain.height+1 )
+        {
+            coin->backstop = coin->blocks.hwmchain.height+1;
+            coin->backstophash2 = next->hash2;
+            coin->backstopmillis = milliseconds();
+            iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+            char str[65]; printf("BACKSTOP.%d %s\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2));
+            coin->numsent++;
+        }
+    }
+
+    while ( 0)//lflag != 0 )
     {
         lflag = 0;
         h = coin->blocks.hwmchain.height / coin->chain->bundlesize;
-        if ( (next= iguana_blockfind(coin,iguana_blockhash(coin,coin->blocks.hwmchain.height+1))) == 0 )
-        {
+        if ( (next= iguana_blockfind(coin,iguana_blockhash(coin,coin->blocks.hwmchain.height+1))) != 0 )
+        /*{
             if ( (block= iguana_blockfind(coin,coin->blocks.hwmchain.hash2)) != 0 )
                 next = block->hh.next;//, block->mainchain = 1;
         }
-        if ( next != 0 )
+        if ( next != 0 )*/
         {
+            if ( _iguana_chainlink(coin,next) == 0 )
             //printf("have next\n");
-            if ( memcmp(next->prev_block.bytes,coin->blocks.hwmchain.hash2.bytes,sizeof(bits256)) == 0 )
+            /*if ( 0 && memcmp(next->prev_block.bytes,coin->blocks.hwmchain.hash2.bytes,sizeof(bits256)) == 0 )
             {
                 if ( _iguana_chainlink(coin,next) != 0 )
                     lflag++;
                 else printf("chainlink error for %d\n",coin->blocks.hwmchain.height+1);//, getchar();
             }
-            else if ( 1 )
+            else if ( 0 )*/
             {
                 double threshold,lag = milliseconds() - coin->backstopmillis;
                 threshold = (10 + coin->longestchain - coin->blocksrecv);
@@ -740,7 +755,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
                     coin->numsent++;
                     // clear recvlens
-                    if ( (rand() % 100) == 0 )
+                    //if ( (rand() % 100) == 0 )
                     {
                         char str[65]; printf("BACKSTOP.%d %s avetime %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
                     }
