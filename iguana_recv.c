@@ -168,24 +168,21 @@ void iguana_blocklink(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
         block->hh.prev = prev->hh.next = 0;
 }
 
-void iguana_recvissue(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_block *origblock)
+void iguana_recvissue(struct iguana_info *coin,struct iguana_block *origblock)
 {
-    int32_t height,i; struct iguana_block *prev,*block; bits256 prevhash2;
+    int32_t height,bundlei,i; struct iguana_block *prev,*block; bits256 prevhash2; struct iguana_bundle *bp;
     block = iguana_blockhashset(coin,-1,origblock->prev_block,1);
     if ( block != origblock )
         iguana_blockcopy(coin,block,origblock);
-    if ( bp == 0 || bundlei < 0 )
-        bp = 0, bundlei = -2, iguana_bundlefind(coin,&bp,&bundlei,block->hash2);
-    if ( bp == 0 )
-        return;
     for (i=0; i<coin->chain->bundlesize; i++)
     {
         if ( block != 0 && bits256_nonz(block->prev_block) > 0 )
         {
             prev = iguana_blockhashset(coin,-1,block->prev_block,1);
+            bp = 0, bundlei = -2, iguana_bundlefind(coin,&bp,&bundlei,block->hash2);
             if ( prev != 0 && prev->ipbits == 0 && bp != 0 && bp->bundleheight >= 0 )
             {
-                prevhash2 = iguana_blockhash(coin,bp->bundleheight + bundlei -1);
+                prevhash2 = iguana_blockhash(coin,bp->bundleheight + bundlei - 1);
                 if ( bits256_nonz(prevhash2) == 0 )
                 {
                     height = bp->bundleheight + bundlei - 1;
@@ -231,7 +228,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
         }
         prev = block;
     }
-    iguana_recvissue(coin,0,-1,iguana_blockfind(coin,blockhashes[num-1]));
+    iguana_recvissue(coin,iguana_blockfind(coin,blockhashes[num-1]));
     return(req);
 }
 
@@ -325,7 +322,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
     if ( block != origblock )
         iguana_blockcopy(coin,block,origblock);
-    iguana_recvissue(coin,bp,bundlei,block);
+    iguana_recvissue(coin,block);
     if ( bp != 0 && bundlei >= 0 )
     {
         if ( bp->bundleheight+bundlei > coin->longestchain )
