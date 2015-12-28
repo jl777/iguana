@@ -283,7 +283,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     {
         if ( bp->bundleheight+bundlei > coin->longestchain )
             coin->longestchain = bp->bundleheight+bundlei;
-        if ( bp->requests[bundlei] > 2 )
+        if ( bp->requests[bundlei] > 99 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
         if ( bundlei == 1 && bp->numhashes < bp->n )
         {
@@ -313,7 +313,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         {
             if ( (rand() % 10) == 0 )
             {
-                printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
+                //printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
                 hash2 = iguana_blockhash(coin,coin->blocks.hwmchain.height+2);
                 if ( bits256_nonz(hash2) > 0 )
                     iguana_blockQ(coin,0,-1,hash2,1);
@@ -485,11 +485,11 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                         flag++;
                     }
                 }
-                free_queueitem(hashstr);
-                return(flag);
             } else printf("datalen.%d from gethdrs\n",datalen);
             free_queueitem(hashstr);
             hashstr = 0;
+            if ( flag != 0 )
+                return(flag);
         }
     }
     if ( (limit= addr->recvblocks) > coin->MAXPENDING )
@@ -609,7 +609,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
-    int32_t newhwm = 0,h,lflag,flag = 0; struct iguana_block *next,*block;
+    int32_t newhwm = 0,h,lflag,i,flag = 0; bits256 hash2; struct iguana_block *next,*block;
     //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
@@ -652,6 +652,22 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 }
                 else if ( 0 && bits256_nonz(next->prev_block) > 0 )
                     printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
+            }
+        }
+        else
+        {
+            for (i=2; i<coin->chain->bundlesize; i++)
+            {
+                hash2 = iguana_blockhash(coin,coin->blocks.hwmchain.height+i);
+                if ( bits256_nonz(hash2) > 0 )
+                {
+                    if ( (block= iguana_blockfind(coin,hash2)) != 0 && bits256_nonz(block->prev_block) > 0 )
+                    {
+                        printf("REVBACKSTOP.%d\n",coin->blocks.hwmchain.height+i);
+                        iguana_blockQ(coin,0,-1,block->prev_block,1);
+                        break;
+                    }
+                }
             }
         }
         if ( h != coin->blocks.hwmchain.height / coin->chain->bundlesize )

@@ -452,7 +452,7 @@ int64_t iguana_ramchain_init(struct iguana_ramchain *ramchain,struct iguana_mems
 
 int64_t iguana_hashmemsize(uint32_t numtxids,uint32_t numunspents,uint32_t numspends,uint32_t numpkinds,uint32_t numexternaltxids)
 {
-    return((numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra)));
+    return(65536 + (numtxids + numpkinds) * (sizeof(UT_hash_handle)+32) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra)));
 }
 
 int64_t iguana_memsize(int32_t expanded,uint32_t numtxids,uint32_t numunspents,uint32_t numspends,uint32_t numpkinds,uint32_t numexternaltxids)
