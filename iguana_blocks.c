@@ -306,8 +306,8 @@ struct iguana_block *_iguana_chainlink(struct iguana_info *coin,struct iguana_bl
             block->hh.prev = prev;
             if ( prev != 0 )
             {
-                if ( prev->hh.next != block )
-                    iguana_blockunmain(coin,prev->hh.next);
+                //if ( prev->hh.next != block )
+                //    iguana_blockunmain(coin,prev->hh.next);
                 prev->hh.next = block;
             }
             if ( coin->isRT != 0 || block->height == hwmchain->height )
