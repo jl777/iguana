@@ -318,16 +318,28 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
 struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,int32_t datalen,int32_t *newhwmp)
 {
     struct iguana_bundle *bp=0; char str[65]; int32_t bundlei = -2;
-    bits256 hash2; struct iguana_block *block; double duration;
+    bits256 hash2; struct iguana_block *block,*ptr; double duration;
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
     if ( block != origblock )
         iguana_blockcopy(coin,block,origblock);
+    if ( memcmp(coin->backstophash2.bytes,block->hash2.bytes,sizeof(bits256)) == 0 )
+    {
+        ptr = _iguana_chainlink(coin,block);
+        printf("RECEIVED BACKSTOP %p %d\n",ptr,coin->blocks.hwmchain.height);
+        if ( ptr != 0 && (ptr= ptr->hh.next) != 0 && bits256_nonz(ptr->hash2) > 0 )
+        {
+            coin->backstop = coin->blocks.hwmchain.height+1;
+            coin->backstophash2 = ptr->hash2;
+            coin->backstopmillis = milliseconds();
+            iguana_blockQ(coin,0,-1,ptr->hash2,1);
+        }
+    }
     iguana_recvissue(coin,block);
     if ( bp != 0 && bundlei >= 0 )
     {
         if ( bp->bundleheight+bundlei > coin->longestchain )
             coin->longestchain = bp->bundleheight+bundlei;
-        if ( bp->requests[bundlei] > 99 )
+        if ( bp->bundleheight+bundlei == coin->blocks.hwmchain.height+1 && bp->requests[bundlei] > 99 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
         if ( 0 && bundlei == 1 && bp->numhashes < bp->n )
         {
@@ -688,6 +700,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
+                    coin->backstophash2 = next->hash2;
                     coin->backstopmillis = milliseconds();
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
                     coin->numsent++;
