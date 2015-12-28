@@ -390,7 +390,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
     int32_t i,gap,n = 0; struct iguana_bundle *bp; char hashstr[65];
     if ( queue_size(&coin->hdrsQ) == 0 ) //iguana_needhdrs(coin) > 0 &&
     {
-        if ( coin->zcount++ > 1000 )
+        if ( coin->zcount++ > 10 )
         {
             for (i=0; i<coin->bundlescount; i++)
             {
@@ -398,7 +398,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                 {
                     if ( i == coin->bundlescount-1 && coin->longestchain/coin->chain->bundlesize != i )
                         gap = 30;
-                    else gap = 120;
+                    else gap = 60;
                     if ( bp->emitfinish != 0 || bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+gap )
                         continue;
                     if ( bp->emitfinish == 0 && time(NULL) > bp->issuetime+gap )
