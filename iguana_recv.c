@@ -338,7 +338,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         iguana_bundleset(coin,&ptr,&tmp,block);
         //printf("HWMCHAIN %s height.%d\n",bits256_str(str,block->hash2),coin->blocks.hwmchain.height+1);
     }
-    else if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
+    else if ( strcmp(coin->symbol,"BTC") != 0 && (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
     {
         if ( prev->mainchain != 0 && prev->height >= 0 )
         {
@@ -351,11 +351,12 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
             if ( bits256_nonz(hash2) > 0 && (ptr= iguana_blockfind(coin,hash2)) != 0 && ptr->ipbits == 0 )
             {
                 printf("AUTONEXT.%d\n",block->height+1);
-                iguana_blockQ(coin,0,-1,hash2,1);
+                iguana_blockQ(coin,0,-1,hash2,0);
             }
         }
     }
-    iguana_recvissue(coin,block);
+    if ( strcmp(coin->symbol,"BTC") != 0 )
+        iguana_recvissue(coin,block);
     if ( bp != 0 && bundlei >= 0 )
     {
         if ( bp->bundleheight+bundlei > coin->longestchain )
