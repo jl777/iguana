@@ -300,7 +300,7 @@ void iguana_coinloop(void *arg)
                 }
             }// bp block needs mutex
         }
-        if ( flag == 0 )
+        //if ( flag == 0 )
         {
             //printf("IDLE\n");
             usleep(10000);
@@ -333,7 +333,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
-        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*128;
+        coin->MAXPENDING = _IGUANA_MAXPENDING;//(strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*128;
     if ( (coin->MAXBUNDLES= maxbundles) <= 0 )
         coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*64;
     coin->myservices = services;
