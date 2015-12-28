@@ -657,7 +657,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
             }
         }
     }
-    if ( req == 0 )
+    if ( addr->rank != 1 && req == 0 )
         req = queue_dequeue(&coin->blocksQ,0);
     if ( req != 0 )
     {
