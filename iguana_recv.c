@@ -444,8 +444,8 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
                     if ( i == coin->bundlescount-1 && coin->longestchain/coin->chain->bundlesize != i )
-                        gap = 30;
-                    else gap = 60;
+                        gap = 6;
+                    else gap = 600;
                     if ( bp->emitfinish != 0 || bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+gap )
                         continue;
                     if ( bp->emitfinish == 0 && time(NULL) > bp->issuetime+gap )
