@@ -618,7 +618,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
             for (k=0; k<coin->bundlescount; k++)
             {
                 i = (bestbp->hdrsi + k) % coin->bundlescount;
-                if ( (bp= coin->bundles[i]) == 0 || bp->emitfinish != 0 )
+                if ( (bp= coin->bundles[i]) == 0 || bp->emitfinish > coin->starttime )
                     continue;
                 //printf("%.15f ref.%d addrind.%d bestbp.%d\n",bestmetric,refbundlei,addr->addrind,bp->hdrsi);
                 for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
@@ -631,7 +631,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     //if ( (rand() % 10000) == 0 )
                     //    flag = 1;
                     //else
-                    if ( bp->requests[j] <= bp->minrequests && bp->ipbits[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+13) )
+                    if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+13) )
                         flag = 1;
                     if ( flag != 0 )
                     {
@@ -642,7 +642,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                             coin->numsent++;
                             addr->pendblocks++;
                             addr->pendtime = (uint32_t)time(NULL);
-                            if ( 0 && (rand() % 1000) == 0 )
+                            if ( 1 && (rand() % 1000) == 0 )
                             {
                                 char str[65];
                                 printf(" %s %s issue.%d %d lag.%d\n",addr->ipaddr,bits256_str(str,hash2),bp->hdrsi,j,now-bp->issued[j]);

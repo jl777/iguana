@@ -293,7 +293,7 @@ void iguana_coinloop(void *arg)
                         if ( str[0] != 0 )
                         {
                             printf("%s.%-2d %s time %.2f files.%d Q.%d %d\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.,coin->peers.numfiles,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
-                            //if ( (rand() % 100) == 0 )
+                            if ( (rand() % 30) == 0 )
                                 myallocated(0,0);
                         }
                     }
