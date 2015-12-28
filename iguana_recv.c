@@ -232,7 +232,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 iguana_hash2set(coin,"recvhash",bp,i,blockhashes[i]);
             if ( (i % coin->chain->bundlesize) == 0 || i == 1 )
                 iguana_blockQ(coin,0,-1,blockhashes[i],1);
-            else if ( bp->hdrsi < 100 )
+            else //if ( bp->hdrsi < 100 )
                 iguana_blockQ(coin,0,-1,blockhashes[i],0);
         }
         prev = block;
@@ -318,7 +318,7 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
             bp = iguana_bundleset(coin,&block,&bundlei,&blocks[i]);
             if ( bundlei == 1 )
                 iguana_blockQ(coin,0,-1,blocks[i].hash2,1);
-            else if ( bp != 0 && bp->hdrsi < 100 )
+            else if ( bp != 0 && bp->hdrsi < IGUANA_MAXACTIVEBUNDLES )
                 iguana_blockQ(coin,0,-1,blocks[i].hash2,0);
 
             //fprintf(stderr,"i.%d of %d iguana_chainextend\n",i,n);
