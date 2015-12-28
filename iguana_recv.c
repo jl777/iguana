@@ -679,8 +679,12 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 coin->numsent++;
                 addr->pendblocks++;
                 addr->pendtime = (uint32_t)time(NULL);
-                if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n )
-                    req->bp->issued[req->bundlei] = milliseconds();
+                if ( (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n )
+                {
+                    if ( bp->requests[req->bundlei] < 100 )
+                        bp->requests[req->bundlei]++;
+                    bp->issued[req->bundlei] = (uint32_t)time(NULL);
+                }
                 flag++;
                 myfree(req,sizeof(*req));
                 return(flag);
