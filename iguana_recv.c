@@ -395,9 +395,9 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+10 )
+                    if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+30 )
                         continue;
-                    if ( bp->emitfinish == 0 && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )//&& coin->numpendings < coin->MAXBUNDLES ) &&
+                    if ( bp->emitfinish == 0 && bp->bundleheight <= coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )//&& coin->numpendings < coin->MAXBUNDLES ) &&
                     {
                         printf("LAG.%ld hdrsi.%d numhashes.%d:%d needhdrs.%d qsize.%d zcount.%d\n",time(NULL)-bp->hdrtime,i,bp->numhashes,bp->n,iguana_needhdrs(coin),queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )

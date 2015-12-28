@@ -1226,7 +1226,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     hashsize = (numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
     while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
     {
-        char str[65],str2[65]; fprintf(stderr,"wait for allocated %s < MAXMEM %s\n",mbstr(str,x),mbstr(str2,coin->MAXMEM));
+        char str[65],str2[65]; fprintf(stderr,"ht.%d wait for allocated %s < MAXMEM %s | elapsed %.2f minutes\n",bp->bundleheight,mbstr(str,myallocated(0,-1)),mbstr(str2,coin->MAXMEM),(double)(time(NULL)-coin->starttime)/60.);
         sleep(3);
     }
     iguana_meminit(&HASHMEM,"ramhashmem",0,hashsize + 4096,0);
