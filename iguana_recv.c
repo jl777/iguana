@@ -322,11 +322,11 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
     if ( block != origblock )
         iguana_blockcopy(coin,block,origblock);
-    if ( memcmp(coin->backstophash2.bytes,block->hash2.bytes,sizeof(bits256)) == 0 )
+    if ( memcmp(coin->blocks.hwmchain.hash2.bytes,block->prev_block.bytes,sizeof(bits256)) == 0 )
     {
         ptr = _iguana_chainlink(coin,block);
-        printf("RECEIVED BACKSTOP %p %d\n",ptr,coin->blocks.hwmchain.height);
-        if ( ptr != 0 && (ptr= ptr->hh.next) != 0 && bits256_nonz(ptr->hash2) > 0 )
+        printf("RECEIVED HWMCHAIN+1 %p %d\n",ptr,coin->blocks.hwmchain.height+1);
+        if ( ptr != 0 && ptr->mainchain != 0 && ptr->height >= 0 && (ptr= ptr->hh.next) != 0 && bits256_nonz(ptr->hash2) > 0 )
         {
             coin->backstop = coin->blocks.hwmchain.height+1;
             coin->backstophash2 = ptr->hash2;
@@ -690,7 +690,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     lflag++;
                 else printf("chainlink error for %d\n",coin->blocks.hwmchain.height+1);//, getchar();
             }
-            else if ( 1 )
+            else if ( 0 )
             {
                 double threshold,lag = milliseconds() - coin->backstopmillis;
                 threshold = (10 + coin->longestchain - coin->blocksrecv);
