@@ -350,7 +350,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 hash2 = ptr->hash2;
             if ( bits256_nonz(hash2) > 0 && (ptr= iguana_blockfind(coin,hash2)) != 0 && ptr->ipbits == 0 )
             {
-                printf("AUTONEXT.%d\n",block->height+1);
+                //printf("AUTONEXT.%d\n",block->height+1);
                 iguana_blockQ(coin,0,-1,hash2,0);
             }
         }
@@ -697,35 +697,26 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
     lflag = 1;
-    if ( 0 && queue_size(&coin->blocksQ) == 0 )
+    h = coin->blocks.hwmchain.height;
+    while ( 1 )
     {
-        HASH_ITER(hh,coin->blocks.hash,block,tmp)
+        if ( (next= iguana_blockfind(coin,iguana_blockhash(coin,coin->blocks.hwmchain.height+1))) != 0 )
         {
-            if ( bits256_nonz(block->prev_block) > 0 && (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
+            _iguana_chainlink(coin,next);
+            if ( (coin->blocks.hwmchain.height+1 < coin->longestchain && coin->backstop != coin->blocks.hwmchain.height+1) || milliseconds() > coin->backstopmillis+333 )
             {
-                if ( prev->mainchain != 0 )
-                {
-                    char str[65]; printf("idle issue %s %d\n",bits256_str(str,block->hash2),prev->height+1);
-                    iguana_blockQ(coin,0,-1,block->hash2,0);
-                }
+                coin->backstop = coin->blocks.hwmchain.height+1;
+                coin->backstophash2 = next->hash2;
+                coin->backstopmillis = milliseconds();
+                iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+                //char str[65]; printf("BACKSTOP.%d %s\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2));
+                coin->numsent++;
             }
         }
+        iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain.hash2));
+        if ( h == coin->blocks.hwmchain.height )
+            break;
     }
-    if ( (next= iguana_blockfind(coin,iguana_blockhash(coin,coin->blocks.hwmchain.height+1))) != 0 )
-    {
-        _iguana_chainlink(coin,next);
-        if ( (coin->blocks.hwmchain.height+1 < coin->longestchain && coin->backstop != coin->blocks.hwmchain.height+1) || milliseconds() > coin->backstopmillis+333 )
-        {
-            coin->backstop = coin->blocks.hwmchain.height+1;
-            coin->backstophash2 = next->hash2;
-            coin->backstopmillis = milliseconds();
-            iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
-            //char str[65]; printf("BACKSTOP.%d %s\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2));
-            coin->numsent++;
-        }
-    }
-    iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain.hash2));
-
     while ( 0)//lflag != 0 )
     {
         lflag = 0;
