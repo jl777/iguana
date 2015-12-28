@@ -232,8 +232,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 iguana_hash2set(coin,"recvhash",bp,i,blockhashes[i]);
             if ( (i % coin->chain->bundlesize) == 0 || i == 1 )
                 iguana_blockQ(coin,0,-1,blockhashes[i],1);
-            //else if ( coin->blocks.hwmchain.height/coin->chain->bundlesize < (bp->hdrsi + 1) )
-            //    iguana_blockQ(coin,0,-1,blockhashes[i],0);
+            else if ( bp->hdrsi < 100 )
+                iguana_blockQ(coin,0,-1,blockhashes[i],0);
         }
         prev = block;
     }
@@ -304,7 +304,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
 
 struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct iguana_bundlereq *req,struct iguana_block *blocks,int32_t n,int32_t *newhwmp)
 {
-    int32_t i,bundlei; struct iguana_block *block;
+    int32_t i,bundlei; struct iguana_block *block; struct iguana_bundle *bp;
     if ( blocks == 0 )
     {
         printf("iguana_recvblockhdrs null blocks?\n");
@@ -315,9 +315,12 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
         for (i=0; i<n; i++)
         {
             //fprintf(stderr,"i.%d of %d bundleset\n",i,n);
-            iguana_bundleset(coin,&block,&bundlei,&blocks[i]);
+            bp = iguana_bundleset(coin,&block,&bundlei,&blocks[i]);
             if ( bundlei == 1 )
                 iguana_blockQ(coin,0,-1,blocks[i].hash2,1);
+            else if ( bp != 0 && bp->hdrsi < 100 )
+                iguana_blockQ(coin,0,-1,blocks[i].hash2,0);
+
             //fprintf(stderr,"i.%d of %d iguana_chainextend\n",i,n);
             //iguana_chainextend(coin,&blocks[i]);
         }
