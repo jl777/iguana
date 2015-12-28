@@ -772,7 +772,7 @@ void iguana_acceptloop(void *args)
         addr->usock = accept(bindsock,(struct sockaddr *)&cli_addr,&clilen);
         if ( addr->usock < 0 )
         {
-            printf("ERROR on accept usock.%d\n",addr->usock);
+            printf("ERROR on accept usock.%d errno.%d (%s)\n",addr->usock,errno,strerror(errno));
             continue;
         }
         memcpy(&ipbits,&cli_addr.sin_addr.s_addr,sizeof(ipbits));

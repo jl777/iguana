@@ -126,6 +126,8 @@ bits256 *iguana_bundleihash2p(struct iguana_info *coin,int32_t *isinsidep,struct
 int32_t iguana_hash2set(struct iguana_info *coin,char *debugstr,struct iguana_bundle *bp,int32_t bundlei,bits256 newhash2)
 {
     int32_t isinside,checki,retval = -1; bits256 *orighash2p = 0; struct iguana_bundle *checkbp; char str[65]; struct iguana_bloominds bit;
+    if ( bp == 0 )
+        return(-1);
     if ( bp->n <= bundlei )
     {
         printf("hash2set.%s [%d] of %d <- %s\n",debugstr,bundlei,bp->n,bits256_str(str,newhash2));
@@ -334,8 +336,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     int32_t i,dispflag,bundlei,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
     struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0;
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
-    if ( queue_size(&coin->blocksQ) == 0 )
-        iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
+    //if ( queue_size(&coin->blocksQ) == 0 )
+    //    iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
     dispflag = (rand() % 100) == 0;
     numbundles = numdone = numrecv = numhashes = numissued = numemit = numactive = 0;
     for (i=0; i<coin->bundlescount; i++)
@@ -356,7 +358,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         missing = bundlei;
                     continue;
                 }
-                if ( missing >= 0 && missing < bp->n )
+                if ( 0 && missing >= 0 && missing < bp->n )
                 {
                     if ( (block= iguana_blockfind(coin,bp->hashes[bundlei])) != 0 && bits256_nonz(block->prev_block) > 0 )
                     {

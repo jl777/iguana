@@ -267,11 +267,11 @@ struct iguana_block *_iguana_chainlink(struct iguana_info *coin,struct iguana_bl
     if ( (block= iguana_blockfind(coin,newblock->hash2)) != 0 )
     {
         if ( memcmp(coin->chain->genesis_hashdata,block->hash2.bytes,sizeof(bits256)) == 0 )
-            block->PoW = PoW_from_compact(block->bits,coin->chain->unitval), height = 0;
+            block->PoW = PoW_from_compact(block->bits,coin->chain->unitval), block->valid = 1, height = 0;
         else if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
         {
             if ( memcmp(prev->hash2.bytes,coin->blocks.hwmchain.hash2.bytes,sizeof(bits256)) == 0 )
-                prev->mainchain = 1;
+                prev->mainchain = 1, prev->valid = 1, prev->height = 0;
             if ( prev->valid != 0 && prev->mainchain != 0 && prev->height >= 0 )
             {
                 prevPoW = prev->PoW;
