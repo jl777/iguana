@@ -300,7 +300,7 @@ void iguana_coinloop(void *arg)
                 }
             }// bp block needs mutex
         }
-        //if ( flag == 0 )
+        if ( flag == 0 )
         {
             //printf("IDLE\n");
             usleep(10000);

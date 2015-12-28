@@ -979,7 +979,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                     flag += iguana_pollQsPT(coin,addr);
             }
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
-                usleep(40000 + (rand() % 10000));//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
+                usleep(10000 + (rand() % 10000));//+ 100000*(coin->blocks.hwmheight > (long)coin->longestchain-coin->minconfirms*2));
         }
         if ( coin->isRT != 0 && addr->rank > coin->MAXPEERS && (rand() % 100) == 0 )
         {
