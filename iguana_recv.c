@@ -223,6 +223,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 prev->hh.next = block;
             if ( (i % coin->chain->bundlesize) == 0 || i == 1 )
                 iguana_blockQ(coin,0,-1,blockhashes[i],1);
+            //else if ( coin->blocks.hwmchain.height/coin->chain->bundlesize < (bp->hdrsi + 1) )
+            //    iguana_blockQ(coin,0,-1,blockhashes[i],0);
         }
         prev = block;
     }
@@ -323,7 +325,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         iguana_blockcopy(coin,block,origblock);
     if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
     {
-        if ( 0 && prev->mainchain != 0 )
+        if ( 1 && prev->mainchain != 0 )
             printf("%s prev height.%d mainchain.%d\n",bits256_str(str,block->prev_block),prev->height,prev->mainchain);
         if ( prev->mainchain != 0 && prev->height >= 0 )
         {
@@ -677,11 +679,25 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
-    int32_t newhwm = 0,h,lflag,i,flag = 0; bits256 hash2; struct iguana_block *next,*block;
+    int32_t newhwm = 0,h,lflag,i,flag = 0; bits256 hash2; struct iguana_block *next,*block,*prev,*tmp;
     //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
     lflag = 1;
+    if ( queue_size(&coin->blocksQ) == 0 )
+    {
+        HASH_ITER(hh,coin->blocks.hash,block,tmp)
+        {
+            if ( bits256_nonz(block->prev_block) > 0 && (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
+            {
+                if ( prev->mainchain != 0 )
+                {
+                    char str[65]; printf("idle issue %s %d\n",bits256_str(str,block->hash2),prev->height+1);
+                    iguana_blockQ(coin,0,-1,block->hash2,0);
+                }
+            }
+        }
+    }
     while ( lflag != 0 )
     {
         lflag = 0;
