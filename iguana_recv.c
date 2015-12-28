@@ -387,7 +387,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                     duration = bp->avetime/10.;
                 else if ( duration > bp->avetime*10. )
                     duration = bp->avetime * 10.;
-                bp->avetime = duration;
+                dxblend(&bp->avetime,duration,.9);
                 dxblend(&coin->avetime,bp->avetime,.9);
             }
             if ( bundlei >= 0 && bundlei < bp->n )
@@ -721,7 +721,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 coin->backstophash2 = next->hash2;
                 coin->backstopmillis = milliseconds();
                 iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,0);
-                char str[65]; printf("BACKSTOP.%d %s\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2));
+                char str[65]; printf("BACKSTOP.%d %s avetime.%.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
             }
         }
         iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain.hash2));
