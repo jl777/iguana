@@ -219,7 +219,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
     {
         if ( bits256_nonz(blockhashes[i]) > 0 )
         {
-            if ( (block= iguana_blockhashset(coin,-1,blockhashes[i],1)) != 0 && prev != 0 )
+            if ( (block= iguana_blockhashset(coin,-1,blockhashes[i],1)) != 0 && prev != 0 && block->ipbits == 0 )
             {
                 prev->hh.next = block;
                 if ( prev->mainchain != 0 )
@@ -228,6 +228,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                     iguana_blockQ(coin,0,-1,block->hash2,0);
                 }
             }
+            if ( block != 0 && block->ipbits == 0 && i < coin->chain->bundlesize )
+                iguana_hash2set(coin,"recvhash",bp,i,blockhashes[i]);
             if ( (i % coin->chain->bundlesize) == 0 || i == 1 )
                 iguana_blockQ(coin,0,-1,blockhashes[i],1);
             //else if ( coin->blocks.hwmchain.height/coin->chain->bundlesize < (bp->hdrsi + 1) )
