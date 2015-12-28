@@ -1224,7 +1224,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
                 (numexternaltxids * sizeof(bits256));
     memset(&HASHMEM,0,sizeof(HASHMEM));
     hashsize = (numtxids + numpkinds) * (sizeof(UT_hash_handle)+16) + ((sizeof(struct iguana_pkextra)+sizeof(struct iguana_account)) * numpkinds) + (numunspents * sizeof(struct iguana_Uextra));
-    while ( 0 && (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
+    while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
     {
         char str[65],str2[65]; fprintf(stderr,"wait for allocated %s < MAXMEM %s\n",mbstr(str,x),mbstr(str2,coin->MAXMEM));
         sleep(3);
