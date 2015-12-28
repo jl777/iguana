@@ -341,7 +341,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         iguana_bundleset(coin,&ptr,&tmp,block);
         //printf("HWMCHAIN %s height.%d\n",bits256_str(str,block->hash2),coin->blocks.hwmchain.height+1);
     }
-    else if ( strcmp(coin->symbol,"BTC") != 0 && (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
+    else if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 )
     {
         if ( prev->mainchain != 0 && prev->height >= 0 )
         {
