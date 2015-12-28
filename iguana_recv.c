@@ -641,7 +641,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
                     flag = 0;
-                    if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+13) )
+                    if ( (bp->numrecv >= bp->n-5 || bp->requests[j] <= bp->minrequests) && bp->ipbits[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->avetime/1000.) )
                         flag = 1;
                     if ( flag != 0 )
                     {
@@ -725,7 +725,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 coin->backstophash2 = next->hash2;
                 coin->backstopmillis = milliseconds();
                 iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,0);
-                char str[65]; printf("MAINCHAIN.%d %s avetime.%.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
+                //char str[65]; printf("MAINCHAIN.%d %s avetime.%.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
             }
         }
         iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain.hash2));
