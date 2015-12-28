@@ -1243,12 +1243,13 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     dest = &bp->ramchain;
     //printf("E.%d depth.%d start bundle ramchain %d at %u started.%u lag.%d\n",coin->numemitted,depth,bp->bundleheight,now,starttime,now-starttime);
     depth++;
-    allocsize = sizeof(*dest) +
+    allocsize = iguana_memsize(1,numtxids,numunspents,numspends,numpkinds,numexternaltxids);
+    /*sizeof(*dest) +
                 (numtxids * sizeof(struct iguana_txid)) +
                 (numunspents * (sizeof(struct iguana_unspent) + sizeof(struct iguana_Uextra))) +
                 (numspends * sizeof(struct iguana_spend)) +
                 (numpkinds * (sizeof(struct iguana_pkhash) + sizeof(struct iguana_pkextra) + sizeof(struct iguana_account))) +
-                (numexternaltxids * sizeof(bits256));
+                (numexternaltxids * sizeof(bits256));*/
     memset(&HASHMEM,0,sizeof(HASHMEM));
     hashsize = iguana_hashmemsize(numtxids,numunspents,numspends,numpkinds,numexternaltxids);
     while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
