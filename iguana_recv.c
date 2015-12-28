@@ -200,7 +200,7 @@ void iguana_recvissue(struct iguana_info *coin,struct iguana_block *origblock)
 // main context, ie single threaded
 struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct iguana_bundlereq *req,bits256 *blockhashes,int32_t num)
 {
-    int32_t i,bundlei,flag = 0; struct iguana_block *block,*prev = 0; struct iguana_bundle *bp;
+    int32_t i,bundlei; struct iguana_bundle *bp;
     bp = 0, bundlei = -2, iguana_bundlefind(coin,&bp,&bundlei,blockhashes[1]);
     if ( (rand() % 100) == 0 )
     {
@@ -213,24 +213,17 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
         return(req);
     }
     bp->hdrtime = (uint32_t)time(NULL);
-    if ( num > coin->chain->bundlesize+1 )
-        num = coin->chain->bundlesize+1;
+    //if ( num > coin->chain->bundlesize+1 )
+    //    num = coin->chain->bundlesize+1;
     for (i=0; i<num; i++)
     {
-        block = 0;
         if ( bits256_nonz(blockhashes[i]) > 0 )
         {
-            if ( (block= iguana_blockhashset(coin,-1,blockhashes[i],1)) != 0 && block->ipbits == 0 )
-            {
-                if ( prev != 0 && prev->mainchain != 0 )
-                    iguana_blockQ(coin,0,-1,blockhashes[i],0);
-            }
-            if ( i == coin->chain->bundlesize || i == 1 || i == 0 )
+            iguana_blockhashset(coin,-1,blockhashes[i],1);
+            if ( (i % coin->chain->bundlesize) == 0 || i == 1 )
                 iguana_blockQ(coin,0,-1,blockhashes[i],1);
         }
-        prev = block;
     }
-    iguana_recvissue(coin,iguana_blockfind(coin,blockhashes[num-1]));
     return(req);
 }
 
@@ -330,7 +323,15 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         {
             block->mainchain = 1, block->height = prev->height+1;
             iguana_bundleset(coin,&ptr,&tmp,block);
+            if ( prev->height == coin->blocks.hwmchain.height )
+                _iguana_chainlink(coin,block);
             printf("RECEIVED prev+1 %p %d\n",ptr,block->height+1);
+            hash2 = iguana_blockhash(coin,block->height+1);
+            if ( bits256_nonz(hash2) > 0 && (ptr= iguana_blockfind(coin,hash2)) != 0 && ptr->ipbits == 0 )
+            {
+                printf("AUTONEXT.%d\n",block->height+1);
+                iguana_blockQ(coin,0,-1,hash2,1);
+            }
         }
     }
     iguana_recvissue(coin,block);
