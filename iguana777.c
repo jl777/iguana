@@ -216,7 +216,7 @@ void iguana_helper(void *arg)
         flag = 0;
         if ( (ptr= queue_dequeue(&helperQ,0)) != 0 )
         {
-            if ( ptr->coin != 0 && myallocated(0,-1) > coin->MAXMEM )
+            if ( ptr->coin != 0 && myallocated(0,-1) > ptr->coin->MAXMEM )
                 queue_enqueue("reQ",&helperQ,&ptr->DL,0);
             else
             {
