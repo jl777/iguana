@@ -598,7 +598,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
-        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 5 )
+        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 2 )
             refbundlei = (addr->ipbits % coin->bundlescount);
         else
         {
@@ -706,7 +706,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
-    int32_t newhwm = 0,h,lflag,i,flag = 0; bits256 hash2; struct iguana_block *next,*block;
+    int32_t newhwm = 0,h,lflag,i,flag = 0; bits256 hash2; struct iguana_block *next,*block,*prev;
     //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
@@ -725,12 +725,24 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 coin->backstophash2 = next->hash2;
                 coin->backstopmillis = milliseconds();
                 iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,0);
-                char str[65]; printf("BACKSTOP.%d %s avetime.%.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
+                char str[65]; printf("MAINCHAIN.%d %s avetime.%.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
             }
         }
         iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain.hash2));
         if ( h == coin->blocks.hwmchain.height )
             break;
+    }
+    if ( strcmp(coin->symbol,"BTC") != 0 )
+    for (i=coin->blocks.hwmchain.height+1; i<coin->longestchain; i++)
+    {
+        if ( (block= iguana_blockfind(coin,iguana_blockhash(coin,i))) != 0 && block->ipbits == 0 )
+        {
+            if ( (prev= iguana_blockfind(coin,block->prev_block)) != 0 && prev->mainchain != 0 )
+            {
+                printf("adjacent %d\n",i);
+                iguana_blockQ(coin,0,-1,block->hash2,1);
+            }
+        }
     }
     while ( 0)//lflag != 0 )
     {
@@ -767,7 +779,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     // clear recvlens
                     //if ( (rand() % 100) == 0 )
                     {
-                        char str[65]; printf("BACKSTOP.%d %s avetime %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
+                        char str[65]; printf("MAINCHAIN.%d %s avetime %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,bits256_str(str,next->hash2),coin->avetime,lag);
                     }
                 }
                 else if ( 0 && bits256_nonz(next->prev_block) > 0 )
