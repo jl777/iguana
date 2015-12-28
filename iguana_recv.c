@@ -283,7 +283,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     {
         if ( bp->bundleheight+bundlei > coin->longestchain )
             coin->longestchain = bp->bundleheight+bundlei;
-        //if ( 0 && bp->requests[bundlei] > 2 )
+        if ( bp->requests[bundlei] > 2 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
         if ( bundlei == 1 && bp->numhashes < bp->n )
         {

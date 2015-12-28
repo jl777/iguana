@@ -269,6 +269,11 @@ void iguana_coinloop(void *arg)
             if ( (coin= coins[i]) != 0 )
             {
                 now = (uint32_t)time(NULL);
+                if ( now > coin->starttime+600 && coin->blocks.hwmchain.height >= coin->longestchain )
+                {
+                    coin->isRT = 1;
+                    coin->MAXPEERS = 8;
+                }
                 if ( now > coin->lastpossible )
                     coin->lastpossible = iguana_possible_peer(coin,0); // tries to connect to new peers
                 if ( coin->active != 0 )
