@@ -396,8 +396,8 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
                     if ( i == coin->bundlescount-1 && coin->longestchain/coin->chain->bundlesize != i )
-                        gap = 1;
-                    else gap = 60;
+                        gap = 30;
+                    else gap = 120;
                     if ( bp->emitfinish != 0 || bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+gap )
                         continue;
                     if ( bp->emitfinish == 0 && time(NULL) > bp->issuetime+gap )
@@ -475,12 +475,15 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
             {
                 decode_hex(hash2.bytes,sizeof(hash2),hashstr);
                 bp = 0, bundlei = -2, iguana_bundlefind(coin,&bp,&bundlei,hash2);
-                if ( bp != 0 && bp->emitfinish == 0 && bits256_nonz(hash2) > 0 )
+                if ( bits256_nonz(hash2) > 0 )
                 {
-                    printf("%s request hdr.(%s)\n",addr!=0?addr->ipaddr:"local",hashstr);
-                    iguana_send(coin,addr,serialized,datalen);
-                    addr->pendhdrs++;
-                    flag++;
+                    if ( bp == 0 || bp->emitfinish == 0 )
+                    {
+                        printf("%s request hdr.(%s) ht.%d\n",addr!=0?addr->ipaddr:"local",hashstr,bp!=0?bp->bundleheight:-1);
+                        iguana_send(coin,addr,serialized,datalen);
+                        addr->pendhdrs++;
+                        flag++;
+                    }
                 }
                 free_queueitem(hashstr);
                 return(flag);

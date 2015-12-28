@@ -1283,6 +1283,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         //printf("%d ",dest->H.txidind);
     }
     iguana_ramchain_setsize(dest);
+    bp->ramchain = *dest;
     //printf("DEST T.%d U.%d S.%d P.%d X.%d -> size.%ld\n",dest->H.data->numtxids,dest->H.data->numunspents,dest->H.data->numspends,dest->H.data->numpkinds,dest->H.data->numexternaltxids,(long)dest->H.data->allocsize);
     if ( bundlei == bp->n )
     {
