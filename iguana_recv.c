@@ -169,7 +169,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                         {
                             if ( prev->mainchain == 0 )
                                 block->hh.prev = prev->hh.next = 0;
-                            memset(bp->hashes[i].bytes,0,sizeof(bp->hashes[i]));
+                            printf("clear hashes?\n");
+                            //memset(bp->hashes[i].bytes,0,sizeof(bp->hashes[i]));
                         }
                     }
                     else if ( 0 && bp->bundleheight + coin->chain->bundlesize >= coin->bundlescount*coin->chain->bundlesize )

@@ -503,6 +503,7 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
             return;
         }
         printf("invalid header received from (%s)\n",addr->ipaddr);
+        addr->dead = 1;
     }
     printf("%s recv error on hdr errno.%d (%s)\n",addr->ipaddr,-recvlen,strerror(-recvlen));
 #ifndef IGUANA_DEDICATED_THREADS
@@ -756,7 +757,7 @@ void iguana_acceptloop(void *args)
     socklen_t clilen; struct sockaddr_in cli_addr; uint32_t ipbits; uint16_t port; int32_t bindsock;
     struct iguana_peer *addr; struct iguana_info *coin = args;
     port = coin->chain->portp2p;
-    bindsock = iguana_socket(1,"0.0.0.0",port);
+    bindsock = iguana_socket(1,"127.0.0.1",port);
     printf("iguana_bindloop 127.0.0.1:%d bind sock.%d\n",port,bindsock);
     while ( bindsock >= 0 )
     {
