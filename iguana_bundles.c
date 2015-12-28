@@ -205,7 +205,7 @@ int32_t iguana_bundlehash2add(struct iguana_info *coin,struct iguana_block **blo
             }
             else
             {
-                //char str[65]; printf(">>>>>>>>>>>>>> bundlehash2.(%s) ht.(%d %d)\n",bits256_str(str,hash2),bp->bundleheight,bundlei);
+//char str[65]; printf(">>>>>>>>>>>>>> bundlehash2.(%s) ht.(%d %d)\n",bits256_str(str,hash2),bp->bundleheight,bundlei);
                 block->hdrsi = bp->hdrsi;
                 block->bundlei = bundlei;
                 block->havebundle = 1;
@@ -361,7 +361,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     if ( (block= iguana_blockfind(coin,bp->hashes[bundlei])) != 0 && bits256_nonz(block->prev_block) > 0 )
                     {
                         iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
-                        printf("issue missing hdrs.%d:%d\n",bp->hdrsi,bundlei);
+                        printf("issue missing block hdrsi.%d:%d\n",bp->hdrsi,bundlei-1);
                         missing = bp->n;
                     }
                 }
