@@ -703,7 +703,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
         if ( (next= iguana_blockfind(coin,iguana_blockhash(coin,coin->blocks.hwmchain.height+1))) != 0 )
         {
             _iguana_chainlink(coin,next);
-            if ( (coin->blocks.hwmchain.height+1 < coin->longestchain && coin->backstop != coin->blocks.hwmchain.height+1) || milliseconds() > coin->backstopmillis+50 )
+            if ( (coin->blocks.hwmchain.height+1 < coin->longestchain && coin->backstop != coin->blocks.hwmchain.height+1) || milliseconds() > coin->backstopmillis+10*sqrt(coin->blocks.hwmchain.height) )
             {
                 coin->backstop = coin->blocks.hwmchain.height+1;
                 coin->backstophash2 = next->hash2;
