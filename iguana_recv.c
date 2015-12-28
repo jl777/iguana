@@ -388,7 +388,11 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 else if ( duration > bp->avetime*10. )
                     duration = bp->avetime * 10.;
                 dxblend(&bp->avetime,duration,.9);
+                if ( bp->avetime < 100 )
+                    bp->avetime = 100;
                 dxblend(&coin->avetime,bp->avetime,.9);
+                if ( coin->avetime < 100 )
+                    coin->avetime = 100;
             }
             if ( bundlei >= 0 && bundlei < bp->n )
             {
