@@ -148,8 +148,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
         return(req);
     }
     bp->hdrtime = (uint32_t)time(NULL);
-    if ( num > coin->chain->bundlesize+1 )
-        num = coin->chain->bundlesize+1;
+    //if ( num > coin->chain->bundlesize+1 )
+    //    num = coin->chain->bundlesize+1;
     for (i=1; i<num; i++)
     {
         block = 0;
