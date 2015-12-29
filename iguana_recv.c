@@ -457,6 +457,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
     char *hashstr=0,hexstr[65]; bits256 hash2; uint32_t now; struct iguana_blockreq *req=0;
+    struct iguana_bundle *bp,*bestbp = 0;
     int32_t limit,refbundlei,height=-1,datalen,flag = 0;
     now = (uint32_t)time(NULL);
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
@@ -487,7 +488,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = 1;
     if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
-        struct iguana_bundle *bp,*bestbp = 0; int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
+        int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
@@ -585,8 +586,12 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 coin->numreqsent++;
                 addr->pendblocks++;
                 addr->pendtime = (uint32_t)time(NULL);
-                if ( req->bp != 0 && req->bundlei >= 0 && req->bundlei < req->bp->n )
-                    req->bp->issued[req->bundlei] = milliseconds();
+                if ( (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n )
+                {
+                    bp->issued[req->bundlei] = addr->pendtime;
+                    if ( bp->requests[req->bundlei] < 100 )
+                        bp->requests[req->bundlei]++;
+                }
                 flag++;
                 myfree(req,sizeof(*req));
                 return(flag);
