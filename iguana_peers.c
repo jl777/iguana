@@ -312,7 +312,7 @@ int32_t iguana_socket(int32_t bindflag,char *hostname,uint16_t port)
             printf("socket() failed: %s errno.%d", strerror(errno),errno);
         return(-1);
     }
-    if ( bindflag != 0 )
+    if ( 0 && bindflag != 0 )
     {
         timeout.tv_sec = 0;
         timeout.tv_usec = 100000;
@@ -772,7 +772,7 @@ void iguana_acceptloop(void *args)
         addr->usock = accept(bindsock,(struct sockaddr *)&cli_addr,&clilen);
         if ( addr->usock < 0 )
         {
-            printf("ERROR on accept usock.%d errno.%d (%s)\n",addr->usock,errno,strerror(errno));
+            printf("ERROR on accept bindsock.%d errno.%d (%s)\n",bindsock,errno,strerror(errno));
             continue;
         }
         memcpy(&ipbits,&cli_addr.sin_addr.s_addr,sizeof(ipbits));

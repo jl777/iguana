@@ -221,6 +221,11 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 iguana_hash2set(coin,"blockadd",bp,block->bundlei,block->hash2);
                 if ( bundlei > 0 )
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,origblock->prev_block);
+                else if ( bundlei == 0 )
+                {
+                    if ( (bp= coin->bundles[bp->hdrsi-1]) != 0 )
+                        iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,origblock->prev_block);
+                }
             }
         }
         if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,origblock->prev_block)) != 0 )
