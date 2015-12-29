@@ -267,9 +267,9 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
         {
             //fprintf(stderr,"i.%d of %d bundleset\n",i,n);
             if ( (bp= iguana_bundleset(coin,&block,&bundlei,&blocks[i])) != 0 && bp->hdrsi < IGUANA_MAXBUNDLES )
-                iguana_blockQ(coin,bp,bundlei,blocks[i].hash2,0);
-            //fprintf(stderr,"i.%d of %d iguana_chainextend\n",i,n);
-            //iguana_chainextend(coin,&blocks[i]);
+            {
+                //iguana_blockQ(coin,bp,bundlei,blocks[i].hash2,0);
+            }
         }
     }
     return(req);
