@@ -163,7 +163,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                     prev->hh.next = block;
                 else if ( prev->hh.next == block && block->hh.prev == prev )
                 {
-                    if ( block->mainchain == 0 && i < coin->chain->bundlesize )
+                    if ( 0 && i < coin->chain->bundlesize )
                     {
                         if ( iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]) < 0 )
                         {
@@ -186,7 +186,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
             if ( (i % coin->chain->bundlesize) <= 1 )
                 iguana_blockQ(coin,bp,i,blockhashes[i],1);
             else if ( bp != 0 && i < bp->n && bp->requests[i] == 0 )
-                iguana_blockQ(coin,bp,i,blockhashes[i],0);
+                iguana_blockQ(coin,0,-1,blockhashes[i],0);
         }
         prev = block;
     }
@@ -195,7 +195,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 
 struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_block **blockp,int32_t *bundleip,struct iguana_block *origblock)
 {
-    struct iguana_block *block,*prev; struct iguana_bundle *bp = 0; int32_t bundlei = -2;
+    struct iguana_block *block,*prev,*next; struct iguana_bundle *bp = 0; int32_t bundlei = -2;
     if ( origblock == 0 )
         return(0);
     block = iguana_blockhashset(coin,-1,origblock->hash2,1);
@@ -205,10 +205,19 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
         if ( bits256_nonz(origblock->prev_block) > 0 )
         {
             prev = iguana_blockhashset(coin,-1,origblock->prev_block,1);
-            if ( prev != 0 )
+            if ( prev != 0 && prev->mainchain != 0 )
             {
                 prev->hh.next = block, block->hh.prev = prev;
-                //printf("link block\n");
+                if ( memcmp(block->prev_block.bytes,coin->blocks.hwmchain.hash2.bytes,sizeof(bits256)) == 0 )
+                {
+                    _iguana_chainlink(coin,block);
+                    printf("link block\n");
+                    if ( (next= block->hh.next) != 0 && bits256_nonz(next->hash2) > 0 )
+                    {
+                        printf("autoreq %d\n",block->height);
+                        iguana_blockQ(coin,0,-1,next->hash2,1);
+                    }
+                }
             }
         }
         if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,origblock->hash2)) != 0 )
