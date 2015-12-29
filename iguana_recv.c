@@ -394,7 +394,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                 {
                     if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+10 )
                         continue;
-                    if ( bp->emitfinish == 0 && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )//&& coin->numpendings < coin->MAXBUNDLES ) &&
+                    if ( bp->emitfinish == 0 && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )
                     {
                         printf("LAG.%ld hdrsi.%d numhashes.%d:%d needhdrs.%d qsize.%d zcount.%d\n",time(NULL)-bp->hdrtime,i,bp->numhashes,bp->n,iguana_needhdrs(coin),queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )
@@ -513,7 +513,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
-        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 5 )
+        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 7 )
             refbundlei = (addr->ipbits % coin->bundlescount);
         else
         {
