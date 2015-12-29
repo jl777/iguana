@@ -513,11 +513,18 @@ long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits
         printf(" wont save.(%s) bundlei.%d != checki.%d\n",fname,bundlei,checki);
         return(-1);
     }
-    if ( ipbits == 0 || (fp= fopen(fname,"rb+")) == 0 )
+    if ( (fp= fopen(fname,"rb+")) == 0 )
     {
         if ( (fp= fopen(fname,"wb")) != 0 )
             coin->peers.numfiles++;
-    } else fseek(fp,0,SEEK_END);
+    }
+    else if ( ipbits != 0 )
+        fseek(fp,0,SEEK_END);
+    else
+    {
+        fclose(fp);
+        fp = fopen(fname,"wb");
+    }
     if ( fp != 0 )
     {
         tmp = *rdata;
