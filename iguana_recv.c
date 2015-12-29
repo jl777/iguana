@@ -217,7 +217,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 }
                 if ( (next= block->hh.next) != 0 && bits256_nonz(next->hash2) > 0 )
                 {
-                    printf("autoreq %d\n",block->height);
+                    //printf("autoreq %d\n",block->height);
                     iguana_blockQ(coin,0,-1,next->hash2,1);
                 }
             }
@@ -313,6 +313,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
         if ( strcmp("BTC",coin->symbol) != 0 && bundlei == 1 && bp->numhashes < bp->n )
         {
             bits256_str(str,block->prev_block);
+            bp->hdrtime = bp->issuetime = (uint32_t)time(NULL);
             queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);
         }
         if ( datalen > 0 )
@@ -428,7 +429,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                         init_hexbytes_noT(hashstr,bp->hashes[0].bytes,sizeof(bits256));
                         queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(hashstr),1);
                         n++;
-                        bp->issuetime = (uint32_t)time(NULL);
+                        bp->hdrtime = bp->issuetime = (uint32_t)time(NULL);
                     }
                 }
             }
