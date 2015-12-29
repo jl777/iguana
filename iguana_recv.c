@@ -183,10 +183,10 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 else if ( prev->mainchain == 0 )
                     block->hh.prev = prev->hh.next = 0;
             }
-            if ( i == coin->chain->bundlesize || i == 1 || i == 0 )
-                iguana_blockQ(coin,0,-1,blockhashes[i],1);
+            if ( (i % coin->chain->bundlesize) <= 1 )
+                iguana_blockQ(coin,bp,i,blockhashes[i],1);
             else if ( bp != 0 )
-                iguana_blockQ(coin,0,-1,blockhashes[i],0);
+                iguana_blockQ(coin,bp,i,blockhashes[i],0);
         }
         prev = block;
     }
@@ -233,7 +233,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             else if ( bundlei == coin->chain->bundlesize-1 )
             {
                 char str[65]; printf("CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,origblock->hash2));
-                iguana_blockQ(coin,0,-1,origblock->hash2,1);
+                iguana_blockQ(coin,bp,bundlei,origblock->hash2,1);
                 iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,origblock->hash2);
             }
         }
@@ -312,7 +312,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 //printf("AUTOBLOCK.%d\n",coin->blocks.hwmchain.height+2);
                 hash2 = iguana_blockhash(coin,coin->blocks.hwmchain.height+2);
                 if ( bits256_nonz(hash2) > 0 )
-                    iguana_blockQ(coin,0,-1,hash2,1);
+                    iguana_blockQ(coin,bp,bundlei,hash2,1);
             }
         }
     }
@@ -555,10 +555,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
                     flag = 0;
-                    //if ( (rand() % 10000) == 0 )
-                    //    flag = 1;
-                    //else
-                    if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                    if ( bp->requests[j] <= bp->minrequests && bp->ipbits[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
                         flag = 1;
                     if ( flag != 0 )
                     {
