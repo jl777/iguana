@@ -605,7 +605,10 @@ int32_t iguana_ramchain_verify(struct iguana_info *coin,struct iguana_ramchain *
             if ( (ptr= iguana_hashfind(ramchain,'T',t->txid.bytes)) == 0 )
                 return(-2);
             if ( ptr->hh.itemind != ramchain->H.txidind )
+            {
+                printf("error -3: itemind.%d vs txidind.%d | num.%d\n",ptr->hh.itemind,ramchain->H.txidind,ramchain->H.data->numtxids);
                 return(-3);
+            }
             for (k=0; k<t->numvouts; k++,ramchain->H.unspentind++)
             {
                 u = &Ux[ramchain->H.unspentind];
