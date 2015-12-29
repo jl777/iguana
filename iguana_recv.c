@@ -185,8 +185,8 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
             }
             if ( (i % coin->chain->bundlesize) <= 1 )
                 iguana_blockQ(coin,bp,i,blockhashes[i],1);
-            //else if ( bp != 0 && i < bp->n && bp->requests[i] == 0 )
-            //    iguana_blockQ(coin,bp,i,blockhashes[i],0);
+            else if ( bp != 0 && i < bp->n && bp->requests[i] == 0 )
+                iguana_blockQ(coin,bp,i,blockhashes[i],0);
         }
         prev = block;
     }
@@ -299,7 +299,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     {
         if ( 0 && bp->requests[bundlei] > 2 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
-        if ( 0 && bundlei == 1 && bp->numhashes < bp->n )
+        if ( strcmp("BTC",coin->symbol) != 0 && bundlei == 1 && bp->numhashes < bp->n )
         {
             bits256_str(str,block->prev_block);
             queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);

@@ -108,8 +108,8 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
 
 int32_t iguana_savehdrs(struct iguana_info *coin)
 {
-    int32_t height,iter,i,n,retval = 0; char fname[512],tmpfname[512],str[65],oldfname[512];
-    bits256 hash2,sha256all; FILE *fp; struct sha256_vstate shastate;
+    int32_t height,iter,i,n,retval = 0; char fname[512],shastr[65],tmpfname[512],str[65],oldfname[512];
+    bits256 hash2,sha256all,hashes[500]; FILE *fp; struct sha256_vstate shastate;
     n = coin->blocks.hwmchain.height + 1;
     if ( 0 )
     {
@@ -147,6 +147,15 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
             fprintf(fp,"%d\n",n);
             for (height=0; height<=n; height+=coin->chain->bundlesize)
             {
+                for (i=0; i<coin->chain->bundlesize; i++)
+                {
+                    hashes[i] = iguana_blockhash(coin,height+i);
+                    if ( bits256_str(str,hashes[i]) == 0 )
+                        break;
+                }
+                if ( i == coin->chain->bundlesize )
+                    vcalc_sha256(shastr,sha256all.bytes,hashes[0].bytes,sizeof(*hashes) * coin->chain->bundlesize);
+                else shastr[0] = 0;
                 for (iter=0; iter<2; iter++)
                 {
                     hash2 = iguana_blockhash(coin,height+iter);
@@ -154,7 +163,7 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
                     {
                         char str[65];
                         bits256_str(str,hash2);
-                        fprintf(fp,"%d %s\n",height+iter,str);
+                        fprintf(fp,"%d %s %s\n",height+iter,str,shastr);
                         retval = height+iter;
                     }
                     if ( coin->chain->hasheaders != 0 )
