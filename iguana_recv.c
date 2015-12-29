@@ -246,7 +246,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             else
             {
                 iguana_bundlehash2add(coin,0,bp,bundlei,origblock->prev_block);
-                iguana_bundlehash2add(coin,0,bp,bundlei+1,origblock->hash2);
+                //iguana_bundlehash2add(coin,0,bp,bundlei+1,origblock->hash2);
             }
         }
         else
