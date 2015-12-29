@@ -233,9 +233,11 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             else if ( bundlei == coin->chain->bundlesize-1 )
             {
                 char str[65]; printf("CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,origblock->hash2));
-                iguana_blockQ(coin,bp,bundlei,origblock->hash2,1);
+                iguana_blockQ(coin,0,-1,origblock->hash2,1);
                 iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,origblock->hash2);
             }
+            else if ( bundlei == 1 )
+                iguana_hash2set(coin,"blockadd",bp,0,origblock->prev_block);
         }
         else
         {
@@ -268,7 +270,7 @@ struct iguana_bundlereq *iguana_recvblockhdrs(struct iguana_info *coin,struct ig
             //fprintf(stderr,"i.%d of %d bundleset\n",i,n);
             if ( (bp= iguana_bundleset(coin,&block,&bundlei,&blocks[i])) != 0 && bp->hdrsi < IGUANA_MAXACTIVEBUNDLES )
             {
-                if ( i < bp->n && bp->requests[i] == 0 )
+                if ( 0 && i < bp->n && bp->requests[i] == 0 )
                     iguana_blockQ(coin,bp,bundlei,blocks[i].hash2,0);
             }
         }
