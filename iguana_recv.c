@@ -236,8 +236,8 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 iguana_blockQ(coin,0,-1,origblock->hash2,1);
                 iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,origblock->hash2);
             }
-            else if ( bundlei == 1 )
-                iguana_hash2set(coin,"blockadd",bp,0,origblock->prev_block);
+            else //if ( bundlei == 1 )
+                iguana_bundlehash2add(coin,0,bp,bundlei-1,origblock->prev_block);
         }
         else
         {
@@ -289,7 +289,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
     {
         if ( 0 && bp->requests[bundlei] > 2 )
             printf("recv bundlei.%d hdrs.%d reqs.[%d]\n",bundlei,bp->hdrsi,bp->requests[bundlei]);
-        if ( bundlei == 1 && bp->numhashes < bp->n )
+        if ( 0 && bundlei == 1 && bp->numhashes < bp->n )
         {
             bits256_str(str,block->prev_block);
             queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);
@@ -394,7 +394,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
             {
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
-                    if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+30 )
+                    if ( bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+60 )
                         continue;
                     if ( bp->emitfinish == 0 && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+sqrt(coin->bundlescount) )
                     {
@@ -509,7 +509,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = coin->MAXPENDING;
     if ( limit < 1 )
         limit = 1;
-    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
+    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 )//&& addr->pendblocks < limit )
     {
         int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
         for (i=n=0; i<coin->bundlescount; i++)
@@ -537,7 +537,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 diff = -diff;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
-                metric = (1 + diff * ((addr->addrind&1) == 0 ? 1 : diff) * (1. + bp->metric));// / (i*((addr->addrind&1) != 0 ? 1 : i) + 1);
+                metric = (1 + diff * ((addr->addrind&1) == 0 ? 1 : diff/diff) * (1. + bp->metric));// / (i*((addr->addrind&1) != 0 ? 1 : i) + 1);
                 //printf("%f ",bp->metric);
                 if ( bestmetric < 0. || metric < bestmetric )
                     bestmetric = metric, bestbp = bp;

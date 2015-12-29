@@ -315,7 +315,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
         else if ( memcmp(prevbp->nextbundlehash2.bytes,bp->hashes[0].bytes,sizeof(bits256)) == 0 )
             sprintf(line+strlen(line),"->");
     }
-    sprintf(line+strlen(line),"(%d:%d)",bp->hdrsi,m);
+    sprintf(line+strlen(line),"(%d:%d).%d ",bp->hdrsi,m,bp->numhashes);
     if ( nextbp != 0 )
     {
         if ( memcmp(nextbp->hashes[0].bytes,bp->nextbundlehash2.bytes,sizeof(bits256)) == 0 )
