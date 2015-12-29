@@ -576,15 +576,14 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         if ( 1 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->recvlens[req->bundlei] != 0 )
         {
             //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
-            myfree(req,sizeof(*req));
         }
         else
         {
             iguana_sendblockreq(coin,addr,req->bp,req->bundlei,hash2);
-            flag++;
-            myfree(req,sizeof(*req));
-            return(flag);
         }
+        flag++;
+        myfree(req,sizeof(*req));
+        return(flag);
     }
     return(flag);
 }
