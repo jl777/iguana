@@ -606,8 +606,23 @@ int32_t iguana_ramchain_verify(struct iguana_info *coin,struct iguana_ramchain *
                 return(-2);
             if ( ptr->hh.itemind != ramchain->H.txidind )
             {
-                printf("error -3: itemind.%d vs txidind.%d | num.%d\n",ptr->hh.itemind,ramchain->H.txidind,ramchain->H.data->numtxids);
-                return(-3);
+                if ( strcmp(coin->name,"bitcoin") == 0 )
+                {
+                    bits256 duptxid;
+                decode_hex(duptxid.bytes,sizeof(duptxid),"e3bf3d07d4b0375638d5f1db5255fe07ba2c4cb067cd81b84ee974b6585fb468"); // BTC.tx0: 91722, 91880
+                    if ( memcmp(duptxid.bytes,t->txid.bytes,sizeof(duptxid)) == 0 )
+                        printf("BIP 0 detected\n");
+                    else
+                    {
+                        printf("error -3: itemind.%d vs txidind.%d | num.%d\n",ptr->hh.itemind,ramchain->H.txidind,ramchain->H.data->numtxids);
+                        return(-3);
+                    }
+                }
+                else
+                {
+                    printf("error -3: itemind.%d vs txidind.%d | num.%d\n",ptr->hh.itemind,ramchain->H.txidind,ramchain->H.data->numtxids);
+                    return(-3);
+                }
             }
             for (k=0; k<t->numvouts; k++,ramchain->H.unspentind++)
             {
