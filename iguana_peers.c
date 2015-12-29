@@ -981,7 +981,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
             {
                 if ( addr->rank != 1 )
-                    usleep(10000 + (rand() % 10000));
+                    usleep(5000 + (rand() % 10000));
                 else usleep(100);
             }
         }
