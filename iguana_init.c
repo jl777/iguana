@@ -163,7 +163,9 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
                     {
                         char str[65];
                         bits256_str(str,hash2);
-                        fprintf(fp,"%d %s %s\n",height+iter,str,shastr);
+                        if ( iter == 0 )
+                            fprintf(fp,"%d %s %s\n",height+iter,str,shastr);
+                        else fprintf(fp,"%d %s\n",height+iter,str);
                         retval = height+iter;
                     }
                     if ( coin->chain->hasheaders != 0 )
