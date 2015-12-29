@@ -163,7 +163,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                     prev->hh.next = block;
                 else if ( prev->hh.next == block && block->hh.prev == prev )
                 {
-                    if ( i < coin->chain->bundlesize )
+                    if ( block->mainchain == 0 && i < coin->chain->bundlesize )
                     {
                         if ( iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]) < 0 )
                         {
