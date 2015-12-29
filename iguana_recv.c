@@ -186,7 +186,7 @@ void iguana_recvissue(struct iguana_info *coin,struct iguana_block *origblock)
                 if ( bits256_nonz(prevhash2) == 0 )
                 {
                     height = bp->bundleheight + bundlei - 1;
-                    char str[65]; printf("[%d] RECVISSUE.%s %d\n",i,bits256_str(str,block->prev_block),height);
+                    //char str[65]; printf("[%d] RECVISSUE.%s %d\n",i,bits256_str(str,block->prev_block),height);
                     iguana_hash2set(coin,"recvadd",coin->bundles[height/coin->chain->bundlesize],height%coin->chain->bundlesize,block->prev_block);
                     iguana_blockQ(coin,coin->bundles[height/coin->chain->bundlesize],height%coin->chain->bundlesize,block->prev_block,1);
                     break;
@@ -355,7 +355,7 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 hash2 = ptr->hash2;
             if ( bits256_nonz(hash2) > 0 && (ptr= iguana_blockfind(coin,hash2)) != 0 && ptr->ipbits == 0 )
             {
-                printf("AUTONEXT.%d\n",block->height+1);
+                //printf("AUTONEXT.%d\n",block->height+1);
                 if ( prev->height == coin->blocks.hwmchain.height )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
