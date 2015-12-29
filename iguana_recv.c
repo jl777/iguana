@@ -509,13 +509,13 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = coin->MAXPENDING;
     if ( limit < 1 )
         limit = 1;
-    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 )//&& addr->pendblocks < limit )
+    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
     {
         int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
-        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 7 )
+        if ( n >= coin->bundlescount-(coin->bundlescount>>3) || (addr->ipbits % 10) < 5 )
             refbundlei = (addr->ipbits % coin->bundlescount);
         else
         {

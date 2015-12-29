@@ -333,7 +333,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
     static uint32_t lastdisp;
-    int32_t i,dispflag,bundlei,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
+    int32_t i,dispflag,bundlei,lefti,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
     struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0;
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     //if ( queue_size(&coin->blocksQ) == 0 )
@@ -354,6 +354,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             {
                 if ( bits256_nonz(bp->hashes[bundlei]) == 0 )
                 {
+                    lefti = bundlei;
                     if ( missing < 0 )
                         missing = bundlei;
                     continue;
@@ -383,9 +384,13 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         else block->recvlen = block->ipbits = 0;
                     }*/
                 }
-                else if ( bp->issued[bundlei] > SMALLVAL )
-                    numissued++;
-            }
+                else
+                {
+                    lefti = bundlei;
+                    if ( bp->issued[bundlei] > SMALLVAL )
+                        numissued++;
+                }
+             }
             bp->minrequests = minrequests;
             numhashes += bp->numhashes;
             bp->numrecv = numrecv;
@@ -419,7 +424,11 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 if ( bp->numhashes == bp->n )
                     numactive++;
                 if ( dispflag != 0 )
-                    printf("(%d %d) ",i,bp->numrecv);
+                {
+                    if ( bp->numrecv < bp->n-1 )
+                        printf("(%d %d) ",i,bp->numrecv);
+                    else printf("(%d -[%d]) ",i,lefti);
+                }
                 if ( bp->numrecv == bp->n && bp->emitfinish == 0 )
                 {
                     bp->emitfinish = 1;
