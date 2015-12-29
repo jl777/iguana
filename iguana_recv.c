@@ -239,7 +239,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             }
             else if ( bundlei == coin->chain->bundlesize-1 )
             {
-                char str[65]; printf("CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,origblock->hash2));
+                //char str[65]; printf("CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,origblock->hash2));
                 iguana_blockQ(coin,0,-1,origblock->hash2,1);
                 iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,origblock->hash2);
             }

@@ -1169,7 +1169,7 @@ int32_t iguana_bundlefiles(struct iguana_info *coin,uint32_t *ipbits,void **ptrs
             ipbits[num] = bp->ipbits[bundlei];
             if ( (checki= iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[bundlei])) != bundlei || bundlei < 0 || bundlei >= coin->chain->bundlesize )
             {
-                printf("iguana_ramchain_map.(%s) illegal hdrsi.%d bundlei.%d\n",fname,hdrsi,bundlei);
+                printf("B iguana_ramchain_map.(%s) illegal hdrsi.%d bundlei.%d checki.%d\n",fname,hdrsi,bundlei,checki);
                 return(0);
             }
             if ( (ptrs[num]= map_file(fname,&filesizes[num],0)) == 0 )
