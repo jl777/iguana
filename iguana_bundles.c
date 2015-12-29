@@ -143,7 +143,7 @@ int32_t iguana_hash2set(struct iguana_info *coin,char *debugstr,struct iguana_bu
     {
         char str2[65],str3[65];
         bits256_str(str2,*orighash2p), bits256_str(str3,newhash2);
-        printf("ERRRO iguana_hash2set overwrite [%s] %s with %s\n",debugstr,str2,str3);
+        printf("ERRRO iguana_hash2set overwrite [%s] %s with %s [%d:%d]\n",debugstr,str2,str3,bp->hdrsi,bundlei);
         getchar();
         return(-1);
     }
