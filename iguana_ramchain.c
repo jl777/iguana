@@ -1372,17 +1372,24 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     return(retval);
 }
 
+int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp,struct iguana_bundle *nextbp,uint32_t starttime)
+{
+    return(0);
+}
+
 void iguana_ramchainmerge(struct iguana_info *coin)
 {
-    int32_t i; struct iguana_bundle *bp,*prevbp,*nextbp;
-    prevbp = bp = 0;
+    int32_t i; struct iguana_bundle *bp,*nextbp;
+    bp = 0;
     for (i=0; i<coin->bundlescount; i++)
     {
-        if ( (nextbp= coin->bundles[i]) != 0 && prevbp != 0 && bp != 0 )
+        if ( (nextbp= coin->bundles[i]) != 0 && bp != 0 )
         {
-            
+            //if ( iguana_ramchainpair(coin,bp,nextbp) > 0 )
+            {
+                iguana_mergeQ(coin,bp,nextbp);
+            }
         }
-        prevbp = bp;
         bp = nextbp;
     }
 }

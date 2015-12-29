@@ -167,11 +167,38 @@ void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp)
     queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
 }
 
+void iguana_mergeQ(struct iguana_info *coin,struct iguana_bundle *bp,struct iguana_bundle *nextbp)
+{
+    struct iguana_helper *ptr;
+    ptr = mycalloc('i',1,sizeof(*ptr));
+    ptr->allocsize = sizeof(*ptr);
+    ptr->coin = coin;
+    ptr->bp = bp, ptr->hdrsi = bp->hdrsi;
+    ptr->nextbp = nextbp;
+    ptr->type = 'M';
+    ptr->starttime = (uint32_t)time(NULL);
+    //printf("%s EMIT.%d[%d] emitfinish.%u\n",coin->symbol,ptr->hdrsi,bp->n,bp->emitfinish);
+    queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
+}
+
 int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_helper *ptr)
 {
-    struct iguana_info *coin; struct iguana_peer *addr; struct iguana_bundle *bp;
+    struct iguana_info *coin; struct iguana_peer *addr; struct iguana_bundle *bp,*nextbp;
     coin = ptr->coin, addr = ptr->addr;
-    if ( ptr->type == 'E' )
+    if ( ptr->type == 'M' )
+    {
+        if ( (coin= ptr->coin) != 0 )
+        {
+            if ( (bp= ptr->bp) != 0 && (nextbp= ptr->nextbp) != 0 )
+            {
+                bp->mergefinish = nextbp->mergefinish = (uint32_t)time(NULL);
+                if ( iguana_bundlemergeHT(coin,mem,memB,bp,nextbp,ptr->starttime) == 0 )
+                    bp->mergefinish = (uint32_t)time(NULL);
+                else bp->mergefinish = nextbp->mergefinish = 0;
+            }
+        }
+    }
+    else if ( ptr->type == 'E' )
     {
         //printf("emitQ coin.%p bp.%p\n",ptr->coin,ptr->bp);
         if ( (coin= ptr->coin) != 0 )
@@ -180,14 +207,17 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
             {
                 bp->emitfinish = (uint32_t)time(NULL);
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp,ptr->starttime) == 0 )
+                {
+                    bp->emitfinish = (uint32_t)time(NULL);
                     coin->numemitted++;
+                }
                 else bp->emitfinish = 0;
             } else printf("error missing bp in emit\n");
             //printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
-            if ( coin->MAXBUNDLES > IGUANA_MAXACTIVEBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
-                coin->MAXBUNDLES--;
-            else if ( (coin->MAXBUNDLES * coin->estsize)/(coin->activebundles+1) < coin->MAXRECVCACHE*.75 )
-                coin->MAXBUNDLES += (coin->MAXBUNDLES >> 2) + 1;
+            //if ( coin->MAXBUNDLES > IGUANA_MAXACTIVEBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
+            //    coin->MAXBUNDLES--;
+            //else if ( (coin->MAXBUNDLES * coin->estsize)/(coin->activebundles+1) < coin->MAXRECVCACHE*.75 )
+             //   coin->MAXBUNDLES += (coin->MAXBUNDLES >> 2) + 1;
             //else printf("no change to MAXBUNDLES.%d\n",coin->MAXBUNDLES);
         } else printf("no coin in helper request?\n");
     }

@@ -185,7 +185,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
             }*/
             if ( (i % coin->chain->bundlesize) <= 1 )
                 iguana_blockQ(coin,bp,i,blockhashes[i],1);
-            else if ( bp != 0 && i < bp->n && bp->requests[i] == 0 )
+            else //if ( bp != 0 && i < bp->n && bp->requests[i] == 0 )
                 iguana_blockQ(coin,0,-1,blockhashes[i],0);
         }
         prev = block;

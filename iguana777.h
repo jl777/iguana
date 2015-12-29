@@ -450,7 +450,7 @@ struct iguana_bundle
     struct queueitem DL; struct iguana_info *coin;
     struct iguana_block block;
     struct iguana_bloom16 bloom;
-    uint32_t issuetime,hdrtime,emitfinish,purgetime,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
+    uint32_t issuetime,hdrtime,emitfinish,mergefinish,purgetime,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
     int32_t minrequests,numhashes,numissued,numrecv,n,hdrsi,bundleheight,numtxids,numspends,numunspents;
     double avetime,threshold,metric; uint64_t datasize,estsize;
     long fpos[IGUANA_MAXBUNDLESIZE+1];
@@ -724,12 +724,13 @@ void iguana_memreset(struct iguana_memspace *mem);
 void *iguana_meminit(struct iguana_memspace *mem,char *name,void *ptr,int64_t totalsize,int32_t threadsafe);
 void iguana_mempurge(struct iguana_memspace *mem);
 
-struct iguana_helper { struct queueitem DL; void *coin,*addr,*bp,*fp; long fpos; int32_t allocsize,type,hdrsi,bundlei,datalen; uint32_t starttime; };
+struct iguana_helper { struct queueitem DL; void *coin,*addr,*bp,*nextbp,*fp; long fpos; int32_t allocsize,type,hdrsi,bundlei,datalen; uint32_t starttime; };
 int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_helper *ptr);
 void iguana_flushQ(struct iguana_info *coin,struct iguana_peer *addr);
 //struct iguana_txdatabits iguana_peerfilePT(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2,struct iguana_txdatabits txdatabits,int32_t recvlen);
 struct iguana_txdatabits iguana_calctxidbits(uint32_t addrind,uint32_t filecount,uint32_t fpos,uint32_t datalen);
 int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp,uint32_t starttime); // helper thread
+int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_bundle *bp,struct iguana_bundle *nextbp,uint32_t starttime); // helper thread
 
 void iguana_peerfilename(struct iguana_info *coin,char *fname,uint32_t addrind,uint32_t filecount);
 
@@ -768,5 +769,6 @@ int32_t iguana_ramchainverifyPT(struct iguana_info *coin,struct iguana_ramchain 
 void *map_file(char *fname,long *filesizep,int32_t enablewrite);
 void iguana_rpcloop(void *args);
 int32_t iguana_socket(int32_t bindflag,char *hostname,uint16_t port);
+void iguana_mergeQ(struct iguana_info *coin,struct iguana_bundle *bp,struct iguana_bundle *nextbp);
 
 #endif
