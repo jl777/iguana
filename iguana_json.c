@@ -123,7 +123,7 @@ void iguana_rpcloop(void *args)
 {
     int32_t recvlen,bindsock,sock,remains,numsent,len; socklen_t clilen;
     char ipaddr[64],jsonbuf[8192],*buf,*retstr; struct sockaddr_in cli_addr; uint32_t ipbits; uint16_t port;
-    port = 7777;//coin->chain->portrpc;
+    port = IGUANA_RPCPORT;//coin->chain->portrpc;
     bindsock = iguana_socket(1,"127.0.0.1",port);
     printf("iguana_rpcloop 127.0.0.1:%d bind sock.%d\n",port,bindsock);
     while ( bindsock >= 0 )
