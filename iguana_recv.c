@@ -219,9 +219,11 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 block->hdrsi = bp->hdrsi;
                 block->havebundle = 1;
                 iguana_hash2set(coin,"blockadd",bp,block->bundlei,block->hash2);
+                if ( bundlei > 0 )
+                    iguana_bundlehash2add(coin,0,bp,bundlei-1,origblock->prev_block);
             }
         }
-        else if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,origblock->prev_block)) != 0 )
+        if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,origblock->prev_block)) != 0 )
         {
             if ( bundlei < coin->chain->bundlesize-1 )
             {
@@ -236,8 +238,11 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 iguana_blockQ(coin,0,-1,origblock->hash2,1);
                 iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,origblock->hash2);
             }
-            else //if ( bundlei == 1 )
-                iguana_bundlehash2add(coin,0,bp,bundlei-1,origblock->prev_block);
+            else
+            {
+                iguana_bundlehash2add(coin,0,bp,bundlei,origblock->prev_block);
+                iguana_bundlehash2add(coin,0,bp,bundlei+1,origblock->hash2);
+            }
         }
         else
         {
@@ -537,7 +542,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 diff = -diff;
             if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish == 0 )
             {
-                metric = (1 + diff * ((addr->addrind&1) == 0 ? 1 : diff/diff) * (1. + bp->metric));// / (i*((addr->addrind&1) != 0 ? 1 : i) + 1);
+                metric = (1 + diff * ((addr->addrind&1) == 0 ? 1 : 1) * (1. + bp->metric));// / (i*((addr->addrind&1) != 0 ? 1 : i) + 1);
                 //printf("%f ",bp->metric);
                 if ( bestmetric < 0. || metric < bestmetric )
                     bestmetric = metric, bestbp = bp;
