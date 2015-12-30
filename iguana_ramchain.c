@@ -1521,7 +1521,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
         }
         bp = nextbp;
     }
-    if ( flag != 0 || (rand() % 100) == 0 )
+    if ( flag != 0 || (rand() % 10000) == 0 )
     {
         bp = coin->bundles[0];
         while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
