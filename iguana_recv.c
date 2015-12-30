@@ -333,7 +333,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 {
                     if ( block->numhashes > coin->chain->bundlesize && bp->hdrsi == coin->bundlescount-1 )
                     {
-                        printf("am block1, check allhashes numhashes.%d\n",block->numhashes);
+                        //printf("am block1, check allhashes numhashes.%d\n",block->numhashes);
                         iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,((bits256 *)block->rawdata)[coin->chain->bundlesize],zero);
                     }
                     iguana_allhashcmp(coin,bp,hashes,block->numhashes);
@@ -519,7 +519,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                 if ( (bp= coin->bundles[i]) != 0 )
                 {
                     if ( i == coin->bundlescount-1 )
-                        lag = 3;
+                        lag = 13;
                     else lag = 60;
                     if ( i < coin->bundlescount-1 && (bp->numhashes >= bp->n || time(NULL) < bp->hdrtime+lag) )
                         continue;
