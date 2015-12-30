@@ -1237,6 +1237,7 @@ int32_t iguana_ramchain_alloc(struct iguana_info *coin,struct iguana_ramchain *r
     ramchain->height = height;
     allocsize = iguana_memsize(1,numtxids,numunspents,numspends,numpkinds,numexternaltxids);
     //printf("T.%d U.%d S.%d P.%d X.%d -> %ld\n",numtxids,numunspents,numspends,numpkinds,numexternaltxids,(long)allocsize);
+    memset(mem,0,sizeof(*mem));
     memset(hashmem,0,sizeof(*hashmem));
     hashsize = iguana_hashmemsize(numtxids,numunspents,numspends,numpkinds,numexternaltxids);
     while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
@@ -1474,6 +1475,11 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
         iguana_ramchain_link(dest,A->H.data->firsthash2,B->H.data->lasthash2,A->H.hdrsi,A->height,0,A->numblocks+B->numblocks,firsti,0);
         _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
         iguana_ramchain_extras(dest,&HASHMEM);
+   
+iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+iguana_ramchain_free(dest,0);
+return(0);
+        
         dest->H.txidind = dest->H.unspentind = dest->H.spendind = dest->pkind = dest->H.data->firsti;
         dest->externalind = 0;
         if ( (err= iguana_ramchain_iterate(coin,dest,A)) != 0 )
@@ -1486,16 +1492,13 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
             bp->mergefinish = 0;
             nextbp->mergefinish = (uint32_t)time(NULL);
-            if ( (bp->nextbp= nextbp->nextbp) == 0 )
-            {
-                //bp->nextbp = coin->bundles[nextbp->hdrsi+1];
-            }
+            bp->nextbp = nextbp->nextbp;
             newchain.hashmem = 0;
             retval = 0;
             nextbp->ramchain = bp->ramchain = newchain;
         } else bp->mergefinish = nextbp->mergefinish = 0;
-        iguana_ramchain_free(dest,0);
         iguana_mergefree(0,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+        iguana_ramchain_free(dest,0);
         depth--;
     } else printf("error merging A.%d [%d] and B.%d [%d]\n",A->height,A->numblocks,B->height,B->numblocks);
     return(retval);
