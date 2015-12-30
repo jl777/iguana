@@ -241,7 +241,7 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                 {
                     if ( block->recvlen == 0 )
                     {
-                        printf("issue %d\n",bp->bundleheight+j);
+                        //printf("issue %d\n",bp->bundleheight+j);
                         iguana_blockQ(coin,0,-1,blockhashes[j],0);
                     }
                 } else iguana_patch(coin,block);
@@ -324,9 +324,13 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             else if ( bundlei < coin->chain->bundlesize-1 )
             {
                 iguana_bundlehash2add(coin,0,bp,bundlei+1,block->hash2);
-                if ( bundlei == 0 && block->havehashes != 0 && (hashes= block->rawdata) != 0 )
+                if ( bundlei == 0 && block->havehashes != 0 && (hashes= block->rawdata) != 0 && block->copyflag == 0 )
                 {
-                    //printf("am block1, check allhashes\n");
+                    if ( block->numhashes > coin->chain->bundlesize && bp->hdrsi == coin->bundlescount-1 )
+                    {
+                        printf("am block1, check allhashes numhashes.%d\n",block->numhashes);
+                        iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,((bits256 *)block->rawdata)[coin->chain->bundlesize],zero);
+                    }
                     iguana_allhashcmp(coin,bp,hashes,block->numhashes);
                 }
             }
@@ -393,7 +397,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 myfree(block->rawdata,block->recvlen), block->copyflag = 0;
             else myfree(block->rawdata,block->numhashes * sizeof(bits256));
         }
-        char str[65]; printf("got %d unmatched hashes %d:%d %s\n",num,bp==0?-1:bp->bundleheight,bundlei,bits256_str(str,blockhashes[1]));
+        //char str[65]; printf("got %d unmatched hashes %d:%d %s\n",num,bp==0?-1:bp->bundleheight,bundlei,bits256_str(str,blockhashes[1]));
         block->rawdata = blockhashes, block->numhashes = num, block->havehashes = 1;
         req->hashes = 0;
     }
