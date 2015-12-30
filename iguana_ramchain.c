@@ -1520,6 +1520,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
                 A = bp, B = nextbp;
             }
         }
+        bp = nextbp;
     }
     if ( A != 0 && B != 0 )
     {
