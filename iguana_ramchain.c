@@ -1482,7 +1482,7 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             printf("error.%d ramchain_iterate A.%d\n",err,A->height);
         else if ( (err= iguana_ramchain_iterate(coin,dest,B)) != 0 )
             printf("error.%d ramchain_iterate B.%d\n",err,B->height);
-        else if ( 1 || iguana_ramchain_expandedsave(coin,RAMCHAIN_DESTARG,&newchain,&HASHMEM,0) == 0 )
+        else if ( iguana_ramchain_expandedsave(coin,RAMCHAIN_DESTARG,&newchain,&HASHMEM,0) == 0 )
         {
             printf("depth.%d ht.%d fsize.%s MERGED %d[%d] and %d[%d] lag.%d elapsed.%ld\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),A->height,A->numblocks,B->height,B->numblocks,now-starttime,time(NULL)-now);
             iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
