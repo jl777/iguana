@@ -60,7 +60,7 @@ void iguana_initcoin(struct iguana_info *coin)
     iguana_initQs(coin);
     randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
     coin->starttime = (uint32_t)time(NULL);
-    coin->avetime = 1 * 1000;
+    coin->avetime = 1 * 100;
     //coin->R.maxrecvbundles = IGUANA_INITIALBUNDLES;
     for (i=0; i<IGUANA_MAXPEERS; i++)
         coin->peers.active[i].usock = -1;

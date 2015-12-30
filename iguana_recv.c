@@ -749,7 +749,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
-    int32_t newhwm = 0,h,lflag,flag = 0; struct iguana_block *next,*block;
+    int32_t newhwm = 0,h,lflag,flag = 0; struct iguana_block *next,*block; struct iguana_bundle *bp;
     //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
@@ -778,7 +778,10 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 threshold = (10 + coin->longestchain - coin->blocksrecv);
                 if ( threshold < 1 )
                     threshold = 1.;
-                threshold = coin->avetime * sqrt(threshold) * .000777;
+                if ( (bp= coin->bundles[(coin->blocks.hwmchain.height+1)/coin->chain->bundlesize]) != 0 )
+                    threshold = (bp->avetime + coin->avetime) * .5;
+                else threshold = coin->avetime;
+                threshold *= 100. * sqrt(threshold) * .000777;
                 if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )//&& next->recvlen == 0 )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
@@ -786,7 +789,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
                     // clear recvlens
                     //if ( coin->backstop != coin->blocks.hwmchain.height+1 )
-                        printf("BACKSTOP.%d avetime %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,coin->avetime,coin->backstopmillis,lag);
+                        printf("BACKSTOP.%d threshold %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,threshold,coin->backstopmillis,lag);
                 }
                 else if ( 0 && bits256_nonz(next->prev_block) > 0 )
                     printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
