@@ -456,7 +456,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         printf("(%d %d) ",i,bp->numrecv);
                     else printf("(%d -[%d]) ",i,lefti);
                 }
-                if ( bp->numrecv > bp->n-10 && lefti >= 0 )
+                if ( bp->numrecv > bp->n-2 && lefti >= 0 )
                 {
                     printf("remainder issue %d:%d %s\n",bp->hdrsi,lefti,bits256_str(str,bp->hashes[lefti]));
                     bp->recvlens[lefti] = bp->ipbits[lefti] = 0;
