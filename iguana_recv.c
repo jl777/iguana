@@ -206,28 +206,29 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
 
 int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits256 *blockhashes,int32_t num)
 {
-    bits256 allhash; int32_t i,j,missing; uint32_t now; struct iguana_block *block,*block1 = 0;
+    bits256 allhash; int32_t i,j,n,missing; uint32_t now; struct iguana_block *block,*block1 = 0;
     if ( bits256_nonz(bp->allhash) > 0 && num >= coin->chain->bundlesize )
     {
         blockhashes[0] = bp->hashes[0];
         vcalc_sha256(0,allhash.bytes,blockhashes[0].bytes,coin->chain->bundlesize * sizeof(*blockhashes));
         if ( memcmp(allhash.bytes,bp->allhash.bytes,sizeof(allhash)) == 0 )
         {
-            for (i=0; i<coin->chain->bundlesize; i++)
+            for (i=n=0; i<coin->chain->bundlesize; i++)
             {
                 iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]);
                 if ( (block= iguana_blockfind(coin,blockhashes[i])) == 0 || bp->ipbits[i] == 0 )
                 {
                     if ( block != 0 && block->copyflag != 0 )
                         printf("have data %d\n",bp->bundleheight+i);
-                    else if ( strcmp(coin->symbol,"BTC") != 0 )
+                    else if ( strcmp(coin->symbol,"BTC") != 0 && bp->requests[i] == 0 )
                     {
-                        //printf("%d ",bp->bundleheight+i);
-                        iguana_blockQ(coin,bp,i,blockhashes[i],0);
+                        printf("%d ",bp->bundleheight+i);
+                        n++;
+                        iguana_blockQ(coin,bp,i,blockhashes[i],1);
                     }
                 }
             }
-            //printf("ALLHASHCMP -> issue blockQ %d\n",bp->bundleheight);
+            printf("ALLHASHCMP -> issue.%d blockQ %d\n",n,bp->bundleheight);
             return(0);
         }
     }
