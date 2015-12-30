@@ -185,7 +185,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
 {
     struct iguana_info *coin; struct iguana_peer *addr; struct iguana_bundle *bp,*nextbp;
     coin = ptr->coin, addr = ptr->addr;
-    if ( ptr->type == 'M' )
+    if ( 0 && ptr->type == 'M' )
     {
         if ( (coin= ptr->coin) != 0 )
         {
@@ -205,7 +205,6 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
         {
             if ( (bp= ptr->bp) != 0 )
             {
-                bp->emitfinish = (uint32_t)time(NULL);
                 if ( iguana_bundlesaveHT(coin,mem,memB,bp,ptr->starttime) == 0 )
                 {
                     bp->emitfinish = (uint32_t)time(NULL);

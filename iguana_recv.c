@@ -45,7 +45,7 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
             printf("extra\n");
         }
     }
-    copyflag = (strcmp(coin->symbol,"BTC") != 0);
+    copyflag = 0 * (strcmp(coin->symbol,"BTC") != 0);
     req = iguana_bundlereq(coin,addr,'B',copyflag * recvlen);
     if ( copyflag != 0 && recvlen != 0 )
     {
@@ -161,7 +161,7 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
                 iguana_blockQ(coin,0,-1,next->hash2,1);
             }
         }
-        else
+        else if ( block->height < 0 )
         {
             for (i=0; i<3; i++)
             {
