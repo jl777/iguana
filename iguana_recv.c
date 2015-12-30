@@ -215,7 +215,7 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
             for (i=0; i<coin->chain->bundlesize; i++)
             {
                 iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]);
-                if ( (block= iguana_blockfind(coin,blockhashes[i])) == 0 || block->ipbits == 0 )
+                if ( (block= iguana_blockfind(coin,blockhashes[i])) == 0 || bp->ipbits[i] == 0 )
                 {
                     if ( block != 0 && block->copyflag != 0 )
                         printf("have data %d\n",bp->bundleheight+i);
@@ -285,12 +285,12 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 {
                     if ( bp->hdrsi > 0 && (bp= coin->bundles[bp->hdrsi-1]) != 0 && bp->ipbits[coin->chain->bundlesize-1] == 0 )
                     {
-                        printf("add to prev hdrs.%d\n",bp->hdrsi);
+                        //printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
                         iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
                     }
                 }
-                else if ( bp->ipbits[bundlei-1] == 0 )
+                else if ( bp->ipbits[bundlei-1] == 0 && strcmp(coin->symbol,"BTC") != 0 )
                 {
                     //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
@@ -331,11 +331,6 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             //char str[65]; printf("can find.(%s)\n",bits256_str(str,origblock->hash2));
             return(0);
         }
-        /*if ( block->havebundle != 0 && block->hdrsi < coin->bundlescount )
-        {
-            bundlei = block->bundlei;
-            bp = coin->bundles[block->hdrsi];
-        }*/
         //char str[65]; printf("iguana_recvblock (%s) %d %d[%d] %p\n",bits256_str(str,block->hash2),block->havebundle,block->hdrsi,bundlei,bp);
     }
     return(iguana_bundlefind(coin,&bp,bundleip,origblock->hash2));
