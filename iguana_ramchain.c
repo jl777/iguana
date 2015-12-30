@@ -1508,32 +1508,32 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
 
 void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next hash2
 {
-    static struct iguana_bundle *bp;
-    struct iguana_bundle *nextbp; int32_t flag = 0;
+    static struct iguana_bundle *lastbp;
+    struct iguana_bundle *bp,*nextbp; int32_t flag = 0;
     if ( coin->bundlescount <= 0 || coin->merging != 0 )
         return;
-    if ( bp == 0 )
-        bp = coin->bundles[0];
+    bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
-        if ( nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
+        if ( bp != lastbp && nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
         {
             bp->mergefinish = nextbp->mergefinish = 1;
             flag++;
             char str[65]; printf("start merge %d[%d] + %d[%d] %s\n",bp->bundleheight,bp->ramchain.numblocks,nextbp->bundleheight,nextbp->ramchain.numblocks,mbstr(str,bp->ramchain.datasize + nextbp->ramchain.datasize));
+            lastbp = bp;
             iguana_mergeQ(coin,bp,nextbp);
             coin->merging = 1;
-            bp = nextbp;
             break;
         }
         bp = nextbp;
     }
     if ( flag != 0 )
     {
-        nextbp = coin->bundles[0];
-        while ( nextbp != 0 && (nextbp= nextbp->nextbp) != 0 )
+        bp = coin->bundles[0];
+        while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
         {
-            printf("%d[%d].%d ",nextbp->bundleheight,nextbp->ramchain.numblocks,nextbp->mergefinish);
+            printf("%d[%d].%d ",bp->bundleheight,bp->ramchain.numblocks,bp->mergefinish);
+            bp = nextbp;
         }
         printf("bundles\n");
     }
