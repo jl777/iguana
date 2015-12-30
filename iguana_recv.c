@@ -160,7 +160,7 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
                 next->height = block->height + 1;
                 //printf("autoreq %d\n",next->height);
                 if ( strcmp(coin->symbol,"BTC") != 0 )
-                    iguana_blockQ(coin,coin->bundles[(block->height+1)/coin->chain->bundlesize],(block->height+1)%coin->chain->bundlesize,next->hash2,1);
+                    iguana_blockQ(coin,coin->bundles[(block->height+1)/coin->chain->bundlesize],(block->height+1)%coin->chain->bundlesize,next->hash2,0);
             }
         }
         else if ( block->height < 0 )
@@ -291,7 +291,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                         //printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
                         if ( bp->ipbits[coin->chain->bundlesize-1] == 0 && strcmp(coin->symbol,"BTC") != 0 )
-                            iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
+                            iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,0);
                     }
                 }
                 else
@@ -299,7 +299,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                     //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
                     if ( bp->ipbits[bundlei-1] == 0 && strcmp(coin->symbol,"BTC") != 0 )
-                        iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
+                        iguana_blockQ(coin,bp,bundlei-1,block->prev_block,0);
                 }
             }
         }
@@ -719,7 +719,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
     {
         hash2 = req->hash2;
         height = req->height;
-        if ( 1 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->ipbits[req->bundlei] != 0 )
+        if ( priority == 0 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->ipbits[req->bundlei] != 0 )
         {
             if ( 0 && priority != 0 )
                 printf("SKIP %p[%d] %d\n",bp,bp!=0?bp->bundleheight:-1,req->bundlei);
