@@ -407,7 +407,7 @@ struct iguana_ramchain_hdr
 
 struct iguana_ramchain
 {
-    struct iguana_ramchain_hdr H; bits256 lasthash2;
+    struct iguana_ramchain_hdr H; bits256 lasthash2; uint64_t datasize;
     uint32_t numblocks:31,expanded:1,pkind,externalind,height;
     struct iguana_kvitem *txids,*pkhashes;
     struct iguana_memspace *hashmem; long filesize; void *fileptr;
