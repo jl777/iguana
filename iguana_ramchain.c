@@ -1476,17 +1476,13 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
         _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
         iguana_ramchain_extras(dest,&HASHMEM);
    
-iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
-iguana_ramchain_free(dest,0);
-return(0);
-        
         dest->H.txidind = dest->H.unspentind = dest->H.spendind = dest->pkind = dest->H.data->firsti;
         dest->externalind = 0;
         if ( (err= iguana_ramchain_iterate(coin,dest,A)) != 0 )
             printf("error.%d ramchain_iterate A.%d\n",err,A->height);
         else if ( (err= iguana_ramchain_iterate(coin,dest,B)) != 0 )
             printf("error.%d ramchain_iterate B.%d\n",err,B->height);
-        else if ( iguana_ramchain_expandedsave(coin,RAMCHAIN_DESTARG,&newchain,&HASHMEM,0) == 0 )
+        else if ( 1 || iguana_ramchain_expandedsave(coin,RAMCHAIN_DESTARG,&newchain,&HASHMEM,0) == 0 )
         {
             printf("depth.%d ht.%d fsize.%s MERGED %d[%d] and %d[%d] lag.%d elapsed.%ld\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),A->height,A->numblocks,B->height,B->numblocks,now-starttime,time(NULL)-now);
             iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
@@ -1512,11 +1508,19 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
     bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
+        printf("%d[%d] ",bp->bundleheight,bp->ramchain.numblocks);
+        bp = nextbp;
+    }
+    printf("bundles\n");
+    bp = coin->bundles[0];
+    while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
+    {
         if ( nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 )
         {
             bp->mergefinish = nextbp->mergefinish = 1;
             printf("start merge %d[%d] + %d[%d]\n",bp->bundleheight,bp->n,nextbp->bundleheight,nextbp->n);
             iguana_mergeQ(coin,bp,nextbp);
+            return;
         }
         bp = nextbp;
     }
