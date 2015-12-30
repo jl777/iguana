@@ -1493,8 +1493,12 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             newchain.hashmem = 0;
             retval = 0;
             nextbp->ramchain = bp->ramchain = newchain;
-        } else bp->mergefinish = nextbp->mergefinish = 0;
-        iguana_mergefree(0,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+        }
+        else
+        {
+            bp->mergefinish = nextbp->mergefinish = 0;
+            iguana_mergefree(0,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+        }
         iguana_ramchain_free(dest,0);
         depth--;
     } else printf("error merging A.%d [%d] and B.%d [%d]\n",A->height,A->numblocks,B->height,B->numblocks);
@@ -1524,7 +1528,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
         bp = coin->bundles[0];
         while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
         {
-            printf("%d[%d].%d ",bp->bundleheight,bp->ramchain.numblocks,bp->mergefinish!=0);
+            printf("%d[%d].%d ",bp->bundleheight,bp->ramchain.numblocks,bp->mergefinish);
             bp = nextbp;
         }
         printf("bundles\n");
