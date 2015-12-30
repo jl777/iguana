@@ -1506,14 +1506,12 @@ return(0);
 
 void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next hash2
 {
-    int32_t i; struct iguana_bundle *bp,*nextbp;
-    bp = 0;
-    for (i=0; i<coin->bundlescount; i++)
+    struct iguana_bundle *bp,*nextbp;
+    if ( coin->bundlescount <= 0 )
+        return;
+    bp = coin->bundles[0];
+    while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
-        if ( bp != 0 )
-            nextbp = bp->nextbp;
-        if ( nextbp == 0 )
-            nextbp = coin->bundles[i];
         if ( nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 )
         {
             bp->mergefinish = nextbp->mergefinish = 1;

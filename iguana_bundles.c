@@ -286,6 +286,8 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bund
             bp->coin = coin;
             bp->avetime = coin->avetime * 2.;
             coin->bundles[coin->bundlescount] = bp;
+            if ( coin->bundlescount > 0 )
+                coin->bundles[coin->bundlescount-1]->nextbp = bp;
             for (bundlei=0; bundlei<bp->n; bundlei++)
                 bp->fpos[bundlei] = -1;
             *bundleip = 0;
