@@ -940,8 +940,8 @@ int32_t iguana_ramchain_iterate(struct iguana_info *coin,struct iguana_ramchain 
     }
     for (ramchain->H.txidind=rdata->firsti; ramchain->H.txidind<rdata->numtxids; ramchain->H.txidind++)
     {
-        if ( 0 && ramchain->expanded != 0 )
-            printf("ITER TXID.%d -> dest.%p desttxid.%d\n",ramchain->H.txidind,dest,dest!=0?dest->H.txidind:0);
+        if ( 1 && ramchain->expanded != 0 )
+            printf("ITER TXID.%d -> dest.%p desttxid.%d dest->hashmem.%p\n",ramchain->H.txidind,dest,dest!=0?dest->H.txidind:0,dest->hashmem);
         tx = &T[ramchain->H.txidind];
         if ( iguana_ramchain_addtxid(coin,RAMCHAIN_ARG,tx->txid,tx->numvouts,tx->numvins) == 0 )
             return(-1);
@@ -1475,7 +1475,6 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
         iguana_ramchain_link(dest,A->H.data->firsthash2,B->H.data->lasthash2,A->H.hdrsi,A->height,0,A->numblocks+B->numblocks,firsti,0);
         _iguana_ramchain_setptrs(RAMCHAIN_DESTPTRS);
         iguana_ramchain_extras(dest,&HASHMEM);
-   
         dest->H.txidind = dest->H.unspentind = dest->H.spendind = dest->pkind = dest->H.data->firsti;
         dest->externalind = 0;
         if ( (err= iguana_ramchain_iterate(coin,dest,A)) != 0 )

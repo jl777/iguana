@@ -298,9 +298,9 @@ void iguana_coinloop(void *arg)
             if ( (coin= coins[i]) != 0 )
             {
                 now = (uint32_t)time(NULL);
-                if ( now > coin->starttime+600 && coin->totalrecv >= coin->longestchain-10 && coin->blocks.hwmchain.height >= coin->longestchain )
+                if ( now > coin->starttime+600 && coin->blocksrecv >= coin->longestchain-10 && coin->blocks.hwmchain.height >= coin->longestchain )
                 {
-                    printf(">>>>>>> %s isRT totalrecv.%d vs longest.%d\n",coin->symbol,(int32_t)coin->totalrecv,coin->longestchain);
+                    printf(">>>>>>> %s isRT blockrecv.%d vs longest.%d\n",coin->symbol,coin->blocksrecv,coin->longestchain);
                     coin->isRT = 1;
                     coin->MAXPEERS = 8;
                 }
