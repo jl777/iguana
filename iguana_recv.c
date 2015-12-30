@@ -157,7 +157,8 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
             }
             if ( (next= block->hh.next) != 0 && bits256_nonz(next->hash2) > 0 )
             {
-                printf("autoreq %d\n",block->height);
+                next->height = block->height + 1;
+                //printf("autoreq %d\n",next->height);
                 iguana_blockQ(coin,coin->bundles[(block->height+1)/coin->chain->bundlesize],(block->height+1)%coin->chain->bundlesize,next->hash2,1);
             }
         }
@@ -286,14 +287,14 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 {
                     if ( bp->hdrsi > 0 && (bp= coin->bundles[bp->hdrsi-1]) != 0 && bp->ipbits[coin->chain->bundlesize-1] == 0 )
                     {
-                        printf("add to prev hdrs.%d\n",bp->hdrsi);
+                        //printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
                         iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
                     }
                 }
                 else if ( bp->ipbits[bundlei-1] == 0 )
                 {
-                    printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
+                    //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
                     iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
                 }
@@ -723,7 +724,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         else
         {
             char str[65];
-            if ( priority != 0 )
+            if ( 0 && priority != 0 )
                 printf("priority issue.%s\n",bits256_str(str,hash2));
             iguana_sendblockreq(coin,addr,req->bp,req->bundlei,hash2);
         }
