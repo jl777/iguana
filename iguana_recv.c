@@ -698,7 +698,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
                     flag = 0;
-                    if ( bp->requests[j] <= bp->minrequests && bp->recvlens[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                    if ( bp->requests[j] <= bp->minrequests && bp->ipbits[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
                         flag = 1;
                     if ( flag != 0 )
                     {
