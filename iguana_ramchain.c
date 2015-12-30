@@ -1511,7 +1511,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
     bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
-        if ( (rand() % 10) == 0 && bp != lastbp && nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
+        if ( bp != lastbp && nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
         {
             bp->mergefinish = nextbp->mergefinish = 1;
             flag++;
@@ -1522,7 +1522,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
         }
         bp = nextbp;
     }
-    if ( flag != 0 || (rand() % 10000) == 0 )
+    if ( flag != 0 )
     {
         bp = coin->bundles[0];
         while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
