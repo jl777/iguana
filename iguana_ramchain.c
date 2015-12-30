@@ -1493,13 +1493,6 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             newchain.hashmem = 0;
             retval = 0;
             nextbp->ramchain = bp->ramchain = newchain;
-            bp = coin->bundles[0];
-            while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
-            {
-                printf("%d[%d].%d ",bp->bundleheight,bp->ramchain.numblocks,bp->mergefinish);
-                bp = nextbp;
-            }
-            printf("new bundles\n");
         }
         else
         {
@@ -1520,13 +1513,12 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
     bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
-        if ( nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 )
+        if ( nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
         {
             bp->mergefinish = nextbp->mergefinish = 1;
             flag++;
-            char str[65]; printf("start merge %d[%d] + %d[%d] %s\n",bp->bundleheight,bp->n,nextbp->bundleheight,nextbp->n,mbstr(str,bp->ramchain.datasize + nextbp->ramchain.datasize));
+            char str[65]; printf("start merge %d[%d] + %d[%d] %s\n",bp->bundleheight,bp->ramchain.numblocks,nextbp->bundleheight,nextbp->ramchain.numblocks,mbstr(str,bp->ramchain.datasize + nextbp->ramchain.datasize));
             iguana_mergeQ(coin,bp,nextbp);
-            bp = coin->bundles[0];
         }
         bp = nextbp;
     }
