@@ -998,8 +998,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
             {
                 if ( addr->rank != 1 )
-                    usleep(5000 + (rand() % 5000));
-                else usleep(100);
+                    usleep(25000 + (rand() % 25000));
+                else usleep(5000);
             }
         }
         if ( coin->isRT != 0 && addr->rank > coin->MAXPEERS && (rand() % 100) == 0 )
