@@ -1508,18 +1508,18 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
     bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
-        printf("%d[%d] ",bp->bundleheight,bp->ramchain.numblocks);
-        bp = nextbp;
-    }
-    printf("bundles\n");
-    bp = coin->bundles[0];
-    while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
-    {
         if ( nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 )
         {
             bp->mergefinish = nextbp->mergefinish = 1;
             printf("start merge %d[%d] + %d[%d]\n",bp->bundleheight,bp->n,nextbp->bundleheight,nextbp->n);
             iguana_mergeQ(coin,bp,nextbp);
+            bp = coin->bundles[0];
+            while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
+            {
+                printf("%d[%d] ",bp->bundleheight,bp->ramchain.numblocks);
+                bp = nextbp;
+            }
+            printf("bundles\n");
             return;
         }
         bp = nextbp;
