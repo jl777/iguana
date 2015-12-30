@@ -221,7 +221,7 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                 {
                     if ( block != 0 && block->copyflag != 0 )
                         printf("have data %d\n",bp->bundleheight+i);
-                    else if ( bp->requests[i] < 2 && strcmp(coin->symbol,"BTC") != 0 )
+                    else if ( strcmp(coin->symbol,"BTC") != 0 )
                         iguana_blockQ(coin,bp,i,blockhashes[i],0);
                 }
             }

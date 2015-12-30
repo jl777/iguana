@@ -458,9 +458,9 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         printf("(%d %d) ",i,bp->numrecv);
                     else printf("(%d -[%d]) ",i,lefti);
                 }
-                if ( bp->numrecv > bp->n-2 && lefti >= 0 && lefti < bp->n )
+                if ( (rand() % 100) == 0 && bp->numrecv > bp->n-2 && lefti >= 0 && lefti < bp->n )
                 {
-                    printf("remainder issue %d:%d %s\n",bp->hdrsi,lefti,bits256_str(str,bp->hashes[lefti]));
+                    //printf("remainder issue %d:%d %s\n",bp->hdrsi,lefti,bits256_str(str,bp->hashes[lefti]));
                     iguana_blockQ(coin,bp,lefti,bp->hashes[lefti],1);
                 }
                 if ( bp->numrecv == bp->n && bp->emitfinish == 0 )
