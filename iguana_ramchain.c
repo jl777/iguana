@@ -940,7 +940,7 @@ int32_t iguana_ramchain_iterate(struct iguana_info *coin,struct iguana_ramchain 
     }
     for (ramchain->H.txidind=rdata->firsti; ramchain->H.txidind<rdata->numtxids; ramchain->H.txidind++)
     {
-        if ( 1 && ramchain->expanded != 0 && dest != 0 )
+        if ( 0 && ramchain->expanded != 0 && dest != 0 )
             printf("ITER TXID.%d -> dest.%p desttxid.%d dest->hashmem.%p\n",ramchain->H.txidind,dest,dest!=0?dest->H.txidind:0,dest!=0?dest->hashmem:0);
         tx = &T[ramchain->H.txidind];
         if ( iguana_ramchain_addtxid(coin,RAMCHAIN_ARG,tx->txid,tx->numvouts,tx->numvins) == 0 )
@@ -1298,7 +1298,7 @@ int32_t iguana_ramchain_expandedsave(struct iguana_info *coin,RAMCHAIN_FUNC,stru
             }
             iguana_ramchain_free(mapchain,cmpflag);
         }
-        iguana_memreset(hashmem);
+        iguana_mempurge(hashmem);
     }
     return(retval);
 }
@@ -1443,6 +1443,7 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
     RAMCHAIN_DESTDECLARE; struct iguana_memspace HASHMEM,HASHMEMA,HASHMEMB;
     uint32_t now = (uint32_t)time(NULL); char str[65];
     struct iguana_ramchain _A,_B,*A,*B,R,newchain,*dest = &R; int32_t err,retval = -1,firsti = 1;
+    memset(mem,0,sizeof(*mem));
     memset(&HASHMEMA,0,sizeof(HASHMEMA));
     iguana_meminit(&HASHMEMA,"hashmemA",0,iguana_hashmemsize(bp->ramchain.H.txidind,bp->ramchain.H.unspentind,bp->ramchain.H.spendind,bp->ramchain.pkind,bp->ramchain.externalind) + 4096,0);
     memset(&HASHMEMB,0,sizeof(HASHMEMB));
