@@ -1511,7 +1511,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
 {
     static struct iguana_bundle *lastbps[8];
     struct iguana_bundle *bp,*nextbp; int32_t i,flag = 0;
-    if ( coin->bundlescount <= 0 || coin->merging < sizeof(lastbps)/sizeof(*lastbps) )
+    if ( coin->bundlescount <= 0 || coin->merging >= sizeof(lastbps)/sizeof(*lastbps) )
         return;
     bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
