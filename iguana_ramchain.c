@@ -1483,8 +1483,8 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             printf("depth.%d ht.%d fsize.%s MERGED %d[%d] and %d[%d] lag.%d elapsed.%ld bp.%d -> %d\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),A->height,A->numblocks,B->height,B->numblocks,now-starttime,time(NULL)-now,bp->bundleheight,nextbp->bundleheight);
             iguana_mergefree(mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
             bp->mergefinish = 0;
-            nextbp->mergefinish = (uint32_t)time(NULL);
-            bp->nextbp = 0;//nextbp->nextbp;
+            nextbp->mergefinish = 0;//(uint32_t)time(NULL);
+            bp->nextbp = nextbp->nextbp;
             newchain.hashmem = 0;
             retval = 0;
             nextbp->ramchain = bp->ramchain = newchain;
@@ -1504,7 +1504,6 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
 
 void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next hash2
 {
-    static struct iguana_bundle *lastbp;
     struct iguana_bundle *bp,*nextbp,*A,*B; int64_t total = 0; int32_t flag = 0;
     if ( coin->bundlescount <= 0 )
         return;
@@ -1512,7 +1511,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
     bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
-        if ( bp != lastbp && nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
+        if ( nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
         {
             if ( total == 0 || (bp->ramchain.datasize + nextbp->ramchain.datasize) < total )
             {
