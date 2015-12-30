@@ -109,8 +109,9 @@ bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)
 int32_t iguana_savehdrs(struct iguana_info *coin)
 {
     int32_t height,iter,i,n,retval = 0; char fname[512],shastr[65],tmpfname[512],str[65],oldfname[512];
-    bits256 hash2,sha256all,hashes[500]; FILE *fp; struct sha256_vstate shastate;
+    bits256 hash2,sha256all,*hashes; FILE *fp; struct sha256_vstate shastate;
     n = coin->blocks.hwmchain.height + 1;
+    hashes = mycalloc('h',coin->chain->bundlesize,sizeof(*hashes));
     if ( 0 )
     {
         printf("start savehdrs calc\n");
@@ -156,7 +157,7 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
                 if ( i == coin->chain->bundlesize )
                     vcalc_sha256(shastr,sha256all.bytes,hashes[0].bytes,sizeof(*hashes) * coin->chain->bundlesize);
                 else shastr[0] = 0;
-                for (iter=0; iter<2; iter++)
+                for (iter=0; iter<1; iter++)
                 {
                     hash2 = iguana_blockhash(coin,height+iter);
                     if ( bits256_nonz(hash2) > 0 )
@@ -182,15 +183,18 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
             iguana_copyfile(tmpfname,fname,1);
         } else fclose(fp);
     }
+    myfree(hashes,coin->chain->bundlesize * sizeof(*hashes));
     return(retval);
 }
 
 void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
 {
-    int32_t j,k,m,c,height,flag,bundlei,bundleheight = -1; char checkstr[1024],line[1024]; bits256 zero;
-    struct iguana_peer *addr; struct iguana_bundle *bp; bits256 hash2,bundlehash2; struct iguana_block *block;
+    int32_t j,k,m,c,height,flag,bundlei,bundleheight = -1; char checkstr[1024],line[1024];
+    struct iguana_peer *addr; struct iguana_bundle *bp; bits256 allhash,hash2,zero;
+    struct iguana_block *block;
     m = flag = 0;
     memset(&zero,0,sizeof(zero));
+    allhash = zero;
     while ( fgets(line,sizeof(line),fp) > 0 )
     {
         j = (int32_t)strlen(line) - 1;
@@ -225,53 +229,41 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                     height = (height * 10) + (line[k] - '0');
                 else break;
             }
-            printf("parseline: k.%d %d height.%d m.%d bundlesize.%d\n",k,line[k],height,m,coin->chain->bundlesize);
+            //printf("parseline: k.%d %d height.%d m.%d bundlesize.%d (%s)\n",k,line[k],height,m,coin->chain->bundlesize,&line[k+1+65]);// + strlen(line+k+1)]);
             if ( line[k] == ' ' )
             {
                 decode_hex(hash2.bytes,sizeof(hash2),line+k+1);
-                init_hexbytes_noT(checkstr,hash2.bytes,sizeof(hash2));
-                if ( strcmp(checkstr,line+k+1) == 0 )
+                if ( line[k+1 + 65] != 0 )
                 {
-                    if ( (height % coin->chain->bundlesize) == 0 )
+                    decode_hex(allhash.bytes,sizeof(allhash),line+k+1 + 64 + 1);
+                    init_hexbytes_noT(checkstr,allhash.bytes,sizeof(allhash));
+                    if ( strcmp(checkstr,line+k+1 + 64 + 1) == 0 )
                     {
-                        if ( height > coin->blocks.maxbits-coin->chain->bundlesize*10 )
-                            iguana_recvalloc(coin,height + coin->chain->bundlesize*100);
-                        if ( flag != 0 )
+                        init_hexbytes_noT(checkstr,hash2.bytes,sizeof(hash2));
+                        //char str[65],str2[65]; printf(">>>> bundle.%d got (%s)/(%s) allhash.(%s)\n",height,bits256_str(str,hash2),checkstr,bits256_str(str2,allhash));
+                        if ( (bp= iguana_bundlecreate(coin,&bundlei,height,hash2,allhash)) != 0 )
                         {
-                            if ( (bp= iguana_bundlecreate(coin,&bundlei,height,bundlehash2)) != 0 )
-                            {
-                                char str[65];
-                                bits256_str(str,bundlehash2);
-                                printf("add bundle.%d:%d (%s) %p\n",bundleheight,bp->hdrsi,str,bp);
-                                bp->bundleheight = bundleheight;
-                                if ( (block= iguana_blockfind(coin,bundlehash2)) != 0 )
-                                    block->mainchain = 1, block->height = bundleheight;
-                                flag = 0;
-                            }
+                            bp->bundleheight = height;
+                            if ( (block= iguana_blockfind(coin,hash2)) != 0 )
+                                block->mainchain = 1, block->height = height;
                         }
-                        bundlehash2 = hash2;
-                        bundleheight = height;
-                        flag = 1;
                     }
-                    else if ( (height % coin->chain->bundlesize) == 1 && height == bundleheight+1 )
+                }
+                init_hexbytes_noT(checkstr,hash2.bytes,sizeof(hash2));
+                if ( strncmp(checkstr,line+k+1,64) == 0 )
+                {
+                    if ( (height % coin->chain->bundlesize) == 1 )
                     {
-                        if ( (bp= iguana_bundlecreate(coin,&bundlei,height-1,bundlehash2)) != 0 )
+                        if ( (bp= coin->bundles[height/coin->chain->bundlesize]) != 0 )
                         {
                             if ( iguana_bundlehash2add(coin,0,bp,1,hash2) == 0 )
                             {
-                                char str[65],str2[65];
-                                bits256_str(str,bundlehash2);
-                                bits256_str(str2,hash2);
-                                printf("add bundle.%d:%d (%s) %s %p\n",bundleheight,bp->hdrsi,str,str2,bp);
-                                if ( (block= iguana_blockfind(coin,bundlehash2)) != 0 )
-                                    block->mainchain = 1, block->height = bundleheight;
+                                //printf("add bundle.%d:%d (%s)\n",bundleheight,bp->hdrsi,bits256_str(str,hash2));
                                 if ( (block= iguana_blockfind(coin,hash2)) != 0 )
                                     block->mainchain = 1, block->height = bundleheight+1;
-                                flag = 0;
                             }
                         }
                     }
-                    iguana_blockhashset(coin,height,hash2,100);
                 }
             }
         }

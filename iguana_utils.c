@@ -674,12 +674,12 @@ int32_t _unhex(char c)
     return(-1);
 }
 
-int32_t is_hexstr(char *str)
+int32_t is_hexstr(char *str,int32_t n)
 {
     int32_t i;
     if ( str == 0 || str[0] == 0 )
         return(0);
-    for (i=0; str[i]!=0; i++)
+    for (i=0; str[i]!=0&&(i<n||n==0); i++)
         if ( _unhex(str[i]) < 0 )
             return(0);
     return(1);
@@ -701,7 +701,7 @@ int32_t decode_hex(unsigned char *bytes,int32_t n,char *hex)
 {
     int32_t adjust,i = 0;
     //printf("decode.(%s)\n",hex);
-    if ( is_hexstr(hex) == 0 )
+    if ( is_hexstr(hex,64) == 0 )
     {
         memset(bytes,0,n);
         return(n);

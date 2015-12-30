@@ -19,13 +19,14 @@
 //#define IGUANA_DISABLEPEERS
 
 #define IGUANA_MAXPENDHDRS 1
-#define _IGUANA_MAXPENDING 8    //64
+#define _IGUANA_MAXPENDING 3    //64
 #define _IGUANA_MAXBUNDLES 8 
 #define IGUANA_MAXACTIVEBUNDLES 32
 #define IGUANA_MAXFILES 4096
 #define IGUANA_BUNDLELOOP 1000
 #define IGUANA_RPCPORT 7778
- 
+#define IGUANA_MAXRAMCHAINSIZE (1024L * 1024L * 1024L)
+
 #define IGUANA_MAPHASHTABLES 1
 #define IGUANA_DEFAULTRAM 4
 #define IGUANA_MAXRECVCACHE ((int64_t)1024L * 1024 * 1024L * 10)
@@ -324,7 +325,7 @@ struct iguana_block
     double PoW; // NOT consensus safe, for estimation purposes only
     int32_t height; uint32_t timestamp,nonce,bits,version,ipbits;
     uint32_t bundlei:11,hdrsi:21,recvlen:24,havebundle:1,tbd:7;
-    uint16_t numvouts,numvins,pad,txn_count:14,mainchain:1,valid:1;
+    uint16_t numvouts,numvins,numhashes:15,havehashes:1,txn_count:14,mainchain:1,valid:1;
     UT_hash_handle hh;
     void *rawdata;
 } __attribute__((packed));
@@ -362,7 +363,7 @@ struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; u
 struct iguana_unspent20 { uint64_t value:63,p2sh:1; uint32_t txidind; uint8_t rmd160[20]; } __attribute__((packed));
 
 struct iguana_spend256 { bits256 prevhash2; uint32_t spendind:16,prevout:16,bundlei:16,hdrsi:15,diffsequence:1; } __attribute__((packed));
-struct iguana_spend { uint32_t spendtxidind,prevspendind; int16_t prevout; uint16_t bundlei:14,external:1,diffsequence:1; } __attribute__((packed));
+struct iguana_spend { uint32_t spendtxidind,prevspendind; int16_t prevout; uint16_t tbd,hdrsi,bundlei:14,external:1,diffsequence:1; } __attribute__((packed));
 
 struct iguana_pkhash { uint8_t rmd160[20]; uint32_t firstunspentind,flags:23,type:8,ps2h:1; } __attribute__((packed));
 
@@ -404,7 +405,7 @@ struct iguana_ramchain_hdr
 
 struct iguana_ramchain
 {
-    struct iguana_ramchain_hdr H;
+    struct iguana_ramchain_hdr H; bits256 lasthash2;
     uint32_t numblocks:31,expanded:1,pkind,externalind,height;
     struct iguana_kvitem *txids,*pkhashes;
     struct iguana_memspace *hashmem; long filesize; void *fileptr;
@@ -447,7 +448,7 @@ struct iguana_bloom16 { uint8_t hash2bits[65536 / 8]; };
 
 struct iguana_bundle
 {
-    struct queueitem DL; struct iguana_info *coin;
+    struct queueitem DL; struct iguana_info *coin; struct iguana_bundle *nextbp;
     struct iguana_block block;
     struct iguana_bloom16 bloom;
     uint32_t issuetime,hdrtime,emitfinish,mergefinish,purgetime,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
@@ -457,7 +458,7 @@ struct iguana_bundle
     uint32_t ipbits[IGUANA_MAXBUNDLESIZE+1];
     uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1],requests[IGUANA_MAXBUNDLESIZE+1];
     //struct iguana_block *prevblock,*blocks[IGUANA_MAXBUNDLESIZE],*nextblock;
-    bits256 prevbundlehash2,hashes[IGUANA_MAXBUNDLESIZE+1],nextbundlehash2;
+    bits256 prevbundlehash2,hashes[IGUANA_MAXBUNDLESIZE+1],nextbundlehash2,allhash;
     struct iguana_ramchain ramchain;
 };
 
@@ -632,7 +633,7 @@ void iguana_coins(void *arg);
 int32_t iguana_savehdrs(struct iguana_info *coin);
 
 // hdrs
-struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bundleip,int32_t bundleheight,bits256 bundlehash2);
+struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bundleip,int32_t bundleheight,bits256 bundlehash2,bits256 allhash);
 struct iguana_block *iguana_updatehdrs(struct iguana_info *coin,int32_t *newhwmp,struct iguana_block *block,bits256 prevhash2,bits256 hash2);
 void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp);
 void iguana_gotheadersM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_block *blocks,int32_t n);
@@ -712,7 +713,7 @@ void *iguana_filestr(int64_t *allocsizep,char *fname);
 
 double milliseconds(void);
 void randombytes(unsigned char *x,long xlen);
-int32_t is_hexstr(char *str);
+int32_t is_hexstr(char *str,int32_t n);
 void iguana_initQ(queue_t *Q,char *name);
 void iguana_emitQ(struct iguana_info *coin,struct iguana_bundle *bp);
 void iguana_txdataQ(struct iguana_info *coin,struct iguana_peer *addr,FILE *fp,long fpos,int32_t datalen);
@@ -739,6 +740,7 @@ struct iguana_txblock *iguana_ramchainptrs(struct iguana_txid **Tptrp,struct igu
 int32_t iguana_ramchainsave(struct iguana_info *coin,struct iguana_ramchain *ramchain);
 int32_t iguana_ramchainfree(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchain);
 struct iguana_ramchain *iguana_ramchainmergeHT(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_ramchain *ramchains[],int32_t n,struct iguana_bundle *bp);
+void iguana_ramchainmerge(struct iguana_info *coin);
 
 int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2,int32_t priority);
 void iguana_blockcopy(struct iguana_info *coin,struct iguana_block *block,struct iguana_block *origblock);
@@ -747,9 +749,9 @@ extern queue_t helperQ;
 extern const char *Hardcoded_coins[][3];
 void iguana_main(void *arg);
 extern struct iguana_info *Coins[64];
-int32_t iguana_peerfname(struct iguana_info *coin,int32_t *hdrsip,char *dirname,char *fname,uint32_t ipbits,bits256 hash2);
+int32_t iguana_peerfname(struct iguana_info *coin,int32_t *hdrsip,char *dirname,char *fname,uint32_t ipbits,bits256 hash2,int32_t numblocks);
 struct iguana_txblock *iguana_peertxdata(struct iguana_info *coin,int32_t *bundleip,char *fname,struct iguana_memspace *mem,uint32_t ipbits,bits256 hash2);
-int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *dirname,char *fname,bits256 hash2);
+int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr,char *dirname,char *fname,bits256 hash2,int32_t numblocks);
 struct iguana_ramchain *iguana_ramchainset(struct iguana_info *coin,struct iguana_ramchain *ramchain,struct iguana_txblock *txdata);
 void *iguana_iAddriterator(struct iguana_info *coin,struct iguana_iAddr *iA);
 long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen);

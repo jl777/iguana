@@ -315,7 +315,8 @@ struct iguana_block *_iguana_chainlink(struct iguana_info *coin,struct iguana_bl
                 coin->blocks.maxblocks = (block->height + 1);
                 coin->blocks.hwmchain = *block;
                 //printf("[%s] <- ht.%d\n",bits256_str(str,block->hash2),coin->blocks.hwmheight);
-                char str[65],str2[65];
+                char str[65],str2[65]; bits256 zero;
+                memset(&zero,0,sizeof(zero));
                 bits256_str(str,newblock->hash2);
                 if ( hash2p != 0 )
                     bits256_str(str2,*hash2p);
@@ -323,7 +324,7 @@ struct iguana_block *_iguana_chainlink(struct iguana_info *coin,struct iguana_bl
                 if ( (block->height % 1000) == 0 )
                     printf("EXTENDMAIN %s %d <- (%s) n.%u max.%u PoW %f numtx.%d valid.%d\n",str,block->height,str2,hwmchain->height+1,coin->blocks.maxblocks,block->PoW,block->txn_count,block->valid);
                 if ( (block->height % coin->chain->bundlesize) == 0 )
-                    iguana_bundlecreate(coin,&bundlei,block->height,block->hash2);
+                    iguana_bundlecreate(coin,&bundlei,block->height,block->hash2,zero);
                 else
                 {
                     struct iguana_bundle *bp;
