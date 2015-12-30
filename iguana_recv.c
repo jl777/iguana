@@ -705,18 +705,26 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
             }
         }
     }
+    int32_t priority;
     if ( addr->rank != 1 && req == 0 )
+    {
+        priority = 0;
         req = queue_dequeue(&coin->blocksQ,0);
+    } else priority = 1;
     if ( req != 0 )
     {
         hash2 = req->hash2;
         height = req->height;
         if ( 1 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->ipbits[req->bundlei] != 0 )
         {
-            //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
+            if ( priority != 0 )
+                printf("SKIP %p[%d] %d\n",bp,bp!=0?bp->bundleheight:-1,req->bundlei);
         }
         else
         {
+            char str[65];
+            if ( priority != 0 )
+                printf("priority issue.%s\n",bits256_str(str,hash2));
             iguana_sendblockreq(coin,addr,req->bp,req->bundlei,hash2);
         }
         flag++;
