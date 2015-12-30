@@ -298,7 +298,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 {
                     //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
-                    //if ( strcmp(coin->symbol,"BTC") != 0 )
+                    if ( strcmp(coin->symbol,"BTC") != 0 )
                         iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
                 }
             }
