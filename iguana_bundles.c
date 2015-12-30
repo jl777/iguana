@@ -200,8 +200,11 @@ int32_t iguana_bundlehash2add(struct iguana_info *coin,struct iguana_block **blo
             return(-2);
         }*/
         bundlesize = coin->chain->bundlesize;
-        if ( bp->n >= bundlesize )
+        if ( bp->n > bundlesize )
+        {
+            printf("bp->n.%d is too big\n",bp->n);
             return(0);
+        }
         if ( bundlei >= bp->n )
             bp->n = bundlesize;//(bundlei < bundlesize-1) ? bundlesize : (bundlei + 1);
         if ( (setval= iguana_hash2set(coin,"blockadd",bp,bundlei,hash2)) == 0 )
@@ -213,7 +216,7 @@ int32_t iguana_bundlehash2add(struct iguana_info *coin,struct iguana_block **blo
             }
             else
             {
-char str[65]; printf(">>>>>>>>>>>>>> bundlehash2.(%s) ht.(%d %d)\n",bits256_str(str,hash2),bp->bundleheight,bundlei);
+//char str[65]; printf(">>>>>>>>>>>>>> bundlehash2.(%s) ht.(%d %d)\n",bits256_str(str,hash2),bp->bundleheight,bundlei);
                 block->hdrsi = bp->hdrsi;
                 block->bundlei = bundlei;
                 block->havebundle = 1;
@@ -365,9 +368,10 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         missing = bundlei;
                     continue;
                 }
+                block = iguana_blockfind(coin,bp->hashes[bundlei]);
                 if ( 0 && missing >= 0 && missing < bp->n )
                 {
-                    if ( (block= iguana_blockfind(coin,bp->hashes[bundlei])) != 0 && bits256_nonz(block->prev_block) > 0 )
+                    if ( block != 0 && bits256_nonz(block->prev_block) > 0 )
                     {
                         iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
                         printf("issue missing block hdrsi.%d:%d\n",bp->hdrsi,bundlei-1);
@@ -377,6 +381,10 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 if ( bp->requests[bundlei] < minrequests )
                     minrequests = bp->requests[bundlei];
                 bp->numhashes++;
+                if ( bp->recvlens[bundlei] == 0 )
+                    bp->recvlens[bundlei] = block->recvlen;
+                if ( bp->ipbits[bundlei] == 0 )
+                    bp->ipbits[bundlei] = block->ipbits;
                 if ( bp->recvlens[bundlei] != 0 )
                 {
                     numrecv++;
@@ -395,6 +403,17 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     lefti = bundlei;
                     if ( bp->issued[bundlei] > SMALLVAL )
                         numissued++;
+                }
+                if ( bp->ipbits[bundlei] == 0 && block->copyflag != 0 && block->rawdata != 0 )
+                {
+                    struct iguana_cacheptr *ptr;
+                    ptr = mycalloc('c',1,sizeof(*ptr) + block->recvlen);
+                    ptr->allocsize = (int32_t)(sizeof(*ptr) + block->recvlen);
+                    ptr->data = block->rawdata;
+                    ptr->recvlen = block->recvlen;
+                    block->rawdata = 0;
+                    queue_enqueue("cacheQ",&coin->cacheQ,&ptr->DL,0);
+                    printf("CACHEQ[%d]\n",block->recvlen);
                 }
              }
             bp->minrequests = minrequests;

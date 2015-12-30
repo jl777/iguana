@@ -318,6 +318,8 @@ struct iguana_iAddr
     int32_t status,height,numkilled,numconnects;
 };
 
+struct iguana_cacheptr { struct queueitem DL; int32_t allocsize,recvlen; uint8_t *data; };
+
 // iguana blocks
 struct iguana_block
 {
@@ -325,7 +327,7 @@ struct iguana_block
     double PoW; // NOT consensus safe, for estimation purposes only
     int32_t height; uint32_t timestamp,nonce,bits,version,ipbits;
     uint32_t bundlei:11,hdrsi:21,recvlen:24,havebundle:1,tbd:7;
-    uint16_t numvouts,numvins,numhashes:15,havehashes:1,txn_count:14,mainchain:1,valid:1;
+    uint16_t numvouts,numvins,numhashes:14,copyflag:1,havehashes:1,txn_count:14,mainchain:1,valid:1;
     UT_hash_handle hh;
     void *rawdata;
 } __attribute__((packed));
@@ -467,8 +469,8 @@ struct iguana_bundlereq
     struct queueitem DL; struct iguana_info *coin; int32_t type;
     struct iguana_peer *addr; struct iguana_block *blocks,block; bits256 *hashes;
     struct iguana_txdatabits txdatabits;
-    int32_t allocsize,datalen,n,numtx; uint32_t ipbits;
-    uint8_t serialized[];
+    int32_t allocsize,datalen,n,recvlen,numtx; uint32_t ipbits;
+    uint8_t copyflag,serialized[];
 };
 
 struct iguana_info
@@ -491,7 +493,7 @@ struct iguana_info
 
     //struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     struct iguana_memspace TXMEM;
-    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,TerminateQ;
+    queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,TerminateQ,cacheQ;
     double parsemillis,avetime; uint32_t Launched[8],Terminated[8];
     portable_mutex_t peers_mutex,blocks_mutex;
     struct iguana_blocks blocks;

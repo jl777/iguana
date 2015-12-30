@@ -436,9 +436,44 @@ int32_t iguana_recv(int32_t usock,uint8_t *recvbuf,int32_t len)
     return(len);
 }
 
+void iguana_parsebuf(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msghdr *H,uint8_t *buf,int32_t len)
+{
+    struct iguana_msghdr checkH;
+    memset(&checkH,0,sizeof(checkH));
+    iguana_sethdr(&checkH,coin->chain->netmagic,H->command,buf,len);
+    if ( memcmp(&checkH,H,sizeof(checkH)) == 0 )
+    {
+        //if ( strcmp(addr->ipaddr,"127.0.0.1") == 0 )
+        //printf("%s parse.(%s) len.%d\n",addr->ipaddr,H.command,len);
+        //printf("addr->dead.%u\n",addr->dead);
+        if ( strcmp(H->command,"block") == 0 || strcmp(H->command,"tx") == 0 )
+        {
+            if ( addr->RAWMEM.ptr == 0 )
+                iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE,0);
+            if ( addr->TXDATA.ptr == 0 )
+                iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE,0);
+            if ( addr->HASHMEM.ptr == 0 )
+                iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,256,0);//IGUANA_MAXPACKETSIZE*16,0);
+            //printf("Init %s memory %p %p %p\n",addr->ipaddr,addr->RAWMEM.ptr,addr->TXDATA.ptr,addr->HASHMEM.ptr);
+        }
+        if ( iguana_parser(coin,addr,&addr->RAWMEM,&addr->TXDATA,&addr->HASHMEM,H,buf,len) < 0 || addr->dead != 0 )
+        {
+            printf("%p addr->dead.%d or parser break at %u\n",&addr->dead,addr->dead,(uint32_t)time(NULL));
+            addr->dead = (uint32_t)time(NULL);
+        }
+        else
+        {
+            addr->numpackets++;
+            addr->totalrecv += len;
+            coin->totalrecv += len, coin->totalpackets++;
+            //printf("next iter.(%s) numreferrals.%d numpings.%d\n",addr->ipaddr,addr->numreferrals,addr->numpings);
+        }
+    } else printf("header error from %s\n",addr->ipaddr);
+}
+
 void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_peer *addr,uint8_t *_buf,int32_t maxlen)
 {
-    int32_t len,recvlen; void *buf = _buf; struct iguana_msghdr H,checkH;
+    int32_t len,recvlen; void *buf = _buf; struct iguana_msghdr H;
     if ( coin->peers.shuttingdown != 0 || addr->dead != 0 )
         return;
     //printf("%p got.(%s) from %s | usock.%d ready.%u dead.%u\n",addr,H.command,addr->ipaddr,addr->usock,addr->ready,addr->dead);
@@ -468,36 +503,7 @@ void _iguana_processmsg(struct iguana_info *coin,int32_t usock,struct iguana_pee
                     return;
                 }
             }
-            memset(&checkH,0,sizeof(checkH));
-            iguana_sethdr(&checkH,coin->chain->netmagic,H.command,buf,len);
-            if ( memcmp(&checkH,&H,sizeof(checkH)) == 0 )
-            {
-                //if ( strcmp(addr->ipaddr,"127.0.0.1") == 0 )
-                //printf("%s parse.(%s) len.%d\n",addr->ipaddr,H.command,len);
-                //printf("addr->dead.%u\n",addr->dead);
-                if ( strcmp(H.command,"block") == 0 || strcmp(H.command,"tx") == 0 )
-                {
-                    if ( addr->RAWMEM.ptr == 0 )
-                        iguana_meminit(&addr->RAWMEM,addr->ipaddr,0,IGUANA_MAXPACKETSIZE,0);
-                    if ( addr->TXDATA.ptr == 0 )
-                        iguana_meminit(&addr->TXDATA,"txdata",0,IGUANA_MAXPACKETSIZE,0);
-                    if ( addr->HASHMEM.ptr == 0 )
-                        iguana_meminit(&addr->HASHMEM,"HASHPTRS",0,256,0);//IGUANA_MAXPACKETSIZE*16,0);
-                    //printf("Init %s memory %p %p %p\n",addr->ipaddr,addr->RAWMEM.ptr,addr->TXDATA.ptr,addr->HASHMEM.ptr);
-                }
-                if ( iguana_parser(coin,addr,&addr->RAWMEM,&addr->TXDATA,&addr->HASHMEM,&H,buf,len) < 0 || addr->dead != 0 )
-                {
-                    printf("%p addr->dead.%d or parser break at %u\n",&addr->dead,addr->dead,(uint32_t)time(NULL));
-                    addr->dead = (uint32_t)time(NULL);
-                }
-                else
-                {
-                    addr->numpackets++;
-                    addr->totalrecv += len;
-                    coin->totalrecv += len, coin->totalpackets++;
-                    //printf("next iter.(%s) numreferrals.%d numpings.%d\n",addr->ipaddr,addr->numreferrals,addr->numpings);
-                }
-            } else printf("header error from %s\n",addr->ipaddr);
+            iguana_parsebuf(coin,addr,&H,buf,len);
             if ( buf != _buf )
                 myfree(buf,len);
             return;
@@ -920,7 +926,7 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
-    struct pollfd fds; uint8_t *buf,serialized[64];
+    struct pollfd fds; struct iguana_cacheptr *ptr; uint8_t *buf,serialized[64];
     int32_t bufsize,flag,timeout = 10;//coin->MAXPEERS/64+1;
 #ifdef IGUANA_PEERALLOC
     int32_t i;  int64_t remaining; struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
@@ -949,6 +955,17 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     //printf("after send version\n");
     while ( addr->usock >= 0 && addr->dead == 0 && coin->peers.shuttingdown == 0 )
     {
+        if ( (ptr= queue_dequeue(&coin->cacheQ,0)) != 0 )
+        {
+            if ( ptr->data != 0 )
+            {
+                printf("CACHE parse[%d]\n",ptr->recvlen);
+                iguana_parsebuf(coin,addr,(void *)ptr->data,&ptr->data[sizeof(struct iguana_msghdr)],(int32_t)(ptr->recvlen-sizeof(struct iguana_msghdr)));
+                myfree(ptr->data,ptr->recvlen);
+            }
+            myfree(ptr,ptr->allocsize);
+            continue;
+        }
         flag = 0;
         memset(&fds,0,sizeof(fds));
         fds.fd = addr->usock;
