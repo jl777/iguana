@@ -185,7 +185,7 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
                     }
                     if ( i == 0 )
                     {
-                        printf("SET HEIGHT.%d j.%d\n",origheight,j);
+                        //printf("SET HEIGHT.%d j.%d\n",origheight,j);
                         if ( (bp= coin->bundles[origheight / coin->chain->bundlesize]) != 0 )
                         {
                             iguana_bundlehash2add(coin,0,bp,origheight % coin->chain->bundlesize,block->hash2);
@@ -194,7 +194,7 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
                             prev = block->hh.prev;
                             prev->hh.next = block;
                         }
-                    } else printf("break at i.%d for j.%d origheight.%d\n",i,j,origheight);
+                    } //else printf("break at i.%d for j.%d origheight.%d\n",i,j,origheight);
                     break;
                 }
             }
@@ -238,7 +238,7 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                     block1 = block;
                 if ( bits256_nonz(block->prev_block) == 0 )
                 {
-                    if ( block->ipbits == 0 )
+                    if ( block->recvlen == 0 )
                     {
                         //printf("issue %d\n",bp->bundleheight+j);
                         iguana_blockQ(coin,0,-1,blockhashes[j],0);
