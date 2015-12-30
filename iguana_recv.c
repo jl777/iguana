@@ -718,7 +718,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         height = req->height;
         if ( 1 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->ipbits[req->bundlei] != 0 )
         {
-            if ( priority != 0 )
+            if ( 0 && priority != 0 )
                 printf("SKIP %p[%d] %d\n",bp,bp!=0?bp->bundleheight:-1,req->bundlei);
         }
         else
