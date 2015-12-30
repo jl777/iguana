@@ -1518,6 +1518,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
             char str[65]; printf("start merge %d[%d] + %d[%d] %s\n",bp->bundleheight,bp->ramchain.numblocks,nextbp->bundleheight,nextbp->ramchain.numblocks,mbstr(str,bp->ramchain.datasize + nextbp->ramchain.datasize));
             lastbp = bp;
             iguana_mergeQ(coin,bp,nextbp);
+            break;
         }
         bp = nextbp;
     }
