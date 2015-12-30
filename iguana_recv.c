@@ -158,7 +158,7 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
             if ( (next= block->hh.next) != 0 && bits256_nonz(next->hash2) > 0 )
             {
                 //printf("autoreq %d\n",block->height);
-                iguana_blockQ(coin,0,-1,next->hash2,1);
+                iguana_blockQ(coin,coin->bundles[(block->height+1)/coin->chain->bundlesize],(block->height+1)%coin->chain->bundlesize,next->hash2,1);
             }
         }
         else if ( block->height < 0 )
@@ -222,8 +222,6 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                     else iguana_blockQ(coin,bp,i,blockhashes[i],0);
                 }
             }
-            if ( num >= coin->chain->bundlesize+1 )
-                iguana_blockQ(coin,0,-1,blockhashes[coin->chain->bundlesize],1);
             return(0);
         }
     }
@@ -283,12 +281,20 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 block->havebundle = 1;
                 //iguana_hash2set(coin,"blockadd",bp,block->bundlei,block->hash2);
                 iguana_bundlehash2add(coin,0,bp,bundlei,block->hash2);
-                if ( bundlei > 0 )
-                    iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
-                else if ( bundlei == 0 )
+                if ( bundlei == 0 )
                 {
-                    if ( (bp= coin->bundles[bp->hdrsi-1]) != 0 )
+                    if ( bp->hdrsi > 0 && (bp= coin->bundles[bp->hdrsi-1]) != 0 && bp->ipbits[coin->chain->bundlesize-1] == 0 )
+                    {
+                        printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
+                        iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
+                    }
+                }
+                else if ( bp->ipbits[bundlei-1] == 0 )
+                {
+                    //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
+                    iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
+                    iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
                 }
             }
         }
@@ -304,9 +310,11 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             }
             if ( bundlei == coin->chain->bundlesize-1 )
             {
-                //char str[65]; printf("CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,block->hash2));
-                iguana_blockQ(coin,0,-1,block->hash2,1);
-                iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,block->hash2,zero);
+                if ( coin->bundlescount < bp->hdrsi+1 )
+                {
+                    char str[65]; printf("CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,block->hash2));
+                    iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,block->hash2,zero);
+                }
             }
             else if ( bundlei < coin->chain->bundlesize-1 )
             {
@@ -375,9 +383,9 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
     for (i=0; i<num; i++)
         if ( bits256_nonz(blockhashes[i]) > 0 )
             iguana_blockhashset(coin,-1,blockhashes[i],1);
-    //char str[65]; printf("got %d unmatched hashes %d:%d %s\n",num,bp==0?-1:bp->bundleheight,bundlei,bits256_str(str,blockhashes[1]));
     iguana_blockQ(coin,0,-1,blockhashes[1],1);
-    if ( (block= iguana_blockhashset(coin,-1,blockhashes[1],1)) != 0 && bits256_nonz(block->prev_block) == 0 && block->mainchain == 0 && num > 2 )
+    iguana_blockQ(coin,0,-1,blockhashes[num-1],1);
+    if ( (block= iguana_blockhashset(coin,-1,blockhashes[1],1)) != 0 && num > 2 )
     {
         if ( block->rawdata != 0 )
         {
@@ -385,10 +393,11 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
                 myfree(block->rawdata,block->recvlen), block->copyflag = 0;
             else myfree(block->rawdata,block->numhashes * sizeof(bits256));
         }
+        char str[65]; printf("got %d unmatched hashes %d:%d %s\n",num,bp==0?-1:bp->bundleheight,bundlei,bits256_str(str,blockhashes[1]));
         block->rawdata = blockhashes, block->numhashes = num, block->havehashes = 1;
         req->hashes = 0;
     }
-    if ( num >= coin->chain->bundlesize+1 )
+    if ( 0 && num >= coin->chain->bundlesize+1 )
     {
         char str[65]; bits256_str(str,blockhashes[coin->chain->bundlesize]);
         queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);
@@ -400,6 +409,18 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
 {
     struct iguana_bundle *bp=0; int32_t bundlei = -2; struct iguana_block *block; double duration;
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
+    if ( block != 0 )
+    {
+        block->recvlen = req->recvlen;
+        if ( bp == 0 && req->copyflag != 0 && block->rawdata == 0 && block->recvlen == 0 )
+        {
+            char str[65]; printf("%s copyflag.%d %d data %d %p\n",bits256_str(str,block->hash2),req->copyflag,block->height,req->recvlen,bp);
+            block->rawdata = mycalloc('n',1,block->recvlen);
+            memcpy(block->rawdata,req->serialized,block->recvlen);
+            block->copyflag = 1;
+        } else block->ipbits = req->ipbits;
+        //printf("datalen.%d ipbits.%x\n",datalen,req->ipbits);
+    } else printf("cant create block.%llx block.%p bp.%p bundlei.%d\n",(long long)origblock->hash2.txid,block,bp,bundlei);
     if ( bp != 0 && bundlei >= 0 )
     {
         if ( 0 && bp->requests[bundlei] > 2 )
@@ -419,19 +440,6 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
             }
         }
     }
-    if ( block != 0 )
-    {
-        if ( bp == 0 && req->copyflag != 0 && bp == 0 && block->rawdata == 0 && block->recvlen == 0 )
-        {
-            block->recvlen = req->recvlen;
-            char str[65]; printf("%s copyflag.%d %d data %d %p\n",bits256_str(str,block->hash2),req->copyflag,block->height,req->recvlen,block->hh.prev);
-            block->rawdata = mycalloc('n',1,block->recvlen);
-            memcpy(block->rawdata,req->serialized,block->recvlen);
-            block->copyflag = 1;
-        }
-        else block->ipbits = req->ipbits;
-        //printf("datalen.%d ipbits.%x\n",datalen,req->ipbits);
-    } else printf("cant create block.%llx block.%p bp.%p bundlei.%d\n",(long long)origblock->hash2.txid,block,bp,bundlei);
     return(req);
 }
 

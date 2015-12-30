@@ -1272,12 +1272,11 @@ int32_t iguana_ramchain_expandedsave(struct iguana_info *coin,RAMCHAIN_FUNC,stru
         memset(ramchain->A,0,sizeof(*ramchain->A) * ramchain->H.data->numpkinds);
         ramchain->H.unspentind = ramchain->H.spendind = ramchain->pkind = firsti;
         ramchain->externalind = 0;
-        //if ( (err= iguana_ramchain_iterate(coin,0,ramchain)) != 0 )
-        //    printf("ERROR.%d iterating presave ramchain hdrsi.%d\n",err,hdrsi);
-        //else
-        //    if ( (err= iguana_ramchain_verify(coin,ramchain)) != 0 )
-        //    printf("ERROR.%d verifying presave ramchain hdrsi.%d\n",err,hdrsi);
-        //else
+        if ( (err= iguana_ramchain_iterate(coin,0,ramchain)) != 0 )
+            printf("ERROR.%d iterating presave ramchain hdrsi.%d\n",err,hdrsi);
+        else if ( (err= iguana_ramchain_verify(coin,ramchain)) != 0 )
+            printf("ERROR.%d verifying presave ramchain hdrsi.%d\n",err,hdrsi);
+        else
             retval = 0;
         //printf("free dest hdrs.%d retval.%d\n",bp->hdrsi,retval);
         memset(&checkR,0,sizeof(checkR));
