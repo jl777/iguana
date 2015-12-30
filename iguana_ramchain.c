@@ -1521,6 +1521,7 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
     }
     if ( flag != 0 )
     {
+        bp = coin->bundles[0];
         while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
         {
             printf("%d[%d].%d ",bp->bundleheight,bp->ramchain.numblocks,bp->mergefinish!=0);
