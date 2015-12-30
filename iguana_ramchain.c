@@ -1508,13 +1508,16 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
 void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next hash2
 {
     static struct iguana_bundle *lastbp;
-    struct iguana_bundle *bp,*nextbp; int32_t flag = 0;
+    struct iguana_bundle *bp,*nextbp; int32_t j,flag = 0;
     if ( coin->bundlescount <= 0 )
         return;
     bp = coin->bundles[0];
+    j = 0;
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
     {
-        if ( bp != lastbp && nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
+        if ( j == 0 || bp == lastbp )
+            j = 1;
+        if ( j != 0 && bp != lastbp && nextbp != 0 && bp != 0 && bp->emitfinish > coin->starttime && nextbp->emitfinish > coin->starttime && bp->mergefinish == 0 && nextbp->mergefinish == 0 && bp->ramchain.datasize + nextbp->ramchain.datasize < IGUANA_MAXRAMCHAINSIZE )
         {
             bp->mergefinish = nextbp->mergefinish = 1;
             flag++;
@@ -1535,4 +1538,6 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
         }
         printf("bundles\n");
     }
+    else if ( bp == 0 || nextbp == 0 )
+        lastbp = 0;
 }
