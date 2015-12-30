@@ -1485,7 +1485,7 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             printf("error.%d ramchain_iterate B.%d\n",err,B->height);
         else if ( iguana_ramchain_expandedsave(coin,RAMCHAIN_DESTARG,&newchain,&HASHMEM,0) == 0 )
         {
-            printf("depth.%d ht.%d fsize.%s MERGED %d[%d] and %d[%d] lag.%d elapsed.%ld\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),A->height,A->numblocks,B->height,B->numblocks,now-starttime,time(NULL)-now);
+            printf("depth.%d ht.%d fsize.%s MERGED %d[%d] and %d[%d] lag.%d elapsed.%ld bp.%d -> %d\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),A->height,A->numblocks,B->height,B->numblocks,now-starttime,time(NULL)-now,bp->bundleheight,nextbp->bundleheight);
             iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
             bp->mergefinish = 0;
             nextbp->mergefinish = (uint32_t)time(NULL);
@@ -1493,6 +1493,13 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             newchain.hashmem = 0;
             retval = 0;
             nextbp->ramchain = bp->ramchain = newchain;
+            bp = coin->bundles[0];
+            while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
+            {
+                printf("%d[%d].%d ",bp->bundleheight,bp->ramchain.numblocks,bp->mergefinish);
+                bp = nextbp;
+            }
+            printf("new bundles\n");
         }
         else
         {
