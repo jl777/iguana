@@ -192,9 +192,8 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
             if ( (bp= ptr->bp) != 0 && (nextbp= ptr->nextbp) != 0 )
             {
                 bp->mergefinish = nextbp->mergefinish = (uint32_t)time(NULL);
-                if ( iguana_bundlemergeHT(coin,mem,memB,bp,nextbp,ptr->starttime) == 0 )
-                    bp->mergefinish = (uint32_t)time(NULL);
-                else bp->mergefinish = nextbp->mergefinish = 0;
+                if ( iguana_bundlemergeHT(coin,mem,memB,bp,nextbp,ptr->starttime) < 0 )
+                    bp->mergefinish = nextbp->mergefinish = 0;
             }
         }
     }
