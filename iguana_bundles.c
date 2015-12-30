@@ -213,6 +213,7 @@ int32_t iguana_bundlehash2add(struct iguana_info *coin,struct iguana_block **blo
             {
                 printf("blockadd warning: %d[%d] <- %d[%d]\n",block->hdrsi,block->bundlei,bp->hdrsi,bundlei);
                 err |= 2;
+                getchar();
             }
             else
             {
