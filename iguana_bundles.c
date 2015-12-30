@@ -456,6 +456,11 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         printf("(%d %d) ",i,bp->numrecv);
                     else printf("(%d -[%d]) ",i,lefti);
                 }
+                if ( bp->numrecv > bp->n-10 && lefti >= 0 )
+                {
+                    printf("remainder issue %d:%d\n",bp->hdrsi,lefti);
+                    iguana_blockQ(coin,bp,lefti,bp->hashes[lefti],0);
+                }
                 if ( bp->numrecv == bp->n && bp->emitfinish == 0 )
                 {
                     bp->emitfinish = 1;
