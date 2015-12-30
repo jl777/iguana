@@ -165,7 +165,7 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
         }
         else if ( block->height < 0 )
         {
-            for (i=0; i<1; i++)
+            for (i=0; i<3; i++)
             {
                 if ( (prev= prev->hh.prev) == 0 )
                     break;
@@ -290,7 +290,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                     {
                         //printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
-                        //if ( strcmp(coin->symbol,"BTC") != 0 )
+                        if ( strcmp(coin->symbol,"BTC") != 0 )
                             iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
                     }
                 }
@@ -298,7 +298,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 {
                     //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
-                    //if ( strcmp(coin->symbol,"BTC") != 0 )
+                    if ( strcmp(coin->symbol,"BTC") != 0 )
                         iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
                 }
             }
