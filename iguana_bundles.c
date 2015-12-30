@@ -345,13 +345,14 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
     static uint32_t lastdisp;
-    int32_t i,dispflag,bundlei,lefti,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,totalrecv = 0;
+    int32_t i,dispflag,bundlei,lefti,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,firstbundle,totalrecv = 0;
     struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0;
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     //if ( queue_size(&coin->blocksQ) == 0 )
     //    iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
     dispflag = (rand() % 100) == 0;
     numbundles = numdone = numrecv = numhashes = numissued = numemit = numactive = 0;
+    firstbundle = -1;
     for (i=0; i<coin->bundlescount; i++)
     {
         if ( (bp= coin->bundles[i]) != 0 )
@@ -372,14 +373,14 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     continue;
                 }
                 block = iguana_blockfind(coin,bp->hashes[bundlei]);
-                if ( 0 && missing >= 0 && missing < bp->n )
+                if ( firstbundle < 0 || firstbundle == bp->hdrsi )
                 {
-                    if ( block != 0 && bits256_nonz(block->prev_block) > 0 )
+                    firstbundle = bp->hdrsi;
+                    if ( block != 0 )
                     {
-                        iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
-                        printf("issue missing block hdrsi.%d:%d\n",bp->hdrsi,bundlei-1);
-                        missing = bp->n;
-                    }
+                        if ( block->ipbits == 0 )
+                            iguana_blockQ(coin,bp,bundlei,block->hash2,0);
+                     }
                 }
                 if ( bp->requests[bundlei] < minrequests )
                     minrequests = bp->requests[bundlei];
@@ -457,7 +458,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         printf("(%d %d) ",i,bp->numrecv);
                     else printf("(%d -[%d]) ",i,lefti);
                 }
-                if ( bp->numrecv > bp->n-2 && lefti >= 0 )
+                if ( bp->numrecv > bp->n-10 && lefti >= 0 && lefti < bp->n )
                 {
                     printf("remainder issue %d:%d %s\n",bp->hdrsi,lefti,bits256_str(str,bp->hashes[lefti]));
                     iguana_blockQ(coin,bp,lefti,bp->hashes[lefti],1);
@@ -489,4 +490,15 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     coin->activebundles = numactive;
     coin->estsize = estsize;
     coin->numrecv = totalrecv;
+    if ( queue_size(&coin->blocksQ) == 0 && coin->blocksrecv > coin->longestchain*.99 && coin->blocksrecv < coin->longestchain-1 )
+    {
+        bits256 hash2; int32_t n;
+        for (i=n=0; i<coin->longestchain-1; i++)
+        {
+            hash2 = iguana_blockhash(coin,i);
+            if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 && block->ipbits == 0 )
+                iguana_blockQ(coin,coin->bundles[i/coin->chain->bundlesize],i%coin->chain->bundlesize,hash2,1), n++;
+        }
+        printf(">>>>>>>>>>> issued.%d 99%% blocks\n",n);
+    }
 }

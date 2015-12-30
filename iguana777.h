@@ -25,7 +25,7 @@
 #define IGUANA_MAXFILES 4096
 #define IGUANA_BUNDLELOOP 1000
 #define IGUANA_RPCPORT 7778
-#define IGUANA_MAXRAMCHAINSIZE (1024L * 1024L * 1024L * 2)
+#define IGUANA_MAXRAMCHAINSIZE (1024L * 1024L * 1024L)
 
 #define IGUANA_MAPHASHTABLES 1
 #define IGUANA_DEFAULTRAM 4
@@ -500,7 +500,8 @@ struct iguana_info
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
     int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,backstoptime,lastbundletime,numreqsent;
     double backstopmillis; bits256 backstophash2;
-    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,blocksrecv; void *launched,*started;
+    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,blocksrecv,merging;
+    void *launched,*started;
     uint64_t bloomsearches,bloomhits,bloomfalse,collisions; uint8_t blockspace[IGUANA_MAXPACKETSIZE + 8192]; struct iguana_memspace blockMEM;
 };
 

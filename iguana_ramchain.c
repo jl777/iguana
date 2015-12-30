@@ -1243,7 +1243,7 @@ int32_t iguana_ramchain_alloc(struct iguana_info *coin,struct iguana_ramchain *r
     hashsize = iguana_hashmemsize(numtxids,numunspents,numspends,numpkinds,numexternaltxids);
     while ( (x= (myallocated(0,-1)+hashsize+allocsize)) > coin->MAXMEM )
     {
-        char str[65],str2[65]; fprintf(stderr,"ht.%d wait for allocated %s < MAXMEM %s | elapsed %.2f minutes\n",height,mbstr(str,myallocated(0,-1)),mbstr(str2,coin->MAXMEM),(double)(time(NULL)-coin->starttime)/60.);
+        char str[65],str2[65]; fprintf(stderr,"ht.%d wait for allocated %s < MAXMEM %s | elapsed %.2f minutes\n",height,mbstr(str,hashsize+allocsize),mbstr(str2,coin->MAXMEM),(double)(time(NULL)-coin->starttime)/60.);
         sleep(3);
     }
     iguana_meminit(hashmem,"ramhashmem",0,hashsize + 4096,0);
@@ -1502,13 +1502,14 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
         iguana_ramchain_free(dest,0);
         depth--;
     } else printf("error merging A.%d [%d] and B.%d [%d]\n",A->height,A->numblocks,B->height,B->numblocks);
+    coin->merging = 0;
     return(retval);
 }
 
 void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next hash2
 {
     struct iguana_bundle *bp,*nextbp; int32_t flag = 0;
-    if ( coin->bundlescount <= 0 )
+    if ( coin->bundlescount <= 0 || coin->merging != 0 )
         return;
     bp = coin->bundles[0];
     while ( bp != 0 && (nextbp= bp->nextbp) != 0 )
@@ -1519,6 +1520,8 @@ void iguana_ramchainmerge(struct iguana_info *coin) // jl777: verify prev/next h
             flag++;
             char str[65]; printf("start merge %d[%d] + %d[%d] %s\n",bp->bundleheight,bp->ramchain.numblocks,nextbp->bundleheight,nextbp->ramchain.numblocks,mbstr(str,bp->ramchain.datasize + nextbp->ramchain.datasize));
             iguana_mergeQ(coin,bp,nextbp);
+            coin->merging = 1;
+            break;
         }
         bp = nextbp;
     }
