@@ -159,7 +159,8 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
             {
                 next->height = block->height + 1;
                 //printf("autoreq %d\n",next->height);
-                iguana_blockQ(coin,coin->bundles[(block->height+1)/coin->chain->bundlesize],(block->height+1)%coin->chain->bundlesize,next->hash2,1);
+                if ( strcmp(coin->symbol,"BTC") != 0 )
+                    iguana_blockQ(coin,coin->bundles[(block->height+1)/coin->chain->bundlesize],(block->height+1)%coin->chain->bundlesize,next->hash2,1);
             }
         }
         else if ( block->height < 0 )
@@ -220,7 +221,7 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                 {
                     if ( block != 0 && block->copyflag != 0 )
                         printf("have data %d\n",bp->bundleheight+i);
-                    else if ( bp->requests[i] < 2 )
+                    else if ( bp->requests[i] < 2 && strcmp(coin->symbol,"BTC") != 0 )
                         iguana_blockQ(coin,bp,i,blockhashes[i],0);
                 }
             }
@@ -289,14 +290,16 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                     {
                         //printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
-                        iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
+                        if ( strcmp(coin->symbol,"BTC") != 0 )
+                            iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
                     }
                 }
                 else if ( bp->ipbits[bundlei-1] == 0 )
                 {
                     //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
-                    iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
+                    if ( strcmp(coin->symbol,"BTC") != 0 )
+                        iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
                 }
             }
         }
