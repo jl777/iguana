@@ -159,7 +159,7 @@ void iguana_patch(struct iguana_info *coin,struct iguana_block *block)
             {
                 next->height = block->height + 1;
                 //printf("autoreq %d\n",next->height);
-                if ( strcmp(coin->symbol,"BTC") != 0 )
+                //if ( strcmp(coin->symbol,"BTC") != 0 )
                     iguana_blockQ(coin,coin->bundles[(block->height+1)/coin->chain->bundlesize],(block->height+1)%coin->chain->bundlesize,next->hash2,1);
             }
         }
