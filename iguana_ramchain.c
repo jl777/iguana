@@ -1489,7 +1489,7 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
             iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
             bp->mergefinish = 0;
             nextbp->mergefinish = (uint32_t)time(NULL);
-            bp->nextbp = nextbp->nextbp;
+            bp->nextbp = 0;//nextbp->nextbp;
             newchain.hashmem = 0;
             retval = 0;
             nextbp->ramchain = bp->ramchain = newchain;
