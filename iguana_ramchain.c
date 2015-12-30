@@ -791,9 +791,9 @@ void iguana_ramchain_extras(struct iguana_ramchain *ramchain,struct iguana_memsp
     }
 }
 
-struct iguana_ramchain *iguana_ramchain_map(struct iguana_info *coin,int32_t numblocks,struct iguana_ramchain *ramchain,struct iguana_memspace *hashmem,uint32_t ipbits,bits256 hash2,int32_t bundlei,long fpos,int32_t allocextras)
+struct iguana_ramchain *iguana_ramchain_map(struct iguana_info *coin,char *fname,int32_t numblocks,struct iguana_ramchain *ramchain,struct iguana_memspace *hashmem,uint32_t ipbits,bits256 hash2,int32_t bundlei,long fpos,int32_t allocextras)
 {
-    int32_t checki,hdrsi; char fname[1024],str[65],str2[65]; long filesize; void *ptr;
+    int32_t checki,hdrsi; char str[65],str2[65]; long filesize; void *ptr;
     if ( ramchain->fileptr == 0 || ramchain->filesize <= 0 )
     {
         if ( (checki= iguana_peerfname(coin,&hdrsi,ipbits==0?"DB":"tmp",fname,ipbits,hash2,numblocks)) != bundlei || bundlei < 0 || bundlei >= coin->chain->bundlesize )
@@ -1052,7 +1052,8 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
 {
     int32_t verifyflag = 0;
     RAMCHAIN_DECLARE; long fsize; void *ptr; struct iguana_ramchain R,*mapchain,*ramchain = &addr->ramchain;
-    struct iguana_msgtx *tx; int32_t i,j,firsti=1,err,flag,bundlei = -2; struct iguana_bundle *bp = 0;
+    struct iguana_msgtx *tx; int32_t i,j,firsti=1,err,flag,bundlei = -2; char fname[1024];
+    struct iguana_bundle *bp = 0;
     if ( iguana_bundlefind(coin,&bp,&bundlei,origtxdata->block.hash2) == 0 )
     {
         return(-1);
@@ -1108,7 +1109,7 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
                 ramchain->H.ROflag = 0;
                 flag = 1;
                 memset(&R,0,sizeof(R));
-                if ( verifyflag != 0 && (mapchain= iguana_ramchain_map(coin,1,&R,0,addr->ipbits,origtxdata->block.hash2,bundlei,bp->fpos[bundlei],1)) != 0 )
+                if ( verifyflag != 0 && (mapchain= iguana_ramchain_map(coin,fname,1,&R,0,addr->ipbits,origtxdata->block.hash2,bundlei,bp->fpos[bundlei],1)) != 0 )
                 {
                     //printf("mapped Soffset.%ld\n",(long)mapchain->data->Soffset);
                     iguana_ramchain_link(&R,origtxdata->block.hash2,origtxdata->block.hash2,bp->hdrsi,bp->bundleheight+bundlei,bundlei,1,firsti,1);
@@ -1258,7 +1259,7 @@ int32_t iguana_ramchain_alloc(struct iguana_info *coin,struct iguana_ramchain *r
 int32_t iguana_ramchain_expandedsave(struct iguana_info *coin,RAMCHAIN_FUNC,struct iguana_ramchain *newchain,struct iguana_memspace *hashmem,int32_t cmpflag)
 {
     bits256 firsthash2,lasthash2; int32_t err,bundlei,hdrsi,numblocks,firsti,height,retval = -1;
-    struct iguana_ramchain checkR,*mapchain;
+    struct iguana_ramchain checkR,*mapchain; char fname[1024];
     firsthash2 = ramchain->H.data->firsthash2, lasthash2 = ramchain->H.data->lasthash2;
     height = ramchain->height, firsti = ramchain->H.data->firsti, hdrsi = ramchain->H.hdrsi, numblocks = ramchain->numblocks;
     iguana_ramchain_setsize(ramchain);
@@ -1285,7 +1286,7 @@ int32_t iguana_ramchain_expandedsave(struct iguana_info *coin,RAMCHAIN_FUNC,stru
         bundlei = 0;
         if ( cmpflag == 0 )
             iguana_memreset(hashmem);
-        if ( (mapchain= iguana_ramchain_map(coin,numblocks,&checkR,cmpflag==0?hashmem:0,0,firsthash2,bundlei,0,1)) != 0 )
+        if ( (mapchain= iguana_ramchain_map(coin,fname,numblocks,&checkR,cmpflag==0?hashmem:0,0,firsthash2,bundlei,0,1)) != 0 )
         {
             iguana_ramchain_link(mapchain,firsthash2,lasthash2,hdrsi,height,0,numblocks,firsti,1);
             iguana_ramchain_extras(mapchain,hashmem);
@@ -1418,18 +1419,12 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     return(retval);
 }
 
-void iguana_mergefree(int32_t deleteflag,struct iguana_memspace *mem,struct iguana_ramchain *A,struct iguana_ramchain *B,struct iguana_memspace *hashmem,struct iguana_memspace *hashmemA,struct iguana_memspace *hashmemB)
+void iguana_mergefree(struct iguana_memspace *mem,struct iguana_ramchain *A,struct iguana_ramchain *B,struct iguana_memspace *hashmem,struct iguana_memspace *hashmemA,struct iguana_memspace *hashmemB)
 {
     if ( A != 0 )
-    {
         iguana_ramchain_free(A,0);
-        // iguana_removefile(fname,0);
-    }
     if ( B != 0 )
-    {
         iguana_ramchain_free(B,0);
-        // iguana_removefile(fname,0);
-    }
     if ( mem != 0 )
         iguana_mempurge(mem);
     if ( hashmemA != 0 )
@@ -1442,7 +1437,7 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
 {
     static int32_t depth;
     RAMCHAIN_DESTDECLARE; struct iguana_memspace HASHMEM,HASHMEMA,HASHMEMB;
-    uint32_t now = (uint32_t)time(NULL); char str[65];
+    uint32_t now = (uint32_t)time(NULL); char str[65],fnameA[1024],fnameB[1024];
     struct iguana_ramchain _A,_B,*A,*B,R,newchain,*dest = &R; int32_t err,retval = -1,firsti = 1;
     memset(mem,0,sizeof(*mem));
     memset(&HASHMEMA,0,sizeof(HASHMEMA));
@@ -1451,18 +1446,18 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
     iguana_meminit(&HASHMEMB,"hashmemB",0,iguana_hashmemsize(nextbp->ramchain.H.txidind,nextbp->ramchain.H.unspentind,nextbp->ramchain.H.spendind,nextbp->ramchain.pkind,nextbp->ramchain.externalind) + 4096,0);
     memset(&_A,0,sizeof(_A)), A = &_A;
     memset(&_B,0,sizeof(_B)), B = &_B;
-    if ( (A= iguana_ramchain_map(coin,bp->ramchain.numblocks,A,&HASHMEMA,0,bp->hashes[0],0,0,1)) != 0 )
+    if ( (A= iguana_ramchain_map(coin,fnameA,bp->ramchain.numblocks,A,&HASHMEMA,0,bp->hashes[0],0,0,1)) != 0 )
     {
         iguana_ramchain_link(A,bp->hashes[0],bp->ramchain.lasthash2,bp->hdrsi,bp->bundleheight,0,bp->ramchain.numblocks,firsti,1);
     }
-    if ( (B= iguana_ramchain_map(coin,nextbp->ramchain.numblocks,B,&HASHMEMB,0,nextbp->hashes[0],0,0,1)) != 0 )
+    if ( (B= iguana_ramchain_map(coin,fnameB,nextbp->ramchain.numblocks,B,&HASHMEMB,0,nextbp->hashes[0],0,0,1)) != 0 )
     {
         iguana_ramchain_link(B,bp->hashes[0],nextbp->ramchain.lasthash2,nextbp->hdrsi,nextbp->bundleheight,0,nextbp->ramchain.numblocks,firsti,1);
     }
     if ( A == 0 || B == 0 || A->H.data == 0 || B->H.data == 0 || (A->H.data->allocsize + B->H.data->allocsize) > IGUANA_MAXRAMCHAINSIZE )
     {
         printf("MERGE error %d[%d] %d[%d]\n",A->height,A->numblocks,B->height,B->numblocks);
-        iguana_mergefree(0,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+        iguana_mergefree(mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
         return(-1);
     }
     if ( A->H.data != 0 && B->H.data != 0 && B->height == A->height+A->numblocks )
@@ -1470,7 +1465,7 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
         if ( iguana_ramchain_alloc(coin,dest,mem,&HASHMEM,(A->H.data->numtxids+B->H.data->numtxids),(A->H.data->numunspents+B->H.data->numunspents),(A->H.data->numspends+B->H.data->numspends),(A->H.data->numpkinds+B->H.data->numpkinds),(A->H.data->numexternaltxids+B->H.data->numexternaltxids),A->height) < 0 )
         {
             printf("depth.%d ht.%d fsize.%s ERROR alloc lag.%d elapsed.%ld\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),now-starttime,time(NULL)-now);
-            iguana_mergefree(0,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+            iguana_mergefree(mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
             return(-1);
         }
         depth++;
@@ -1486,18 +1481,20 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
         else if ( iguana_ramchain_expandedsave(coin,RAMCHAIN_DESTARG,&newchain,&HASHMEM,0) == 0 )
         {
             printf("depth.%d ht.%d fsize.%s MERGED %d[%d] and %d[%d] lag.%d elapsed.%ld bp.%d -> %d\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),A->height,A->numblocks,B->height,B->numblocks,now-starttime,time(NULL)-now,bp->bundleheight,nextbp->bundleheight);
-            iguana_mergefree(1,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+            iguana_mergefree(mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
             bp->mergefinish = 0;
             nextbp->mergefinish = (uint32_t)time(NULL);
             bp->nextbp = 0;//nextbp->nextbp;
             newchain.hashmem = 0;
             retval = 0;
             nextbp->ramchain = bp->ramchain = newchain;
+            iguana_removefile(fnameA,0);
+            iguana_removefile(fnameB,0);
         }
         else
         {
             bp->mergefinish = nextbp->mergefinish = 0;
-            iguana_mergefree(0,mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
+            iguana_mergefree(mem,A,B,&HASHMEM,&HASHMEMA,&HASHMEMB);
         }
         iguana_ramchain_free(dest,0);
         depth--;
