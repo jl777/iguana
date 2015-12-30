@@ -286,19 +286,19 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 iguana_bundlehash2add(coin,0,bp,bundlei,block->hash2);
                 if ( bundlei == 0 )
                 {
-                    if ( bp->hdrsi > 0 && (bp= coin->bundles[bp->hdrsi-1]) != 0 && bp->ipbits[coin->chain->bundlesize-1] == 0 )
+                    if ( bp->hdrsi > 0 && (bp= coin->bundles[bp->hdrsi-1]) != 0 )
                     {
                         //printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
-                        //if ( strcmp(coin->symbol,"BTC") != 0 )
+                        if ( bp->ipbits[coin->chain->bundlesize-1] == 0 )  //if ( strcmp(coin->symbol,"BTC") != 0 )
                             iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,1);
                     }
                 }
-                else if ( bp->ipbits[bundlei-1] == 0 )
+                else
                 {
                     //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
-                    if ( strcmp(coin->symbol,"BTC") != 0 )
+                    if ( bp->ipbits[bundlei-1] == 0 )
                         iguana_blockQ(coin,bp,bundlei-1,block->prev_block,1);
                 }
             }
