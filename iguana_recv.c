@@ -213,7 +213,6 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
         vcalc_sha256(0,allhash.bytes,blockhashes[0].bytes,coin->chain->bundlesize * sizeof(*blockhashes));
         if ( memcmp(allhash.bytes,bp->allhash.bytes,sizeof(allhash)) == 0 )
         {
-            //printf("ALLHASHCMP -> issue blockQ %d\n",bp->bundleheight);
             for (i=0; i<coin->chain->bundlesize; i++)
             {
                 iguana_bundlehash2add(coin,0,bp,i,blockhashes[i]);
@@ -222,9 +221,13 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                     if ( block != 0 && block->copyflag != 0 )
                         printf("have data %d\n",bp->bundleheight+i);
                     else if ( strcmp(coin->symbol,"BTC") != 0 )
+                    {
+                        //printf("%d ",bp->bundleheight+i);
                         iguana_blockQ(coin,bp,i,blockhashes[i],0);
+                    }
                 }
             }
+            //printf("ALLHASHCMP -> issue blockQ %d\n",bp->bundleheight);
             return(0);
         }
     }
@@ -725,14 +728,14 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         height = req->height;
         if ( priority == 0 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->ipbits[req->bundlei] != 0 )
         {
-            if ( 0 && priority != 0 )
+            //f ( 0 && priority != 0 )
                 printf("SKIP %p[%d] %d\n",bp,bp!=0?bp->bundleheight:-1,req->bundlei);
         }
         else
         {
             char str[65];
-            if ( 0 && priority != 0 )
-                printf("priority issue.%s\n",bits256_str(str,hash2));
+            //if ( 0 && priority != 0 )
+                printf(" issue.%s\n",bits256_str(str,hash2));
             iguana_sendblockreq(coin,addr,req->bp,req->bundlei,hash2);
         }
         flag++;

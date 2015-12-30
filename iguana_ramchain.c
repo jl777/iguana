@@ -1438,14 +1438,14 @@ int32_t iguana_bundlemergeHT(struct iguana_info *coin,struct iguana_memspace *me
     static int32_t depth;
     RAMCHAIN_DESTDECLARE; struct iguana_memspace HASHMEM,HASHMEMA,HASHMEMB;
     uint32_t now = (uint32_t)time(NULL); char str[65],fnameA[1024],fnameB[1024];
-    struct iguana_ramchain _A,_B,*A,*B,R,newchain,*dest = &R; int32_t err,retval = -1,firsti = 1;
+    struct iguana_ramchain _Achain,_Bchain,*A,*B,R,newchain,*dest = &R; int32_t err,retval = -1,firsti = 1;
     memset(mem,0,sizeof(*mem));
     memset(&HASHMEMA,0,sizeof(HASHMEMA));
     iguana_meminit(&HASHMEMA,"hashmemA",0,iguana_hashmemsize(bp->ramchain.H.txidind,bp->ramchain.H.unspentind,bp->ramchain.H.spendind,bp->ramchain.pkind,bp->ramchain.externalind) + 4096,0);
     memset(&HASHMEMB,0,sizeof(HASHMEMB));
     iguana_meminit(&HASHMEMB,"hashmemB",0,iguana_hashmemsize(nextbp->ramchain.H.txidind,nextbp->ramchain.H.unspentind,nextbp->ramchain.H.spendind,nextbp->ramchain.pkind,nextbp->ramchain.externalind) + 4096,0);
-    memset(&_A,0,sizeof(_A)), A = &_A;
-    memset(&_B,0,sizeof(_B)), B = &_B;
+    memset(&_Achain,0,sizeof(_Achain)); A = &_Achain;
+    memset(&_Bchain,0,sizeof(_Bchain)); B = &_Bchain;
     if ( (A= iguana_ramchain_map(coin,fnameA,bp->ramchain.numblocks,A,&HASHMEMA,0,bp->hashes[0],0,0,1)) != 0 )
     {
         iguana_ramchain_link(A,bp->hashes[0],bp->ramchain.lasthash2,bp->hdrsi,bp->bundleheight,0,bp->ramchain.numblocks,firsti,1);
