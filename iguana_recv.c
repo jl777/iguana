@@ -240,7 +240,7 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                 {
                     if ( block->ipbits == 0 )
                     {
-                        printf("issue %d\n",bp->bundleheight+j);
+                        //printf("issue %d\n",bp->bundleheight+j);
                         iguana_blockQ(coin,0,-1,blockhashes[j],0);
                     }
                 } else iguana_patch(coin,block);
@@ -707,7 +707,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
     {
         hash2 = req->hash2;
         height = req->height;
-        if ( 1 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->recvlens[req->bundlei] != 0 )
+        if ( 1 && (bp= req->bp) != 0 && req->bundlei >= 0 && req->bundlei < bp->n && req->bundlei < coin->chain->bundlesize && bp->ipbits[req->bundlei] != 0 )
         {
             //printf("%p[%d] %d\n",req->bp,req->bp!=0?req->bp->bundleheight:-1,req->bundlei);
         }
