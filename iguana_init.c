@@ -155,7 +155,12 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
                         break;
                 }
                 if ( i == coin->chain->bundlesize )
+                {
+                    struct iguana_bundle *bp;
                     vcalc_sha256(shastr,sha256all.bytes,hashes[0].bytes,sizeof(*hashes) * coin->chain->bundlesize);
+                    if ( (bp= coin->bundles[height/coin->chain->bundlesize]) != 0 )
+                        bp->allhash = sha256all;
+                }
                 else shastr[0] = 0;
                 for (iter=0; iter<1; iter++)
                 {
