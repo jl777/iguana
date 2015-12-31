@@ -146,7 +146,7 @@ struct iguana_chain *iguana_createchain(cJSON *json)
         if ( (hexstr= jstr(json,"pubval")) != 0 && strlen(hexstr) == 2 )
             decode_hex((uint8_t *)&chain->pubval,1,hexstr);
         if ( (hexstr= jstr(json,"scriptval")) != 0 && strlen(hexstr) == 2 )
-            decode_hex((uint8_t *)&chain->scriptval,1,hexstr);
+            decode_hex((uint8_t *)&chain->p2shval,1,hexstr);
         if ( (hexstr= jstr(json,"wipval")) != 0 && strlen(hexstr) == 2 )
             decode_hex((uint8_t *)&chain->wipval,1,hexstr);
         if ( (hexstr= jstr(json,"netmagic")) != 0 && strlen(hexstr) == 8 )

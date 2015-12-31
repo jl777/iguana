@@ -461,6 +461,7 @@ int32_t iguana_getdata(struct iguana_info *coin,uint8_t *serialized,int32_t type
     }
     return(iguana_sethdr((void *)serialized,coin->chain->netmagic,"getdata",&serialized[sizeof(struct iguana_msghdr)],len));
 }
+
 int32_t iguana_rwvin(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgvin *msg)
 {
     int32_t len = 0;
@@ -495,10 +496,10 @@ int32_t iguana_rwvout(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serial
 
 int32_t iguana_rwtx(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgtx *msg,int32_t maxsize,bits256 *txidp,int32_t height,int32_t hastimestamp)
 {
-    int32_t i,len = 0; uint8_t *txstart = serialized; char txidstr[65]; uint32_t timestamp;
+    int32_t i,len = 0; uint8_t *txstart = serialized; char txidstr[65];
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->version),&msg->version);
     if ( hastimestamp != 0 )
-        len += iguana_rwnum(rwflag,&serialized[len],sizeof(timestamp),&timestamp);
+        len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->timestamp),&msg->timestamp);
     len += iguana_rwvarint32(rwflag,&serialized[len],&msg->tx_in);
     //printf("version.%d ",msg->version);
     if ( msg->tx_in > 0 && msg->tx_out*100 < maxsize )
@@ -532,6 +533,48 @@ int32_t iguana_rwtx(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serializ
     *txidp = bits256_doublesha256(txidstr,txstart,len);
     msg->allocsize = len;
     return(len);
+}
+
+void iguana_vinset(struct iguana_info *coin,struct iguana_msgvin *vin,struct iguana_txid *tx,int32_t i)
+{
+    
+}
+
+void iguana_voutset(struct iguana_info *coin,struct iguana_msgvout *vout,struct iguana_txid *tx,int32_t i)
+{
+    
+}
+
+char *iguana_txbytes(struct iguana_info *coin,bits256 *txidp,struct iguana_txid *tx)
+{
+    int32_t i,rwflag=1,len = 0; uint8_t *serialized = coin->blockspace; char txidstr[65],*txbytes = 0;
+    uint32_t numvins,numvouts; struct iguana_msgvin vin; struct iguana_msgvout vout;
+    len += iguana_rwnum(rwflag,&serialized[len],sizeof(tx->version),&tx->version);
+    if ( coin->chain->hastimestamp != 0 )
+        len += iguana_rwnum(rwflag,&serialized[len],sizeof(tx->timestamp),&tx->timestamp);
+    numvins = tx->numvins, numvouts = tx->numvouts;
+    len += iguana_rwvarint32(rwflag,&serialized[len],&numvins);
+    for (i=0; i<numvins; i++)
+    {
+        iguana_vinset(coin,&vin,tx,i);
+        len += iguana_rwvin(rwflag,0,&serialized[len],&vin);
+    }
+    len += iguana_rwvarint32(rwflag,&serialized[len],&numvouts);
+    for (i=0; i<numvouts; i++)
+    {
+        iguana_voutset(coin,&vout,tx,i);
+        len += iguana_rwvout(rwflag,0,&serialized[len],&vout);
+    }
+    len += iguana_rwnum(rwflag,&serialized[len],sizeof(tx->locktime),&tx->locktime);
+    *txidp = bits256_doublesha256(txidstr,serialized,len);
+    if ( memcmp(txidp,tx->txid.bytes,sizeof(*txidp)) != 0 )
+    {
+        printf("error generating txbytes\n");
+        return(0);
+    }
+    txbytes = mycalloc('x',1,len*2+1);
+    init_hexbytes_noT(txbytes,serialized,len*2+1);
+    return(txbytes);
 }
 
 int32_t iguana_gentxarray(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *txdata,int32_t *lenp,uint8_t *data,int32_t datalen)

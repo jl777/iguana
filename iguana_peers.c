@@ -1000,7 +1000,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             {
                 if ( run++ > 10000 )
                 {
-                    printf("sleep\n");
+                    //printf("sleep\n");
                     sleep(1);
                 }
                 else if ( addr->rank != 1 )

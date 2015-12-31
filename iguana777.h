@@ -209,7 +209,7 @@ struct iguana_chain
 {
 	//const int32_t chain_id;
     char name[32],symbol[8];
-    uint8_t pubval,scriptval,wipval,netmagic[4];
+    uint8_t pubval,p2shval,wipval,netmagic[4];
     char *genesis_hash,*genesis_hex; // hex string
     uint16_t portp2p,portrpc,hastimestamp;
     uint64_t rewards[512][2];
@@ -257,7 +257,7 @@ struct iguana_msgtx
     struct iguana_msgvin *vins;
     struct iguana_msgvout *vouts;
     bits256 txid;
-    int32_t allocsize;
+    int32_t allocsize,timestamp;
 } __attribute__((packed));
 
 struct iguana_packet { struct queueitem DL; struct iguana_peer *addr; int32_t datalen,getdatablock; uint8_t serialized[]; };
@@ -359,7 +359,7 @@ struct iguana_ledger
 } __attribute__((packed));
 
 // ramchain append only structs -> canonical 32bit inds and ledgerhashes
-struct iguana_txid { bits256 txid; uint32_t txidind,firstvout,firstvin; uint16_t numvouts,numvins; } __attribute__((packed));
+struct iguana_txid { bits256 txid; uint32_t txidind,firstvout,firstvin,locktime,version,timestamp; uint16_t numvouts,numvins; } __attribute__((packed));
 
 struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; uint16_t hdrsi,vout; } __attribute__((packed));
 struct iguana_unspent20 { uint64_t value:63,p2sh:1; uint32_t txidind; uint8_t rmd160[20]; } __attribute__((packed));
@@ -777,4 +777,17 @@ int32_t iguana_socket(int32_t bindflag,char *hostname,uint16_t port);
 void iguana_mergeQ(struct iguana_info *coin,struct iguana_bundle *bp,struct iguana_bundle *nextbp);
 
 #define bits256_nonz(a) (((a).ulongs[0] | (a).ulongs[1] | (a).ulongs[2] | (a).ulongs[3]) != 0)
+int32_t btc_addr2univ(uint8_t *addrtypep,uint8_t rmd160[20],char *coinaddr);
+
+struct iguana_agent
+{
+    char name[32],hostname[64]; void *methods; uint16_t port; int32_t sock,nummethods;
+    bits256 pubkey,privkey;
+    char *(*parsefunc)(struct iguana_agent *agent,struct iguana_info *coin,char *method,void *json);
+};
+char *iguana_txbytes(struct iguana_info *coin,bits256 *txidp,struct iguana_txid *tx);
+void iguana_vinset(struct iguana_info *coin,struct iguana_msgvin *vin,struct iguana_txid *tx,int32_t i);
+void iguana_voutset(struct iguana_info *coin,struct iguana_msgvout *vout,struct iguana_txid *tx,int32_t i);
+int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t rmd160[20]);
+
 #endif

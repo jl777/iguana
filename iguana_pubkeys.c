@@ -588,10 +588,10 @@ int32_t btc_getpubkey(char pubkeystr[67],uint8_t pubkeybuf[33],struct bp_key *ke
     return((int32_t)len);
 }
 
-int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t md160[20])
+int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t rmd160[20])
 {
     cstring *btc_addr;
-    if ( (btc_addr= base58_encode_check(addrtype,true,md160,20)) != 0 )
+    if ( (btc_addr= base58_encode_check(addrtype,true,rmd160,20)) != 0 )
     {
         strcpy(coinaddr,btc_addr->str);
         cstr_free(btc_addr,true);
@@ -615,6 +615,19 @@ int32_t btc_convaddr(char *hexaddr,char *addr58)
         sprintf(hexaddr,"%02x",addrtype);
         init_hexbytes_noT(hexaddr+2,(void *)cstr->str,cstr->len);
         cstr_free(cstr,true);
+        return(0);
+    }
+    return(-1);
+}
+
+int32_t btc_addr2univ(uint8_t *addrtypep,uint8_t rmd160[20],char *coinaddr)
+{
+    char hexstr[512]; uint8_t hex[21];
+    if ( btc_convaddr(hexstr,coinaddr) == 0 )
+    {
+        decode_hex(hex,21,hexstr);
+        *addrtypep = hex[0];
+        memcpy(rmd160,hex+1,20);
         return(0);
     }
     return(-1);
@@ -791,7 +804,7 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *p
         //printf("minus2\n");
         vcalc_sha256(0,sha256,&pk_script[1],pk_script[0]);
         calc_rmd160(0,rmd160,sha256,sizeof(sha256));
-        return(0);
+        return(1);
     }
     if ( orign < sizeof(hexstr)/2-1)
         init_hexbytes_noT(hexstr,orig,orign);
@@ -799,7 +812,7 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *p
     {
         static FILE *fp;
         //printf("unparsed script in %s len.%d\n",bits256_str(debugtxid),orign);
-        if ( 0 && fp == 0 )
+        if ( 1 && fp == 0 )
             fp = fopen("unparsed.txt","w");
         if ( fp != 0 )
             fprintf(fp,"%s\n",hexstr), fflush(fp);
