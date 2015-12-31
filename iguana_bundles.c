@@ -330,7 +330,7 @@ struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundl
     {
         if ( mode == 0 )
             iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[0],1);
-        else iguana_peerfname(coin,&hdrsi,(mode == 1) ? "tmp" : "DB",fname,0,bp->hashes[0],bp->n);
+        else iguana_peerfname(coin,&hdrsi,"DB",fname,0,bp->hashes[0],bp->n);
         if ( (fp= fopen(fname,"rb")) != 0 )
         {
             fseek(fp,(long)&rdata.Toffset - (long)&rdata,SEEK_SET);
