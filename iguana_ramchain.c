@@ -1064,6 +1064,7 @@ long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,stru
     SETBIT(bp->recv,bundlei);
     bp->fpos[bundlei] = -1;
     bp->recvlens[bundlei] = recvlen;
+    bp->firsttxidinds[bundlei] = firsti;
     if ( iguana_ramchain_init(ramchain,&addr->TXDATA,&addr->HASHMEM,1,txn_count,origtxdata->numunspents,origtxdata->numspends,0,0,0) == 0 )
         return(-1);
     iguana_ramchain_link(ramchain,origtxdata->block.hash2,origtxdata->block.hash2,bp->hdrsi,bp->bundleheight+bundlei,bundlei,1,firsti,0);

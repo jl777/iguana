@@ -404,10 +404,10 @@ struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *
                         return(tx);
                     printf("error getting txidind.%d + i.%d from hdrsi.%d\n",txidind,i,block->hdrsi);
                     return(0);
-                }
-            }
+                } else printf("iguana_blocktx null txidind\n");
+            } else printf("iguana_blocktx no bp\n");
         }
-    }
+    } else printf("i.%d vs txn_count.%d\n",i,block->txn_count);
     return(0);
 }
 
