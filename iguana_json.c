@@ -15,6 +15,7 @@
 
 #include "iguana777.h"
 
+struct agent_info { char name[32]; cJSON *methods; } *Agents[16];
 int32_t iguana_launchcoin(char *symbol,cJSON *json);
 struct iguana_jsonitem { struct queueitem DL; uint32_t expired,allocsize; char **retjsonstrp; char jsonstr[]; };
 
@@ -197,52 +198,6 @@ void iguana_rpcloop(void *args)
     }
 }
 
-struct iguana_info *iguana_coin(const char *symbol)
-{
-    struct iguana_info *coin; int32_t i = 0;
-    if ( symbol == 0 )
-    {
-        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
-            if ( Hardcoded_coins[i][0] == 0 )
-                break;
-        for (; i<sizeof(Coins)/sizeof(*Coins); i++)
-        {
-            if ( Coins[i] == 0 )
-            {
-                Coins[i] = mycalloc('c',1,sizeof(*Coins[i]));
-                //memset(Coins[i],0,sizeof(*Coins[i]));
-                printf("iguana_coin.(new) -> %p\n",Coins[i]);
-                return(Coins[i]);
-            } return(0);
-            printf("i.%d (%s) vs name.(%s)\n",i,Coins[i]->name,symbol);
-        }
-    }
-    else
-    {
-        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
-        {
-            if ( Hardcoded_coins[i][0] == 0 )
-                break;
-            if ( strcmp(symbol,Hardcoded_coins[i][0]) == 0 )
-            {
-                if ( Coins[i] == 0 )
-                    Coins[i] = mycalloc('c',1,sizeof(*Coins[i]));
-                coin = Coins[i];
-                if ( coin->chain == 0 )
-                {
-                    strcpy(coin->name,Hardcoded_coins[i][1]);
-                    //coin->myservices = atoi(Hardcoded_coins[i][2]);
-                    strcpy(coin->symbol,symbol);
-                    coin->chain = iguana_chainfind(coin->symbol);
-                    iguana_initcoin(coin);
-                }
-                return(coin);
-            }
-        }
-    }
-    return(0);
-}
-
 cJSON *iguana_peerjson(struct iguana_info *coin,struct iguana_peer *addr)
 {
     cJSON *array,*json = cJSON_CreateObject();
@@ -316,6 +271,13 @@ char *iguana_genericjson(char *method,cJSON *json)
                 jaddistr(array,Coins[i]->symbol);
         }
         jadd(retjson,"coins",array);
+        array = cJSON_CreateArray();
+        for (i=0; i<sizeof(Agents)/sizeof(*Agents); i++)
+        {
+            if ( Agents[i] != 0 && Agents[i]->name[0] != 0 )
+                jaddistr(array,Agents[i]->name);
+        }
+        jadd(retjson,"agents",array);
         return(jprint(retjson,1));
     }
     if ( strcmp(method,"peers") == 0 )

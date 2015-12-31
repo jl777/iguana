@@ -629,7 +629,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
     char *hashstr=0; bits256 hash2; uint32_t now; struct iguana_blockreq *req=0;
-    struct iguana_bundle *bp,*bestbp = 0;
+    int32_t i,r,diff,j,k,n; double metric,bestmetric = -1.; struct iguana_bundle *bp,*bestbp = 0;
     int32_t limit,refbundlei,height=-1,datalen,flag = 0;
     now = (uint32_t)time(NULL);
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
@@ -658,9 +658,10 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = coin->MAXPENDING;
     if ( limit < 1 )
         limit = 1;
-    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )
+    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit && now > addr->lastpoll )
     {
-        int32_t i,flag,r,diff,j,k,n; double metric,bestmetric = -1.;
+        printf("%s lastpoll.%u %u\n",addr->ipaddr,addr->lastpoll,now);
+        addr->lastpoll = now;
         for (i=n=0; i<coin->bundlescount; i++)
             if ( coin->bundles[i] != 0 && coin->bundles[i]->emitfinish == 0 )
                 n++;
@@ -706,10 +707,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                     hash2 = bp->hashes[j];
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
-                    flag = 0;
                     if ( bp->requests[j] <= bp->minrequests && bp->ipbits[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
-                        flag = 1;
-                    if ( flag != 0 )
                     {
                         iguana_sendblockreq(coin,addr,bp,j,hash2);
                         return(1);
@@ -742,7 +740,6 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         }
         flag++;
         myfree(req,sizeof(*req));
-        return(flag);
     }
     return(flag);
 }

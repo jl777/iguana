@@ -926,8 +926,8 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
-    struct pollfd fds; uint8_t *buf,serialized[64];
-    int32_t bufsize,flag,timeout = strcmp(coin->symbol,"BTC") == 0 ? 10 : 10;//coin->MAXPEERS/64+1;
+    struct pollfd fds; uint8_t *buf,serialized[64]; struct iguana_cacheptr *ptr;
+    int32_t bufsize,flag,timeout = strcmp(coin->symbol,"BTC") == 0 ? 10 : 50;//coin->MAXPEERS/64+1;
 #ifdef IGUANA_PEERALLOC
     int32_t i;  int64_t remaining; struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
@@ -955,7 +955,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
     //printf("after send version\n");
     while ( addr->usock >= 0 && addr->dead == 0 && coin->peers.shuttingdown == 0 )
     {
-        /*if ( (ptr= queue_dequeue(&coin->cacheQ,0)) != 0 )
+        if ( 0 && (ptr= queue_dequeue(&coin->cacheQ,0)) != 0 )
         {
             if ( ptr->data != 0 )
             {
@@ -965,19 +965,20 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             }
             myfree(ptr,ptr->allocsize);
             continue;
-        }*/
+        }
         flag = 0;
         memset(&fds,0,sizeof(fds));
         fds.fd = addr->usock;
-        fds.events |= POLLOUT;
-        if (  poll(&fds,1,timeout) > 0 )
+        fds.events |= (POLLOUT | POLLIN);
+        if (  poll(&fds,1,timeout) > 0 && (fds.revents & POLLOUT) != 0 )
             flag += iguana_pollsendQ(coin,addr);
         if ( flag == 0 )
         {
-            memset(&fds,0,sizeof(fds));
-            fds.fd = addr->usock;
-            fds.events |= POLLIN;
-            if ( poll(&fds,1,timeout) > 0 )
+            //memset(&fds,0,sizeof(fds));
+            //fds.fd = addr->usock;
+            //fds.events |= POLLIN;
+            //if ( poll(&fds,1,timeout) > 0 )
+            if ( (fds.revents & POLLIN) != 0 )
                 flag += iguana_pollrecv(coin,addr,buf,bufsize);
             if ( flag == 0 )
             {
@@ -989,17 +990,18 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                         addr->pendhdrs--;
                     addr->pendtime = 0;
                 }
-                memset(&fds,0,sizeof(fds));
-                fds.fd = addr->usock;
-                fds.events |= POLLOUT;
-                if ( poll(&fds,1,timeout) > 0 )
+                //memset(&fds,0,sizeof(fds));
+                //fds.fd = addr->usock;
+                //fds.events |= POLLOUT;
+                //if ( poll(&fds,1,timeout) > 0 )
+                if ( (fds.revents & POLLOUT) != 0 )
                     flag += iguana_pollQsPT(coin,addr);
             }
-            if ( flag == 0 )//&& iguana_processjsonQ(coin) == 0 )
+            if ( flag == 0 )
             {
                 if ( addr->rank != 1 )
-                    usleep(1000 + (rand() % 1000));
-                else usleep(100);
+                    usleep(25000 + (rand() % 25000));
+                else usleep(10000);
             }
         }
         if ( coin->isRT != 0 && addr->rank > coin->MAXPEERS && (rand() % 100) == 0 )

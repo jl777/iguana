@@ -15,13 +15,56 @@
 
 
 #include "iguana777.h"
-//static const bits256 bits256_zero;
+
+
+struct iguana_info *iguana_coin(const char *symbol)
+{
+    struct iguana_info *coin; int32_t i = 0;
+    if ( symbol == 0 )
+    {
+        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+            if ( Hardcoded_coins[i][0] == 0 )
+                break;
+        for (; i<sizeof(Coins)/sizeof(*Coins); i++)
+        {
+            if ( Coins[i] == 0 )
+            {
+                Coins[i] = mycalloc('c',1,sizeof(*Coins[i]));
+                //memset(Coins[i],0,sizeof(*Coins[i]));
+                printf("iguana_coin.(new) -> %p\n",Coins[i]);
+                return(Coins[i]);
+            } return(0);
+            printf("i.%d (%s) vs name.(%s)\n",i,Coins[i]->name,symbol);
+        }
+    }
+    else
+    {
+        for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+        {
+            if ( Hardcoded_coins[i][0] == 0 )
+                break;
+            if ( strcmp(symbol,Hardcoded_coins[i][0]) == 0 )
+            {
+                if ( Coins[i] == 0 )
+                    Coins[i] = mycalloc('c',1,sizeof(*Coins[i]));
+                coin = Coins[i];
+                if ( coin->chain == 0 )
+                {
+                    strcpy(coin->name,Hardcoded_coins[i][1]);
+                    //coin->myservices = atoi(Hardcoded_coins[i][2]);
+                    strcpy(coin->symbol,symbol);
+                    coin->chain = iguana_chainfind(coin->symbol);
+                    iguana_initcoin(coin);
+                }
+                return(coin);
+            }
+        }
+    }
+    return(0);
+}
 
 void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
 {
-    //coin->emitbits = myrealloc('W',coin->emitbits,coin->emitbits==0?0:coin->blocks.maxbits/coin->chain->bundlesize+1,numitems/coin->chain->bundlesize+1);
-    //coin->bundleready = myrealloc('W',coin->bundleready,coin->bundleready==0?0:coin->blocks.maxbits/coin->chain->bundlesize+1,numitems/coin->chain->bundlesize+1);
-    //coin->havehash = myrealloc('W',coin->havehash,coin->havehash==0?0:coin->blocks.maxbits/8+1,numitems/8+1);
     coin->blocks.ptrs = myrealloc('W',coin->blocks.ptrs,coin->blocks.ptrs==0?0:coin->blocks.maxbits * sizeof(*coin->blocks.ptrs),numitems * sizeof(*coin->blocks.ptrs));
     printf("realloc waitingbits.%d -> %d\n",coin->blocks.maxbits,numitems);
     coin->blocks.maxbits = numitems;
