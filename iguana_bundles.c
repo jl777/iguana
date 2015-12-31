@@ -314,11 +314,13 @@ int32_t iguana_bundlemode(struct iguana_info *coin,struct iguana_bundle *bp,int3
 {
     if ( bp->ipbits[bundlei] == 0 )
         return(-1);
-    else if ( bp->ramchain.numblocks == 1 )
-        return(0);
-    else if ( bp->ramchain.numblocks == bp->n )
-        return(1);
-    else return(2);
+    else if ( bp->emitfinish > coin->starttime )
+    {
+        if ( bp->ramchain.numblocks == bp->n )
+            return(1);
+        else return(2);
+    }
+    else return(0);
 }
 
 struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind)
