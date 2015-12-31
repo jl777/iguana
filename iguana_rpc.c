@@ -389,11 +389,24 @@ char *jumblr_parser(struct iguana_agent *agent,struct iguana_info *coin,char *me
     return(clonestr("{\"error\":\"jumblr API is not yet\"}"));
 }
 
-struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_block *block,int32_t i)
+struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *tx,struct iguana_block *block,int32_t i)
 {
+    struct iguana_bundle *bp; uint32_t txidind;
     if ( i >= 0 && i < block->txn_count )
     {
-        
+        if ( block->height >= 0 && block->hdrsi == block->height/coin->chain->bundlesize && block->bundlei == (block->height % coin->chain->bundlesize) )
+        {
+            if ( (bp= coin->bundles[block->hdrsi]) != 0 )
+            {
+                if ( (txidind= bp->firsttxidinds[block->bundlei]) > 0 )
+                {
+                    if ( iguana_bundletx(coin,bp,block->bundlei,tx,txidind+i) == tx )
+                        return(tx);
+                    printf("error getting txidind.%d + i.%d from hdrsi.%d\n",txidind,i,block->hdrsi);
+                    return(0);
+                }
+            }
+        }
     }
     return(0);
 }
@@ -406,7 +419,7 @@ struct iguana_txid *iguana_txidfind(struct iguana_info *coin,bits256 hash2)
 
 cJSON *iguana_blockjson(struct iguana_info *coin,struct iguana_block *block,int32_t txidsflag)
 {
-    char str[65]; int32_t i; struct iguana_txid *tx; cJSON *array,*json = cJSON_CreateObject();
+    char str[65]; int32_t i; struct iguana_txid *tx,T; cJSON *array,*json = cJSON_CreateObject();
     jaddstr(json,"blockhash",bits256_str(str,block->hash2));
     jaddnum(json,"height",block->height);
     jaddstr(json,"merkle_root",bits256_str(str,block->merkle_root));
@@ -430,7 +443,7 @@ cJSON *iguana_blockjson(struct iguana_info *coin,struct iguana_block *block,int3
         array = cJSON_CreateArray();
         for (i=0; i<block->txn_count; i++)
         {
-            if ( (tx= iguana_blocktx(coin,block,i)) != 0 )
+            if ( (tx= iguana_blocktx(coin,&T,block,i)) != 0 )
                 jaddistr(array,bits256_str(str,tx->txid));
         }
         jadd(json,"txids",array);
@@ -499,7 +512,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
 {
     char *symbol,*hashstr,*txidstr,*coinaddr,*txbytes,rmd160str[41]; int32_t height,i,n,valid = 0;
     cJSON *addrs,*retjson,*retitem; uint8_t rmd160[20],addrtype; bits256 hash2,checktxid;
-    struct iguana_txid *tx; struct iguana_block *block = 0;
+    struct iguana_txid *tx,T; struct iguana_block *block = 0;
     /*{"agent":"ramchain","method":"block","coin":"BTCD","hash":"<sha256hash>"}
     {"agent":"ramchain","method":"block","coin":"BTCD","height":345600}
     {"agent":"ramchain","method":"tx","coin":"BTCD","txid":"<sha txid>"}
@@ -604,7 +617,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
         {
             for (i=0; i<block->txn_count; i++)
             {
-                if ( (tx= iguana_blocktx(coin,block,i)) != 0 )
+                if ( (tx= iguana_blocktx(coin,&T,block,i)) != 0 )
                     jaddi(retitem,iguana_txjson(coin,tx));
             }
         }

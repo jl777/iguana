@@ -326,7 +326,7 @@ struct iguana_block
     bits256 hash2,prev_block,merkle_root;
     double PoW; // NOT consensus safe, for estimation purposes only
     int32_t height; uint32_t timestamp,nonce,bits,version,ipbits;
-    uint32_t bundlei:11,hdrsi:21,recvlen:24,havebundle:1,tbd:7;
+    uint32_t firsttxidind,bundlei:11,hdrsi:21,recvlen:24,havebundle:1,tbd:7;
     uint16_t numvouts,numvins,numhashes:14,copyflag:1,havehashes:1,txn_count:14,mainchain:1,valid:1;
     UT_hash_handle hh;
     void *rawdata;
@@ -453,11 +453,12 @@ struct iguana_bundle
     struct queueitem DL; struct iguana_info *coin; struct iguana_bundle *nextbp;
     struct iguana_block block;
     struct iguana_bloom16 bloom;
-    uint32_t issuetime,hdrtime,emitfinish,mergefinish,purgetime,issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1];
+    uint32_t issuetime,hdrtime,emitfinish,mergefinish,purgetime;
+    uint32_t issued[IGUANA_MAXBUNDLESIZE+1],recvlens[IGUANA_MAXBUNDLESIZE+1],firsttxidinds[IGUANA_MAXBUNDLESIZE+1];
     int32_t minrequests,numhashes,numissued,numrecv,n,hdrsi,bundleheight,numtxids,numspends,numunspents;
     double avetime,threshold,metric; uint64_t datasize,estsize;
     long fpos[IGUANA_MAXBUNDLESIZE+1];
-    uint32_t ipbits[IGUANA_MAXBUNDLESIZE+1];
+    uint32_t firsttxidind,ipbits[IGUANA_MAXBUNDLESIZE+1];
     uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1],requests[IGUANA_MAXBUNDLESIZE+1];
     //struct iguana_block *prevblock,*blocks[IGUANA_MAXBUNDLESIZE],*nextblock;
     bits256 prevbundlehash2,hashes[IGUANA_MAXBUNDLESIZE+1],nextbundlehash2,allhash;
@@ -789,5 +790,6 @@ char *iguana_txbytes(struct iguana_info *coin,bits256 *txidp,struct iguana_txid 
 void iguana_vinset(struct iguana_info *coin,struct iguana_msgvin *vin,struct iguana_txid *tx,int32_t i);
 void iguana_voutset(struct iguana_info *coin,struct iguana_msgvout *vout,struct iguana_txid *tx,int32_t i);
 int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t rmd160[20]);
+struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind);
 
 #endif

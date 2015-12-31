@@ -228,7 +228,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
 {
     struct iguana_info *coin; struct iguana_peer *addr; struct iguana_bundle *bp,*nextbp;
     coin = ptr->coin, addr = ptr->addr;
-    if ( ptr->type == 'M' )
+    if ( 0 && ptr->type == 'M' )
     {
         if ( (coin= ptr->coin) != 0 )
         {

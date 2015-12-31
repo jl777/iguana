@@ -310,6 +310,43 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bund
     return(0);
 }
 
+int32_t iguana_bundlemode(struct iguana_info *coin,struct iguana_bundle *bp)
+{
+    if ( bp->ramchain.numblocks == 0 )
+        return(-1);
+    else if ( bp->ramchain.numblocks == 1 )
+        return(0);
+    else if ( bp->ramchain.numblocks == bp->n )
+        return(1);
+    else return(2);
+}
+
+struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind)
+{
+    int32_t hdrsi,mode; int64_t Toffset; char fname[1024]; FILE *fp; struct iguana_ramchaindata rdata;
+    if ( (mode= iguana_bundlemode(coin,bp)) >= 0 )
+    {
+        if ( mode == 0 )
+            iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[0],1);
+        else iguana_peerfname(coin,&hdrsi,(mode == 1) ? "tmp" : "DB",fname,0,bp->hashes[0],bp->n);
+        if ( (fp= fopen(fname,"rb")) != 0 )
+        {
+            fseek(fp,(long)&rdata.Toffset - (long)&rdata,SEEK_SET);
+            if ( fread(&Toffset,1,sizeof(Toffset),fp) == sizeof(Toffset) )
+            {
+                fseek(fp,Toffset + sizeof(struct iguana_txid) * (bp->firsttxidind + txidind),SEEK_SET);
+                if ( fread(tx,1,sizeof(*tx),fp) == sizeof(*tx) )
+                {
+                    fclose(fp);
+                    return(tx);
+                }
+            }
+            fclose(fp);
+        }
+    }
+    return(0);
+}
+
 char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,struct iguana_bundle *bp,struct iguana_bundle *nextbp,int32_t m)
 {
     static char line[1024];
