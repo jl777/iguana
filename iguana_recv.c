@@ -658,7 +658,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
         limit = coin->MAXPENDING;
     if ( limit < 1 )
         limit = 1;
-    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit && now > addr->lastpoll )
+    if ( coin->bundlescount > 0  && (req= queue_dequeue(&coin->priorityQ,0)) == 0 && addr->pendblocks < limit )//&& now > addr->lastpoll )
     {
         //printf("%s lastpoll.%u %u\n",addr->ipaddr,addr->lastpoll,now);
         addr->lastpoll = now;
