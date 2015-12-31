@@ -228,7 +228,7 @@ int32_t iguana_allhashcmp(struct iguana_info *coin,struct iguana_bundle *bp,bits
                     }
                 }
             }
-            if ( n != 0 )
+            if ( n != 0 && 0 )
                 printf("ALLHASHCMP -> issue.%d blockQ %d\n",n,bp->bundleheight);
             return(0);
         }

@@ -543,7 +543,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
         }
         //printf(">>>>>>>>>>> issued.%d 99%% blocks\n",n);
     }
-    else if ( strcmp(coin->symbol,"BTCD") == 0 && queue_size(&coin->blocksQ) == 0 )
+    else if ( 0 && strcmp(coin->symbol,"BTCD") == 0 && queue_size(&coin->blocksQ) == 0 )
     {
         for (i=n=0; i<coin->longestchain-1; i++)
         {
