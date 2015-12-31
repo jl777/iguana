@@ -447,6 +447,7 @@ cJSON *iguana_blockjson(struct iguana_info *coin,struct iguana_block *block,int3
                 jaddistr(array,bits256_str(str,tx->txid));
         }
         jadd(json,"txids",array);
+        printf("add txids[%d]\n",block->txn_count);
     }
     return(json);
 }

@@ -680,7 +680,7 @@ char *iguana_JSON(char *jsonstr)
             timeout = IGUANA_JSONTIMEOUT;
         if ( (retjsonstr= iguana_blockingjsonstr(coin,jsonstr,tag,timeout)) != 0 )
         {
-            printf("retjsonstr.(%s)\n",retjsonstr);
+            //printf("retjsonstr.(%s)\n",retjsonstr);
             if ( (retjson= cJSON_Parse(retjsonstr)) == 0 )
             {
                 retjson = cJSON_Parse("{\"error\":\"cant parse retjsonstr\"}");
@@ -688,7 +688,7 @@ char *iguana_JSON(char *jsonstr)
             jdelete(retjson,"tag");
             jadd64bits(retjson,"tag",tag);
             retstr = jprint(retjson,1);
-            printf("retstr.(%s) retjsonstr.%p retjson.%p\n",retstr,retjsonstr,retjson);
+            //printf("retstr.(%s) retjsonstr.%p retjson.%p\n",retstr,retjsonstr,retjson);
             free(retjsonstr);//,strlen(retjsonstr)+1);
         }
         free_json(json);
