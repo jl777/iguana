@@ -537,7 +537,12 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 && block->ipbits == 0 )
             {
                 iguana_blockQ(coin,coin->bundles[i/coin->chain->bundlesize],i%coin->chain->bundlesize,hash2,1);
-                if ( n++ > 1000 )
+                if ( strcmp("BTC",coin->symbol) == 0 )
+                {
+                    if ( n++ > 10 )
+                        break;
+                }
+                else if ( n++ > 1000 )
                     break;
             }
         }
