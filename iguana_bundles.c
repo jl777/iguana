@@ -310,9 +310,9 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bund
     return(0);
 }
 
-int32_t iguana_bundlemode(struct iguana_info *coin,struct iguana_bundle *bp)
+int32_t iguana_bundlemode(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei)
 {
-    if ( bp->ramchain.numblocks == 0 )
+    if ( bp->ipbits[bundlei] == 0 )
         return(-1);
     else if ( bp->ramchain.numblocks == 1 )
         return(0);
@@ -324,7 +324,7 @@ int32_t iguana_bundlemode(struct iguana_info *coin,struct iguana_bundle *bp)
 struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind)
 {
     int32_t hdrsi,mode; int64_t Toffset; char fname[1024]; FILE *fp; struct iguana_ramchaindata rdata;
-    if ( (mode= iguana_bundlemode(coin,bp)) >= 0 )
+    if ( (mode= iguana_bundlemode(coin,bp,bundlei)) >= 0 )
     {
         if ( mode == 0 )
             iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[0],1);
@@ -343,7 +343,7 @@ struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundl
             } else printf("bundletx mode.%d Toffset read error\n",mode);
             fclose(fp);
         } else printf("bundletx mode.%d couldnt open.(%s)\n",mode,fname);
-    }
+    } else printf("bundletx illegal mode\n");
     return(0);
 }
 
