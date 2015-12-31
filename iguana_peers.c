@@ -560,7 +560,7 @@ void iguana_startconnection(void *arg)
         printf("avoid self-loopback\n");
         return;
     }
-    printf("startconnection.(%s) pending.%u usock.%d addrind.%d\n",addr->ipaddr,addr->pending,addr->usock,addr->addrind);
+    //printf("startconnection.(%s) pending.%u usock.%d addrind.%d\n",addr->ipaddr,addr->pending,addr->usock,addr->addrind);
     addr->pending = (uint32_t)time(NULL);
     if ( addr->usock < 0 )
         addr->usock = iguana_socket(0,addr->ipaddr,coin->chain->portp2p);
@@ -927,7 +927,7 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
     struct pollfd fds; uint8_t *buf,serialized[64];
-    int32_t bufsize,flag,timeout = strcmp(coin->symbol,"BTC") == 0 ? 1 : 1;//coin->MAXPEERS/64+1;
+    int32_t bufsize,flag,timeout = strcmp(coin->symbol,"BTC") == 0 ? 10 : 10;//coin->MAXPEERS/64+1;
 #ifdef IGUANA_PEERALLOC
     int32_t i;  int64_t remaining; struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)

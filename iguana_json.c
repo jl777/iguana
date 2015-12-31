@@ -336,6 +336,7 @@ char *iguana_genericjson(char *method,cJSON *json)
 char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
 {
     int32_t i,max,retval; struct iguana_peer *addr; char *ipaddr; cJSON *retjson = 0;
+    //printf("iguana_json(%s)\n",jprint(json,0));
     if ( strcmp(method,"peers") == 0 )
         return(jprint(iguana_peersjson(coin),1));
     else if ( strcmp(method,"addnode") == 0 )
@@ -384,7 +385,7 @@ char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
     }
     else if ( strcmp(method,"pausecoin") == 0 )
     {
-        coin->active = 1;
+        coin->active = 0;
         return(clonestr("{\"result\":\"coin paused\"}"));
     }
     else if ( strcmp(method,"addcoin") == 0 )
@@ -401,6 +402,7 @@ char *iguana_json(struct iguana_info *coin,char *method,cJSON *json)
 char *iguana_jsonstr(struct iguana_info *coin,char *jsonstr)
 {
     cJSON *json; char *retjsonstr,*methodstr;
+    //printf("iguana_jsonstr.(%s)\n",jsonstr);
     if ( (json= cJSON_Parse(jsonstr)) != 0 )
     {
         if ( (methodstr= jstr(json,"method")) != 0 )
@@ -438,7 +440,7 @@ int32_t iguana_processjsonQ(struct iguana_info *coin) // reentrant, can be calle
     }
     if ( (ptr= queue_dequeue(&coin->jsonQ,0)) != 0 )
     {
-        printf("process.(%s)\n",ptr->jsonstr);
+        //printf("process.(%s)\n",ptr->jsonstr);
         if ( (*ptr->retjsonstrp= iguana_jsonstr(coin,ptr->jsonstr)) == 0 )
             *ptr->retjsonstrp = clonestr("{\"error\":\"null return from iguana_jsonstr\"}");
         queue_enqueue("finishedQ",&coin->finishedQ,&ptr->DL,0);
@@ -449,11 +451,15 @@ int32_t iguana_processjsonQ(struct iguana_info *coin) // reentrant, can be calle
 
 char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag,int32_t maxmillis)
 {
-    struct iguana_jsonitem *ptr; char *retjsonstr; int32_t len,allocsize; double expiration = milliseconds() + maxmillis;
+    struct iguana_jsonitem *ptr; char *retjsonstr = 0; int32_t len,allocsize; double expiration = milliseconds() + maxmillis;
     if ( coin == 0 )
+    {
+        //printf("no coin case.(%s)\n",jsonstr);
         return(iguana_genericjsonstr(jsonstr));
+    }
     else
     {
+        //printf("blocking case.(%s)\n",jsonstr);
         len = (int32_t)strlen(jsonstr);
         allocsize = sizeof(*ptr) + len + 1;
         ptr = mycalloc('J',1,allocsize);
@@ -466,7 +472,7 @@ char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag
             usleep(100);
             if ( (retjsonstr= *ptr->retjsonstrp) != 0 )
             {
-                printf("blocking retjsonstr.(%s)\n",retjsonstr);
+                //printf("blocking retjsonstr.(%s)\n",retjsonstr);
                 queue_delete(&coin->finishedQ,&ptr->DL,allocsize,1);
                 return(retjsonstr);
             }
@@ -504,14 +510,15 @@ char *iguana_JSON(char *jsonstr)
             timeout = IGUANA_JSONTIMEOUT;
         if ( (retjsonstr= iguana_blockingjsonstr(coin,jsonstr,tag,timeout)) != 0 )
         {
+            printf("retjsonstr.(%s)\n",retjsonstr);
             if ( (retjson= cJSON_Parse(retjsonstr)) == 0 )
             {
-                printf("retjsonstr.(%s)\n",retjsonstr);
                 retjson = cJSON_Parse("{\"error\":\"cant parse retjsonstr\"}");
             }
             jdelete(retjson,"tag");
             jadd64bits(retjson,"tag",tag);
             retstr = jprint(retjson,1);
+            printf("retstr.(%s) retjsonstr.%p retjson.%p\n",retstr,retjsonstr,retjson);
             free(retjsonstr);//,strlen(retjsonstr)+1);
         }
         free_json(json);
@@ -575,11 +582,11 @@ void iguana_main(void *arg)
     iguana_launch(iguana_coin("BTCD"),"rpcloop",iguana_rpcloop,iguana_coin("BTCD"),IGUANA_PERMTHREAD);
     if ( coinargs != 0 )
         iguana_launch(iguana_coin("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
-    else if ( 1 )
+    else if ( 0 )
     {
 #ifdef __APPLE__
         sleep(1);
-        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"services\":0,\"maxpeers\":128,\"coin\":\"BTCD\",\"active\":1}");
+        iguana_JSON("{\"agent\":\"iguana\",\"method\":\"addcoin\",\"services\":0,\"maxpeers\":2,\"coin\":\"BTCD\",\"active\":1}");
 #endif
     }
     if ( arg != 0 )

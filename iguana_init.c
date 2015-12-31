@@ -213,13 +213,13 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                 {
                     addr = &coin->peers.active[m++];
                     iguana_initpeer(coin,addr,(uint32_t)calc_ipbits("127.0.0.1"));
-                    printf("call initpeer.(%s)\n",addr->ipaddr);
+                    //printf("call initpeer.(%s)\n",addr->ipaddr);
                     iguana_launch(coin,"connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
                 }
 #ifndef IGUANA_DISABLEPEERS
                 addr = &coin->peers.active[m++];
                 iguana_initpeer(coin,addr,(uint32_t)calc_ipbits(line));
-                printf("call initpeer.(%s)\n",addr->ipaddr);
+                //printf("call initpeer.(%s)\n",addr->ipaddr);
                 iguana_launch(coin,"connection",iguana_startconnection,addr,IGUANA_CONNTHREAD);
 #endif
             }
