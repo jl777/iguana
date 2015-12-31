@@ -384,8 +384,8 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
     static uint32_t lastdisp;
-    int32_t i,dispflag,bundlei,lefti,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,firstbundle,totalrecv = 0;
-    struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0;
+    int32_t i,n,dispflag,bundlei,lefti,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,firstbundle,totalrecv = 0;
+    bits256 hash2; struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0;
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
     //if ( queue_size(&coin->blocksQ) == 0 )
     //    iguana_blockQ(coin,0,-1,coin->blocks.hwmchain.hash2,0);
@@ -531,7 +531,6 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     coin->numrecv = totalrecv;
     if ( queue_size(&coin->priorityQ) == 0 && coin->blocksrecv > coin->longestchain*.9 && coin->blocksrecv < coin->longestchain-1 )
     {
-        bits256 hash2; int32_t n;
         for (i=n=0; i<coin->longestchain-1; i++)
         {
             hash2 = iguana_blockhash(coin,i);
@@ -543,5 +542,14 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             }
         }
         //printf(">>>>>>>>>>> issued.%d 99%% blocks\n",n);
+    }
+    else if ( strcmp(coin->symbol,"BTCD") == 0 && queue_size(&coin->blocksQ) == 0 )
+    {
+        for (i=n=0; i<coin->longestchain-1; i++)
+        {
+            hash2 = iguana_blockhash(coin,i);
+            if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 && block->ipbits == 0 )
+                iguana_blockQ(coin,coin->bundles[i/coin->chain->bundlesize],i%coin->chain->bundlesize,hash2,0);
+        }
     }
 }
