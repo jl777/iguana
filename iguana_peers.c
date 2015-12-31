@@ -927,7 +927,7 @@ int64_t iguana_peerallocated(struct iguana_info *coin,struct iguana_peer *addr)
 void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
 {
     struct pollfd fds; uint8_t *buf,serialized[64]; struct iguana_cacheptr *ptr;
-    int32_t bufsize,flag,timeout = strcmp(coin->symbol,"BTC") == 0 ? 10 : 50;//coin->MAXPEERS/64+1;
+    int32_t bufsize,flag,timeout = strcmp(coin->symbol,"BTC") == 0 ? 5 : 25;//coin->MAXPEERS/64+1;
 #ifdef IGUANA_PEERALLOC
     int32_t i;  int64_t remaining; struct iguana_memspace *mem[sizeof(addr->SEROUT)/sizeof(*addr->SEROUT)];
     for (i=0; i<sizeof(addr->SEROUT)/sizeof(*addr->SEROUT); i++)
@@ -1001,7 +1001,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             {
                 if ( addr->rank != 1 )
                     usleep(25000 + (rand() % 25000));
-                else usleep(10000);
+                else usleep(1000);
             }
         }
         if ( coin->isRT != 0 && addr->rank > coin->MAXPEERS && (rand() % 100) == 0 )
