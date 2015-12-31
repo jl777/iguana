@@ -998,7 +998,7 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
             }
             if ( flag == 0 )
             {
-                if ( run++ > 1000 )
+                if ( run++ > 10000 )
                 {
                     printf("sleep\n");
                     sleep(1);
