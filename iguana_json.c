@@ -544,7 +544,7 @@ void iguana_main(void *arg)
     iguana_launch(iguana_coin("BTCD"),"rpcloop",iguana_rpcloop,iguana_coin("BTCD"),IGUANA_PERMTHREAD);
     if ( coinargs != 0 )
         iguana_launch(iguana_coin("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
-    else if ( 0 )
+    else if ( 1 )
     {
 #ifdef __APPLE__
         sleep(1);
