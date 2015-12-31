@@ -491,12 +491,10 @@ int32_t bits256_cmp(bits256 a,bits256 b)
     return(0);
 }
 
-int32_t bits256_nonz(bits256 a)
+/*int32_t bits256_nonz(bits256 a)
 {
-    bits256 z;
-    memset(z.bytes,0,sizeof(z));
-    return(memcmp(a.bytes,z.bytes,sizeof(a)) != 0);
-}
+    return((a.ulongs[0] | a.ulongs[1] | a.ulongs[2] | a.ulongs[3]) != 0);
+}*/
 
 bits256 bits256_lshift(bits256 x)
 {

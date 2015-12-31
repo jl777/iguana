@@ -629,8 +629,8 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 {
     uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
     char *hashstr=0; bits256 hash2; uint32_t now; struct iguana_blockreq *req=0;
-    int32_t i,r,diff,j,k,n; double metric,bestmetric = -1.; struct iguana_bundle *bp,*bestbp = 0;
-    int32_t limit,refbundlei,height=-1,datalen,flag = 0;
+    int32_t i,r,diff,j,k,n,m; double metric,bestmetric = -1.; struct iguana_bundle *bp,*bestbp = 0;
+    int32_t limit,refbundlei,height=-1,datalen,flag = 0; double val;
     now = (uint32_t)time(NULL);
     if ( iguana_needhdrs(coin) != 0 && addr->pendhdrs < IGUANA_MAXPENDHDRS )
     {
@@ -701,13 +701,19 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
                 if ( (bp= coin->bundles[i]) == 0 || bp->emitfinish != 0 )
                     continue;
                 //printf("%.15f ref.%d addrind.%d bestbp.%d\n",bestmetric,refbundlei,addr->addrind,bp->hdrsi);
-                for (r=0; r<coin->chain->bundlesize && r<bp->n; r++)
+                m = coin->chain->bundlesize;
+                if ( bp->n < m )
+                    m = bp->n;
+                j = (addr->addrind*3 + 0) % m;
+                val = (bp->threshold / 1000.);
+                for (r=0; r<m; r++,j++)
                 {
-                    j = (addr->addrind*3 + r) % bp->n;
+                    if ( j >= m )
+                        j = 0;
                     hash2 = bp->hashes[j];
                     if ( bits256_nonz(hash2) == 0 )
                         continue;
-                    if ( bp->requests[j] <= bp->minrequests && bp->ipbits[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+bp->threshold) )
+                    if ( bp->requests[j] <= bp->minrequests && bp->ipbits[j] == 0 && (bp->issued[j] == 0 || now > bp->issued[j]+val) )
                     {
                         iguana_sendblockreq(coin,addr,bp,j,hash2);
                         return(1);

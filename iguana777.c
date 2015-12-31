@@ -322,6 +322,7 @@ void iguana_coinloop(void *arg)
         if ( (coin= coins[i]) != 0 && coin->started == 0 )
         {
             iguana_startcoin(coin,coin->initialheight,coin->mapflags);
+            printf("init.(%s) maxpeers.%d maxrecvcache.%s services.%llx MAXMEM.%s polltimeout.%d\n",coin->symbol,coin->MAXPEERS,mbstr(str,coin->MAXRECVCACHE),(long long)coin->myservices,mbstr(str,coin->MAXMEM),coin->polltimeout);
             coin->started = coin;
             coin->chain->minconfirms = coin->minconfirms;
         }
@@ -376,7 +377,7 @@ void iguana_coinloop(void *arg)
         if ( flag == 0 )
         {
             //printf("IDLE\n");
-            usleep(10000);
+            usleep(coin->polltimeout * 10000);
         }
     }
 }
@@ -420,6 +421,8 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     if ( coin->MAXMEM == 0 )
         coin->MAXMEM = IGUANA_DEFAULTRAM;
     coin->MAXMEM *= (1024 * 1024 * 1024);
+    if ( (coin->polltimeout= juint(json,"poll")) <= 0 )
+        coin->polltimeout = 10;
     char str[65]; printf("MAXMEM.%s\n",mbstr(str,coin->MAXMEM));
     coin->active = juint(json,"active");
     if ( (coin->minconfirms = minconfirms) == 0 )
@@ -496,7 +499,6 @@ void iguana_coins(void *arg)
         if ( juint(json,"GBavail") < 8 )
             maphash = IGUANA_MAPHASHTABLES;
         else maphash = 0;
-        printf("MAPHASH.%d\n",maphash);
         for (i=0; i<n; i++)
         {
             item = jitem(array,i);
@@ -506,10 +508,7 @@ void iguana_coins(void *arg)
                 continue;
             }
             iguana_coinargs(symbol,&maxrecvcache,&minconfirms,&maxpeers,&initialheight,&services,&maxpending,&maxbundles,item);
-            char str[65],str2[65];
-            printf("init.(%s) maxpeers.%d maxrecvcache.%s maphash.%x services.%llx MAXMEM.%s\n",symbol,maxpeers,mbstr(str,maxrecvcache),maphash,(long long)services,mbstr(str2,coin->MAXMEM));
             coins[1 + i] = coin = iguana_setcoin(symbol,coins,maxpeers,maxrecvcache,services,initialheight,maphash,minconfirms,maxpending,maxbundles,item);
-            printf("MAXRECVCACHE.%s\n",mbstr(str,coin->MAXRECVCACHE));
         }
         coins[0] = (void *)((long)n);
         iguana_coinloop(coins);

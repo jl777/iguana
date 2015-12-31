@@ -500,7 +500,7 @@ struct iguana_info
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
     int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,backstoptime,lastbundletime,numreqsent;
     double backstopmillis; bits256 backstophash2;
-    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,blocksrecv,merging;
+    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,blocksrecv,merging,polltimeout;
     void *launched,*started;
     uint64_t bloomsearches,bloomhits,bloomfalse,collisions; uint8_t blockspace[IGUANA_MAXPACKETSIZE + 8192]; struct iguana_memspace blockMEM;
 };
@@ -686,7 +686,7 @@ char *bits256_lstr(char hexstr[65],bits256 x);
 bits256 bits256_add(bits256 a,bits256 b);
 int32_t bits256_cmp(bits256 a,bits256 b);
 bits256 bits256_from_compact(uint32_t c);
-int32_t bits256_nonz(bits256 a);
+//int32_t bits256_nonz(bits256 a);
 
 void *mycalloc(uint8_t type,int32_t n,long itemsize);
 void *myrealloc(uint8_t type,void *oldptr,long oldsize,long newsize);
@@ -776,4 +776,5 @@ void iguana_rpcloop(void *args);
 int32_t iguana_socket(int32_t bindflag,char *hostname,uint16_t port);
 void iguana_mergeQ(struct iguana_info *coin,struct iguana_bundle *bp,struct iguana_bundle *nextbp);
 
+#define bits256_nonz(a) (((a).ulongs[0] | (a).ulongs[1] | (a).ulongs[2] | (a).ulongs[3]) != 0)
 #endif
