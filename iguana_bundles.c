@@ -339,10 +339,10 @@ struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundl
                 {
                     fclose(fp);
                     return(tx);
-                }
-            }
+                } else printf("bundletx mode.%d tx read error\n",mode);
+            } else printf("bundletx mode.%d Toffset read error\n",mode);
             fclose(fp);
-        }
+        } else printf("bundletx mode.%d couldnt open.(%s)\n",mode,fname);
     }
     return(0);
 }
