@@ -994,13 +994,14 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                 //fds.fd = addr->usock;
                 //fds.events |= POLLOUT;
                 //if ( poll(&fds,1,timeout) > 0 )
-                if ( (fds.revents & POLLOUT) != 0 )
+                if ( coin->active != 0 && (fds.revents & POLLOUT) != 0 )
                     flag += iguana_pollQsPT(coin,addr);
             }
             if ( flag == 0 )
             {
+                sleep(1);
                 //if ( addr->rank != 1 )
-                    usleep(coin->polltimeout*2500 + (rand() % (coin->polltimeout*2500)));
+                //    usleep(coin->polltimeout*2500 + (rand() % (coin->polltimeout*2500)));
                 //else usleep(100 + coin->polltimeout*1000);
             }
         }

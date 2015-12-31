@@ -254,12 +254,6 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
                 }
                 else bp->emitfinish = 0;
             } else printf("error missing bp in emit\n");
-            //printf("MAXBUNDLES.%d vs max.%d estsize %ld vs cache.%ld\n",coin->MAXBUNDLES,_IGUANA_MAXBUNDLES,(long)coin->estsize,(long)coin->MAXRECVCACHE);
-            //if ( coin->MAXBUNDLES > IGUANA_MAXACTIVEBUNDLES || (coin->estsize > coin->MAXRECVCACHE*.9 && coin->MAXBUNDLES > _IGUANA_MAXBUNDLES) )
-            //    coin->MAXBUNDLES--;
-            //else if ( (coin->MAXBUNDLES * coin->estsize)/(coin->activebundles+1) < coin->MAXRECVCACHE*.75 )
-             //   coin->MAXBUNDLES += (coin->MAXBUNDLES >> 2) + 1;
-            //else printf("no change to MAXBUNDLES.%d\n",coin->MAXBUNDLES);
         } else printf("no coin in helper request?\n");
     }
     return(0);
@@ -345,6 +339,8 @@ void iguana_coinloop(void *arg)
                 {
                     printf(">>>>>>> %s isRT blockrecv.%d vs longest.%d\n",coin->symbol,coin->blocksrecv,coin->longestchain);
                     coin->isRT = 1;
+                    if ( coin->polltimeout > 100 )
+                        coin->polltimeout = 100;
                     coin->MAXPEERS = 8;
                 }
                 if ( now > coin->lastpossible )
