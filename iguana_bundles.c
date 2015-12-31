@@ -490,7 +490,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     coin->activebundles = numactive;
     coin->estsize = estsize;
     coin->numrecv = totalrecv;
-    if ( queue_size(&coin->priorityQ) == 0 && coin->blocksrecv > coin->longestchain*.99 && coin->blocksrecv < coin->longestchain-1 )
+    if ( queue_size(&coin->priorityQ) == 0 && coin->blocksrecv > coin->longestchain*.9 && coin->blocksrecv < coin->longestchain-1 )
     {
         bits256 hash2; int32_t n;
         for (i=n=0; i<coin->longestchain-1; i++)
@@ -499,10 +499,10 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 && block->ipbits == 0 )
             {
                 iguana_blockQ(coin,coin->bundles[i/coin->chain->bundlesize],i%coin->chain->bundlesize,hash2,1);
-                if ( n++ > 10 )
+                if ( n++ > 100 )
                     break;
             }
         }
-        printf(">>>>>>>>>>> issued.%d 99%% blocks\n",n);
+        //printf(">>>>>>>>>>> issued.%d 99%% blocks\n",n);
     }
 }
