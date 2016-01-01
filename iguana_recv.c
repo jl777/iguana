@@ -672,6 +672,7 @@ int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid)
         printf("txidreq full, wait\n");
         sleep(1);
     }
+    char str[65]; printf("txidreq.%s\n",bits256_str(str,txid));
     coin->reqtxids[coin->numreqtxids++] = txid;
     iguana_sendtxidreq(coin,coin->peers.ranked[0],txid);
     iguana_sendtxidreq(coin,0,txid);
