@@ -1008,8 +1008,8 @@ void iguana_dedicatedloop(struct iguana_info *coin,struct iguana_peer *addr)
                 else usleep(100 + coin->polltimeout*1000);
             }
         }
-        if ( flag != 0 && run > 0 )
-            run >>= 1;
+        if ( flag != 0 )
+            run = 0;
         if ( coin->isRT != 0 && addr->rank > coin->MAXPEERS && (rand() % 100) == 0 )
         {
             printf("isRT and low rank.%d ",addr->rank);
