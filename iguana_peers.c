@@ -345,6 +345,8 @@ int32_t iguana_socket(int32_t bindflag,char *hostname,uint16_t port)
 int32_t iguana_send(struct iguana_info *coin,struct iguana_peer *addr,uint8_t *serialized,int32_t len)
 {
     int32_t numsent,remains,usock;
+    if ( addr == 0 && coin->peers.numranked > 1 )
+        addr = coin->peers.ranked[rand() % coin->peers.numranked];
     if ( addr == 0 )
         return(-1);
     usock = addr->usock;
