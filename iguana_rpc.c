@@ -394,7 +394,7 @@ struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *
     struct iguana_bundle *bp; uint32_t txidind;
     if ( i >= 0 && i < block->txn_count )
     {
-        if ( block->height >= 0 && block->hdrsi == block->height/coin->chain->bundlesize && block->bundlei == (block->height % coin->chain->bundlesize) )
+        if ( block->height >= 0 ) //
         {
             if ( (bp= coin->bundles[block->hdrsi]) != 0 )
             {
@@ -406,7 +406,7 @@ struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *
                     return(0);
                 } else printf("iguana_blocktx null txidind\n");
             } else printf("iguana_blocktx no bp\n");
-        }
+        } 
     } else printf("i.%d vs txn_count.%d\n",i,block->txn_count);
     return(0);
 }
