@@ -634,7 +634,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                             {
                                 if ( block->havehashes != 0 && block->rawdata != 0 )
                                     iguana_allhashcmp(coin,bp,block->rawdata,block->numhashes);
-                                iguana_sendblockreq(coin,0,bp,0,bp->hashes,bp->n);
+                                //iguana_sendblockreq(coin,0,bp,0,bp->hashes,bp->n);
                                 iguana_blockQ(coin,bp,1,bp->hashes[1],1);
                                 iguana_blockQ(coin,bp,1,bp->hashes[0],1);
                             }
