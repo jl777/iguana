@@ -544,7 +544,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     iguana_blockQ(coin,bp,bundlei,hash2,1);
                     n++;
                     printf("%d ",i);
-                    if ( n > 10 )
+                    if ( n > 1000 )
                         break;
                 }
                 coin->lastsweep = i;

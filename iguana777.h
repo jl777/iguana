@@ -468,7 +468,7 @@ struct iguana_bundle
 struct iguana_bundlereq
 {
     struct queueitem DL; struct iguana_info *coin; int32_t type;
-    struct iguana_peer *addr; struct iguana_block *blocks,block; bits256 *hashes;
+    struct iguana_peer *addr; struct iguana_block *blocks,block; bits256 *hashes,txid; 
     struct iguana_txdatabits txdatabits;
     int32_t allocsize,datalen,n,recvlen,numtx; uint32_t ipbits;
     uint8_t copyflag,serialized[];
@@ -501,7 +501,7 @@ struct iguana_info
     struct iguana_bundle *bundles[IGUANA_MAXBUNDLES];
     int32_t numpendings,zcount,recvcount,bcount,pcount,lastbundle; uint32_t recvtime,hdrstime,backstoptime,lastbundletime,numreqsent;
     double backstopmillis; bits256 backstophash2;
-    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,blocksrecv,merging,polltimeout;
+    int32_t initialheight,mapflags,minconfirms,numrecv,isRT,backstop,blocksrecv,merging,polltimeout,numreqtxids; bits256 reqtxids[64];
     void *launched,*started;
     uint64_t bloomsearches,bloomhits,bloomfalse,collisions; uint8_t blockspace[IGUANA_MAXPACKETSIZE + 8192]; struct iguana_memspace blockMEM;
 };
@@ -791,5 +791,6 @@ void iguana_vinset(struct iguana_info *coin,struct iguana_msgvin *vin,struct igu
 void iguana_voutset(struct iguana_info *coin,struct iguana_msgvout *vout,struct iguana_txid *tx,int32_t i);
 int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t rmd160[20]);
 struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind);
+int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid);
 
 #endif

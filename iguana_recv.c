@@ -101,12 +101,11 @@ void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 
 void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,uint8_t *data,int32_t datalen)
 {
     struct iguana_bundlereq *req;
-    char str[65]; bits256_str(str,tx->txid);
-    printf("%s unconfirmed.%s\n",addr->ipaddr,str);
+    char str[65]; printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(str,tx->txid));
     req = iguana_bundlereq(coin,addr,'U',datalen);
     req->datalen = datalen;
+    req->txid = tx->txid;
     memcpy(req->serialized,data,datalen);
-    //iguana_freetx(tx,1);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
@@ -465,8 +464,28 @@ struct iguana_bundlereq *iguana_recvtxids(struct iguana_info *coin,struct iguana
     return(req);
 }
 
+int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid)
+{
+    while ( coin->numreqtxids >= sizeof(coin->reqtxids)/sizeof(*coin->reqtxids) )
+    {
+        printf("txidreq full, wait\n");
+        sleep(1);
+    }
+    coin->reqtxids[coin->numreqtxids++] = txid;
+    return(0);
+}
+
 struct iguana_bundlereq *iguana_recvunconfirmed(struct iguana_info *coin,struct iguana_bundlereq *req,uint8_t *data,int32_t datalen)
 {
+    int32_t i;
+    for (i=0; i<coin->numreqtxids; i++)
+    {
+        if ( memcmp(req->txid.bytes,coin->reqtxids[i].bytes,sizeof(req->txid)) == 0 )
+        {
+            char str[65]; printf("got reqtxid.%s datalen.%d | numreqs.%d\n",bits256_str(str,req->txid),req->datalen,coin->numreqtxids);
+            coin->reqtxids[i] = coin->reqtxids[--coin->numreqtxids];
+        }
+    }
     return(req);
 }
 
