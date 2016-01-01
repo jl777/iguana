@@ -325,12 +325,13 @@ int32_t iguana_bundlemode(struct iguana_info *coin,struct iguana_bundle *bp,int3
 
 struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind)
 {
+    static bits256 zero;
     int32_t hdrsi,mode; int64_t Toffset; char fname[1024]; FILE *fp; struct iguana_ramchaindata rdata;
     if ( (mode= iguana_bundlemode(coin,bp,bundlei)) >= 0 )
     {
         if ( mode == 0 )
-            iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[0],1);
-        else iguana_peerfname(coin,&hdrsi,"DB",fname,0,bp->hashes[0],bp->n);
+            iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[0],zero,1);
+        else iguana_peerfname(coin,&hdrsi,"DB",fname,0,bp->hashes[0],zero,bp->n);
         if ( (fp= fopen(fname,"rb")) != 0 )
         {
             fseek(fp,(long)&rdata.Toffset - (long)&rdata,SEEK_SET);
@@ -383,7 +384,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
-    static uint32_t lastdisp;
+    static uint32_t lastdisp; static bits256 zero;
     int32_t i,n,dispflag,bundlei,lefti,minrequests,missing,numbundles,numdone,numrecv,numhashes,numissued,numemit,numactive,firstbundle,totalrecv = 0;
     bits256 hash2; struct iguana_bundle *bp; struct iguana_block *block; int64_t datasize,estsize = 0;
     //iguana_chainextend(coin,iguana_blockfind(coin,coin->blocks.hwmchain));
@@ -424,15 +425,16 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 if ( bp->requests[bundlei] < minrequests )
                     minrequests = bp->requests[bundlei];
                 bp->numhashes++;
-                if ( bp->recvlens[bundlei] == 0 )
-                    bp->recvlens[bundlei] = block->recvlen;
-                if ( bp->ipbits[bundlei] == 0 )
-                    bp->ipbits[bundlei] = block->ipbits;
-                if ( bp->recvlens[bundlei] != 0 )
+                //if ( bp->recvlens[bundlei] == 0 )
+                //    bp->recvlens[bundlei] = block->recvlen;
+                //if ( bp->ipbits[bundlei] == 0 )
+                //    bp->ipbits[bundlei] = block->ipbits;
+                if ( bp->ipbits[bundlei] != 0 )
+                    numissued++;
+                if ( bp->fpos[bundlei] >= 0 )
                 {
                     numrecv++;
-                    numissued++;
-                    datasize += bp->recvlens[bundlei];
+                    datasize += block->recvlen;
                     /*if ( block->ipbits != 0 )
                     {
                         iguana_memreset(&coin->blockMEM);
@@ -473,7 +475,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     {
                         if ( (ipbits= coin->peers.active[j].ipbits) != 0 )
                         {
-                            if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits,bp->hashes[0],1) >= 0 )
+                            if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits,bp->hashes[0],zero,1) >= 0 )
                             {
                                 if ( iguana_removefile(fname,0) > 0 )
                                     coin->peers.numfiles--, m++;
