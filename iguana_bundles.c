@@ -536,15 +536,16 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
         for (i=n=0; i<coin->longestchain-1; i++)
         {
             hash2 = iguana_blockhash(coin,i);
-            if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 && block->ipbits == 0 )
+            if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 )
             {
-                iguana_blockQ(coin,coin->bundles[i/coin->chain->bundlesize],i%coin->chain->bundlesize,hash2,1);
+                if ( iguana_bundlefind(coin,&bp,&bundlei,hash2) == 0 || bp->fpos[bundlei] < 0 )
+                    iguana_blockQ(coin,coin->bundles[i/coin->chain->bundlesize],i%coin->chain->bundlesize,hash2,1), n++;
                 if ( strcmp("BTC",coin->symbol) == 0 )
                 {
-                    if ( n++ > 10 )
+                    if ( n > 10 )
                         break;
                 }
-                else if ( n++ > 1000 )
+                else if ( n > 1000 )
                     break;
             }
         }
