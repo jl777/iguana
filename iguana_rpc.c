@@ -449,7 +449,7 @@ cJSON *iguana_blockjson(struct iguana_info *coin,struct iguana_block *block,int3
                 jaddistr(array,bits256_str(str,tx->txid));
         }
         jadd(json,"txids",array);
-        printf("add txids[%d]\n",block->txn_count);
+        //printf("add txids[%d]\n",block->txn_count);
     }
     return(json);
 }
@@ -565,7 +565,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     }
     if ( strcmp(method,"block") == 0 )
     {
-        if ( (hashstr= jstr(json,"hash")) != 0 && strlen(hashstr) == sizeof(bits256)*2 )
+        if ( (hashstr= jstr(json,"blockhash")) != 0 && strlen(hashstr) == sizeof(bits256)*2 )
             decode_hex(hash2.bytes,sizeof(hash2),hashstr);
         else
         {
@@ -574,7 +574,10 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
         }
         retitem = cJSON_CreateObject();
         if ( (block= iguana_blockfind(coin,hash2)) != 0 )
+        {
+            char str[65],str2[65]; printf("hash2.(%s) -> %s\n",bits256_str(str,hash2),bits256_str(str2,block->hash2));
             return(jprint(iguana_blockjson(coin,block,juint(json,"txids")),1));
+        }
         else return(clonestr("{\"error\":\"cant find block\"}"));
     }
     else if ( strcmp(method,"tx") == 0 )
