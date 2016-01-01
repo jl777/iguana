@@ -137,7 +137,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,int32_t ind,int32_t width,int32_t tables
 
 uint32_t iguana_sparseaddtx(uint8_t *bits,int32_t width,int32_t tablesize,bits256 txid,struct iguana_txid *T,uint32_t txidind)
 {
-    uint32_t ind;// = ((txid.ulongs[0] % tablesize) + (txid.ulongs[1] % tablesize) + (txid.ulongs[2] % tablesize) + (txid.ulongs[3] % tablesize)) >> 2;
+    uint32_t ind;
     ind = (txid.ulongs[0] ^ txid.ulongs[1] ^ txid.ulongs[2] ^ txid.ulongs[3]) % tablesize;
     return(iguana_sparseadd(bits,ind,width,tablesize,txid.bytes,sizeof(txid),txidind,T,sizeof(*T)));
 }
@@ -148,9 +148,48 @@ uint32_t iguana_sparseaddpk(uint8_t *bits,int32_t width,int32_t tablesize,uint8_
     memcpy(&key0,rmd160,sizeof(key0));
     memcpy(&key1,&rmd160[sizeof(key0)],sizeof(key1));
     memcpy(&key2,&rmd160[sizeof(key0) + sizeof(key1)],sizeof(key2));
-    //ind = ((key0 % tablesize) + (key1 % tablesize) + (key2 % tablesize)) / 3;
     ind = (key0 ^ key1 ^ key2) % tablesize;
     return(iguana_sparseadd(bits,ind,width,tablesize,rmd160,20,pkind,P,sizeof(*P)));
+}
+
+struct iguana_txid *iguana_sparsefindtx(struct iguana_info *coin,struct iguana_txid *tx,bits256 txid)
+{
+    uint8_t *TXbits; struct iguana_txid *T; uint32_t txidind,i; struct iguana_bundle *bp; struct iguana_ramchain *ramchain;
+    for (i=0; i<coin->bundlescount; i++)
+    {
+        if ( (bp= coin->bundles[i]) != 0 )
+        {
+            ramchain = &bp->ramchain;
+            TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
+            T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
+            if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
+            {
+                *tx = T[txidind];
+                return(tx);
+            }
+        }
+    }
+    return(0);
+}
+
+struct iguana_pkhash *iguana_sparsefindpk(struct iguana_info *coin,struct iguana_pkhash *p,uint8_t rmd160[20])
+{
+    uint8_t *PKbits; struct iguana_pkhash *P; uint32_t pkind,i; struct iguana_bundle *bp; struct iguana_ramchain *ramchain;
+    for (i=0; i<coin->bundlescount; i++)
+    {
+        if ( (bp= coin->bundles[i]) != 0 )
+        {
+            ramchain = &bp->ramchain;
+            PKbits = (void *)((long)ramchain->H.data + ramchain->H.data->PKoffset);
+            P = (void *)((long)ramchain->H.data + ramchain->H.data->Poffset);
+            if ( (pkind= iguana_sparseaddpk(PKbits,ramchain->H.data->pksparsebits,ramchain->H.data->numpksparse,rmd160,P,0)) > 0 )
+            {
+                *p = P[pkind];
+                return(p);
+            }
+        }
+    }
+    return(0);
 }
 
 int32_t iguana_peerfname(struct iguana_info *coin,int32_t *hdrsip,char *dirname,char *fname,uint32_t ipbits,bits256 hash2,bits256 prevhash2,int32_t numblocks)
@@ -233,7 +272,7 @@ uint32_t iguana_ramchain_addtxid(struct iguana_info *coin,RAMCHAIN_FUNC,bits256 
 
 uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_t rmd160[20],int32_t flags,uint32_t unspentind)
 {
-    struct iguana_kvitem *ptr; uint32_t pkind = 0; uint64_t key0,key1;
+    struct iguana_kvitem *ptr; uint32_t pkind = 0;
     if ( ramchain->expanded != 0 && (ptr= iguana_hashfind(ramchain,'P',rmd160)) == 0 )
     {
         pkind = ramchain->pkind++;
@@ -257,8 +296,6 @@ uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_
             P[pkind].firstunspentind = unspentind;
             //printf("%p P[%d] <- firstunspent.%d\n",&P[pkind],pkind,unspentind);
             memcpy(P[pkind].rmd160,rmd160,sizeof(P[pkind].rmd160));
-            memcpy(&key0,rmd160,sizeof(key0));
-            memcpy(&key1,&rmd160[sizeof(key0)],sizeof(key1));
             iguana_sparseaddpk(PKbits,ramchain->H.data->pksparsebits,ramchain->H.data->numpksparse,rmd160,P,pkind);
         }
         if ( (ptr= iguana_hashsetPT(ramchain,'P',&P[pkind],pkind)) == 0 )

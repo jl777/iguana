@@ -870,7 +870,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                         iguana_blockQ(coin,bp,bundlei,next->hash2,1);
                     }
                     if ( (rand() % 10) == 0 )
-                        printf("BACKSTOP.%d threshold %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,threshold,coin->backstopmillis,lag);
+                        printf("MAINCHAIN.%d threshold %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,threshold,coin->backstopmillis,lag);
                 }
                 else if ( 0 && bits256_nonz(next->prev_block) > 0 )
                     printf("next prev cmp error nonz.%d\n",bits256_nonz(next->prev_block));
