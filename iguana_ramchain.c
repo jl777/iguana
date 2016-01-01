@@ -139,7 +139,8 @@ uint32_t iguana_sparseadd(uint8_t *bits,int32_t ind,int32_t width,int32_t tables
 
 uint32_t iguana_sparseaddtx(uint8_t *bits,int32_t width,int32_t tablesize,bits256 txid,struct iguana_txid *T,uint32_t txidind)
 {
-    uint32_t ind = ((txid.ulongs[0] % tablesize) + (txid.ulongs[1] % tablesize) + (txid.ulongs[2] % tablesize) + (txid.ulongs[3] % tablesize)) >> 2;
+    uint32_t ind;// = ((txid.ulongs[0] % tablesize) + (txid.ulongs[1] % tablesize) + (txid.ulongs[2] % tablesize) + (txid.ulongs[3] % tablesize)) >> 2;
+    ind = (txid.ulongs[0] ^ txid.ulongs[1] ^ txid.ulongs[2] ^ txid.ulongs[3]) % tablesize;
     return(iguana_sparseadd(bits,ind,width,tablesize,txid.bytes,sizeof(txid),txidind,T,sizeof(*T)));
 }
 
@@ -149,7 +150,8 @@ uint32_t iguana_sparseaddpk(uint8_t *bits,int32_t width,int32_t tablesize,uint8_
     memcpy(&key0,rmd160,sizeof(key0));
     memcpy(&key1,&rmd160[sizeof(key0)],sizeof(key1));
     memcpy(&key2,&rmd160[sizeof(key0) + sizeof(key1)],sizeof(key2));
-    ind = ((key0 % tablesize) + (key1 % tablesize) + (key2 % tablesize)) / 3;
+    //ind = ((key0 % tablesize) + (key1 % tablesize) + (key2 % tablesize)) / 3;
+    ind = (key0 ^ key1 ^ key2) % tablesize;
     return(iguana_sparseadd(bits,ind,width,tablesize,rmd160,20,pkind,P,sizeof(*P)));
 }
 
