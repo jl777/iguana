@@ -675,7 +675,7 @@ int64_t iguana_ramchain_size(struct iguana_ramchain *ramchain)
 
 long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits,bits256 hash2,bits256 prevhash2,int32_t bundlei)
 {
-    struct iguana_ramchaindata *rdata,tmp;
+    struct iguana_ramchaindata *rdata,tmp; struct sha256_vstate state;
     char fname[1024]; long fpos = -1; int32_t hdrsi,checki; int64_t offset; FILE *fp; bits256 sha256;
     if ( (rdata= ramchain->H.data) == 0 )
     {
@@ -725,8 +725,28 @@ long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits
         rdata->TXoffset = offset, offset += (((int64_t)rdata->numtxsparse*rdata->txsparsebits)/8 + 1);
         rdata->PKoffset = offset, offset += (((int64_t)rdata->numpksparse*rdata->pksparsebits)/8 + 1);
         rdata->allocsize = offset;
-        memset(sha256.bytes,0,sizeof(sha256));
-        vcalc_sha256(0,sha256.bytes,(void *)rdata,(uint32_t)offset);
+        vupdate_sha256(sha256.bytes,&state,0,0);
+        vupdate_sha256(sha256.bytes,&state,(void *)rdata,sizeof(*rdata));
+        vupdate_sha256(sha256.bytes,&state,(uint8_t *)T,sizeof(struct iguana_txid)*rdata->numtxids);
+        if ( ramchain->expanded != 0 )
+        {
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)Ux,sizeof(struct iguana_unspent)*rdata->numunspents);
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)Sx,sizeof(struct iguana_spend)*rdata->numspends);
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)P,sizeof(struct iguana_pkhash)*rdata->numpkinds);
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)U2,sizeof(struct iguana_Uextra)*rdata->numunspents);
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)P2,sizeof(struct iguana_pkextra)*rdata->numpkinds);
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)A,sizeof(struct iguana_account)*rdata->numpkinds);
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)X,sizeof(bits256)*rdata->numexternaltxids);
+        }
+        else
+        {
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)U,sizeof(struct iguana_unspent20)*rdata->numunspents);
+            vupdate_sha256(sha256.bytes,&state,(uint8_t *)S,sizeof(struct iguana_spend256)*rdata->numspends);
+        }
+        if ( rdata->numtxsparse != 0 )
+            vupdate_sha256(sha256.bytes,&state,TXbits,(int32_t)((int64_t)rdata->numtxsparse*rdata->txsparsebits)/8 + 1);
+        if ( rdata->numpksparse != 0 )
+            vupdate_sha256(sha256.bytes,&state,PKbits,(int32_t)((int64_t)rdata->numpksparse*rdata->pksparsebits)/8 + 1);
         rdata->sha256 = sha256;
         if ( iguana_ramchain_size(ramchain) != offset )
             printf("iguana_ramchain_size %ld vs %ld\n",(long)iguana_ramchain_size(ramchain),(long)offset), getchar();

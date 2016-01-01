@@ -539,7 +539,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     coin->activebundles = numactive;
     coin->estsize = estsize;
     coin->numrecv = totalrecv;
-    if ( 1 && queue_size(&coin->priorityQ) == 0 && coin->blocksrecv > coin->longestchain*.9 && coin->blocksrecv < coin->longestchain-1 )
+    if ( 0 && queue_size(&coin->priorityQ) == 0 && coin->blocksrecv > coin->longestchain*.9 && coin->blocksrecv < coin->longestchain-1 )
     {
         n = 0;
         for (i=coin->lastsweep; i<coin->longestchain-1; i++)
