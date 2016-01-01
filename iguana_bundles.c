@@ -545,7 +545,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     if ( n > 10 )
                         break;
                 }
-                else if ( n > 1000 )
+                else if ( n > 100 )
                     break;
             }
         }
