@@ -827,6 +827,7 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t ms
     }
     else if ( pk_scriptlen > 34 && pk_script[pk_scriptlen-1] == 0xae && (n= pk_script[pk_scriptlen-2]) >= 0x51 && n <= 0x60 && (m= pk_script[0]) >= 0x51 && m <= n ) // m of n multisig
     {
+        m -= 0x50, n -= 0x50;
         if ( msigs160 != 0 && nump != 0 && *Mp != 0 )
         {
             script = pk_script+1;
