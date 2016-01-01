@@ -72,9 +72,107 @@ struct iguana_kvitem *iguana_hashsetPT(struct iguana_ramchain *ramchain,int32_t 
     return(ptr);
 }
 
-void iguana_sparseadd(uint8_t *bits,int32_t width,int32_t tablesize,uint64_t key0,uint64_t key1,uint32_t ind)
+uint32_t iguana_sparseaddtx(uint8_t *bits,int32_t width,int32_t tablesize,bits256 txid,struct iguana_txid *T,uint32_t txidind)
 {
-    
+    static long sparsesearches,sparseiters,sparsehits;
+    int64_t bitoffset; uint32_t x,i,j,ind = (txid.ulongs[0] ^ txid.ulongs[3]) % tablesize;
+    sparsesearches++;
+    bitoffset = (ind * width);
+    for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
+    {
+        sparseiters++;
+        if ( ind >= tablesize )
+        {
+            ind = 0;
+            bitoffset = 0;
+        }
+        for (x=j=0; j<width; j++)
+        {
+            x <<= 1;
+            x |= GETBIT(bits,bitoffset+j) != 0;
+        }
+        if ( x == 0 )
+        {
+            if ( (x= txidind) == 0 )
+                return(0);
+            for (j=0; j<width; j++,x>>=1)
+                if ( (x & 1) != 0 )
+                    SETBIT(bits,bitoffset+width-1-j);
+            if ( 1 )
+            {
+                for (x=j=0; j<width; j++)
+                {
+                    x <<= 1;
+                    x |= GETBIT(bits,bitoffset+j) != 0;
+                }
+                if ( x != txidind )
+                    printf("x.%d vs txidind.%d ind.%d bitoffset.%d\n",x,txidind,ind,(int32_t)bitoffset);
+                if ( (rand() % 1000) == 0 )
+                    printf("TX[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld\n",width,tablesize,(double)sparseiters/sparsesearches,sparsesearches,sparseiters,sparsehits);
+            }
+            return(txidind);
+        }
+        else if ( T[x].txidind == txidind || memcmp(T[x].txid.bytes,txid.bytes,sizeof(txid)) == 0 )
+        {
+            sparsehits++;
+            printf("found duplicate txidind.%d at x.%d\n",txidind,x);
+            return(txidind);
+        }
+    }
+    return(0);
+}
+
+uint32_t iguana_sparseaddpk(uint8_t *bits,int32_t width,int32_t tablesize,uint8_t rmd160[20],struct iguana_pkhash *P,uint32_t pkind)
+{
+    static long sparsesearches,sparseiters,sparsehits;
+    uint32_t i,j,x,ind; uint64_t key0,key1,bitoffset;
+    sparsesearches++;
+    memcpy(&key0,rmd160,sizeof(key0));
+    memcpy(&key1,&rmd160[sizeof(key0)],sizeof(key1));
+    ind = (key0 ^ key1) % tablesize;
+    bitoffset = (ind * width);
+    for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
+    {
+        sparseiters++;
+        if ( ind >= tablesize )
+        {
+            ind = 0;
+            bitoffset = 0;
+        }
+        for (x=j=0; j<width; j++)
+        {
+            x <<= 1;
+            x |= GETBIT(bits,bitoffset+j) != 0;
+        }
+        if ( x == 0 )
+        {
+            if ( (x= pkind) == 0 )
+                return(0);
+            for (j=0; j<width; j++,x>>=1)
+                if ( (x & 1) != 0 )
+                    SETBIT(bits,bitoffset+width-1-j);
+            if ( 1 )
+            {
+                for (x=j=0; j<width; j++)
+                {
+                    x <<= 1;
+                    x |= GETBIT(bits,bitoffset+j) != 0;
+                }
+                if ( x != pkind )
+                    printf("x.%d vs pkind.%d ind.%d bitoffset.%d\n",x,pkind,ind,(int32_t)bitoffset);
+                if ( (rand() % 1000) == 0 )
+                    printf("PK[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld\n",width,tablesize,(double)sparseiters/sparsesearches,sparsesearches,sparseiters,sparsehits);
+            }
+            return(pkind);
+        }
+        else if ( P[x].pkind == pkind || memcmp(P[x].rmd160,rmd160,20) == 0 )
+        {
+            sparsehits++;
+            printf("found duplicate pkind.%d at x.%d\n",pkind,x);
+            return(pkind);
+        }
+    }
+    return(0);
 }
 
 int32_t iguana_peerfname(struct iguana_info *coin,int32_t *hdrsip,char *dirname,char *fname,uint32_t ipbits,bits256 hash2,bits256 prevhash2,int32_t numblocks)
@@ -140,7 +238,8 @@ uint32_t iguana_ramchain_addtxid(struct iguana_info *coin,RAMCHAIN_FUNC,bits256 
         t->txidind = txidind, t->txid = txid, t->numvouts = numvouts, t->numvins = numvins;
         t->firstvout = ramchain->H.unspentind, t->firstvin = ramchain->H.spendind;
         t->locktime = locktime, t->version = version, t->timestamp = timestamp;
-        iguana_sparseadd(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid.ulongs[0],txid.ulongs[3],txidind);
+        if ( ramchain->expanded != 0 )
+            iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,txidind);
         //if ( txidind <= 2 )
         //    printf("%p TXID.[%d] firstvout.%d/%d firstvin.%d/%d\n",t,txidind,ramchain->unspentind,numvouts,ramchain->spendind,numvins);
     }
@@ -183,7 +282,8 @@ uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_
             memcpy(P[pkind].rmd160,rmd160,sizeof(P[pkind].rmd160));
             memcpy(&key0,rmd160,sizeof(key0));
             memcpy(&key1,&rmd160[sizeof(key0)],sizeof(key1));
-            iguana_sparseadd(PKbits,ramchain->H.data->pksparsebits,ramchain->H.data->numpksparse,key0,key1,pkind);
+            if ( ramchain->expanded != 0 )
+                iguana_sparseaddpk(PKbits,ramchain->H.data->pksparsebits,ramchain->H.data->numpksparse,rmd160,P,pkind);
         }
         if ( (ptr= iguana_hashsetPT(ramchain,'P',&P[pkind],pkind)) == 0 )
         {
