@@ -419,7 +419,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 
 struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,int32_t datalen,int32_t recvlen,int32_t *newhwmp)
 {
-    struct iguana_bundle *bp=0; int32_t bundlei = -2; struct iguana_block *block; double duration;
+    struct iguana_bundle *bp=0; int32_t bundlei = -2; struct iguana_block *block,*prev; double duration;
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
     if ( block != 0 )
     {
@@ -452,6 +452,11 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 dxblend(&coin->avetime,bp->avetime,.9);
             }
         }
+    }
+    if ( block != 0 && strcmp(coin->symbol,"BTC") != 0 )
+    {
+        bp = iguana_bundlefind(coin,&bp,&bundlei,block->prev_block);
+        iguana_blockQ(coin,bp,bundlei,block->prev_block,0);
     }
     return(req);
 }
@@ -789,6 +794,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     threshold = (bp->avetime + coin->avetime) * .5;
                 else threshold = coin->avetime;
                 threshold *= 100. * sqrt(threshold) * .000777;
+                threshold = 1000;
                 if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
