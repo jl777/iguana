@@ -789,13 +789,12 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     threshold = (bp->avetime + coin->avetime) * .5;
                 else threshold = coin->avetime;
                 threshold *= 100. * sqrt(threshold) * .000777;
-                if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )//&& next->recvlen == 0 )
+                if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
                     iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
                     // clear recvlens
-                    if ( coin->backstop != coin->blocks.hwmchain.height+1 )
                         printf("BACKSTOP.%d threshold %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,threshold,coin->backstopmillis,lag);
                 }
                 else if ( 0 && bits256_nonz(next->prev_block) > 0 )
