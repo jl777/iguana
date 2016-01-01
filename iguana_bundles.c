@@ -540,14 +540,9 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             {
                 if ( iguana_bundlefind(coin,&bp,&bundlei,hash2) == 0 || bp->fpos[bundlei] < 0 )
                     iguana_blockQ(coin,bp,bundlei,hash2,1), n++;
-                if ( strcmp("BTC",coin->symbol) == 0 )
-                {
-                    if ( n > 10 )
-                        break;
-                }
-                printf("%d ",bundlei);
-                //else if ( n > 100 )
-                //    break;
+                printf("%d ",i);
+                if ( n > 10 )
+                    break;
             }
         }
         if ( n > 0 )
