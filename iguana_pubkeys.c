@@ -856,7 +856,7 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t ms
     }
     else if ( pk_scriptlen == pk_script[0]+1 )
     {
-        printf("just data.%d\n",pk_scriptlen);
+        //printf("just data.%d\n",pk_scriptlen);
         memcpy(rmd160,zero_rmd160,sizeof(zero_rmd160));
         return(0);
     }

@@ -480,7 +480,7 @@ struct iguana_info
     struct iguana_peers peers;
     uint64_t instance_nonce,myservices,totalsize,totalrecv,totalpackets,sleeptime;
     int64_t mining,totalfees,TMPallocated,MAXRECVCACHE,MAXMEM,estsize,activebundles;
-    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle,numemitted;
+    int32_t MAXPEERS,MAXPENDING,MAXBUNDLES,active,closestbundle,numemitted,lastsweep;
     uint32_t longestchain,starttime,lastsync,parsetime,numiAddrs,firstblock,lastpossible,bundlescount;
     struct iguana_chain *chain;
     struct iguana_iAddr *iAddrs;
