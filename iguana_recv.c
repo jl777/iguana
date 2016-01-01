@@ -419,7 +419,7 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 
 struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,int32_t datalen,int32_t recvlen,int32_t *newhwmp)
 {
-    struct iguana_bundle *bp=0; int32_t bundlei = -2; struct iguana_block *block,*prev; double duration;
+    struct iguana_bundle *bp=0; int32_t bundlei = -2; struct iguana_block *block; double duration;
     bp = iguana_bundleset(coin,&block,&bundlei,origblock);
     if ( block != 0 )
     {
@@ -452,12 +452,17 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 dxblend(&coin->avetime,bp->avetime,.9);
             }
         }
+        if ( strcmp(coin->symbol,"BTC") != 0 && bundlei < coin->chain->bundlesize-1 && bits256_nonz(bp->hashes[bundlei+1]) != 0 && bp->fpos[bundlei+1] < 0 )
+            iguana_blockQ(coin,bp,bundlei+1,bp->hashes[bundlei+1],0);
     }
     if ( block != 0 && strcmp(coin->symbol,"BTC") != 0 )
     {
-        bp = iguana_bundlefind(coin,&bp,&bundlei,block->prev_block);
-        iguana_blockQ(coin,bp,bundlei,block->prev_block,0);
-    }
+        if ( (bp = iguana_bundlefind(coin,&bp,&bundlei,block->prev_block)) != 0 )
+        {
+            if ( bp->fpos[bundlei] < 0 )
+                iguana_blockQ(coin,bp,bundlei,block->prev_block,0);
+        }
+     }
     return(req);
 }
 
