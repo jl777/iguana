@@ -662,6 +662,7 @@ int32_t iguana_sendtxidreq(struct iguana_info *coin,struct iguana_peer *addr,bit
             }
         } else iguana_send(coin,addr,serialized,len);
     } else printf("MSG_TX null datalen.%d\n",len);
+    printf("send MSG_TX.%d\n",len);
     return(len);
 }
 
@@ -674,8 +675,9 @@ int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid)
     }
     char str[65]; printf("txidreq.%s\n",bits256_str(str,txid));
     coin->reqtxids[coin->numreqtxids++] = txid;
-    iguana_sendtxidreq(coin,coin->peers.ranked[0],txid);
-    iguana_sendtxidreq(coin,0,txid);
+    for (i=0; i<coin->MAXPEERS; i++)
+        if ( coin->peers.active[i].usock >= 0 )
+            iguana_sendtxidreq(coin,coin->peers.ranked[i],txid);
     return(0);
 }
 
