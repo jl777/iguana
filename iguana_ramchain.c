@@ -94,7 +94,6 @@ uint32_t iguana_sparseadd(uint8_t *bits,int32_t ind,int32_t width,int32_t tables
             if ( modval >= 8 )
                 ptr++, modval = 0;
             x <<= 1;
-            //x |= GETBIT(bits,bitoffset+j) != 0;
             x |= (*ptr & masks[modval]) >> modval;
         }
         if ( x == 0 )
@@ -109,9 +108,8 @@ uint32_t iguana_sparseadd(uint8_t *bits,int32_t ind,int32_t width,int32_t tables
                     ptr--, modval = 7;
                 if ( (x & 1) != 0 )
                     *ptr |= masks[modval];
-                    //SETBIT(bits,bitoffset+width-1-j);
             }
-            if ( 1 )
+            if ( 0 )
             {
                 for (x=j=0; j<width; j++)
                 {
