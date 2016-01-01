@@ -847,7 +847,7 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t ms
             {
                 *nump = n;
                 *Mp = m;
-                printf("M.%d N.%d\n",m,n);
+                //printf("M.%d N.%d\n",m,n);
             }
         }
         vcalc_sha256(0,sha256,pk_script,pk_scriptlen);
