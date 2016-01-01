@@ -411,9 +411,10 @@ struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *
     return(0);
 }
 
-struct iguana_txid *iguana_txidfind(struct iguana_info *coin,bits256 hash2)
+struct iguana_txid *iguana_txidfind(struct iguana_info *coin,bits256 txid)
 {
-    struct iguana_txid *tx = 0;
+    struct iguana_txid *tx = 0; char *retstrp = 0;
+    iguana_txidreq(coin,&retstrp,txid);
     return(tx);
 }
 
