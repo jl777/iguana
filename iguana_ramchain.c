@@ -162,7 +162,6 @@ struct iguana_txid *iguana_txidfind(struct iguana_info *coin,struct iguana_txid 
             ramchain = &bp->ramchain;
             if ( ramchain->H.data != 0 )
             {
-                printf("check %p %d\n",ramchain->H.data,i);
                 TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
                 T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
                 if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
@@ -587,6 +586,10 @@ int64_t iguana_ramchain_init(struct iguana_ramchain *ramchain,struct iguana_mems
         if ( numpkinds != 0 )
             numpkinds++;
     }
+    rdata->txsparsebits = hcalc_bitsize(rdata->numtxids);
+    rdata->numtxsparse = SPARSECOUNT(rdata->numtxids);
+    rdata->pksparsebits = hcalc_bitsize(rdata->numpkinds);
+    rdata->numpksparse = SPARSECOUNT(rdata->numpkinds);
     rdata->Toffset = offset, offset += (sizeof(struct iguana_txid) * numtxids);
     if ( ramchain->expanded != 0 )
     {
@@ -659,16 +662,6 @@ int64_t iguana_ramchain_size(struct iguana_ramchain *ramchain)
         {
             offset += (sizeof(struct iguana_unspent20) * rdata->numunspents);
             offset += (sizeof(struct iguana_spend256) * rdata->numspends);
-        }
-        if ( rdata->txsparsebits == 0 )
-        {
-            rdata->txsparsebits = hcalc_bitsize(rdata->numtxids);
-            rdata->numtxsparse = SPARSECOUNT(rdata->numtxids);
-        }
-        if ( rdata->pksparsebits == 0 )
-        {
-            rdata->pksparsebits = hcalc_bitsize(rdata->numpkinds);
-            rdata->numpksparse = SPARSECOUNT(rdata->numpkinds);
         }
         offset += ((int64_t)rdata->txsparsebits * rdata->numtxsparse)/8 + 1;
         offset += ((int64_t)rdata->pksparsebits * rdata->numpksparse)/8 + 1;
@@ -1241,13 +1234,12 @@ long iguana_ramchain_setsize(struct iguana_ramchain *ramchain)
     rdata->numspends = ramchain->H.spendind;
     rdata->numpkinds = ramchain->pkind;
     rdata->numexternaltxids = ramchain->externalind;
-    //if ( ramchain->expanded != 0 )
-    {
+    /*
         rdata->txsparsebits = hcalc_bitsize(rdata->numtxids);
         rdata->pksparsebits = hcalc_bitsize(rdata->numpkinds);
         rdata->numtxsparse = SPARSECOUNT(rdata->numtxids);
         rdata->numpksparse = SPARSECOUNT(rdata->numpkinds);
-    }
+    */
     rdata->allocsize = iguana_ramchain_size(ramchain);
     ramchain->datasize = rdata->allocsize;
     return((long)rdata->allocsize);
