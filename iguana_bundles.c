@@ -545,8 +545,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     if ( n > 10 )
                         break;
                 }
-                else if ( n > 100 )
-                    break;
+                //else if ( n > 100 )
+                //    break;
             }
         }
         //printf(">>>>>>>>>>> issued.%d 99%% blocks\n",n);

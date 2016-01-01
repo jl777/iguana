@@ -760,7 +760,7 @@ int32_t iguana_pollQsPT(struct iguana_info *coin,struct iguana_peer *addr)
 
 int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
 {
-    int32_t newhwm = 0,h,lflag,flag = 0; struct iguana_block *next,*block; struct iguana_bundle *bp;
+    int32_t newhwm = 0,h,lflag,bundlei,flag = 0; struct iguana_block *next,*block; struct iguana_bundle *bp;
     //printf("process bundlesQ\n");
     flag += iguana_processbundlesQ(coin,&newhwm);
     flag += iguana_reqhdrs(coin);
@@ -800,8 +800,10 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
-                    iguana_blockQ(coin,coin->bundles[(coin->blocks.hwmchain.height+1)/coin->chain->bundlesize],(coin->blocks.hwmchain.height+1)%coin->chain->bundlesize,next->hash2,1);
-                    // clear recvlens
+                    bundlei = (coin->blocks.hwmchain.height+1) % coin->chain->bundlesize;
+                    if ( (bp= coin->bundles[(coin->blocks.hwmchain.height+1)/coin->chain->bundlesize]) == 0 || bp->fpos[bundlei] >= 0 )
+                        iguana_blockQ(coin,bp,bundlei,next->hash2,1);
+                    if ( (rand() % 10) == 0 )
                         printf("BACKSTOP.%d threshold %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,threshold,coin->backstopmillis,lag);
                 }
                 else if ( 0 && bits256_nonz(next->prev_block) > 0 )
