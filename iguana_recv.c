@@ -380,12 +380,6 @@ struct iguana_bundlereq *iguana_recvblockhashes(struct iguana_info *coin,struct 
 {
     int32_t bundlei,i; struct iguana_block *block; struct iguana_bundle *bp;
     bp = 0, bundlei = -2, iguana_bundlefind(coin,&bp,&bundlei,blockhashes[1]);
-    /*if ( bp == 0 || bundlei != 1 || num <= 2 )
-    {
-        if ( num > 2 )
-            iguana_blockQ(coin,0,-1,blockhashes[1],1);
-        return(req);
-    }*/
     if ( bp != 0 && num >= coin->chain->bundlesize )
     {
         bp->hdrtime = (uint32_t)time(NULL);
@@ -799,12 +793,14 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     threshold = (bp->avetime + coin->avetime) * .5;
                 else threshold = coin->avetime;
                 threshold *= 100. * sqrt(threshold) * .000777;
-                threshold = 1000;
+                if ( strcmp(coin->symbol,"BTC") != 0 )
+                    threshold = 100;
+                else threshold = 1000;
                 if ( coin->blocks.hwmchain.height+1 < coin->longestchain && (coin->backstop != coin->blocks.hwmchain.height+1 || lag > threshold) )
                 {
                     coin->backstop = coin->blocks.hwmchain.height+1;
                     coin->backstopmillis = milliseconds();
-                    iguana_blockQ(coin,0,coin->blocks.hwmchain.height+1,next->hash2,1);
+                    iguana_blockQ(coin,coin->bundles[(coin->blocks.hwmchain.height+1)/coin->chain->bundlesize],(coin->blocks.hwmchain.height+1)%coin->chain->bundlesize,next->hash2,1);
                     // clear recvlens
                         printf("BACKSTOP.%d threshold %.3f %.3f lag %.3f\n",coin->blocks.hwmchain.height+1,threshold,coin->backstopmillis,lag);
                 }
