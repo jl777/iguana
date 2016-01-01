@@ -13,7 +13,7 @@
  *                                                                            *
  ******************************************************************************/
 
-#define SPARSECOUNT(x) ((x * 3) >> 1)
+#define SPARSECOUNT(x) (x << 2)
 
 #define uthash_malloc(size) ((ramchain->hashmem == 0) ? mycalloc('u',1,size) : iguana_memalloc(ramchain->hashmem,size,1))
 #define uthash_free(ptr,size) ((ramchain->hashmem == 0) ? myfree(ptr,size) : 0)
@@ -74,7 +74,7 @@ struct iguana_kvitem *iguana_hashsetPT(struct iguana_ramchain *ramchain,int32_t 
 
 uint32_t iguana_sparseaddtx(uint8_t *bits,int32_t width,int32_t tablesize,bits256 txid,struct iguana_txid *T,uint32_t txidind)
 {
-    static long sparsesearches,sparseiters,sparsehits;
+    static long sparsesearches,sparseiters,sparsehits,sparsemax;
     int64_t bitoffset; uint32_t x,i,j,ind = (txid.ulongs[0] ^ txid.ulongs[3]) % tablesize;
     sparsesearches++;
     bitoffset = (ind * width);
@@ -108,8 +108,10 @@ uint32_t iguana_sparseaddtx(uint8_t *bits,int32_t width,int32_t tablesize,bits25
                 if ( x != txidind )
                     printf("x.%d vs txidind.%d ind.%d bitoffset.%d\n",x,txidind,ind,(int32_t)bitoffset);
                 if ( (rand() % 1000) == 0 )
-                    printf("TX[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld\n",width,tablesize,(double)sparseiters/sparsesearches,sparsesearches,sparseiters,sparsehits);
+                    printf("TX[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld max.%ld\n",width,tablesize,(double)sparseiters/sparsesearches,sparsesearches,sparseiters,sparsehits,sparsemax+1);
             }
+            if ( i > sparsemax )
+                sparsemax = i;
             return(txidind);
         }
         else if ( T[x].txidind == txidind || memcmp(T[x].txid.bytes,txid.bytes,sizeof(txid)) == 0 )
@@ -124,7 +126,7 @@ uint32_t iguana_sparseaddtx(uint8_t *bits,int32_t width,int32_t tablesize,bits25
 
 uint32_t iguana_sparseaddpk(uint8_t *bits,int32_t width,int32_t tablesize,uint8_t rmd160[20],struct iguana_pkhash *P,uint32_t pkind)
 {
-    static long sparsesearches,sparseiters,sparsehits;
+    static long sparsesearches,sparseiters,sparsehits,sparsemax;
     uint32_t i,j,x,ind; uint64_t key0,key1,bitoffset;
     sparsesearches++;
     memcpy(&key0,rmd160,sizeof(key0));
@@ -161,8 +163,10 @@ uint32_t iguana_sparseaddpk(uint8_t *bits,int32_t width,int32_t tablesize,uint8_
                 if ( x != pkind )
                     printf("x.%d vs pkind.%d ind.%d bitoffset.%d\n",x,pkind,ind,(int32_t)bitoffset);
                 if ( (rand() % 1000) == 0 )
-                    printf("PK[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld\n",width,tablesize,(double)sparseiters/sparsesearches,sparsesearches,sparseiters,sparsehits);
+                    printf("PK[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld max.%ld\n",width,tablesize,(double)sparseiters/sparsesearches,sparsesearches,sparseiters,sparsehits,sparsemax+1);
             }
+            if ( i > sparsemax )
+                sparsemax = i;
             return(pkind);
         }
         else if ( P[x].pkind == pkind || memcmp(P[x].rmd160,rmd160,20) == 0 )
