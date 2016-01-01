@@ -794,7 +794,7 @@ struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundl
 int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid);
 void iguana_bundleiclear(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei);
 int32_t hcalc_bitsize(uint64_t x);
-struct iguana_pkhash *iguana_sparsefindpk(struct iguana_info *coin,struct iguana_pkhash *p,uint8_t rmd160[20]);
-struct iguana_txid *iguana_sparsefindtx(struct iguana_info *coin,struct iguana_txid *tx,bits256 txid);
+struct iguana_pkhash *iguana_pkhashfind(struct iguana_info *coin,struct iguana_pkhash *p,uint8_t rmd160[20]);
+struct iguana_txid *iguana_txidfind(struct iguana_info *coin,struct iguana_txid *tx,bits256 txid);
 
 #endif

@@ -152,7 +152,7 @@ uint32_t iguana_sparseaddpk(uint8_t *bits,int32_t width,int32_t tablesize,uint8_
     return(iguana_sparseadd(bits,ind,width,tablesize,rmd160,20,pkind,P,sizeof(*P)));
 }
 
-struct iguana_txid *iguana_sparsefindtx(struct iguana_info *coin,struct iguana_txid *tx,bits256 txid)
+struct iguana_txid *iguana_txidfind(struct iguana_info *coin,struct iguana_txid *tx,bits256 txid)
 {
     uint8_t *TXbits; struct iguana_txid *T; uint32_t txidind,i; struct iguana_bundle *bp; struct iguana_ramchain *ramchain;
     for (i=0; i<coin->bundlescount; i++)
@@ -175,7 +175,7 @@ struct iguana_txid *iguana_sparsefindtx(struct iguana_info *coin,struct iguana_t
     return(0);
 }
 
-struct iguana_pkhash *iguana_sparsefindpk(struct iguana_info *coin,struct iguana_pkhash *p,uint8_t rmd160[20])
+struct iguana_pkhash *iguana_pkhashfind(struct iguana_info *coin,struct iguana_pkhash *p,uint8_t rmd160[20])
 {
     uint8_t *PKbits; struct iguana_pkhash *P; uint32_t pkind,i; struct iguana_bundle *bp; struct iguana_ramchain *ramchain;
     for (i=0; i<coin->bundlescount; i++)

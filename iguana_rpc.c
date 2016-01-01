@@ -411,14 +411,6 @@ struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *
     return(0);
 }
 
-struct iguana_txid *iguana_txidfind(struct iguana_info *coin,bits256 txid)
-{
-    struct iguana_txid *tx = 0; char *retstrp = 0;
-    printf("call iguana_txidreq\n");
-    iguana_txidreq(coin,&retstrp,txid);
-    return(tx);
-}
-
 cJSON *iguana_blockjson(struct iguana_info *coin,struct iguana_block *block,int32_t txidsflag)
 {
     char str[65]; int32_t i; struct iguana_txid *tx,T; cJSON *array,*json = cJSON_CreateObject();
@@ -586,7 +578,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
         {
             retitem = cJSON_CreateObject();
             decode_hex(hash2.bytes,sizeof(hash2),txidstr);
-            if ( (tx= iguana_txidfind(coin,hash2)) != 0 )
+            if ( (tx= iguana_txidfind(coin,&T,hash2)) != 0 )
             {
                 jadd(retitem,"tx",iguana_txjson(coin,tx));
                 return(jprint(retitem,1));
@@ -600,7 +592,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
         if ( ((txidstr= jstr(json,"txid")) != 0 || (txidstr= jstr(json,"hash")) != 0) && strlen(txidstr) == sizeof(bits256)*2 )
         {
             decode_hex(hash2.bytes,sizeof(hash2),txidstr);
-            if ( (tx= iguana_txidfind(coin,hash2)) != 0 )
+            if ( (tx= iguana_txidfind(coin,&T,hash2)) != 0 )
             {
                 if ( (txbytes= iguana_txbytes(coin,&checktxid,tx)) != 0 )
                 {
