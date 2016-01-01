@@ -387,7 +387,7 @@ void iguana_coinargs(char *symbol,int64_t *maxrecvcachep,int32_t *minconfirmsp,i
     *maxpendingp = juint(json,"maxpending");
     *maxbundlesp = juint(json,"maxbundles");
     if ( (*initialheightp= juint(json,"initialheight")) == 0 )
-        *initialheightp = (strcmp(symbol,"BTC") == 0) ? 400000 : 100000;
+        *initialheightp = (strcmp(symbol,"BTC") == 0) ? 400000 : 1000000;
     *servicesp = j64bits(json,"services");
 }
 

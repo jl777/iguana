@@ -128,7 +128,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,int32_t ind,int32_t width,int32_t tables
         else if ( memcmp((void *)((long)refdata + x*refsize),key,keylen) == 0 )
         {
             sparsehits++;
-            printf("found duplicate setind.%d at x.%d\n",setind,x);
+            //printf("found duplicate setind.%d at x.%d\n",setind,x);
             return(setind);
         }
     }
@@ -473,8 +473,6 @@ void _iguana_ramchain_setptrs(RAMCHAIN_PTRPS)
         *Sx = (void *)((long)rdata + (long)rdata->Soffset);
         *P = (void *)((long)rdata + (long)rdata->Poffset);
         *X = (void *)((long)rdata + (long)rdata->Xoffset);
-        *TXbits = (void *)((long)rdata + (long)rdata->TXoffset);
-        *PKbits = (void *)((long)rdata + (long)rdata->PKoffset);
         ramchain->roU2 = (void *)((long)rdata + (long)rdata->U2offset);
         ramchain->roP2 = (void *)((long)rdata + (long)rdata->P2offset);
         ramchain->roA = (void *)((long)rdata + (long)rdata->Aoffset);
@@ -493,6 +491,8 @@ void _iguana_ramchain_setptrs(RAMCHAIN_PTRPS)
         *S = (void *)((long)rdata + (long)rdata->Soffset);
         *Ux = 0, *Sx = 0, *P = 0, *X = 0, *U2 = 0, *P2 = 0, *A = 0;
     }
+    *TXbits = (void *)((long)rdata + (long)rdata->TXoffset);
+    *PKbits = (void *)((long)rdata + (long)rdata->PKoffset);
 }
 
 int64_t iguana_hashmemsize(uint32_t numtxids,uint32_t numunspents,uint32_t numspends,uint32_t numpkinds,uint32_t numexternaltxids)
@@ -638,7 +638,7 @@ int64_t iguana_ramchain_size(struct iguana_ramchain *ramchain)
 long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits,bits256 hash2,bits256 prevhash2,int32_t bundlei)
 {
     struct iguana_ramchaindata *rdata,tmp;
-    char fname[1024]; long fpos = -1; int32_t hdrsi,checki; int64_t offset; FILE *fp;
+    char fname[1024]; long fpos = -1; int32_t hdrsi,checki; int64_t offset; FILE *fp; bits256 sha256;
     if ( (rdata= ramchain->H.data) == 0 )
     {
         printf("ramchainsave no data ptr\n");
@@ -687,12 +687,14 @@ long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits
         rdata->TXoffset = offset, offset += (((int64_t)rdata->numtxsparse*rdata->txsparsebits)/8 + 1);
         rdata->PKoffset = offset, offset += (((int64_t)rdata->numpksparse*rdata->pksparsebits)/8 + 1);
         rdata->allocsize = offset;
-        memset(rdata->sha256.bytes,0,sizeof(rdata->sha256));
-        vcalc_sha256(0,rdata->sha256.bytes,(void *)rdata,(uint32_t)offset);
+        memset(sha256.bytes,0,sizeof(sha256));
+        vcalc_sha256(0,sha256.bytes,(void *)rdata,(uint32_t)offset);
+        rdata->sha256 = sha256;
         if ( iguana_ramchain_size(ramchain) != offset )
             printf("iguana_ramchain_size %ld vs %ld\n",(long)iguana_ramchain_size(ramchain),(long)offset), getchar();
         fwrite(rdata,1,sizeof(*rdata),fp);
         *rdata = tmp;
+        rdata->sha256 = sha256;
         fwrite(T,sizeof(struct iguana_txid),rdata->numtxids,fp);
         if ( ramchain->expanded != 0 )
         {
@@ -1548,7 +1550,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     depth--;
     if ( bundlei == bp->n && iguana_ramchain_expandedsave(coin,RAMCHAIN_DESTARG,&newchain,&HASHMEM,0) == 0 )
     {
-        char str[65]; printf("depth.%d ht.%d fsize.%s saved lag.%d elapsed.%ld\n",depth,dest->height,mbstr(str,dest->H.data->allocsize),now-starttime,time(NULL)-now);
+        char str[65],str2[65]; printf("%s d.%d ht.%d %s saved lag.%d elapsed.%ld\n",bits256_str(str2,newchain.H.data->sha256),depth,dest->height,mbstr(str,dest->H.data->allocsize),now-starttime,time(NULL)-now);
         retval = 0;
     }
     iguana_bundlemapfree(mem,&HASHMEM,ipbits,ptrs,filesizes,num,R,bp->n);
