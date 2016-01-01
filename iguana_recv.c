@@ -30,9 +30,81 @@ struct iguana_bundlereq *iguana_bundlereq(struct iguana_info *coin,struct iguana
     return(req);
 }
 
+int32_t iguana_sendblockreq(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2)
+{
+    int32_t len; uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
+    char hexstr[65]; init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
+    if ( (len= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
+    {
+        iguana_send(coin,addr,serialized,len);
+        coin->numreqsent++;
+        addr->pendblocks++;
+        addr->pendtime = (uint32_t)time(NULL);
+        if( bp != 0 && bundlei >= 0 && bundlei < bp->n )
+        {
+            bp->issued[bundlei] = addr->pendtime;
+            if ( bp->requests[bundlei] < 100 )
+                bp->requests[bundlei]++;
+        }
+    } else printf("MSG_BLOCK null datalen.%d\n",len);
+    return(len);
+}
+
+int32_t iguana_sendtxidreq(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2)
+{
+    uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
+    int32_t len,i,r,j; char hexstr[65]; init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
+    if ( (len= iguana_getdata(coin,serialized,MSG_TX,hexstr)) > 0 )
+    {
+        if ( addr == 0 )
+        {
+            r = rand();
+            for (i=0; i<coin->MAXPEERS; i++)
+            {
+                j = (i + r) % coin->MAXPEERS;
+                addr = &coin->peers.active[j];
+                if ( coin->peers.active[j].usock >= 0 && coin->peers.active[j].dead == 0 )
+                {
+                    iguana_send(coin,addr,serialized,len);
+                    break;
+                }
+            }
+        } else iguana_send(coin,addr,serialized,len);
+    } else printf("MSG_TX null datalen.%d\n",len);
+    printf("send MSG_TX.%d\n",len);
+    return(len);
+}
+
+int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid)
+{
+    int32_t i;
+    while ( coin->numreqtxids >= sizeof(coin->reqtxids)/sizeof(*coin->reqtxids) )
+    {
+        printf("txidreq full, wait\n");
+        sleep(1);
+    }
+    char str[65]; printf("txidreq.%s\n",bits256_str(str,txid));
+    coin->reqtxids[coin->numreqtxids++] = txid;
+    for (i=0; i<coin->MAXPEERS; i++)
+        if ( coin->peers.active[i].usock >= 0 )
+            iguana_sendtxidreq(coin,coin->peers.ranked[i],txid);
+    return(0);
+}
+
+void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,uint8_t *data,int32_t datalen)
+{
+    struct iguana_bundlereq *req;
+    char str[65]; printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(str,tx->txid));
+    req = iguana_bundlereq(coin,addr,'U',datalen);
+    req->datalen = datalen;
+    req->txid = tx->txid;
+    memcpy(req->serialized,data,datalen);
+    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
+}
+
 void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,uint8_t *data,int32_t recvlen)
 {
-    struct iguana_bundlereq *req; struct iguana_txblock *txdata = 0; int32_t i,copyflag; char fname[1024];
+    struct iguana_bundlereq *req; struct iguana_txblock *txdata = 0; int32_t i,j,copyflag; char fname[1024];
     if ( 0 )
     {
         for (i=0; i<txdata->space[0]; i++)
@@ -43,6 +115,19 @@ void iguana_gotblockM(struct iguana_info *coin,struct iguana_peer *addr,struct i
             for (i=0; i<txdata->space[0]; i++)
                 printf("%02x ",txdata->space[i]);
             printf("extra\n");
+        }
+    }
+    if ( coin->numreqtxids > 0 )
+    {
+        for (i=0; i<origtxdata->block.txn_count; i++)
+        {
+            for (j=0; j<coin->numreqtxids; j++)
+            {
+                if ( memcmp(coin->reqtxids[j].bytes,txarray[i].txid.bytes,sizeof(bits256)) == 0 )
+                {
+                    char str[65]; printf("i.%d j.%d found txid.%s\n",i,j,bits256_str(str,coin->reqtxids[j]));
+                }
+            }
         }
     }
     copyflag = 0 * (strcmp(coin->symbol,"BTC") != 0);
@@ -95,17 +180,6 @@ void iguana_gottxidsM(struct iguana_info *coin,struct iguana_peer *addr,bits256 
     printf("got %d txids from %s\n",n,addr->ipaddr);
     req = iguana_bundlereq(coin,addr,'T',0);
     req->hashes = txids, req->n = n;
-    queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
-}
-
-void iguana_gotunconfirmedM(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_msgtx *tx,uint8_t *data,int32_t datalen)
-{
-    struct iguana_bundlereq *req;
-    char str[65]; printf("%s unconfirmed.%s\n",addr->ipaddr,bits256_str(str,tx->txid));
-    req = iguana_bundlereq(coin,addr,'U',datalen);
-    req->datalen = datalen;
-    req->txid = tx->txid;
-    memcpy(req->serialized,data,datalen);
     queue_enqueue("bundlesQ",&coin->bundlesQ,&req->DL,0);
 }
 
@@ -618,67 +692,6 @@ int32_t iguana_blockQ(struct iguana_info *coin,struct iguana_bundle *bp,int32_t 
             return(1);
         } else printf("null Q\n");
     } //else printf("queueblock skip priority.%d bundlei.%d\n",bundlei,priority);
-    return(0);
-}
-
-int32_t iguana_sendblockreq(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundle *bp,int32_t bundlei,bits256 hash2)
-{
-    int32_t len; uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
-    char hexstr[65]; init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
-    if ( (len= iguana_getdata(coin,serialized,MSG_BLOCK,hexstr)) > 0 )
-    {
-        iguana_send(coin,addr,serialized,len);
-        coin->numreqsent++;
-        addr->pendblocks++;
-        addr->pendtime = (uint32_t)time(NULL);
-        if( bp != 0 && bundlei >= 0 && bundlei < bp->n )
-        {
-            bp->issued[bundlei] = addr->pendtime;
-            if ( bp->requests[bundlei] < 100 )
-                bp->requests[bundlei]++;
-        }
-    } else printf("MSG_BLOCK null datalen.%d\n",len);
-    return(len);
-}
-
-int32_t iguana_sendtxidreq(struct iguana_info *coin,struct iguana_peer *addr,bits256 hash2)
-{
-    uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(uint32_t)*32 + sizeof(bits256)];
-    int32_t len,i,r,j; char hexstr[65]; init_hexbytes_noT(hexstr,hash2.bytes,sizeof(hash2));
-    if ( (len= iguana_getdata(coin,serialized,MSG_TX,hexstr)) > 0 )
-    {
-        if ( addr == 0 )
-        {
-            r = rand();
-            for (i=0; i<coin->MAXPEERS; i++)
-            {
-                j = (i + r) % coin->MAXPEERS;
-                addr = &coin->peers.active[j];
-                if ( coin->peers.active[j].usock >= 0 && coin->peers.active[j].dead == 0 )
-                {
-                    iguana_send(coin,addr,serialized,len);
-                    break;
-                }
-            }
-        } else iguana_send(coin,addr,serialized,len);
-    } else printf("MSG_TX null datalen.%d\n",len);
-    printf("send MSG_TX.%d\n",len);
-    return(len);
-}
-
-int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid)
-{
-    int32_t i;
-    while ( coin->numreqtxids >= sizeof(coin->reqtxids)/sizeof(*coin->reqtxids) )
-    {
-        printf("txidreq full, wait\n");
-        sleep(1);
-    }
-    char str[65]; printf("txidreq.%s\n",bits256_str(str,txid));
-    coin->reqtxids[coin->numreqtxids++] = txid;
-    for (i=0; i<coin->MAXPEERS; i++)
-        if ( coin->peers.active[i].usock >= 0 )
-            iguana_sendtxidreq(coin,coin->peers.ranked[i],txid);
     return(0);
 }
 
