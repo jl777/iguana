@@ -77,7 +77,6 @@ uint32_t iguana_sparseadd(uint8_t *bits,int32_t ind,int32_t width,int32_t tables
     static long sparsesearches,sparseiters,sparsehits,sparsemax;
     static uint8_t masks[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
     int32_t i,j,x,modval; int64_t bitoffset; uint8_t *ptr;
-    return(setind);
     bitoffset = (ind * width);
     sparsesearches++;
     for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
@@ -161,12 +160,15 @@ struct iguana_txid *iguana_sparsefindtx(struct iguana_info *coin,struct iguana_t
         if ( (bp= coin->bundles[i]) != 0 )
         {
             ramchain = &bp->ramchain;
-            TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
-            T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
-            if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
+            if ( ramchain->H.data != 0 )
             {
-                *tx = T[txidind];
-                return(tx);
+                TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
+                T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
+                if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
+                {
+                    *tx = T[txidind];
+                    return(tx);
+                }
             }
         }
     }
@@ -1636,9 +1638,10 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     else
     {
-        //if ( (mapchain= iguana_ramchain_map(coin,fname,bp->ramchain.numblocks,&bp->ramchain,&HASHMEMA,0,bp->hashes[0],zero,0,0,1)) != 0 )
+        memset(&bp->ramchain,0,sizeof(bp->ramchain));
+        if ( (mapchain= iguana_ramchain_map(coin,fname,bp->ramchain.numblocks,&bp->ramchain,0,0,bp->hashes[0],zero,0,0,0)) != 0 )
         {
-           //iguana_ramchain_link(A,bp->hashes[0],bp->ramchain.lasthash2,bp->hdrsi,bp->bundleheight,0,bp->ramchain.numblocks,firsti,1);
+           iguana_ramchain_link(mapchain,bp->hashes[0],bp->ramchain.lasthash2,bp->hdrsi,bp->bundleheight,0,bp->ramchain.numblocks,firsti,1);
         }
     }
     //printf("bp.%d: T.%d U.%d S.%d P%d X.%d\n",bp->hdrsi,bp->ramchain.H.txidind,bp->ramchain.H.unspentind,bp->ramchain.H.spendind,bp->ramchain.pkind,bp->ramchain.externalind);
