@@ -533,7 +533,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
     coin->numrecv = totalrecv;
     if ( queue_size(&coin->priorityQ) == 0 && coin->blocksrecv > coin->longestchain*.9 && coin->blocksrecv < coin->longestchain-1 )
     {
-        for (i=n=coin->lastsweep; i<coin->longestchain-1; i++)
+        n = 0;
+        for (i=coin->lastsweep; i<coin->longestchain-1; i++)
         {
             hash2 = iguana_blockhash(coin,i);
             if ( bits256_nonz(hash2) > 0 && (block= iguana_blockfind(coin,hash2)) != 0 )

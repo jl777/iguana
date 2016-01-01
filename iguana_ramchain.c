@@ -156,9 +156,9 @@ uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_
         pkind = ramchain->pkind++;
         if ( ramchain->H.ROflag != 0 )
         {
-            if ( P[pkind].flags != flags || P[pkind].firstunspentind != unspentind )
+            if ( P[pkind].flags != flags || P[pkind].firstunspentind != unspentind || P[pkind].pkind != pkind )
             {
-                printf("iguana_ramchain_addpkhash pkind.%d error mismatched flags.(%x %x) firstunspentind.%x vs %x\n",pkind,P[pkind].flags,flags,P[pkind].firstunspentind,unspentind);
+                printf("iguana_ramchain_addpkhash pkind.%d vs %d error mismatched flags.(%x %x) firstunspentind.%x vs %x\n",pkind,P[pkind].pkind,P[pkind].flags,flags,P[pkind].firstunspentind,unspentind);
                 return(0);
             }
             if ( memcmp(P[pkind].rmd160,rmd160,sizeof(P[pkind].rmd160)) != 0 )
@@ -170,6 +170,7 @@ uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_
         else
         {
             P[pkind].flags = flags;
+            P[pkind].pkind = pkind;
             P[pkind].firstunspentind = unspentind;
             //printf("%p P[%d] <- firstunspent.%d\n",&P[pkind],pkind,unspentind);
             memcpy(P[pkind].rmd160,rmd160,sizeof(P[pkind].rmd160));
