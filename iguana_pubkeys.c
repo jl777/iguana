@@ -791,8 +791,20 @@ int32_t btc_pub65toaddr(char *coinaddr,uint8_t addrtype,char pubkey[131],uint8_t
 
 int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *pk_script,int32_t pk_scriptlen,bits256 debugtxid)
 {
-    char hexstr[8192]; uint32_t orign; uint8_t sha256[32],*orig;
-    orign = pk_scriptlen, orig = pk_script;
+    static uint8_t zero_rmd160[20];
+    char hexstr[8192]; uint8_t sha256[32];
+    if ( pk_scriptlen == 0 || pk_script[0] == 0x6a ) // no script or OP_RETURN
+    {
+        if ( zero_rmd160[0] == 0 )
+        {
+            vcalc_sha256(0,sha256,pk_script,pk_scriptlen); // e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855
+            calc_rmd160(0,zero_rmd160,sha256,sizeof(sha256)); // b472a266d0bd89c13706a4132ccfb16f7c3b9fcb
+            init_hexbytes_noT(hexstr,zero_rmd160,20);
+            char str[65]; printf("iguana_calcrmd160 zero len %s -> %s\n",bits256_str(str,*(bits256 *)sha256),hexstr);
+        }
+        memcpy(rmd160,zero_rmd160,sizeof(zero_rmd160));
+        return(0);
+    }
     if ( pk_script[0] == 0x76 && pk_script[1] == 0xa9 && pk_script[pk_scriptlen-2] == 0x88 && pk_script[pk_scriptlen-1] == 0xac )
     {
         vcalc_sha256(0,sha256,&pk_script[3],pk_script[2]);
@@ -804,19 +816,23 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *p
         //printf("minus2\n");
         vcalc_sha256(0,sha256,&pk_script[1],pk_script[0]);
         calc_rmd160(0,rmd160,sha256,sizeof(sha256));
+        return(0);
+    }
+    else if ( pk_script[0] == 0xa9 && pk_script[1] == 0x14 && pk_scriptlen == 23 && pk_script[22] == 0x87 )
+    {
+        memcpy(rmd160,pk_script+2,20);
         return(1);
     }
-    if ( orign < sizeof(hexstr)/2-1)
-        init_hexbytes_noT(hexstr,orig,orign);
-    else sprintf(hexstr,"overflowed %ld",(long)sizeof(hexstr));
+    if ( pk_scriptlen < sizeof(hexstr)/2-1)
     {
         static FILE *fp;
-        //printf("unparsed script in %s len.%d\n",bits256_str(debugtxid),orign);
+        init_hexbytes_noT(hexstr,pk_script,pk_scriptlen);
+        char str[65]; printf("unparsed script.(%s).%d in %s len.%d\n",hexstr,pk_scriptlen,bits256_str(str,debugtxid),pk_scriptlen);
         if ( 1 && fp == 0 )
             fp = fopen("unparsed.txt","w");
         if ( fp != 0 )
             fprintf(fp,"%s\n",hexstr), fflush(fp);
-    }
+    } else sprintf(hexstr,"pkscript overflowed %ld\n",(long)sizeof(hexstr));
     vcalc_sha256(0,sha256,pk_script,pk_scriptlen);
     calc_rmd160(0,rmd160,sha256,sizeof(sha256));
     return(0);

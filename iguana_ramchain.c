@@ -571,6 +571,8 @@ long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits
             rdata->Soffset = offset, offset += (sizeof(struct iguana_spend256) * rdata->numspends);
         }
         rdata->allocsize = offset;
+        memset(rdata->sha256.bytes,0,sizeof(rdata->sha256));
+        vcalc_sha256(0,rdata->sha256.bytes,(void *)rdata,(uint32_t)offset);
         if ( iguana_ramchain_size(ramchain) != offset )
             printf("iguana_ramchain_size %ld vs %ld\n",(long)iguana_ramchain_size(ramchain),(long)offset), getchar();
         fwrite(rdata,1,sizeof(*rdata),fp);
