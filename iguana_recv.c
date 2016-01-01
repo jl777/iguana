@@ -668,6 +668,7 @@ int32_t iguana_sendtxidreq(struct iguana_info *coin,struct iguana_peer *addr,bit
 
 int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid)
 {
+    int32_t i;
     while ( coin->numreqtxids >= sizeof(coin->reqtxids)/sizeof(*coin->reqtxids) )
     {
         printf("txidreq full, wait\n");
