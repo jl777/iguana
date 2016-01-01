@@ -854,6 +854,12 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t ms
         calc_rmd160(0,rmd160,sha256,sizeof(sha256));
         return(1);
     }
+    else if ( pk_scriptlen == pk_script[0]+1 )
+    {
+        printf("just data.%d\n",pk_scriptlen);
+        memcpy(rmd160,zero_rmd160,sizeof(zero_rmd160));
+        return(0);
+    }
     if ( pk_scriptlen < sizeof(hexstr)/2-1)
     {
         static FILE *fp;
