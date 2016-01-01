@@ -565,7 +565,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     }
     if ( strcmp(method,"block") == 0 )
     {
-        if ( (hashstr= jstr(json,"blockhash")) != 0 && strlen(hashstr) == sizeof(bits256)*2 )
+        if ( ((hashstr= jstr(json,"blockhash")) != 0 || (hashstr= jstr(json,"hash")) != 0) && strlen(hashstr) == sizeof(bits256)*2 )
             decode_hex(hash2.bytes,sizeof(hash2),hashstr);
         else
         {
@@ -582,7 +582,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     }
     else if ( strcmp(method,"tx") == 0 )
     {
-        if ( (txidstr= jstr(json,"txid")) != 0 && strlen(txidstr) == sizeof(bits256)*2 )
+        if ( ((txidstr= jstr(json,"txid")) != 0 || (txidstr= jstr(json,"hash")) != 0) && strlen(txidstr) == sizeof(bits256)*2 )
         {
             retitem = cJSON_CreateObject();
             decode_hex(hash2.bytes,sizeof(hash2),txidstr);
@@ -597,7 +597,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     }
     else if ( strcmp(method,"rawtx") == 0 )
     {
-        if ( (txidstr= jstr(json,"txid")) != 0 && strlen(txidstr) == sizeof(bits256)*2 )
+        if ( ((txidstr= jstr(json,"txid")) != 0 || (txidstr= jstr(json,"hash")) != 0) && strlen(txidstr) == sizeof(bits256)*2 )
         {
             decode_hex(hash2.bytes,sizeof(hash2),txidstr);
             if ( (tx= iguana_txidfind(coin,hash2)) != 0 )
@@ -616,7 +616,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     }
     else if ( strcmp(method,"txs") == 0 )
     {
-        if ( (hashstr= jstr(json,"block")) != 0 && strlen(hashstr) == sizeof(bits256)*2 )
+        if ( ((hashstr= jstr(json,"block")) != 0 || (hashstr= jstr(json,"blockhash")) != 0) && strlen(hashstr) == sizeof(bits256)*2 )
         {
             decode_hex(hash2.bytes,sizeof(hash2),hashstr);
             if ( (block= iguana_blockfind(coin,hash2)) == 0 )
