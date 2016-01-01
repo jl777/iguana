@@ -382,7 +382,7 @@ char *iguana_addagent(char *name,char *(*parsefunc)(struct iguana_agent *agent,s
                 agent->sock = iguana_socket(0,agent->hostname,port);
                 printf("set (%s) port.%d for %s -> sock.%d\n",hostname,port,agent->name,agent->sock);
             }
-            if ( agent->port > 0 && agent->sock < 0 && agent->hostname != 0 && (agent->sock= iguana_socket(0,agent->hostname,agent->port)) < 0 )
+            if ( agent->port > 0 && agent->sock < 0 && agent->hostname[0] != 0 && (agent->sock= iguana_socket(0,agent->hostname,agent->port)) < 0 )
                 return(clonestr("{\"result\":\"existing agent couldnt connect to remote agent\"}"));
             else return(clonestr("{\"result\":\"agent already there\"}"));
         }
