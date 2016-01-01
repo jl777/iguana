@@ -721,12 +721,9 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct i
         iguana_memreset(rawmem);
         tx = iguana_memalloc(rawmem,sizeof(*tx),1);//mycalloc('u',1,sizeof(*tx));
         len = iguana_rwtx(0,rawmem,data,tx,datalen,&tx->txid,-1,coin->chain->hastimestamp);
-        if ( len == datalen && addr != 0 )
-        {
-            iguana_gotunconfirmedM(coin,addr,tx,data,datalen);
-            printf("tx datalen.%d\n",datalen);
-            addr->msgcounts.tx++;
-        }
+        iguana_gotunconfirmedM(coin,addr,tx,data,datalen);
+        printf("tx datalen.%d vs len.%d\n",datalen,len);
+        addr->msgcounts.tx++;
     }
     else if ( strcmp(H->command,"block") == 0 )
     {

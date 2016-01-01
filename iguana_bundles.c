@@ -384,7 +384,7 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
 
 void iguana_bundleiclear(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei)
 {
-    bp->ipbits[bundlei] = 0;
+    //bp->ipbits[bundlei] = 0;
     bp->issued[bundlei] = 0;
     bp->requests[bundlei] = 0;
     CLEARBIT(bp->recv,bundlei);
