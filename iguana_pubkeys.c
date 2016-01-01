@@ -807,10 +807,16 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t ms
         memcpy(rmd160,zero_rmd160,sizeof(zero_rmd160));
         return(0);
     }
-    if ( pk_script[0] == 0x76 && pk_script[1] == 0xa9 && pk_script[pk_scriptlen-2] == 0x88 && pk_script[pk_scriptlen-1] == 0xac )
+    if ( pk_script[0] == 0x76 && pk_script[1] == 0xa9 && pk_script[pk_script[2]+2] == 0x88 && pk_script[pk_script[2]+3] == 0xac )
     {
         vcalc_sha256(0,sha256,&pk_script[3],pk_script[2]);
         calc_rmd160(0,rmd160,sha256,sizeof(sha256));
+        if ( (plen= pk_script[2]+3) < pk_scriptlen )
+        {
+            while ( plen < pk_scriptlen )
+                if ( pk_script[plen++] != 0x61 ) // nop
+                    return(0);
+        }
         return(0);
     }
     else if ( pk_script[0] > 0 && pk_script[0] < 76 && pk_script[pk_scriptlen-1] == 0xac && pk_script[0] == pk_scriptlen-2 )
