@@ -554,7 +554,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     printf("%d ",i);
                     if ( n > 1000 )
                         break;
-                    else if ( n < 10 )
+                    else if ( n < 10 && bp != 0 )
                         iguana_bundleiclear(coin,bp,bundlei);
                 }
                 coin->lastsweep = i;

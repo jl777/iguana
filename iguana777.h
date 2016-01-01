@@ -388,8 +388,8 @@ struct iguana_txblock
 struct iguana_ramchaindata
 {
     bits256 sha256,firsthash2,lasthash2;
-    int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,U2offset,P2offset,Aoffset,Xoffset;
-    int32_t numblocks,height,firsti,hdrsi;
+    int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,U2offset,P2offset,Aoffset,Xoffset,TXoffset,PKoffset,numtxsparse,numpksparse;
+    int32_t numblocks,height,firsti,hdrsi,txsparsebits,pksparsebits;
     uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
     uint8_t data[];
 };
@@ -793,5 +793,6 @@ int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t rmd160[20]);
 struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind);
 int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid);
 void iguana_bundleiclear(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei);
+int32_t hcalc_bitsize(uint64_t x);
 
 #endif
