@@ -573,8 +573,8 @@ long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits
         printf(" wont save.(%s) bundlei.%d != checki.%d\n",fname,bundlei,checki);
         return(-1);
     }
-    if ( ipbits == 0 )
-        printf("ipbits.%x -> {%s}\n",ipbits,fname);
+    //if ( ipbits == 0 )
+    //    printf("ipbits.%x -> {%s}\n",ipbits,fname);
     if ( (fp= fopen(fname,"rb+")) == 0 )
     {
         if ( (fp= fopen(fname,"wb")) != 0 )
