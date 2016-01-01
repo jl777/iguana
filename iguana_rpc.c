@@ -455,17 +455,30 @@ cJSON *iguana_blockjson(struct iguana_info *coin,struct iguana_block *block,int3
 cJSON *iguana_voutjson(struct iguana_info *coin,struct iguana_msgvout *vout)
 {
     static bits256 zero;
-    char scriptstr[8192+1],coinaddr[65]; uint8_t rmd160[20],addrtype; cJSON *json = cJSON_CreateObject();
+    char scriptstr[8192+1],coinaddr[65]; int32_t i,M,N; uint8_t rmd160[20],msigs160[16][20],addrtype;
+    cJSON *addrs,*json = cJSON_CreateObject();
     jaddnum(json,"value",dstr(vout->value));
     if ( vout->pk_script != 0 && vout->pk_scriptlen*2+1 < sizeof(scriptstr) )
     {
-        if ( iguana_calcrmd160(coin,rmd160,vout->pk_script,vout->pk_scriptlen,zero) > 0 )
+        if ( iguana_calcrmd160(coin,rmd160,msigs160,&M,&N,vout->pk_script,vout->pk_scriptlen,zero) > 0 )
             addrtype = coin->chain->p2shval;
         else addrtype = coin->chain->pubval;
         btc_convrmd160(coinaddr,addrtype,rmd160);
         jaddstr(json,"address",coinaddr);
         init_hexbytes_noT(scriptstr,vout->pk_script,vout->pk_scriptlen);
         jaddstr(json,"payscript",scriptstr);
+        if ( N != 0 )
+        {
+            jaddnum(json,"M",M);
+            jaddnum(json,"N",N);
+            addrs = cJSON_CreateArray();
+            for (i=0; i<N; i++)
+            {
+                btc_convrmd160(coinaddr,coin->chain->pubval,msigs160[i]);
+                jaddistr(addrs,coinaddr);
+            }
+            jadd(json,"addrs",addrs);
+        }
     }
     return(json);
 }

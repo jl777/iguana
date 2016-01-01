@@ -789,10 +789,12 @@ int32_t btc_pub65toaddr(char *coinaddr,uint8_t addrtype,char pubkey[131],uint8_t
     return(retval);
 }
 
-int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *pk_script,int32_t pk_scriptlen,bits256 debugtxid)
+int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t msigs160[16][20],int32_t *Mp,int32_t *nump,uint8_t *pk_script,int32_t pk_scriptlen,bits256 debugtxid)
 {
     static uint8_t zero_rmd160[20];
-    char hexstr[8192]; uint8_t sha256[32];
+    char hexstr[8192]; uint8_t sha256[32],*script; int32_t i,n,m,plen;
+    if ( nump != 0 )
+        *nump = 0;
     if ( pk_scriptlen == 0 || pk_script[0] == 0x6a ) // no script or OP_RETURN
     {
         if ( zero_rmd160[0] == 0 )
@@ -820,7 +822,29 @@ int32_t iguana_calcrmd160(struct iguana_info *coin,uint8_t rmd160[20],uint8_t *p
     }
     else if ( pk_script[0] == 0xa9 && pk_script[1] == 0x14 && pk_scriptlen == 23 && pk_script[22] == 0x87 )
     {
-        memcpy(rmd160,pk_script+2,20);
+        memcpy(rmd160,pk_script+2,20); // p2sh
+        return(1);
+    }
+    else if ( pk_scriptlen > 34 && pk_script[pk_scriptlen-1] == 0xae && (n= pk_script[pk_scriptlen-2]) >= 0x51 && n <= 0x60 && (m= pk_script[0]) >= 0x51 && m <= n ) // m of n multisig
+    {
+        if ( msigs160 != 0 && nump != 0 && *Mp != 0 )
+        {
+            script = pk_script+1;
+            for (i=0; i<n; i++,script += plen)
+            {
+                plen = *script++;
+                vcalc_sha256(0,sha256,script,plen);
+                calc_rmd160(0,msigs160[i],sha256,sizeof(sha256));
+            }
+            if ( (int32_t)((long)script - (long)pk_script) == pk_scriptlen-2 )
+            {
+                *nump = n;
+                *Mp = m;
+                printf("M.%d N.%d\n",m,n);
+            }
+        }
+        vcalc_sha256(0,sha256,pk_script,pk_scriptlen);
+        calc_rmd160(0,rmd160,sha256,sizeof(sha256));
         return(1);
     }
     if ( pk_scriptlen < sizeof(hexstr)/2-1)

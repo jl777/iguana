@@ -186,12 +186,12 @@ uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_
 uint32_t iguana_ramchain_addunspent20(struct iguana_info *coin,RAMCHAIN_FUNC,uint64_t value,uint8_t *script,int32_t scriptlen,bits256 txid,int32_t vout)
 {
     //struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; } __attribute__((packed));
-    uint8_t rmd160[20]; uint32_t unspentind; struct iguana_unspent20 *u;
+    uint8_t rmd160[20],msigs160[16][20]; int32_t M,N; uint32_t unspentind; struct iguana_unspent20 *u;
     unspentind = ramchain->H.unspentind++;
     u = &U[unspentind];
     if ( scriptlen == -20 )
         memcpy(rmd160,script,20);
-    else iguana_calcrmd160(coin,rmd160,script,scriptlen,txid);
+    else iguana_calcrmd160(coin,rmd160,msigs160,&M,&N,script,scriptlen,txid);
     if ( ramchain->H.ROflag != 0 )
     {
         //printf("%p U[%d] txidind.%d pkind.%d\n",u,unspentind,ramchain->txidind,pkind);
