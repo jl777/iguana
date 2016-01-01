@@ -320,7 +320,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
             }
             if ( bundlei == coin->chain->bundlesize-1 )
             {
-                if ( coin->bundlescount < bp->hdrsi+1 )
+                if ( 0 && coin->bundlescount < bp->hdrsi+1 )
                 {
                     char str[65]; printf("CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,block->hash2));
                     iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,block->hash2,zero);
@@ -331,7 +331,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 if ( bundlei == 0 && block->havehashes != 0 && (hashes= block->rawdata) != 0 && block->copyflag == 0 )
                 {
                     iguana_allhashcmp(coin,bp,hashes,block->numhashes);
-                    if ( block->numhashes > coin->chain->bundlesize && bp->hdrsi == coin->bundlescount-1 )
+                    if ( 0 && block->numhashes > coin->chain->bundlesize && bp->hdrsi == coin->bundlescount-1 )
                     {
                         //printf("am block1, check allhashes numhashes.%d\n",block->numhashes);
                         iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,((bits256 *)block->rawdata)[coin->chain->bundlesize],zero);
