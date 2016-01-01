@@ -162,6 +162,7 @@ struct iguana_txid *iguana_txidfind(struct iguana_info *coin,struct iguana_txid 
             ramchain = &bp->ramchain;
             if ( ramchain->H.data != 0 )
             {
+                printf("check %p %d\n",ramchain->H.data,i);
                 TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
                 T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
                 if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
