@@ -72,6 +72,11 @@ struct iguana_kvitem *iguana_hashsetPT(struct iguana_ramchain *ramchain,int32_t 
     return(ptr);
 }
 
+void iguana_sparseadd(uint8_t *bits,int32_t width,int32_t tablesize,uint64_t key0,uint64_t key1,uint32_t ind)
+{
+    
+}
+
 int32_t iguana_peerfname(struct iguana_info *coin,int32_t *hdrsip,char *dirname,char *fname,uint32_t ipbits,bits256 hash2,bits256 prevhash2,int32_t numblocks)
 {
     struct iguana_bundle *bp = 0; int32_t bundlei = -2; char str[65];
@@ -101,11 +106,6 @@ int32_t iguana_peerfile_exists(struct iguana_info *coin,struct iguana_peer *addr
         else fclose(fp);
     }
     return(bundlei);
-}
-
-void iguana_sparseadd(uint8_t *bits,int32_t width,int32_t tablesize,uint64_t key0,uint64_t key1,uint32_t ind)
-{
-    
 }
 
 #define RAMCHAIN_FUNC struct iguana_ramchain *ramchain,struct iguana_txid *T,struct iguana_unspent20 *U,struct iguana_Uextra *U2,struct iguana_spend256 *S,struct iguana_pkhash *P,struct iguana_pkextra *P2,struct iguana_account *A,bits256 *X,struct iguana_unspent *Ux,struct iguana_spend *Sx,uint8_t *TXbits,uint8_t *PKbits
