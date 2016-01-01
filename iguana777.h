@@ -388,8 +388,8 @@ struct iguana_txblock
 struct iguana_ramchaindata
 {
     bits256 sha256,firsthash2,lasthash2;
-    int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,U2offset,P2offset,Aoffset,Xoffset,TXoffset,PKoffset,numtxsparse,numpksparse;
-    int32_t numblocks,height,firsti,hdrsi,txsparsebits,pksparsebits;
+    int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,U2offset,P2offset,Aoffset,Xoffset,TXoffset,PKoffset;
+    int32_t numblocks,height,firsti,hdrsi,txsparsebits,pksparsebits,numtxsparse,numpksparse;
     uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
     uint8_t data[];
 };
