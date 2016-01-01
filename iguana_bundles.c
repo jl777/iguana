@@ -382,6 +382,14 @@ char *iguana_bundledisp(struct iguana_info *coin,struct iguana_bundle *prevbp,st
     return(line);
 }
 
+void iguana_bundleiclear(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei)
+{
+    bp->ipbits[bundlei] = 0;
+    bp->issued[bundlei] = 0;
+    bp->requests[bundlei] = 0;
+    CLEARBIT(bp->recv,bundlei);
+}
+
 void iguana_bundlestats(struct iguana_info *coin,char *str)
 {
     static uint32_t lastdisp; static bits256 zero;
@@ -546,6 +554,8 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     printf("%d ",i);
                     if ( n > 1000 )
                         break;
+                    else if ( n < 10 )
+                        iguana_bundleiclear(coin,bp,bundlei);
                 }
                 coin->lastsweep = i;
             }

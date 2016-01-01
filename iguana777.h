@@ -792,5 +792,6 @@ void iguana_voutset(struct iguana_info *coin,struct iguana_msgvout *vout,struct 
 int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t rmd160[20]);
 struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind);
 int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid);
+void iguana_bundleiclear(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei);
 
 #endif

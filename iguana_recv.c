@@ -849,12 +849,7 @@ int32_t iguana_processrecv(struct iguana_info *coin) // single threaded
                     if ( (bp= coin->bundles[(coin->blocks.hwmchain.height+1)/coin->chain->bundlesize]) == 0 || bp->fpos[bundlei] >= 0 )
                     {
                         if ( bp != 0 && coin->backstop == coin->blocks.hwmchain.height+1 )
-                        {
-                            bp->ipbits[bundlei] = 0;
-                            bp->issued[bundlei] = 0;
-                            bp->requests[bundlei] = 0;
-                            CLEARBIT(bp->recv,bundlei);
-                        }
+                            iguana_bundleiclear(coin,bp,bundlei);
                         iguana_blockQ(coin,bp,bundlei,next->hash2,1);
                     }
                     if ( (rand() % 10) == 0 )
