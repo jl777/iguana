@@ -296,7 +296,7 @@ uint32_t iguana_ramchain_addpkhash(struct iguana_info *coin,RAMCHAIN_FUNC,uint8_
             P[pkind].firstunspentind = unspentind;
             //printf("%p P[%d] <- firstunspent.%d\n",&P[pkind],pkind,unspentind);
             memcpy(P[pkind].rmd160,rmd160,sizeof(P[pkind].rmd160));
-            if ( ramchain->expanded != 0 )
+            //if ( ramchain->expanded != 0 )
                 iguana_sparseaddpk(PKbits,ramchain->H.data->pksparsebits,ramchain->H.data->numpksparse,rmd160,P,pkind);
         }
         if ( (ptr= iguana_hashsetPT(ramchain,'P',&P[pkind],pkind)) == 0 )
@@ -726,6 +726,7 @@ long iguana_ramchain_save(struct iguana_info *coin,RAMCHAIN_FUNC,uint32_t ipbits
         rdata->PKoffset = offset, offset += (((int64_t)rdata->numpksparse*rdata->pksparsebits)/8 + 1);
         rdata->allocsize = offset;
         vupdate_sha256(sha256.bytes,&state,0,0);
+        memset(&rdata->sha256,0,sizeof(rdata->sha256));
         vupdate_sha256(sha256.bytes,&state,(void *)rdata,sizeof(*rdata));
         vupdate_sha256(sha256.bytes,&state,(uint8_t *)T,sizeof(struct iguana_txid)*rdata->numtxids);
         if ( ramchain->expanded != 0 )
@@ -1624,11 +1625,21 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     iguana_ramchain_free(dest,0);
     bp->ramchain = newchain;
-    bp->ramchain.hashmem = 0;
-    bp->ramchain.txids = 0;
-    bp->ramchain.pkhashes = 0;
-    bp->ramchain.fileptr = 0;
-    bp->ramchain.filesize = 0;
+    if ( 0 )
+    {
+        bp->ramchain.hashmem = 0;
+        bp->ramchain.txids = 0;
+        bp->ramchain.pkhashes = 0;
+        bp->ramchain.fileptr = 0;
+        bp->ramchain.filesize = 0;
+    }
+    else
+    {
+        //if ( (mapchain= iguana_ramchain_map(coin,fname,bp->ramchain.numblocks,&bp->ramchain,&HASHMEMA,0,bp->hashes[0],zero,0,0,1)) != 0 )
+        {
+           //iguana_ramchain_link(A,bp->hashes[0],bp->ramchain.lasthash2,bp->hdrsi,bp->bundleheight,0,bp->ramchain.numblocks,firsti,1);
+        }
+    }
     //printf("bp.%d: T.%d U.%d S.%d P%d X.%d\n",bp->hdrsi,bp->ramchain.H.txidind,bp->ramchain.H.unspentind,bp->ramchain.H.spendind,bp->ramchain.pkind,bp->ramchain.externalind);
     return(retval);
 }
