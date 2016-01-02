@@ -1707,7 +1707,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     iguana_ramchain_free(dest,0);
     bp->ramchain = newchain;
-    if ( 1 )
+    if ( 0 )
     {
         bp->ramchain.hashmem = 0;
         bp->ramchain.txids = 0;
@@ -1725,7 +1725,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             char str[65]; printf("bp.%d: T.%d U.%d S.%d P%d X.%d MAPPED %s\n",bp->hdrsi,bp->ramchain.H.data->numtxids,bp->ramchain.H.data->numunspents,bp->ramchain.H.data->numspends,bp->ramchain.H.data->numpkinds,bp->ramchain.H.data->numexternaltxids,mbstr(str,bp->ramchain.H.data->allocsize));
             T = (void *)((long)mapchain->H.data + mapchain->H.data->Toffset);
             for (i=1; i<mapchain->H.data->numtxids; i++)
-            {
+            {break;
                 if ( iguana_txidfind(coin,&height,&tx,T[i].txid) == 0 )
                     printf("error couldnt find T[%d] %s\n",i,bits256_str(str,T[i].txid));
                 else if ( memcmp(&tx,&T[i],sizeof(T[i])) != 0 )
