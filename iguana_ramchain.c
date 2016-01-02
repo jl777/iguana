@@ -1334,7 +1334,7 @@ int32_t iguana_ramchain_iterate(struct iguana_info *coin,struct iguana_ramchain 
 
 long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen)
 {
-    int32_t verifyflag = 0;
+    int32_t verifyflag = 1;
     RAMCHAIN_DECLARE; long fsize; void *ptr; struct iguana_ramchain R,*mapchain,*ramchain = &addr->ramchain;
     struct iguana_msgtx *tx; int32_t i,j,fpos,firsti=1,err,flag,bundlei = -2; char fname[1024];
     struct iguana_bundle *bp = 0;
@@ -1707,7 +1707,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
     }
     iguana_ramchain_free(dest,0);
     bp->ramchain = newchain;
-    if ( 0 )
+    if ( 1 )
     {
         bp->ramchain.hashmem = 0;
         bp->ramchain.txids = 0;
