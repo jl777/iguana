@@ -40,7 +40,7 @@ int32_t iguana_sendblockreq(struct iguana_info *coin,struct iguana_peer *addr,st
         coin->numreqsent++;
         addr->pendblocks++;
         addr->pendtime = (uint32_t)time(NULL);
-        printf("REQ.%s bundlei.%d hdrsi.%d\n",bits256_str(hexstr,hash2),bundlei,bp!=0?bp->hdrsi:-1);
+        //printf("REQ.%s bundlei.%d hdrsi.%d\n",bits256_str(hexstr,hash2),bundlei,bp!=0?bp->hdrsi:-1);
         if( bp != 0 && bundlei >= 0 && bundlei < bp->n )
         {
             bp->issued[bundlei] = addr->pendtime;
@@ -369,7 +369,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                     {
                         //printf("add to prev hdrs.%d\n",bp->hdrsi);
                         iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->prev_block);
-                        if ( bp->fpos[coin->chain->bundlesize-1] < 0 && strcmp(coin->symbol,"BTC") != 0 )
+                        if ( 0 && bp->fpos[coin->chain->bundlesize-1] < 0 && strcmp(coin->symbol,"BTC") != 0 )
                             iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->prev_block,0);
                     }
                 }
@@ -377,7 +377,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                 {
                     //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
                     iguana_bundlehash2add(coin,0,bp,bundlei-1,block->prev_block);
-                    if ( bp->fpos[bundlei-1] < 0 && strcmp(coin->symbol,"BTC") != 0 )
+                    if ( 0 && bp->fpos[bundlei-1] < 0 && strcmp(coin->symbol,"BTC") != 0 )
                         iguana_blockQ(coin,bp,bundlei-1,block->prev_block,0);
                 }
             }
@@ -520,10 +520,10 @@ struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana
                 dxblend(&coin->avetime,bp->avetime,.9);
             }
         }
-        if ( strcmp(coin->symbol,"BTC") != 0 && bundlei < coin->chain->bundlesize-1 && bits256_nonz(bp->hashes[bundlei+1]) != 0 && bp->fpos[bundlei+1] < 0 )
+        if ( 0 && strcmp(coin->symbol,"BTC") != 0 && bundlei < coin->chain->bundlesize-1 && bits256_nonz(bp->hashes[bundlei+1]) != 0 && bp->fpos[bundlei+1] < 0 )
             iguana_blockQ(coin,bp,bundlei+1,bp->hashes[bundlei+1],0);
     }
-    if ( block != 0 && strcmp(coin->symbol,"BTC") != 0 )
+    if ( 0 && block != 0 && strcmp(coin->symbol,"BTC") != 0 )
     {
         if ( (bp = iguana_bundlefind(coin,&bp,&bundlei,block->prev_block)) != 0 )
         {
