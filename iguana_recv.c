@@ -40,6 +40,7 @@ int32_t iguana_sendblockreq(struct iguana_info *coin,struct iguana_peer *addr,st
         coin->numreqsent++;
         addr->pendblocks++;
         addr->pendtime = (uint32_t)time(NULL);
+        printf("REQ.%s bundlei.%d hdrsi.%d\n",bits256_str(hexstr,hash2),bundlei,bp!=0?bp->hdrsi:-1);
         if( bp != 0 && bundlei >= 0 && bundlei < bp->n )
         {
             bp->issued[bundlei] = addr->pendtime;
