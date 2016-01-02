@@ -1275,7 +1275,7 @@ int32_t iguana_ramchain_iterate(struct iguana_info *coin,struct iguana_ramchain 
 
 long iguana_ramchain_data(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_txblock *origtxdata,struct iguana_msgtx *txarray,int32_t txn_count,uint8_t *data,int32_t recvlen)
 {
-    int32_t verifyflag = 1;
+    int32_t verifyflag = 0;
     RAMCHAIN_DECLARE; long fsize; void *ptr; struct iguana_ramchain R,*mapchain,*ramchain = &addr->ramchain;
     struct iguana_msgtx *tx; int32_t i,j,firsti=1,err,flag,bundlei = -2; char fname[1024];
     struct iguana_bundle *bp = 0;
@@ -1438,7 +1438,10 @@ int32_t iguana_bundlefiles(struct iguana_info *coin,uint32_t *ipbits,void **ptrs
                 return(0);
             }
             if ( (ptrs[num]= map_file(fname,&filesizes[num],0)) == 0 )
+            {
+                printf("error mapping bundlei.%d\n",bundlei);
                 return(0);
+            }
             //printf("%s mapped ptrs[%d] filesize.%ld bundlei.%d ipbits.%x fpos.%d\n",fname,num,(long)filesizes[num],bundlei,bp->ipbits[bundlei],bp->fpos[bundlei]);
             num++;
         }
@@ -1451,7 +1454,10 @@ void iguana_bundlemapfree(struct iguana_memspace *mem,struct iguana_memspace *ha
     int32_t j;
     for (j=0; j<num; j++)
         if ( ptrs[j] != 0 && filesizes[j] != 0 )
+        {
+            printf("unmap.%d: %p %ld\n",j,ptrs[j],filesizes[j]);
             munmap(ptrs[j],filesizes[j]);
+        }
     myfree(ptrs,n * sizeof(*ptrs));
     myfree(ipbits,n * sizeof(*ipbits));
     myfree(filesizes,n * sizeof(*filesizes));
