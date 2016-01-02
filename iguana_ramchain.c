@@ -76,6 +76,11 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
     static long sparsesearches,sparseiters,sparsehits,sparsemax;
     static uint8_t masks[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
     int32_t i,j,x,n,modval; int64_t bitoffset; uint8_t *ptr;
+    if ( tablesize == 0 )
+    {
+        printf("iguana_sparseadd tablesize zero illegal\n");
+        return(0);
+    }
     if ( 0 && setind == 0 )
     {
         char str[65];
@@ -188,7 +193,7 @@ struct iguana_txid *iguana_txidfind(struct iguana_info *coin,int32_t *heightp,st
             {
                 TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
                 T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
-                if ( 0 && (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
+                if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
                 {
                     for (j=0; j<bp->n-1; j++)
                         if ( txidind >= bp->firsttxidinds[j] && txidind < bp->firsttxidinds[j+1] )
