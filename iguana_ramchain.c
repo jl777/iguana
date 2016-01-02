@@ -143,7 +143,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
                 if ( x != setind )
                     printf("x.%d vs setind.%d ind.%d bitoffset.%d\n",x,setind,ind,(int32_t)bitoffset);
                 if ( (rand() % 10000) == 0 )
-                    printf("[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld max.%ld\n",width,tablesize,(double)sparseiters/sparsesearches,sparsesearches,sparseiters,sparsehits,sparsemax+1);
+                    printf("[%d %d] %.3f sparse searches.%ld iters.%ld hits.%ld max.%ld\n",width,tablesize,(double)sparseiters/(1+sparsesearches),sparsesearches,sparseiters,sparsehits,sparsemax+1);
             }
             if ( i > sparsemax )
                 sparsemax = i;
