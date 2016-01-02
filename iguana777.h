@@ -304,11 +304,11 @@ struct iguana_block
 #define IGUANA_LHASH_SPENDS 2 //
 #define IGUANA_LHASH_PKHASHES 3 //
 #define IGUANA_LHASH_SPENTINDS 4
-#define IGUANA_LHASH_FIRSTSPENDS 5 //
-#define IGUANA_LHASH_ACCOUNTS 6 //
-#define IGUANA_LHASH_EXTERNALS 7 //
-#define IGUANA_LHASH_TXBITS 8 //
-#define IGUANA_LHASH_PKBITS 9 //
+//#define IGUANA_LHASH_FIRSTSPENDS 5 //
+#define IGUANA_LHASH_ACCOUNTS 4 //
+#define IGUANA_LHASH_EXTERNALS 5 //
+#define IGUANA_LHASH_TXBITS 6 //
+#define IGUANA_LHASH_PKBITS 7 //
 #define IGUANA_NUMLHASHES (IGUANA_LHASH_PKBITS + 1)
 
 struct iguana_counts
@@ -368,7 +368,7 @@ struct iguana_ramchaindata
 {
     bits256 sha256;
     bits256 lhashes[IGUANA_NUMLHASHES],firsthash2,lasthash2;
-    int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,U2offset,P2offset,Aoffset,Xoffset,TXoffset,PKoffset;
+    int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,Aoffset,Xoffset,TXoffset,PKoffset;//U2offset,P2offset,
     int32_t numblocks,height,firsti,hdrsi,txsparsebits,pksparsebits;
     uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids,numtxsparse,numpksparse;
     uint8_t data[];
