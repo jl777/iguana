@@ -344,16 +344,16 @@ struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; u
 struct iguana_unspent20 { uint64_t value:63,p2sh:1; uint32_t txidind; uint8_t rmd160[20]; } __attribute__((packed));
 
 struct iguana_spend256 { bits256 prevhash2; uint32_t spendind:16,prevout:15,diffsequence:1; } __attribute__((packed));
-struct iguana_spend { uint32_t spendtxidind,prevspendind; int16_t prevout; uint16_t tbd:14,external:1,diffsequence:1; } __attribute__((packed));
+struct iguana_spend { uint32_t spendtxidind; int16_t prevout; uint16_t tbd:14,external:1,diffsequence:1; } __attribute__((packed));
 
 struct iguana_pkhash { uint8_t rmd160[20]; uint32_t pkind,firstunspentind,flags:23,type:8,ps2h:1; } __attribute__((packed));
 
-// one zero to non-zero write (unless reorg)
-struct iguana_Uextra { uint32_t spendind; } __attribute__((packed)); // unspentind
-struct iguana_pkextra { uint32_t firstspendind; } __attribute__((packed)); // pkind
-
 // dynamic
-struct iguana_account { uint64_t balance; uint32_t lastunspentind,lastspendind; } __attribute__((packed)); // pkind
+struct iguana_account { uint64_t balance; uint32_t lastunspentind; } __attribute__((packed)); // pkind
+
+// GLOBAL one zero to non-zero write (unless reorg)
+struct iguana_Uextra { uint32_t spendind; uint16_t hdrsi; } __attribute__((packed)); // unspentind
+//struct iguana_pkextra { uint32_t firstspendind; } __attribute__((packed)); // pkind
 
 struct iguana_txblock
 {
