@@ -386,7 +386,7 @@ struct iguana_ramchain
     uint32_t numblocks:31,expanded:1,pkind,externalind,height;
     struct iguana_kvitem *txids,*pkhashes;
     struct iguana_memspace *hashmem; long filesize; void *fileptr;
-    struct iguana_account *A,*roA; struct iguana_Uextra *U2,*roU2; struct iguana_pkextra *P2,*roP2;
+    struct iguana_account *A,*roA; //struct iguana_Uextra *U2,*roU2; struct iguana_pkextra *P2,*roP2;
 };
 
 struct iguana_peer
