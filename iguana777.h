@@ -340,10 +340,10 @@ struct iguana_ledger
 // ramchain append only structs -> canonical 32bit inds and ledgerhashes
 struct iguana_txid { bits256 txid; uint32_t txidind,firstvout,firstvin,locktime,version,timestamp; uint16_t numvouts,numvins; } __attribute__((packed));
 
-struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; uint16_t hdrsi,vout; } __attribute__((packed));
-struct iguana_unspent20 { uint64_t value:63,p2sh:1; uint32_t txidind; uint8_t rmd160[20]; } __attribute__((packed));
+struct iguana_unspent { uint64_t value; uint32_t txidind,pkind,prevunspentind; uint16_t hdrsi:12,type:4,vout; } __attribute__((packed));
+struct iguana_unspent20 { uint64_t value; uint32_t txidind:28,type:4; uint8_t rmd160[20]; } __attribute__((packed));
 
-struct iguana_spend256 { bits256 prevhash2; uint32_t spendind:16,prevout:15,diffsequence:1; } __attribute__((packed));
+struct iguana_spend256 { bits256 prevhash2; int16_t prevout; uint16_t spendind:15,diffsequence:1; } __attribute__((packed));
 struct iguana_spend { uint32_t spendtxidind; int16_t prevout; uint16_t tbd:14,external:1,diffsequence:1; } __attribute__((packed));
 
 struct iguana_pkhash { uint8_t rmd160[20]; uint32_t pkind,firstunspentind,flags:23,type:8,ps2h:1; } __attribute__((packed));
@@ -761,15 +761,17 @@ struct iguana_agent
     bits256 pubkey,privkey;
     char *(*parsefunc)(struct iguana_agent *agent,struct iguana_info *coin,char *method,void *json);
 };
-char *iguana_txbytes(struct iguana_info *coin,bits256 *txidp,struct iguana_txid *tx);
-void iguana_vinset(struct iguana_info *coin,struct iguana_msgvin *vin,struct iguana_txid *tx,int32_t i);
-void iguana_voutset(struct iguana_info *coin,struct iguana_msgvout *vout,struct iguana_txid *tx,int32_t i);
+char *iguana_txbytes(struct iguana_info *coin,bits256 *txidp,struct iguana_txid *tx,int32_t height);
+void iguana_vinset(struct iguana_info *coin,int32_t height,struct iguana_msgvin *vin,struct iguana_txid *tx,int32_t i);
+int32_t iguana_voutset(struct iguana_info *coin,uint8_t *scriptspace,char *asmstr,int32_t height,struct iguana_msgvout *vout,struct iguana_txid *tx,int32_t i);
 int32_t btc_convrmd160(char *coinaddr,uint8_t addrtype,uint8_t rmd160[20]);
 struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei,struct iguana_txid *tx,int32_t txidind);
 int32_t iguana_txidreq(struct iguana_info *coin,char **retstrp,bits256 txid);
 void iguana_bundleiclear(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei);
 int32_t hcalc_bitsize(uint64_t x);
 struct iguana_pkhash *iguana_pkhashfind(struct iguana_info *coin,struct iguana_pkhash *p,uint8_t rmd160[20]);
-struct iguana_txid *iguana_txidfind(struct iguana_info *coin,struct iguana_txid *tx,bits256 txid);
+struct iguana_txid *iguana_txidfind(struct iguana_info *coin,int32_t *heightp,struct iguana_txid *tx,bits256 txid);
+int32_t iguana_scriptgen(struct iguana_info *coin,uint8_t *script,char *asmstr,struct iguana_bundle *bp,struct iguana_pkhash *p,uint8_t type);
+int32_t iguana_ramchain_spendtxid(struct iguana_info *coin,bits256 *txidp,struct iguana_txid *T,int32_t numtxids,bits256 *X,int32_t numexternaltxids,struct iguana_spend *s);
 
 #endif
