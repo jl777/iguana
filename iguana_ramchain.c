@@ -190,22 +190,22 @@ struct iguana_txid *iguana_txidfind(struct iguana_info *coin,int32_t *heightp,st
     *heightp = -1;
     for (i=0; i<coin->bundlescount; i++)
     {
-        if ( (bp= coin->bundles[i]) != 0 )
+        if ( (bp= coin->bundles[i]) != 0 && bp->emitfinish > coin->starttime )
         {
             ramchain = &bp->ramchain;
             if ( ramchain->H.data != 0 )
             {
                 TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
                 T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
-                printf("search bp.%p TXbits.%p T.%p %d %d\n",bp,TXbits,T,(int32_t)ramchain->H.data->TXoffset,(int32_t)ramchain->H.data->Toffset);
+                //printf("search bp.%p TXbits.%p T.%p %d %d\n",bp,TXbits,T,(int32_t)ramchain->H.data->TXoffset,(int32_t)ramchain->H.data->Toffset);
                 if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
                 {
-                    printf("found txidind.%d\n",txidind);
+                    //printf("found txidind.%d\n",txidind);
                     for (j=0; j<bp->n-1; j++)
                         if ( txidind >= bp->firsttxidinds[j] && txidind < bp->firsttxidinds[j+1] )
                             break;
                     *heightp = bp->bundleheight + j;
-                    printf("found height.%d\n",*heightp);
+                    //printf("found height.%d\n",*heightp);
                     *tx = T[txidind];
                     return(tx);
                 }
@@ -1736,6 +1736,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
             iguana_ramchain_link(mapchain,bp->hashes[0],bp->ramchain.lasthash2,bp->hdrsi,bp->bundleheight,0,bp->ramchain.numblocks,firsti,1);
             char str[65]; printf("bp.%d: T.%d U.%d S.%d P%d X.%d MAPPED %s %p\n",bp->hdrsi,bp->ramchain.H.data->numtxids,bp->ramchain.H.data->numunspents,bp->ramchain.H.data->numspends,bp->ramchain.H.data->numpkinds,bp->ramchain.H.data->numexternaltxids,mbstr(str,bp->ramchain.H.data->allocsize),bp->ramchain.H.data);
             T = (void *)((long)mapchain->H.data + mapchain->H.data->Toffset);
+            bp->emitfinish = (uint32_t)time(NULL);
             for (i=1; i<mapchain->H.data->numtxids; i++)
             {
                 if ( iguana_txidfind(coin,&height,&tx,T[i].txid) == 0 )
