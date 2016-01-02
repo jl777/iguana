@@ -76,6 +76,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
     static long sparsesearches,sparseiters,sparsehits,sparsemax;
     static uint8_t masks[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
     int32_t i,j,x,modval; int64_t bitoffset; uint8_t *ptr;
+return(setind);
     bitoffset = (ind * width);
     sparsesearches++;
     for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
