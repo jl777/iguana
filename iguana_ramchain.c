@@ -103,6 +103,8 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
     }
     bitoffset = (ind * width);
     sparsesearches++;
+    if ( setind == 0 )
+        printf("tablesize.%d width.%d bitoffset.%d\n",tablesize,width,bitoffset);
     for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
     {
         sparseiters++;
@@ -113,6 +115,8 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
         }
         ptr = &bits[bitoffset >> 3];
         modval = (bitoffset & 7);
+        if ( setind == 0 )
+            printf("tablesize.%d width.%d bitoffset.%d modval.%d i.%d\n",tablesize,width,bitoffset,modval,i);
         for (x=j=0; j<width; j++,modval++)
         {
             if ( modval >= 8 )
@@ -120,6 +124,8 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
             x <<= 1;
             x |= (*ptr & masks[modval]) >> modval;
         }
+        if ( setind == 0 )
+            printf("x.%d\n",x);
         if ( x == 0 )
         {
             if ( (x= setind) == 0 )
@@ -133,7 +139,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
                 if ( (x & 1) != 0 )
                     *ptr |= masks[modval];
             }
-            if ( 1 )
+            if ( 0 )
             {
                 for (x=j=0; j<width; j++)
                 {
@@ -152,12 +158,10 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
         else if ( memcmp((void *)((long)refdata + x*refsize),key,keylen) == 0 )
         {
             if ( setind == 0 )
-            {
                 sparsehits++;
-                return(x);
-            }
             else if ( setind != x )
                 printf("sparseadd index collision setind.%d != x.%d\n",setind,x);
+            return(x);
         }
     }
     return(0);
