@@ -64,8 +64,8 @@ void iguana_initcoin(struct iguana_info *coin)
     //coin->R.maxrecvbundles = IGUANA_INITIALBUNDLES;
     for (i=0; i<IGUANA_MAXPEERS; i++)
         coin->peers.active[i].usock = -1;
-    for (i=0; i<IGUANA_NUMAPPENDS; i++)
-        vupdate_sha256(coin->latest.lhashes[i].bytes,&coin->latest.states[i],0,0);
+    //for (i=0; i<IGUANA_NUMAPPENDS; i++)
+    //    vupdate_sha256(coin->latest.lhashes[i].bytes,&coin->latest.states[i],0,0);
 }
 
 bits256 iguana_genesis(struct iguana_info *coin,struct iguana_chain *chain)

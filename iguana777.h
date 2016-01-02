@@ -61,16 +61,6 @@ struct iguana_txdatabits { uint64_t addrind:IGUANA_LOG2MAXPEERS,filecount:10,fpo
 #define IGUANA_MAXRECVTHREADS 64
 #endif
 
-#define IGUANA_LHASH_TXIDS 0 //
-#define IGUANA_LHASH_UNSPENTS 1 //
-#define IGUANA_LHASH_UPREV 2
-#define IGUANA_LHASH_USPEND 3 //
-#define IGUANA_LHASH_SPENDS 4 //
-#define IGUANA_LHASH_SPREV 5 //
-#define IGUANA_LHASH_PKHASHES 6 //
-#define IGUANA_LHASH_PKFIRSTSPEND 7 //
-#define IGUANA_NUMAPPENDS (IGUANA_LHASH_PKFIRSTSPEND + 1)
-
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -279,7 +269,6 @@ struct iguana_memspace
     int32_t outofptrs,numptrs,availptrs;
    void *ptrs[4096]; int32_t allocsizes[4096],maxsizes[4096];
 #endif
-    //uint8_t space[4];
 };
 
 struct msgcounts { uint32_t version,verack,getaddr,addr,inv,getdata,notfound,getblocks,getheaders,headers,tx,block,mempool,ping,pong,reject,filterload,filteradd,filterclear,merkleblock,alert; };
@@ -287,29 +276,6 @@ struct msgcounts { uint32_t version,verack,getaddr,addr,inv,getdata,notfound,get
 struct iguana_fileitem { bits256 hash2; struct iguana_txdatabits txdatabits; };
 
 struct iguana_kvitem { UT_hash_handle hh; uint8_t keyvalue[]; } __attribute__((packed));
-
-/*struct iguana_prevdep
-{
-    double PoW; // yes I know this is not consensus safe, it is used only for approximations locally
-    uint64_t supply;
-    uint32_t numtxids,numunspents,numspends,numpkinds;
-} __attribute__((packed));
-
-struct iguanakv
-{
-    char name[63],fname[512],threadsafe; FILE *fp;
-    portable_mutex_t KVmutex,MMlock,MMmutex;
-    void *HDDitems,*HDDitems2,*HDDitems3,**HDDitemsp,**HDDitems2p,**HDDitems3p; // linear array of HDDitems;
-    struct iguana_kvitem *hashtables[0x100]; // of HDDitems
-    struct iguana_mappedptr M,M2,M3;
-    struct iguana_memspace HASHPTRS;//,MEM;
-    double mult;
-    uint64_t updated;
-    int32_t keysize,keyoffset,RAMvaluesize,HDDvaluesize,valuesize2,valuesize3;
-    int32_t numkeys,dispflag,flags,incr,numitems,numvalid,maxitemind;
-    uint32_t iteruarg; int32_t iterarg;
-    uint8_t *space;
-};*/
 
 struct iguana_iAddr
 {
@@ -332,10 +298,23 @@ struct iguana_block
     void *rawdata;
 } __attribute__((packed));
 
+
+#define IGUANA_LHASH_TXIDS 0 //
+#define IGUANA_LHASH_UNSPENTS 1 //
+#define IGUANA_LHASH_SPENDS 2 //
+#define IGUANA_LHASH_PKHASHES 3 //
+#define IGUANA_LHASH_SPENTINDS 4
+#define IGUANA_LHASH_FIRSTSPENDS 5 //
+#define IGUANA_LHASH_ACCOUNTS 6 //
+#define IGUANA_LHASH_EXTERNALS 7 //
+#define IGUANA_LHASH_TXBITS 8 //
+#define IGUANA_LHASH_PKBITS 9 //
+#define IGUANA_NUMLHASHES (IGUANA_LHASH_PKBITS + 1)
+
 struct iguana_counts
 {
     uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
-    bits256 lhashes[IGUANA_NUMAPPENDS],ledgerhash; struct sha256_vstate states[IGUANA_NUMAPPENDS];
+    //bits256 lhashes[IGUANA_NUMAPPENDS],ledgerhash; struct sha256_vstate states[IGUANA_NUMAPPENDS];
     struct iguana_block block;
     //bits256 blockhash,merkle_root;
     uint64_t credits,debits;
@@ -387,17 +366,13 @@ struct iguana_txblock
 
 struct iguana_ramchaindata
 {
-    bits256 sha256,firsthash2,lasthash2;
+    bits256 sha256;
+    bits256 lhashes[IGUANA_NUMLHASHES],firsthash2,lasthash2;
     int64_t allocsize,Toffset,Uoffset,Soffset,Poffset,U2offset,P2offset,Aoffset,Xoffset,TXoffset,PKoffset;
-    int32_t numblocks,height,firsti,hdrsi,txsparsebits,pksparsebits,numtxsparse,numpksparse;
-    uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids;
+    int32_t numblocks,height,firsti,hdrsi,txsparsebits,pksparsebits;
+    uint32_t numtxids,numunspents,numspends,numpkinds,numexternaltxids,numtxsparse,numpksparse;
     uint8_t data[];
 };
-
-//bits256 lhashes[IGUANA_NUMAPPENDS],ledgerhash; struct sha256_vstate states[IGUANA_NUMAPPENDS];
-//uint32_t firsttxidind,firstunspentind,firstspendind,firstpkind;
-//
-//
 
 struct iguana_ramchain_hdr
 {
@@ -548,7 +523,7 @@ int32_t iguana_send_version(struct iguana_info *coin,struct iguana_peer *addr,ui
 //int32_t iguana_send_hashes(struct iguana_info *coin,char *command,struct iguana_peer *addr,bits256 stophash,bits256 *hashes,int32_t n);
 int32_t iguana_gentxarray(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *txblock,int32_t *lenp,uint8_t *data,int32_t datalen);
 int32_t iguana_gethdrs(struct iguana_info *coin,uint8_t *serialized,char *cmd,char *hashstr);
-int32_t iguana_getdata(struct iguana_info *coin,uint8_t *serialized,int32_t type,bits256 *hashes,uint32_t n);
+int32_t iguana_getdata(struct iguana_info *coin,uint8_t *serialized,int32_t type,char *hashstr);
 
 // DB
 void iguana_closemap(struct iguana_mappedptr *M);
@@ -622,7 +597,7 @@ int32_t iguana_updatewaiting(struct iguana_info *coin,int32_t starti,int32_t max
 int32_t iguana_recvinit(struct iguana_info *coin,int32_t initialheight);
 int32_t ramcoder_decompress(uint8_t *data,int32_t maxlen,uint8_t *bits,uint32_t numbits,bits256 seed);
 int32_t ramcoder_compress(uint8_t *bits,int32_t maxlen,uint8_t *data,int32_t datalen,uint64_t *histo,bits256 seed);
-int32_t hconv_bitlen(uint32_t bitlen);
+uint64_t hconv_bitlen(uint64_t bitlen);
 struct iguana_block *iguana_blockptr(struct iguana_info *coin,int32_t height);
 void *iguana_mappedptr(void **ptrp,struct iguana_mappedptr *mp,uint64_t allocsize,int32_t rwflag,char *fname);
 //void *iguana_tmpalloc(struct iguana_info *coin,char *name,struct iguana_memspace *mem,long origsize);

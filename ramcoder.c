@@ -50,7 +50,7 @@ int32_t ramcoder_emit(HUFF *hp,struct ramcoder *coder,int32_t updateprobs,uint8_
 
 int32_t ramcoder_decompress(uint8_t *data,int32_t maxlen,uint8_t *bits,uint32_t numbits,bits256 seed);
 int32_t ramcoder_compress(uint8_t *bits,int32_t maxlen,uint8_t *data,int32_t datalen,uint64_t *histo,bits256 seed);
-int32_t hconv_bitlen(uint32_t bitlen);
+uint64_t hconv_bitlen(uint64_t bitlen);
 void _init_HUFF(HUFF *hp,int32_t allocsize,void *buf);
 
 #endif
@@ -68,11 +68,11 @@ static const uint8_t huffoppomasks[8] = { ~(1<<0), ~(1<<1), ~(1<<2), ~(1<<3), ~(
 
 void _init_HUFF(HUFF *hp,int32_t allocsize,void *buf) {  hp->buf = hp->ptr = buf, hp->allocsize = allocsize, hp->bitoffset = 0; }
 
-int32_t hconv_bitlen(uint32_t bitlen)
+uint64_t hconv_bitlen(uint64_t bitlen)
 {
-    int32_t len;
-    len = (int32_t)(bitlen >> 3);
-    if ( ((int32_t)bitlen & 7) != 0 )
+    uint64_t len;
+    len = (bitlen >> 3);
+    if ( (bitlen & 7) != 0 )
         len++;
     return(len);
 }
@@ -475,7 +475,7 @@ int32_t ramcoder_compress(uint8_t *bits,int32_t maxlen,uint8_t *data,int32_t dat
 int32_t ramcoder_decompress(uint8_t *data,int32_t maxlen,uint8_t *bits,uint32_t numbits,bits256 seed)
 {
     HUFF H,*hp = &H;
-    _init_HUFF(hp,hconv_bitlen(numbits),bits);
+    _init_HUFF(hp,(uint32_t)hconv_bitlen(numbits),bits);
     hp->endpos = numbits;
     hrewind(hp);
     return(ramcoder_decoder(0,1,data,maxlen,hp,&seed));

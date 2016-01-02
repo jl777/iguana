@@ -66,7 +66,7 @@ void *mycalloc(uint8_t type,int32_t n,long itemsize)
     }
     //portable_mutex_lock(&MEMmutex);
     myallocated(type,allocsize);
-    while ( (item= calloc(1,sizeof(struct allocitem) + allocsize)) == 0 )
+    while ( (item= calloc(1,sizeof(struct allocitem) + allocsize + 16)) == 0 )
     {
         char str[65];
         printf("mycalloc: need to wait for memory.(%d,%ld) %s to be available\n",n,itemsize,mbstr(str,allocsize));
