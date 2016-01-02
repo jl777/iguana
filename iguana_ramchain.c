@@ -103,7 +103,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
     }
     bitoffset = (ind * width);
     sparsesearches++;
-    if ( setind == 0 )
+    if ( 0 && setind == 0 )
         printf("tablesize.%d width.%d bitoffset.%d\n",tablesize,width,(int32_t)bitoffset);
     for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
     {
@@ -115,7 +115,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
         }
         ptr = &bits[bitoffset >> 3];
         modval = (bitoffset & 7);
-        if ( setind == 0 )
+        if ( 0 && setind == 0 )
             printf("tablesize.%d width.%d bitoffset.%d modval.%d i.%d\n",tablesize,width,(int32_t)bitoffset,modval,i);
         for (x=j=0; j<width; j++,modval++)
         {
@@ -124,7 +124,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
             x <<= 1;
             x |= (*ptr & masks[modval]) >> modval;
         }
-        if ( setind == 0 )
+        if ( 0 && setind == 0 )
             printf("x.%d\n",x);
         if ( x == 0 )
         {
@@ -197,7 +197,7 @@ struct iguana_txid *iguana_txidfind(struct iguana_info *coin,int32_t *heightp,st
             {
                 TXbits = (void *)((long)ramchain->H.data + ramchain->H.data->TXoffset);
                 T = (void *)((long)ramchain->H.data + ramchain->H.data->Toffset);
-                printf("search bp.%p TXbits.%p T.%p\n",bp,TXbits,T);
+                printf("search bp.%p TXbits.%p T.%p %d %d\n",bp,TXbits,T,(int32_t)ramchain->H.data->TXoffset,(int32_t)ramchain->H.data->Toffset);
                 if ( (txidind= iguana_sparseaddtx(TXbits,ramchain->H.data->txsparsebits,ramchain->H.data->numtxsparse,txid,T,0)) > 0 )
                 {
                     printf("found txidind.%d\n",txidind);
@@ -1585,7 +1585,7 @@ int32_t iguana_ramchain_expandedsave(struct iguana_info *coin,RAMCHAIN_FUNC,stru
         {
             iguana_ramchain_link(mapchain,firsthash2,lasthash2,hdrsi,height,0,numblocks,firsti,1);
             iguana_ramchain_extras(mapchain,hashmem);
-            //printf("MAP T.%d U.%d S.%d P.%d X.%d -> size.%ld Xoffset.%d\n",mapchain->H.data->numtxids,mapchain->H.data->numunspents,mapchain->H.data->numspends,mapchain->H.data->numpkinds,mapchain->H.data->numexternaltxids,(long)mapchain->H.data->allocsize,(int32_t)mapchain->H.data->Xoffset);
+            printf("MAP T.%d U.%d S.%d P.%d X.%d -> size.%ld Xoffset.%d\n",mapchain->H.data->numtxids,mapchain->H.data->numunspents,mapchain->H.data->numspends,mapchain->H.data->numpkinds,mapchain->H.data->numexternaltxids,(long)mapchain->H.data->allocsize,(int32_t)mapchain->H.data->Xoffset);
             if ( (err= iguana_ramchain_iterate(coin,0,mapchain)) != 0 )
                 printf("err.%d iterate mapped dest\n",err);
             else if ( cmpflag != 0 )
@@ -1734,7 +1734,7 @@ int32_t iguana_bundlesaveHT(struct iguana_info *coin,struct iguana_memspace *mem
         {
             struct iguana_txid tx; int32_t i,height;
             iguana_ramchain_link(mapchain,bp->hashes[0],bp->ramchain.lasthash2,bp->hdrsi,bp->bundleheight,0,bp->ramchain.numblocks,firsti,1);
-            char str[65]; printf("bp.%d: T.%d U.%d S.%d P%d X.%d MAPPED %s\n",bp->hdrsi,bp->ramchain.H.data->numtxids,bp->ramchain.H.data->numunspents,bp->ramchain.H.data->numspends,bp->ramchain.H.data->numpkinds,bp->ramchain.H.data->numexternaltxids,mbstr(str,bp->ramchain.H.data->allocsize));
+            char str[65]; printf("bp.%d: T.%d U.%d S.%d P%d X.%d MAPPED %s %p\n",bp->hdrsi,bp->ramchain.H.data->numtxids,bp->ramchain.H.data->numunspents,bp->ramchain.H.data->numspends,bp->ramchain.H.data->numpkinds,bp->ramchain.H.data->numexternaltxids,mbstr(str,bp->ramchain.H.data->allocsize),bp->ramchain.H.data);
             T = (void *)((long)mapchain->H.data + mapchain->H.data->Toffset);
             for (i=1; i<mapchain->H.data->numtxids; i++)
             {
