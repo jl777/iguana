@@ -76,7 +76,6 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
     static long sparsesearches,sparseiters,sparsehits,sparsemax;
     static uint8_t masks[8] = { 1, 2, 4, 8, 16, 32, 64, 128 };
     int32_t i,j,x,modval; int64_t bitoffset; uint8_t *ptr;
-return(setind);
     bitoffset = (ind * width);
     sparsesearches++;
     for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
@@ -1048,7 +1047,7 @@ struct iguana_ramchain *iguana_ramchain_map(struct iguana_info *coin,char *fname
         if ( iguana_ramchain_size(RAMCHAIN_ARG) != ramchain->H.data->allocsize || fpos+ramchain->H.data->allocsize > filesize )
         {
             printf("iguana_ramchain_map.(%s) size mismatch %ld vs %ld vs filesize.%ld expanded.%d\n",fname,(long)iguana_ramchain_size(RAMCHAIN_ARG),(long)ramchain->H.data->allocsize,(long)filesize,expanded);
-            munmap(ramchain->fileptr,ramchain->filesize);
+            //munmap(ramchain->fileptr,ramchain->filesize);
             return(0);
         }
         else if ( memcmp(hash2.bytes,ramchain->H.data->firsthash2.bytes,sizeof(bits256)) != 0 )

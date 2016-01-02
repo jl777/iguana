@@ -639,7 +639,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                 }
             }
             if ( n > 0 )
-                printf("REQ HDRS pending.%d\n",coin->numpendings);
+                printf("REQ HDRS pending.%d\n",n);
             coin->zcount = 0;
         }
     } else coin->zcount = 0;
