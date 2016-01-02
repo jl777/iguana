@@ -104,7 +104,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
     bitoffset = (ind * width);
     sparsesearches++;
     if ( setind == 0 )
-        printf("tablesize.%d width.%d bitoffset.%d\n",tablesize,width,bitoffset);
+        printf("tablesize.%d width.%d bitoffset.%d\n",tablesize,width,(int32_t)bitoffset);
     for (i=0; i<tablesize; i++,ind++,bitoffset+=width)
     {
         sparseiters++;
@@ -116,7 +116,7 @@ uint32_t iguana_sparseadd(uint8_t *bits,uint32_t ind,int32_t width,uint32_t tabl
         ptr = &bits[bitoffset >> 3];
         modval = (bitoffset & 7);
         if ( setind == 0 )
-            printf("tablesize.%d width.%d bitoffset.%d modval.%d i.%d\n",tablesize,width,bitoffset,modval,i);
+            printf("tablesize.%d width.%d bitoffset.%d modval.%d i.%d\n",tablesize,width,(int32_t)bitoffset,modval,i);
         for (x=j=0; j<width; j++,modval++)
         {
             if ( modval >= 8 )
