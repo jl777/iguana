@@ -383,7 +383,7 @@ uint32_t iguana_ramchain_addspend256(struct iguana_info *coin,RAMCHAIN_FUNC,bits
     {
         if ( (s->diffsequence == 0 && sequence != 0xffffffff) || (s->diffsequence != 0 && sequence == 0xffffffff) || memcmp(s->prevhash2.bytes,prev_hash.bytes,sizeof(bits256)) != 0 || s->prevout != prev_vout ) //|| s->hdrsi != hdrsi
         {
-            char str[65],str2[65]; printf("check addspend.%d v %d RO value mismatch diffseq.%d v %x (%d) vs (%d) %s vs %s\n",spendind,s->spendind,s->diffsequence,sequence,s->prevout,prev_vout,bits256_str(str,s->prevhash2),bits256_str(str2,prev_hash));
+            char str[65],str2[65]; printf("check addspend.%d v %d RO value mismatch diffseq.%d seq.%x prev_vout(%d vs %d) %s vs %s\n",spendind,s->spendind,s->diffsequence,sequence,s->prevout,prev_vout,bits256_str(str,s->prevhash2),bits256_str(str2,prev_hash));
             //printf("check addspend.%d vs %d RO value mismatch (%d %d:%d) vs (%d %d:%d)\n",spendind,s->spendind,s->prevout,s->hdrsi,s->bundlei,prev_vout,hdrsi,bundlei);
             getchar();
             return(0);
