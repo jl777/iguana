@@ -18,16 +18,18 @@
 char Default_coin[64] = { "BTCD" };
 char Default_agent[64] = { "ALL" };
 #define IGUANA_FORMS "[ \
-{\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":10,\"rows\":1}]}, \
-{\"disp\":\"InstantDEX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"InstantDEX\",\"cols\":1,\"rows\":1}]}, \
-{\"disp\":\"PAX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"PAX\",\"cols\":1,\"rows\":1}]}, \
-{\"disp\":\"pangea\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"pangea\",\"cols\":1,\"rows\":1}]}, \
-{\"disp\":\"jumblr\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"jumblr\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":10,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"InstantDEX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"InstantDEX\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"PAX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"PAX\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"pangea\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"pangea\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"jumblr\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"jumblr\",\"cols\":1,\"rows\":1}]}, \
 {\"disp\":\"ramchain\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"ramchain\",\"cols\":1,\"rows\":1}]}, \
+\
 {\"disp\":\"simple explorer\",\"agent\":\"ramchain\",\"method\":\"explore\",\"fields\":[{\"skip\":1,\"field\":\"search\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
 {\"disp\":\"block hash\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"txid\",\"fields\":[{\"skip\":1,\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
+\
 {\"disp\":\"addcoin\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
 {\"disp\":\"pausecoin\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
 {\"disp\":\"startcoin\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
@@ -35,12 +37,18 @@ char Default_agent[64] = { "ALL" };
 {\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"skip\":1,\"field\":\"max\",\"cols\":8,\"rows\":1}]}, \
 {\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
 {\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"skip\":1,\"field\":\"ipaddr\",\"cols\":32,\"rows\":1}]}, \
+\
 {\"agent\":\"InstantDEX\",\"method\":\"placebid\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1},{\"field\":\"price\",\"cols\":16,\"rows\":1},{\"field\":\"volume\",\"cols\":16,\"rows\":1}]}, \
 {\"agent\":\"InstantDEX\",\"method\":\"placeask\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1},{\"field\":\"price\",\"cols\":16,\"rows\":1},{\"field\":\"volume\",\"cols\":16,\"rows\":1}]}, \
-{\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1}]} \
+{\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"orderstatus\",\"agent\":\"InstantDEX\",\"method\":\"orderstatus\",\"fields\":[{\"skip\":1,\"field\":\"orderid\",\"cols\":32,\"rows\":1}]}, \
+{\"disp\":\"cancelorder\",\"agent\":\"InstantDEX\",\"method\":\"cancelorder\",\"fields\":[{\"skip\":1,\"field\":\"orderid\",\"cols\":32,\"rows\":1}]}, \
+{\"disp\":\"balance\",\"agent\":\"InstantDEX\",\"method\":\"balance\",\"fields\":[{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"allorderbooks\",\"agent\":\"InstantDEX\",\"method\":\"allorderbooks\",\"fields\":[{\"skip\":1,\"field\":\"allorderbooks\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"openorders\",\"agent\":\"InstantDEX\",\"method\":\"openorders\",\"fields\":[{\"skip\":1,\"field\":\"openorders\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"tradehistory\",\"agent\":\"InstantDEX\",\"method\":\"tradehistory\",\"fields\":[{\"skip\":1,\"field\":\"tradehistory\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"allexchanges\",\"agent\":\"InstantDEX\",\"method\":\"allexchanges\",\"fields\":[{\"skip\":1,\"field\":\"allexchanges\",\"cols\":1,\"rows\":1}]} \
 ]"
-
-// "allorderbooks", "orderbook", "lottostats", "LSUM", "makebasket", "disable", "enable", "peggyrates", "tradesequence", "placebid", "placeask", "orderstatus", "openorders", "cancelorder", "tradehistory", "balance", "allexchanges",
 
 char *HTMLheader =
 "<!DOCTYPE HTML> \
@@ -217,6 +225,8 @@ char *iguana_htmlget(char *path)
                     return(clonestr("{\"result\":\"ALL agents selected\"}"));
                 }
                 strcpy(Default_agent,path);
+                if ( Default_agent[strlen(Default_agent)-1] == '/' )
+                    Default_agent[strlen(Default_agent)-1] = 0;
                 return(clonestr("{\"result\":\"agent selected\"}"));
             }
             return(clonestr("{\"error\":\"invalid agent specified\"}"));
@@ -355,6 +365,51 @@ char *iguana_htmlget(char *path)
             sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"base\":\"%s\",\"rel\":\"%s\",\"exchange\":\"%s\"}",base,rel,exchange);
             return(clonestr(Currentjsonstr));
         }
+        else if ( strncmp(path,"orderstatus/",strlen("orderstatus/")) == 0 )
+        {
+            path += strlen("orderstatus/");
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"orderstatus\",\"orderid\":\"%s\"}",path);
+            return(clonestr(Currentjsonstr));
+        }
+        else if ( strncmp(path,"cancelorder/",strlen("cancelorder/")) == 0 )
+        {
+            path += strlen("cancelorder/");
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"cancelorder\",\"orderid\":\"%s\"}",path);
+            return(clonestr(Currentjsonstr));
+        }
+        else if ( strncmp(path,"balance/",strlen("balance/")) == 0 )
+        {
+            path += strlen("balance/");
+            iguana_parsebidask(base,rel,exchange,&price,&volume,path);
+            if ( path[0] != ' ' && path[0] != '/' )
+                sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"balance\",\"exchange\":\"%s\"}",path);
+            else sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"balance\"}");
+            return(clonestr(Currentjsonstr));
+        }
+        else if ( strncmp(path,"openorders/",strlen("openorders/")) == 0 )
+        {
+            path += strlen("openorders/");
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"openorders\"}");
+            return(clonestr(Currentjsonstr));
+        }
+        else if ( strncmp(path,"tradehistory/",strlen("tradehistory/")) == 0 )
+        {
+            path += strlen("tradehistory/");
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"tradehistory\"}");
+            return(clonestr(Currentjsonstr));
+        }
+        else if ( strncmp(path,"allorderbooks/",strlen("allorderbooks/")) == 0 )
+        {
+            path += strlen("allorderbooks/");
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"allorderbooks\"}");
+            return(clonestr(Currentjsonstr));
+        }
+        else if ( strncmp(path,"allexchanges/",strlen("allexchanges/")) == 0 )
+        {
+            path += strlen("allexchanges/");
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"allexchanges\"}");
+            return(clonestr(Currentjsonstr));
+        }
     }
     else if ( strncmp(path,"/pangea/",strlen("/pangea/")) == 0 )
     {
@@ -490,7 +545,12 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     char *disp,*fieldname,*button,*agent,*method,*str;
     bufsize--;
     HTML_EMIT("<html> <head></head> <body> <text>");
-    HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin); HTML_EMIT("</b>   Agent: <b>"); HTML_EMIT(Default_agent); HTML_EMIT("<b><br><br/>");
+    HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin);
+    HTML_EMIT("</b>   Agent: <b>"); HTML_EMIT(Default_agent);
+    //sprintf(formfooter,"<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>",button,clickname);
+    //HTML_EMIT(formfooter);
+
+    HTML_EMIT("<b><br><br/>");
     HTML_EMIT(origjsonstr); HTML_EMIT(" -> ");
     HTML_EMIT("<textarea cols=\"150\" rows=\"10\"  name=\"jsonresult\"/>");
     tmp = cJSON_Parse(result), str = cJSON_Print(tmp), free_json(tmp);
@@ -552,7 +612,7 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
                         sprintf(fieldbuf,"%s_%c",clickname,'A'+j), fieldname = fieldbuf;
                     if ( rows == 0 && cols == 0 )
                         sprintf(buf,"<input type=\"text\" name=\"%s\"/>",fieldname);
-                    else sprintf(buf,"<textarea cols=\"%d\" rows=\"%d\"  name=\"%s\"/></textarea>",cols,rows,fieldname);
+                    else sprintf(buf,"<textarea cols=\"%d\" rows=\"%d\"  name=\"%s\"/ %s></textarea>",cols,rows,fieldname,cols == 1 ? "hidden" : "");
                     str = disp==0?jstr(obj,"disp"):disp;
                     sprintf(&retbuf[size],"<td>%s</td> <td> %s </td>\r\n",str!=0?str:fieldname,buf), size += strlen(&retbuf[size]);
                 }
