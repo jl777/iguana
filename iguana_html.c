@@ -19,11 +19,6 @@ char Default_coin[64] = { "BTCD" };
 char Default_agent[64] = { "ALL" };
 #define IGUANA_FORMS "[ \
 {\"newline\":0,\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":10,\"rows\":1}]}, \
-{\"newline\":0,\"disp\":\"InstantDEX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"InstantDEX\",\"cols\":1,\"rows\":1}]}, \
-{\"newline\":0,\"disp\":\"PAX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"PAX\",\"cols\":1,\"rows\":1}]}, \
-{\"newline\":0,\"disp\":\"pangea\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"pangea\",\"cols\":1,\"rows\":1}]}, \
-{\"newline\":0,\"disp\":\"jumblr\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"jumblr\",\"cols\":1,\"rows\":1}]}, \
-{\"disp\":\"ramchain\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"ramchain\",\"cols\":1,\"rows\":1}]}, \
 \
 {\"disp\":\"simple explorer\",\"agent\":\"ramchain\",\"method\":\"explore\",\"fields\":[{\"skip\":1,\"field\":\"search\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
@@ -47,7 +42,13 @@ char Default_agent[64] = { "ALL" };
 {\"newline\":0,\"disp\":\"allorderbooks\",\"agent\":\"InstantDEX\",\"method\":\"allorderbooks\",\"fields\":[{\"skip\":1,\"field\":\"allorderbooks\",\"cols\":1,\"rows\":1}]}, \
 {\"newline\":0,\"disp\":\"openorders\",\"agent\":\"InstantDEX\",\"method\":\"openorders\",\"fields\":[{\"skip\":1,\"field\":\"openorders\",\"cols\":1,\"rows\":1}]}, \
 {\"newline\":0,\"disp\":\"tradehistory\",\"agent\":\"InstantDEX\",\"method\":\"tradehistory\",\"fields\":[{\"skip\":1,\"field\":\"tradehistory\",\"cols\":1,\"rows\":1}]}, \
-{\"disp\":\"allexchanges\",\"agent\":\"InstantDEX\",\"method\":\"allexchanges\",\"fields\":[{\"skip\":1,\"field\":\"allexchanges\",\"cols\":1,\"rows\":1}]} \
+{\"disp\":\"allexchanges\",\"agent\":\"InstantDEX\",\"method\":\"allexchanges\",\"fields\":[{\"skip\":1,\"field\":\"allexchanges\",\"cols\":1,\"rows\":1}]}, \
+\
+{\"newline\":0,\"disp\":\"InstantDEX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"InstantDEX\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"PAX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"PAX\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"pangea\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"pangea\",\"cols\":1,\"rows\":1}]}, \
+{\"newline\":0,\"disp\":\"jumblr\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"jumblr\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"ramchain\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"ramchain\",\"cols\":1,\"rows\":1}]} \
 ]"
 
 char *HTMLheader =
@@ -546,11 +547,14 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     bufsize--;
     HTML_EMIT("<html> <head></head> <body> <text>");
     HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin);
-    HTML_EMIT("</b>   Agent: <b>"); HTML_EMIT(Default_agent);
-    //sprintf(formfooter,"<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>",button,clickname);
-    //HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana1_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana2_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana3_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana4_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","ramchain","iguana5_setagent"); HTML_EMIT(formfooter);
+    HTML_EMIT("   Agent:    "); HTML_EMIT(Default_agent);
 
-    HTML_EMIT("<b><br><br/>");
+    HTML_EMIT("<br><br/>");
     HTML_EMIT(origjsonstr); HTML_EMIT(" -> ");
     HTML_EMIT("<textarea cols=\"150\" rows=\"10\"  name=\"jsonresult\"/>");
     tmp = cJSON_Parse(result), str = cJSON_Print(tmp), free_json(tmp);
