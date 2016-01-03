@@ -63,6 +63,17 @@ struct iguana_info *iguana_coin(const char *symbol)
     return(0);
 }
 
+struct iguana_info *iguana_coinselect()
+{
+    int32_t i;
+    for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+    {
+        if ( Coins[i] != 0 && Coins[i]->symbol[0] != 0 && Coins[i]->bundlescount > 0 )
+            return(Coins[i]);
+    }
+    return(0);
+}
+
 void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
 {
     coin->blocks.ptrs = myrealloc('W',coin->blocks.ptrs,coin->blocks.ptrs==0?0:coin->blocks.maxbits * sizeof(*coin->blocks.ptrs),numitems * sizeof(*coin->blocks.ptrs));

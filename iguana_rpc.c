@@ -406,7 +406,7 @@ struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *
                     return(0);
                 } else printf("iguana_blocktx null txidind\n");
             } else printf("iguana_blocktx no bp\n");
-        } 
+        }
     } else printf("i.%d vs txn_count.%d\n",i,block->txn_count);
     return(0);
 }
@@ -566,36 +566,11 @@ cJSON *iguana_txjson(struct iguana_info *coin,struct iguana_txid *tx,int32_t hei
     return(json);
 }
 
-char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json)
+char *ramchain_coinparser(struct iguana_info *coin,char *method,cJSON *json)
 {
-    char *symbol,*hashstr,*txidstr,*coinaddr,*txbytes,rmd160str[41],str[65]; int32_t height,i,n,valid = 0;
+    char *hashstr,*txidstr,*coinaddr,*txbytes,rmd160str[41],str[65]; int32_t height,i,n,valid = 0;
     cJSON *addrs,*retjson,*retitem; uint8_t rmd160[20],addrtype; bits256 hash2,checktxid;
-    struct iguana_txid *tx,T; struct iguana_block *block = 0;
-    /*{"agent":"ramchain","method":"block","coin":"BTCD","hash":"<sha256hash>"}
-    {"agent":"ramchain","method":"block","coin":"BTCD","height":345600}
-    {"agent":"ramchain","method":"tx","coin":"BTCD","txid":"<sha txid>"}
-    {"agent":"ramchain","method":"rawtx","coin":"BTCD","txid":"<sha txid>"}
-    {"agent":"ramchain","method":"balance","coin":"BTCD","address":"<coinaddress>"}
-    {"agent":"ramchain","method":"balance","coin":"BTCD","addrs":["<coinaddress>",...]}
-    {"agent":"ramchain","method":"totalreceived","coin":"BTCD","address":"<coinaddress>"}
-    {"agent":"ramchain","method":"totalsent","coin":"BTCD","address":"<coinaddress>"}
-    {"agent":"ramchain","method":"unconfirmed","coin":"BTCD","address":"<coinaddress>"}
-    {"agent":"ramchain","method":"utxo","coin":"BTCD","address":"<coinaddress>"}
-    {"agent":"ramchain","method":"utxo","coin":"BTCD","addrs":["<coinaddress0>", "<coinadress1>",...]}
-    {"agent":"ramchain","method":"txs","coin":"BTCD","block":"<blockhash>"}
-    {"agent":"ramchain","method":"txs","coin":"BTCD","height":12345}
-    {"agent":"ramchain","method":"txs","coin":"BTCD","address":"<coinaddress>"}
-    {"agent":"ramchain","method":"status","coin":"BTCD"}*/
-    memset(&hash2,0,sizeof(hash2));
-    if ( (symbol= jstr(json,"coin")) != 0 )
-    {
-        if ( coin == 0 )
-            coin = iguana_coin(symbol);
-        else if ( strcmp(symbol,coin->symbol) != 0 )
-            return(clonestr("{\"error\":\"mismatched coin symbol\"}"));
-    }
-    if ( coin == 0 )
-        return(clonestr("{\"error\":\"no coin specified\"}"));
+    memset(&hash2,0,sizeof(hash2)); struct iguana_txid *tx,T; struct iguana_block *block = 0;
     if ( (coinaddr= jstr(json,"address")) != 0 )
     {
         if ( btc_addr2univ(&addrtype,rmd160,coinaddr) == 0 )
@@ -695,15 +670,11 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     }
     else if ( strcmp(method,"status") == 0 )
     {
-        if ( coin != 0 )
-        {
-            retitem = cJSON_CreateObject();
-            jaddstr(retitem,"status","coin status");
-            return(jprint(retitem,1));
-        }
-        else return(clonestr("{\"error\":\"status needs coin\"}"));
+        retitem = cJSON_CreateObject();
+        jaddstr(retitem,"status","coin status");
+        return(jprint(retitem,1));
     }
-    else if ( coin != 0 )
+    else
     {
         n = 0;
         if ( valid == 0 )
@@ -755,5 +726,45 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
         return(jprint(retjson,1));
     }
     return(clonestr("{\"error\":\"illegal ramchain method or missing coin\"}"));
+}
+
+char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json)
+{
+    static struct iguana_info *lastcoin;
+    char *symbol;
+    /*{"agent":"ramchain","method":"block","coin":"BTCD","hash":"<sha256hash>"}
+    {"agent":"ramchain","method":"block","coin":"BTCD","height":345600}
+    {"agent":"ramchain","method":"tx","coin":"BTCD","txid":"<sha txid>"}
+    {"agent":"ramchain","method":"rawtx","coin":"BTCD","txid":"<sha txid>"}
+    {"agent":"ramchain","method":"balance","coin":"BTCD","address":"<coinaddress>"}
+    {"agent":"ramchain","method":"balance","coin":"BTCD","addrs":["<coinaddress>",...]}
+    {"agent":"ramchain","method":"totalreceived","coin":"BTCD","address":"<coinaddress>"}
+    {"agent":"ramchain","method":"totalsent","coin":"BTCD","address":"<coinaddress>"}
+    {"agent":"ramchain","method":"unconfirmed","coin":"BTCD","address":"<coinaddress>"}
+    {"agent":"ramchain","method":"utxo","coin":"BTCD","address":"<coinaddress>"}
+    {"agent":"ramchain","method":"utxo","coin":"BTCD","addrs":["<coinaddress0>", "<coinadress1>",...]}
+    {"agent":"ramchain","method":"txs","coin":"BTCD","block":"<blockhash>"}
+    {"agent":"ramchain","method":"txs","coin":"BTCD","height":12345}
+    {"agent":"ramchain","method":"txs","coin":"BTCD","address":"<coinaddress>"}
+    {"agent":"ramchain","method":"status","coin":"BTCD"}*/
+    if ( (symbol= jstr(json,"coin")) != 0 )
+    {
+        if ( coin == 0 )
+            coin = iguana_coin(symbol);
+        else if ( strcmp(symbol,coin->symbol) != 0 )
+            return(clonestr("{\"error\":\"mismatched coin symbol\"}"));
+        if ( coin != 0 )
+            lastcoin = coin;
+    }
+    if ( strcmp(method,"explore") == 0 )
+    {
+        return(clonestr("{\"result\":\"html field has stringified html\",\"html\":\"stringified HTML here\"}"));
+    }
+    if ( coin == 0 && (coin= lastcoin) == 0 )
+    {
+        if ( (coin= iguana_coinselect()) == 0 )
+            return(clonestr("{\"error\":\"no coin specified and no existing coin or more than one\"}"));
+    }
+    return(ramchain_coinparser(coin,method,json));
 }
 
