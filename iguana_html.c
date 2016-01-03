@@ -16,20 +16,31 @@
 #include "includes/cJSON.h"
 
 char Default_coin[64] = { "BTCD" };
+char Default_agent[64] = { "ALL" };
 #define IGUANA_FORMS "[ \
-{\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":10,\"rows\":1}]}, \
-{\"disp\":\"simple explorer\",\"agent\":\"ramchain\",\"method\":\"explore\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":10,\"rows\":1}]}, \
+{\"disp\":\"InstantDEX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"InstantDEX\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"PAX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"PAX\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"pangea\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"pangea\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"jumblr\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"jumblr\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"ramchain\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"ramchain\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"simple explorer\",\"agent\":\"ramchain\",\"method\":\"explore\",\"fields\":[{\"skip\":1,\"field\":\"search\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
 {\"disp\":\"block hash\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"txid\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"addcoin\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":16,\"rows\":1}]}, \
-{\"disp\":\"pausecoin\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"field\":\"skip\",\"cols\":16,\"rows\":1}]}, \
-{\"disp\":\"startcoin\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":16,\"rows\":1}]}, \
-{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"field\":\"skip\",\"cols\":32,\"rows\":1}]}, \
-{\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"field\":\"skip\",\"cols\":8,\"rows\":1}]}, \
+{\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"txid\",\"fields\":[{\"skip\":1,\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"addcoin\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"pausecoin\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"startcoin\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"skip\":1,\"field\":\"ipaddr\",\"cols\":32,\"rows\":1}]}, \
+{\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"skip\":1,\"field\":\"max\",\"cols\":8,\"rows\":1}]}, \
 {\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
-{\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"field\":\"skip\",\"cols\":32,\"rows\":1}]} \
+{\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"skip\":1,\"field\":\"ipaddr\",\"cols\":32,\"rows\":1}]}, \
+{\"agent\":\"InstantDEX\",\"method\":\"placebid\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1},{\"field\":\"price\",\"cols\":16,\"rows\":1},{\"field\":\"volume\",\"cols\":16,\"rows\":1}]}, \
+{\"agent\":\"InstantDEX\",\"method\":\"placeask\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1},{\"field\":\"price\",\"cols\":16,\"rows\":1},{\"field\":\"volume\",\"cols\":16,\"rows\":1}]}, \
+{\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1}]} \
 ]"
+
+// "allorderbooks", "orderbook", "lottostats", "LSUM", "makebasket", "disable", "enable", "peggyrates", "tradesequence", "placebid", "placeask", "orderstatus", "openorders", "cancelorder", "tradehistory", "balance", "allexchanges",
 
 char *HTMLheader =
 "<!DOCTYPE HTML> \
@@ -86,11 +97,64 @@ void iguana_urldecode(char *str)
     *dest = 0;
 }
 
+char *iguana_parsebidask(char *base,char *rel,char *exchange,double *pricep,double *volumep,char *line)
+{
+    int32_t i;
+    for (i=0; i<16&&line[i]!='/'&&line[i]!=0; i++)
+        base[i] = line[i];
+    base[i] = 0;
+    touppercase(base);
+    line += (i + 1);
+    for (i=0; i<16&&line[i]!='/'&&line[i]!=0; i++)
+        rel[i] = line[i];
+    rel[i] = 0;
+    touppercase(rel);
+    line += (i + 1);
+    for (i=0; i<16&&line[i]!='/'&&line[i]!=0; i++)
+        exchange[i] = line[i];
+    exchange[i] = 0;
+    line += (i + 1);
+    if ( strncmp(line,"price/",strlen("price/")) == 0 )
+    {
+        line += strlen("price/");
+        *pricep = atof(line);
+        if ( (line= strstr(line,"volume/")) != 0 )
+        {
+            line += strlen("volume/");
+            *volumep = atof(line);
+            for (i=0; i<16&&line[i]!=0; i++)
+                if ( line[i] == '/' )
+                {
+                    i++;
+                    break;
+                }
+            return(line+i);
+        }
+    }
+    return(0);
+}
+
+char *iguana_InstantDEX(char *path,char *method)
+{
+    char *str,base[64],rel[64],exchange[64]; double price,volume;
+    if ( (str= iguana_parsebidask(base,rel,exchange,&price,&volume,path)) != 0 )
+    {
+        if ( price > 0. && volume > 0. )
+        {
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"%s\",\"base\":\"%s\",\"rel\":\"%s\",\"exchange\":\"%s\",\"price\":\%0.8f,\"volume\":%0.8f}",method,base,rel,exchange,price,volume);
+            return(clonestr(Currentjsonstr));
+        }
+        else return(clonestr("{\"error\":\"invalid price and or volume\"}"));
+    }
+    return(clonestr("{\"error\":\"invalid price and or volume\"}"));
+}
+
 char *iguana_htmlget(char *path)
 {
     char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json);
     char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json);
-    struct iguana_info *coin = 0; cJSON *json; bits256 hash2; int32_t height,i; char buf[64],retbuf[512],*retstr;
+    struct iguana_info *coin = 0; cJSON *json; bits256 hash2; int32_t height,i;
+    char buf[64],retbuf[512],*retstr;
     for (i=0; path[i]!=0; i++)
         if ( path[i] == ' ' )
             break;
@@ -142,7 +206,22 @@ char *iguana_htmlget(char *path)
     {
         strcpy(Currentjsonstr,path);
         path += strlen("/iguana/");
-        if ( strncmp(path,"setcoin/",strlen("setcoin/")) == 0 )
+        if ( strncmp(path,"setagent/",strlen("setagent/")) == 0 )
+        {
+            path += strlen("setagent/");
+            if ( strncmp(path,"ramchain",strlen("ramchain")) == 0 || strncmp(path,"iguana",strlen("iguana")) == 0 || strncmp(path,"InstantDEX",strlen("InstantDEX")) == 0 || strncmp(path,"pangea",strlen("pangea")) == 0 || strncmp(path,"PAX",strlen("PAX")) == 0 || strncmp(path,"ALL",strlen("ALL")) == 0 || strncmp(path,"jumblr",strlen("jumblr")) == 0 )
+            {
+                if ( strcmp(Default_agent,path) == 0 )
+                {
+                    strcpy(Default_agent,"ALL");
+                    return(clonestr("{\"result\":\"ALL agents selected\"}"));
+                }
+                strcpy(Default_agent,path);
+                return(clonestr("{\"result\":\"agent selected\"}"));
+            }
+            return(clonestr("{\"error\":\"invalid agent specified\"}"));
+        }
+        else if ( strncmp(path,"setcoin/",strlen("setcoin/")) == 0 )
         {
             path += strlen("setcoin/");
             for (i=0; i<8&&path[i]!=0&&path[i]!=' '; i++)
@@ -254,7 +333,37 @@ char *iguana_htmlget(char *path)
             }
             return(clonestr("{\"result\":\"iguana method needs coin\"}"));
         }
-     }
+    }
+    else if ( strncmp(path,"/InstantDEX/",strlen("/InstantDEX/")) == 0 )
+    {
+        double price,volume; char base[16],rel[16],exchange[16];
+        path += strlen("/InstantDEX/");
+        if ( strncmp(path,"placebid/",strlen("placebid/")) == 0 )
+        {
+            path += strlen("placebid/");
+            return(iguana_InstantDEX(path,"placebid"));
+        }
+        else if ( strncmp(path,"placeask/",strlen("placeask/")) == 0 )
+        {
+            path += strlen("placeask/");
+            return(iguana_InstantDEX(path,"placeask"));
+        }
+        else if ( strncmp(path,"orderbook/",strlen("orderbook/")) == 0 )
+        {
+            path += strlen("orderbook/");
+            iguana_parsebidask(base,rel,exchange,&price,&volume,path);
+            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"base\":\"%s\",\"rel\":\"%s\",\"exchange\":\"%s\"}",base,rel,exchange);
+            return(clonestr(Currentjsonstr));
+        }
+    }
+    else if ( strncmp(path,"/pangea/",strlen("/pangea/")) == 0 )
+    {
+        path += strlen("/pangea/");
+    }
+    else if ( strncmp(path,"/jumblr/",strlen("/jumblr/")) == 0 )
+    {
+        path += strlen("/jumblr/");
+    }
     else printf("no match to (%s)\n",path);
     return(0);
 }
@@ -293,7 +402,7 @@ char *iguana_rpcparse(int32_t *postflagp,char *jsonstr)
             break;
     if ( i == n )
     {
-        printf("no url\n");
+        //printf("no url\n");
         return(0);
     }
     if ( i > 0 )
@@ -381,7 +490,7 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     char *disp,*fieldname,*button,*agent,*method,*str;
     bufsize--;
     HTML_EMIT("<html> <head></head> <body> <text>");
-    HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin); HTML_EMIT("<b><br><br/>");
+    HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin); HTML_EMIT("</b>   Agent: <b>"); HTML_EMIT(Default_agent); HTML_EMIT("<b><br><br/>");
     HTML_EMIT(origjsonstr); HTML_EMIT(" -> ");
     HTML_EMIT("<textarea cols=\"150\" rows=\"10\"  name=\"jsonresult\"/>");
     tmp = cJSON_Parse(result), str = cJSON_Print(tmp), free_json(tmp);
@@ -405,6 +514,11 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
             HTML_EMIT(buf);
             if ( (agent= jstr(item,"agent")) == 0 )
                 agent = "iguana";
+            if ( strncmp(Default_agent,"ALL",3) != 0 && strcmp(method,"setagent") != 0 && strcmp(method,"setcoin") != 0 && strncmp(Default_agent,agent,strlen(agent)) != 0 )
+            {
+                //printf("Default_agent.%s vs agent.(%s)\n",Default_agent,agent);
+                continue;
+            }
             sprintf(postjson,"%s/%s",agent,method);
             //printf("form.%s button.%s [%s]\n",formname,button,postjson);
             if ( (array2= jarray(&m,item,"fields")) != 0 )
@@ -412,14 +526,14 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
                 for (j=0; j<m; j++)
                 {
                     obj = jitem(array2,j);
-                    printf("item[%d] -> (%s)\n",j,jprint(obj,0));
+                    //printf("item[%d] -> (%s)\n",j,jprint(obj,0));
                     sprintf(fieldindex,"%c",'A'+j);
                     if ( (fieldname= jstr(obj,"field")) != 0 )
                     {
                         sprintf(buf,"%s = document.%s.%s.value;\n",fieldindex,clickname,fieldname);
                         HTML_EMIT(buf);
                         //sprintf(postjson+strlen(postjson),",\"%s\":\"' + %s + '\"",fieldname,fieldindex);
-                        if ( strcmp(fieldname,"skip") != 0 )
+                        if ( juint(obj,"skip") == 0 )
                             sprintf(postjson+strlen(postjson),"/%s/' + %s + '",fieldname,fieldindex);
                         else sprintf(postjson+strlen(postjson),"/' + %s + '",fieldindex);
                     }
@@ -428,8 +542,7 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
                 sprintf(&retbuf[size],"location.href = '%s/%s';\n}</script>\r\n",url,postjson), size += strlen(&retbuf[size]);
                 sprintf(formheader,"<form name=\"%s\" action=\"%s\" method=\"POST\" onsubmit=\"return submitForm(this);\"><table>",clickname,url);
                 HTML_EMIT(formheader);
-                if ( (disp= jstr(item,"disp")) == 0 )
-                    disp = fieldname;
+                disp = jstr(item,"disp");
                 for (j=0; j<m; j++)
                 {
                     obj = jitem(array2,j);
@@ -437,10 +550,11 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
                     cols = juint(obj,"cols");
                     if ( (fieldname= jstr(obj,"field")) == 0 )
                         sprintf(fieldbuf,"%s_%c",clickname,'A'+j), fieldname = fieldbuf;
-                     if ( rows == 0 && cols == 0 )
+                    if ( rows == 0 && cols == 0 )
                         sprintf(buf,"<input type=\"text\" name=\"%s\"/>",fieldname);
                     else sprintf(buf,"<textarea cols=\"%d\" rows=\"%d\"  name=\"%s\"/></textarea>",cols,rows,fieldname);
-                    sprintf(&retbuf[size],"<td>%s</td> <td> %s </td>\r\n",disp,buf), size += strlen(&retbuf[size]);
+                    str = disp==0?jstr(obj,"disp"):disp;
+                    sprintf(&retbuf[size],"<td>%s</td> <td> %s </td>\r\n",str!=0?str:fieldname,buf), size += strlen(&retbuf[size]);
                 }
                 sprintf(formfooter,"<td colspan=\"2\"> <input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></td> </tr>\n</table></form>",button,clickname);
                 HTML_EMIT(formfooter);
