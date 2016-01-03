@@ -22,9 +22,9 @@ char Default_coin[64] = { "BTCD" };
 {\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
 {\"disp\":\"block hash\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"txid\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"addcoin\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"pausecoin\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"startcoin\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":65,\"rows\":1}]}, \
@@ -202,6 +202,45 @@ char *iguana_htmlget(char *path)
                     free_json(json);
                     return(retstr);
                 }
+                else if ( strncmp(path,"addcoin/",strlen("addcoin/")) == 0 )
+                {
+                    path += strlen("addcoin/");
+                    for (i=0; i<8&&path[i]!=0&&path[i]!=' '; i++)
+                        buf[i] = path[i];
+                    buf[i] = 0;
+                    touppercase(buf);
+                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"%s\"}",path);
+                    json = cJSON_Parse(Currentjsonstr);
+                    retstr = iguana_coinjson(coin,"addcoin",json);
+                    free_json(json);
+                    return(retstr);
+                }
+                else if ( strncmp(path,"startcoin/",strlen("startcoin/")) == 0 )
+                {
+                    path += strlen("startcoin/");
+                    for (i=0; i<8&&path[i]!=0&&path[i]!=' '; i++)
+                        buf[i] = path[i];
+                    buf[i] = 0;
+                    touppercase(buf);
+                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"startcoin\",\"coin\":\"%s\"}",path);
+                    json = cJSON_Parse(Currentjsonstr);
+                    retstr = iguana_coinjson(coin,"startcoin",json);
+                    free_json(json);
+                    return(retstr);
+                }
+                else if ( strncmp(path,"pausecoin/",strlen("pausecoin/")) == 0 )
+                {
+                    path += strlen("pausecoin/");
+                    for (i=0; i<8&&path[i]!=0&&path[i]!=' '; i++)
+                        buf[i] = path[i];
+                    buf[i] = 0;
+                    touppercase(buf);
+                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"pausecoin\",\"coin\":\"%s\"}",path);
+                    json = cJSON_Parse(Currentjsonstr);
+                    retstr = iguana_coinjson(coin,"pausecoin",json);
+                    free_json(json);
+                    return(retstr);
+                }
                 else if ( strncmp(path,"maxpeers/",strlen("maxpeers/")) == 0 )
                 {
                     path += strlen("maxpeers/");
@@ -220,13 +259,14 @@ char *iguana_htmlget(char *path)
     return(0);
 }
 
-char *iguana_rpcparse(char *jsonstr)
+char *iguana_rpcparse(int32_t *postflagp,char *jsonstr)
 {
     cJSON *json = 0; int32_t i,n,datalen,postflag = 0;
     char *key,*reststr,*str,*retstr,*data = 0,*value,*agent = "SuperNET";
     //printf("rpcparse.(%s)\n",jsonstr);
+    *postflagp = 0;
     if ( strncmp("POST",jsonstr,4) == 0 )
-        jsonstr += 6, postflag = 1;
+        jsonstr += 6, *postflagp = postflag = 1;
     else if ( strncmp("GET",jsonstr,3) == 0 )
     {
         jsonstr += 4;
@@ -320,8 +360,8 @@ char *iguana_rpcparse(char *jsonstr)
                 {
                     datalen = (int32_t)atoi(jsonstr + i + 1 + strlen("Content-Length:") + 1);
                     data = &jsonstr[n - datalen];
-                    iguana_urldecode(data);
-                    printf("post.(%s) (%c)\n",data,data[0]);
+                    //printf("post.(%s) (%c)\n",data,data[0]);
+                    //iguana_urldecode(data);
                 }
             }
         }
@@ -455,7 +495,7 @@ char *iguana_htmlresponse(char *retbuf,int32_t bufsize,int32_t *remainsp,int32_t
 
 void iguana_rpcloop(void *args)
 {
-    int32_t recvlen,bindsock,sock,remains,numsent,len; socklen_t clilen;
+    int32_t recvlen,bindsock,postflag,sock,remains,numsent,len; socklen_t clilen;
     char ipaddr[64],jsonbuf[8192],*buf,*retstr,*space;//,*retbuf; ,n,i,m
     struct sockaddr_in cli_addr; uint32_t ipbits,i,size = 1024*1024; uint16_t port;
     port = IGUANA_RPCPORT;//coin->chain->portrpc;
@@ -501,14 +541,16 @@ void iguana_rpcloop(void *args)
                     buf = &buf[len];
                 } else usleep(10000);
                 //printf("got.(%s) %d remains.%d of total.%d\n",jsonbuf,recvlen,remains,len);
-                retstr = iguana_rpcparse(jsonbuf);
+                retstr = iguana_rpcparse(&postflag,jsonbuf);
                 break;
             }
         }
         if ( retstr != 0 )
         {
             i = 0;
-            retstr = iguana_htmlresponse(space,size,&remains,1,retstr,1);
+            if ( postflag == 0 )
+                retstr = iguana_htmlresponse(space,size,&remains,1,retstr,1);
+            else remains = (int32_t)strlen(retstr);
             //printf("RETBUF.(%s)\n",retstr);
             while ( remains > 0 )
             {
