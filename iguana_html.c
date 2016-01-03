@@ -33,6 +33,15 @@ char Default_agent[64] = { "ALL" };
 {\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
 {\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"skip\":1,\"field\":\"ipaddr\",\"cols\":32,\"rows\":1}]}, \
 \
+{\"disp\":\"rates\",\"agent\":\"PAX\",\"method\":\"rates\",\"fields\":[{\"skip\":1,\"field\":\"peg\",\"cols\":16,\"rows\":1}]},\
+{\"disp\":\"prices\",\"agent\":\"PAX\",\"method\":\"prices\",\"fields\":[{\"skip\":1,\"field\":\"peg\",\"cols\":16,\"rows\":1}]},\
+{\"agent\":\"PAX\",\"method\":\"lock\",\"fields\":[{\"skip\":1,\"field\":\"peg\",\"cols\":16,\"rows\":1},{\"skip\":1,\"field\":\"lockdays\",\"cols\":6,\"rows\":1},{\"skip\":1,\"field\":\"units\",\"cols\":12,\"rows\":1}]}, \
+{\"agent\":\"PAX\",\"method\":\"redeem\",\"fields\":[{\"skip\":1,\"field\":\"txid\",\"cols\":65,\"rows\":1},{\"skip\":1,\"field\":\"dest\",\"cols\":65,\"rows\":1}]},\
+{\"disp\":\"balance\",\"agent\":\"PAX\",\"method\":\"balance\",\"fields\":[{\"skip\":1,\"field\":\"address\",\"cols\":44,\"rows\":1}]},\
+{\"agent\":\"PAX\",\"method\":\"rollover\",\"fields\":[{\"skip\":1,\"field\":\"txid\",\"cols\":16,\"rows\":1},{\"skip\":1,\"field\":\"newpeg\",\"cols\":16,\"rows\":1},{\"skip\":1,\"field\":\"newlockdays\",\"cols\":6,\"rows\":1}]},\
+{\"agent\":\"PAX\",\"method\":\"swap\",\"fields\":[{\"skip\":1,\"field\":\"txid\",\"cols\":16,\"rows\":1},{\"skip\":1,\"field\":\"othertxid\",\"cols\":16,\"rows\":1}]},\
+{\"agent\":\"PAX\",\"method\":\"bet\",\"fields\":[{\"skip\":1,\"field\":\"peg\",\"cols\":16,\"rows\":1},{\"skip\":1,\"field\":\"price\",\"cols\":16,\"rows\":1},{\"skip\":1,\"field\":\"amount\",\"cols\":16,\"rows\":1}]},\
+\
 {\"agent\":\"InstantDEX\",\"method\":\"placebid\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1},{\"field\":\"price\",\"cols\":16,\"rows\":1},{\"field\":\"volume\",\"cols\":16,\"rows\":1}]}, \
 {\"agent\":\"InstantDEX\",\"method\":\"placeask\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1},{\"field\":\"price\",\"cols\":16,\"rows\":1},{\"field\":\"volume\",\"cols\":16,\"rows\":1}]}, \
 {\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"fields\":[{\"skip\":1,\"field\":\"base\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"rel\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"exchange\",\"cols\":16,\"rows\":1}]}, \
@@ -43,6 +52,25 @@ char Default_agent[64] = { "ALL" };
 {\"newline\":0,\"disp\":\"openorders\",\"agent\":\"InstantDEX\",\"method\":\"openorders\",\"fields\":[{\"skip\":1,\"field\":\"openorders\",\"cols\":1,\"rows\":1}]}, \
 {\"newline\":0,\"disp\":\"tradehistory\",\"agent\":\"InstantDEX\",\"method\":\"tradehistory\",\"fields\":[{\"skip\":1,\"field\":\"tradehistory\",\"cols\":1,\"rows\":1}]}, \
 {\"disp\":\"allexchanges\",\"agent\":\"InstantDEX\",\"method\":\"allexchanges\",\"fields\":[{\"skip\":1,\"field\":\"allexchanges\",\"cols\":1,\"rows\":1}]}, \
+\
+{\"agent\":\"pangea\",\"method\":\"bet\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":24,\"rows\":1},{\"skip\":1,\"field\":\"amount\",\"cols\":24,\"rows\":1}]}, \
+{\"disp\":\"call\",\"agent\":\"pangea\",\"method\":\"call\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"fold\",\"agent\":\"pangea\",\"method\":\"fold\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"status\",\"agent\":\"pangea\",\"method\":\"status\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"hand history\",\"agent\":\"pangea\",\"method\":\"handhistory\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"history\",\"agent\":\"pangea\",\"method\":\"history\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":1,\"rows\":1}]}, \
+{\"disp\":\"follow\",\"agent\":\"pangea\",\"method\":\"follow\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":24,\"rows\":1}]}, \
+{\"disp\":\"lobby\",\"agent\":\"pangea\",\"method\":\"lobby\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":8,\"rows\":1}]}, \
+{\"disp\":\"join\",\"agent\":\"pangea\",\"method\":\"join\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":24,\"rows\":1}]}, \
+{\"agent\":\"pangea\",\"method\":\"buyin\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"tableid\",\"cols\":24,\"rows\":1},{\"skip\":1,\"field\":\"amount\",\"cols\":12,\"rows\":1}]}, \
+{\"agent\":\"pangea\",\"method\":\"newtournament\",\"fields\":[{\"field\":\"mintables\",\"cols\":8,\"rows\":1},{\"field\":\"maxtables\",\"cols\":4,\"rows\":1},{\"field\":\"starttime\",\"cols\":16,\"rows\":1},{\"field\":\"prizefund\",\"cols\":12,\"rows\":1},{\"field\":\"coin\",\"cols\":12,\"rows\":1}]}, \
+{\"agent\":\"pangea\",\"method\":\"newtable\",\"fields\":[{\"field\":\"minplayers\",\"cols\":4,\"rows\":1},{\"field\":\"maxplayers\",\"cols\":4,\"rows\":1},{\"field\":\"rake\",\"cols\":4,\"rows\":1},{\"field\":\"bigblind\",\"cols\":12,\"rows\":1},{\"field\":\"ante\",\"cols\":12,\"rows\":1},{\"field\":\"minbuyin\",\"cols\":12,\"rows\":1},{\"field\":\"maxbuyin\",\"cols\":12,\"rows\":1}]}, \
+{\"disp\":\"leave\",\"agent\":\"pangea\",\"method\":\"leave\",\"fields\":[{\"skip\":1,\"field\":\"tableid\",\"cols\":8,\"rows\":1}]}, \
+\
+{\"agent\":\"jumblr\",\"method\":\"send\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"amount\",\"cols\":13,\"rows\":1},{\"skip\":1,\"field\":\"address\",\"cols\":8,\"rows\":1}]}, \
+{\"agent\":\"jumblr\",\"method\":\"invoice\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"amount\",\"cols\":13,\"rows\":1},{\"skip\":1,\"field\":\"address\",\"cols\":8,\"rows\":1}]}, \
+{\"agent\":\"jumblr\",\"method\":\"shuffle\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"amount\",\"cols\":13,\"rows\":1}]}, \
+{\"agent\":\"jumblr\",\"method\":\"balance\",\"fields\":[{\"skip\":1,\"field\":\"coin\",\"cols\":8,\"rows\":1},{\"skip\":1,\"field\":\"address\",\"cols\":13,\"rows\":1}]}, \
 \
 {\"newline\":0,\"disp\":\"InstantDEX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"InstantDEX\",\"cols\":1,\"rows\":1}]}, \
 {\"newline\":0,\"disp\":\"PAX\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"PAX\",\"cols\":1,\"rows\":1}]}, \
@@ -168,6 +196,8 @@ char *iguana_htmlget(char *path)
         if ( path[i] == ' ' )
             break;
     path[i] = 0;
+    if ( path[strlen(path)-1] == '/' )
+        path[strlen(path)-1] = 0;
     //printf("GETCHECK.(%s)\n",path);
     if ( strncmp(path,"/ramchain/",strlen("/ramchain/")) == 0 )
     {
@@ -220,7 +250,7 @@ char *iguana_htmlget(char *path)
             path += strlen("setagent/");
             if ( strncmp(path,"ramchain",strlen("ramchain")) == 0 || strncmp(path,"iguana",strlen("iguana")) == 0 || strncmp(path,"InstantDEX",strlen("InstantDEX")) == 0 || strncmp(path,"pangea",strlen("pangea")) == 0 || strncmp(path,"PAX",strlen("PAX")) == 0 || strncmp(path,"ALL",strlen("ALL")) == 0 || strncmp(path,"jumblr",strlen("jumblr")) == 0 )
             {
-                if ( strcmp(Default_agent,path) == 0 )
+                if ( strncmp(Default_agent,path,strlen(path)) == 0 )
                 {
                     strcpy(Default_agent,"ALL");
                     return(clonestr("{\"result\":\"ALL agents selected\"}"));
@@ -228,7 +258,8 @@ char *iguana_htmlget(char *path)
                 strcpy(Default_agent,path);
                 if ( Default_agent[strlen(Default_agent)-1] == '/' )
                     Default_agent[strlen(Default_agent)-1] = 0;
-                return(clonestr("{\"result\":\"agent selected\"}"));
+                sprintf(buf,"{\"result\":\"agent selected\",\"name\":\"%s\"}",path);
+                return(clonestr(buf));
             }
             return(clonestr("{\"error\":\"invalid agent specified\"}"));
         }
@@ -547,11 +578,11 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     bufsize--;
     HTML_EMIT("<html> <head></head> <body> <text>");
     HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana22_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana23_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana24_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana25_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","ramchain","iguana26_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana47_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana48_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana49_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana50_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","ramchain","iguana51_setagent"); HTML_EMIT(formfooter);
     HTML_EMIT("   Agent:    "); HTML_EMIT(Default_agent);
 
     HTML_EMIT("<br><br/>");
