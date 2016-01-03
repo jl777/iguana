@@ -776,5 +776,6 @@ int32_t iguana_ramchain_spendtxid(struct iguana_info *coin,bits256 *txidp,struct
 struct iguana_info *iguana_coinselect();
 int32_t unhex(char c);
 void touppercase(char *str);
+uint32_t is_ipaddr(char *str);
 
 #endif

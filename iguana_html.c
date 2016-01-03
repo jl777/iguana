@@ -15,16 +15,20 @@
 
 #include "includes/cJSON.h"
 
-char Default_coin[64];
+char Default_coin[64] = { "BTCD" };
 #define IGUANA_FORMS "[ \
 {\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":10,\"rows\":1}]}, \
+{\"disp\":\"simple explorer\",\"agent\":\"ramchain\",\"method\":\"search\",\"fields\":[{\"field\":\"skip\",\"cols\":10,\"rows\":1}]}, \
 {\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
 {\"disp\":\"block hash\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"tx\",\"fields\":[{\"field\":\"txid\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"field\":\"ipaddr\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"field\":\"max\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"txid\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"field\":\"ipaddr\",\"cols\":65,\"rows\":1}]} \
+{\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]} \
 ]"
 
 char *HTMLheader =
@@ -84,8 +88,9 @@ void iguana_urldecode(char *str)
 
 char *iguana_htmlget(char *path)
 {
+    char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json);
     char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json);
-    bits256 hash2; int32_t height,i; char buf[16],retbuf[512];
+    struct iguana_info *coin = 0; cJSON *json; bits256 hash2; int32_t height,i; char buf[64],retbuf[512],*retstr;
     for (i=0; path[i]!=0; i++)
         if ( path[i] == ' ' )
             break;
@@ -100,14 +105,14 @@ char *iguana_htmlget(char *path)
             if ( strncmp(path,"height/",strlen("height/")) == 0 )
             {
                 height = atoi(path + strlen("height/"));
-                sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"block\",\"coin\":\"%s\",\"height\":%d}",Default_coin,height);
+                sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"block\",\"coin\":\"%s\",\"height\":%d,\"txids\":1}",Default_coin,height);
                 return(ramchain_parser(0,0,"block",cJSON_Parse(Currentjsonstr)));
             }
-            else if ( strncmp(path,"blockhash/",strlen("blockhash/")) == 0 )
+            else if ( strncmp(path,"hash/",strlen("hash/")) == 0 )
             {
-                decode_hex(hash2.bytes,sizeof(hash2),path + strlen("blockhash/"));
+                decode_hex(hash2.bytes,sizeof(hash2),path + strlen("hash/"));
                 char str[65]; printf("ramchain blockhash.%s\n",bits256_str(str,hash2));
-                sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"block\",\"coin\":\"%s\",\"hash\":\"%s\"}",Default_coin,str);
+                sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"block\",\"coin\":\"%s\",\"hash\":\"%s\",\"txids\":1}",Default_coin,str);
                 return(ramchain_parser(0,0,"block",cJSON_Parse(Currentjsonstr)));
             }
         }
@@ -117,6 +122,19 @@ char *iguana_htmlget(char *path)
             char str[65]; printf("ramchain txid.%s\n",bits256_str(str,hash2));
             sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"tx\",\"coin\":\"%s\",\"txid\":\"%s\"}",Default_coin,str);
             return(ramchain_parser(0,0,"tx",cJSON_Parse(Currentjsonstr)));
+        }
+        else if ( strncmp(path,"search/",strlen("search/")) == 0 )
+        {
+            path += strlen("search/");
+            if ( Default_coin[0] != 0 )
+            {
+                coin = iguana_coin(Default_coin);
+                sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"explore\",\"coin\":\"%s\",\"search\":\"%s\"}",Default_coin,path);
+            } else sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"explore\",\"search\":\"%s\"}",path);
+            json = cJSON_Parse(Currentjsonstr);
+            retstr = iguana_coinjson(coin,"peers",json);
+            free_json(json);
+            return(retstr);
         }
         return(clonestr("{\"error\":\"ramchain unknown request\"}"));
     }
@@ -149,8 +167,55 @@ char *iguana_htmlget(char *path)
             sprintf(retbuf,"{\"result\":\"coin not found\",\"coin\":\"%s\"}",buf);
             return(clonestr(retbuf));
         }
-        return(clonestr("{\"result\":\"iguana method not found\"}"));
-    }
+        else
+        {
+            if ( strncmp(path,"peers/",strlen("peers/")) == 0 )
+            {
+                path += strlen("peers/");
+                if ( Default_coin[0] != 0 )
+                {
+                    coin= iguana_coin(Default_coin);
+                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"peers\",\"coin\":\"%s\"}",Default_coin);
+                } else sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"peers\"}");
+                json = cJSON_Parse(Currentjsonstr);
+                retstr = iguana_coinjson(coin,"peers",json);
+                free_json(json);
+                return(retstr);
+            }
+            else if ( Default_coin[0] != 0 && (coin= iguana_coin(Default_coin)) != 0 )
+            {
+                if ( strncmp(path,"addnode/",strlen("addnode/")) == 0 )
+                {
+                    path += strlen("addnode/");
+                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"addnode\",\"coin\":\"%s\",\"ipaddr\":\"%s\"}",Default_coin,path);
+                    json = cJSON_Parse(Currentjsonstr);
+                    retstr = iguana_coinjson(coin,"addnode",json);
+                    free_json(json);
+                    return(retstr);
+                }
+                else if ( strncmp(path,"nodestatus/",strlen("nodestatus/")) == 0 )
+                {
+                    path += strlen("nodestatus/");
+                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"nodestatus\",\"coin\":\"%s\",\"ipaddr\":\"%s\"}",Default_coin,path);
+                    json = cJSON_Parse(Currentjsonstr);
+                    retstr = iguana_coinjson(coin,"nodestatus",json);
+                    free_json(json);
+                    return(retstr);
+                }
+                else if ( strncmp(path,"maxpeers/",strlen("maxpeers/")) == 0 )
+                {
+                    path += strlen("maxpeers/");
+                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"maxpeers\",\"coin\":\"%s\",\"max\":%d}",Default_coin,atoi(path));
+                    json = cJSON_Parse(Currentjsonstr);
+                    retstr = iguana_coinjson(coin,"maxpeers",json);
+                    free_json(json);
+                    return(retstr);
+                }
+               return(clonestr("{\"result\":\"iguana method not found\"}"));
+            }
+            return(clonestr("{\"result\":\"iguana method needs coin\"}"));
+        }
+     }
     else printf("no match to (%s)\n",path);
     return(0);
 }

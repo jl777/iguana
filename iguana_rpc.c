@@ -728,10 +728,30 @@ char *ramchain_coinparser(struct iguana_info *coin,char *method,cJSON *json)
     return(clonestr("{\"error\":\"illegal ramchain method or missing coin\"}"));
 }
 
+char *iguana_jsoncheck(char *retstr,int32_t freeflag)
+{
+    cJSON *retjson; char *errstr;
+    if ( retstr != 0 )
+    {
+        if ( (retjson= cJSON_Parse(retstr)) != 0 )
+        {
+            if ( (errstr= jstr(retjson,"error")) == 0 )
+            {
+                free_json(retjson);
+                return(retstr);
+            }
+            free_json(retjson);
+        }
+        if ( freeflag != 0 )
+            free(retstr);
+    }
+    return(0);
+}
+
 char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json)
 {
     static struct iguana_info *lastcoin; extern char Default_coin[];
-    char *symbol;
+    char *symbol,*str,*retstr; int32_t height; cJSON *argjson,*obj;
     /*{"agent":"ramchain","method":"block","coin":"BTCD","hash":"<sha256hash>"}
     {"agent":"ramchain","method":"block","coin":"BTCD","height":345600}
     {"agent":"ramchain","method":"tx","coin":"BTCD","txid":"<sha txid>"}
@@ -760,7 +780,38 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     }
     if ( strcmp(method,"explore") == 0 )
     {
-        return(clonestr("{\"result\":\"html field has stringified html\",\"html\":\"stringified HTML here\"}"));
+        obj = jobj(json,"search");
+        if ( coin != 0 && obj != 0 )
+        {
+            argjson = cJSON_CreateObject();
+            jaddstr(argjson,"agent","ramchain");
+            jaddstr(argjson,"method","block");
+            if ( is_cJSON_Number(obj) != 0 )
+            {
+                height = juint(obj,0);
+                jaddnum(argjson,"height",height);
+            }
+            else if ( (str= jstr(obj,0)) != 0 )
+                jaddstr(argjson,"hash",str);
+            else return(clonestr("{\"error\":\"need number or string to search\"}"));
+            if ( (retstr= iguana_jsoncheck(ramchain_coinparser(coin,"block",argjson),1)) != 0 )
+            {
+                free_json(argjson);
+                return(retstr);
+            }
+            free_json(argjson);
+            argjson = cJSON_CreateObject();
+            jaddstr(argjson,"agent","ramchain");
+            jaddstr(argjson,"method","tx");
+            jaddstr(argjson,"txid",str);
+            if ( (retstr= iguana_jsoncheck(ramchain_coinparser(coin,"tx",argjson),1)) != 0 )
+            {
+                free_json(argjson);
+                return(retstr);
+            }
+            free_json(argjson);
+            return(clonestr("{\"result\":\"explore search cant find height, blockhash, txid\"}"));
+        }
     }
     if ( coin == 0 && (coin= lastcoin) == 0 )
     {
