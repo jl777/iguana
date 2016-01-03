@@ -547,11 +547,11 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     bufsize--;
     HTML_EMIT("<html> <head></head> <body> <text>");
     HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana1_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana2_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana3_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana4_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","ramchain","iguana5_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana22_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana23_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana24_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana25_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","ramchain","iguana26_setagent"); HTML_EMIT(formfooter);
     HTML_EMIT("   Agent:    "); HTML_EMIT(Default_agent);
 
     HTML_EMIT("<br><br/>");
@@ -574,8 +574,6 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
             sprintf(clickname,"%s%d_%s",tabname,i,method);
             if ( (button= jstr(item,"button")) == 0 )
                 button = method;
-            sprintf(buf,"<script> function click_%s()\n{\n",clickname);
-            HTML_EMIT(buf);
             if ( (agent= jstr(item,"agent")) == 0 )
                 agent = "iguana";
             if ( strncmp(Default_agent,"ALL",3) != 0 && strcmp(method,"setagent") != 0 && strcmp(method,"setcoin") != 0 && strncmp(Default_agent,agent,strlen(agent)) != 0 )
@@ -583,6 +581,8 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
                 //printf("Default_agent.%s vs agent.(%s)\n",Default_agent,agent);
                 continue;
             }
+            sprintf(buf,"<script> function click_%s()\n{\n",clickname);
+            HTML_EMIT(buf);
             sprintf(postjson,"%s/%s",agent,method);
             //printf("form.%s button.%s [%s]\n",formname,button,postjson);
             if ( (array2= jarray(&m,item,"fields")) != 0 )
