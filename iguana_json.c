@@ -358,7 +358,7 @@ char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json)
             return(clonestr("{\"result\":\"coin already there\"}"));
         else return(clonestr("{\"error\":\"error adding coin\"}"));
     }
-    return(clonestr("{\"result\":\"stub processed iguana json\"}"));
+    return(clonestr("{\"error\":\"unhandled request\"}"));
 }
 
 char *iguana_jsonstr(struct iguana_info *coin,char *jsonstr)

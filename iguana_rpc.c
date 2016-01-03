@@ -786,6 +786,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
             argjson = cJSON_CreateObject();
             jaddstr(argjson,"agent","ramchain");
             jaddstr(argjson,"method","block");
+            jaddnum(argjson,"txids",1);
             if ( is_cJSON_Number(obj) != 0 )
             {
                 height = juint(obj,0);
@@ -812,6 +813,7 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
             free_json(argjson);
             return(clonestr("{\"result\":\"explore search cant find height, blockhash, txid\"}"));
         }
+        return(clonestr("{\"result\":\"explore no coin or search\"}"));
     }
     if ( coin == 0 && (coin= lastcoin) == 0 )
     {

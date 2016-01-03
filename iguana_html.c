@@ -18,7 +18,7 @@
 char Default_coin[64] = { "BTCD" };
 #define IGUANA_FORMS "[ \
 {\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":10,\"rows\":1}]}, \
-{\"disp\":\"simple explorer\",\"agent\":\"ramchain\",\"method\":\"search\",\"fields\":[{\"field\":\"skip\",\"cols\":10,\"rows\":1}]}, \
+{\"disp\":\"simple explorer\",\"agent\":\"ramchain\",\"method\":\"explore\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
 {\"disp\":\"block hash\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"txid\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
@@ -123,16 +123,16 @@ char *iguana_htmlget(char *path)
             sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"tx\",\"coin\":\"%s\",\"txid\":\"%s\"}",Default_coin,str);
             return(ramchain_parser(0,0,"tx",cJSON_Parse(Currentjsonstr)));
         }
-        else if ( strncmp(path,"search/",strlen("search/")) == 0 )
+        else if ( strncmp(path,"explore/",strlen("explore/")) == 0 )
         {
-            path += strlen("search/");
+            path += strlen("explore/");
             if ( Default_coin[0] != 0 )
             {
                 coin = iguana_coin(Default_coin);
                 sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"explore\",\"coin\":\"%s\",\"search\":\"%s\"}",Default_coin,path);
             } else sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"explore\",\"search\":\"%s\"}",path);
             json = cJSON_Parse(Currentjsonstr);
-            retstr = iguana_coinjson(coin,"peers",json);
+            retstr = ramchain_parser(0,0,"explore",json);
             free_json(json);
             return(retstr);
         }
