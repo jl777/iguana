@@ -22,13 +22,13 @@ char Default_coin[64] = { "BTCD" };
 {\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
 {\"disp\":\"block hash\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
 {\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"txid\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"addcoin\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"pausecoin\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"startcoin\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":65,\"rows\":1}]}, \
-{\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"field\":\"skip\",\"cols\":65,\"rows\":1}]} \
+{\"disp\":\"addcoin\",\"agent\":\"iguana\",\"method\":\"addcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"pausecoin\",\"agent\":\"iguana\",\"method\":\"pausecoin\",\"fields\":[{\"field\":\"skip\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"startcoin\",\"agent\":\"iguana\",\"method\":\"startcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"field\":\"skip\",\"cols\":32,\"rows\":1}]}, \
+{\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"field\":\"skip\",\"cols\":8,\"rows\":1}]}, \
+{\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":16,\"rows\":1}]}, \
+{\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"field\":\"skip\",\"cols\":32,\"rows\":1}]} \
 ]"
 
 char *HTMLheader =
