@@ -730,7 +730,7 @@ char *ramchain_coinparser(struct iguana_info *coin,char *method,cJSON *json)
 
 char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json)
 {
-    static struct iguana_info *lastcoin;
+    static struct iguana_info *lastcoin; extern char Default_coin[];
     char *symbol;
     /*{"agent":"ramchain","method":"block","coin":"BTCD","hash":"<sha256hash>"}
     {"agent":"ramchain","method":"block","coin":"BTCD","height":345600}
@@ -747,7 +747,9 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     {"agent":"ramchain","method":"txs","coin":"BTCD","height":12345}
     {"agent":"ramchain","method":"txs","coin":"BTCD","address":"<coinaddress>"}
     {"agent":"ramchain","method":"status","coin":"BTCD"}*/
-    if ( (symbol= jstr(json,"coin")) != 0 )
+    if ( (symbol= jstr(json,"coin")) == 0 )
+        symbol = Default_coin;
+    if ( symbol != 0 && symbol[0] != 0 )
     {
         if ( coin == 0 )
             coin = iguana_coin(symbol);

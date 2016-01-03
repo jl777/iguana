@@ -15,6 +15,18 @@
 
 #include "includes/cJSON.h"
 
+char Default_coin[64];
+#define IGUANA_FORMS "[ \
+{\"disp\":\"select coin\",\"agent\":\"iguana\",\"method\":\"setcoin\",\"fields\":[{\"field\":\"skip\",\"cols\":10,\"rows\":1}]}, \
+{\"disp\":\"block height\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]}, \
+{\"disp\":\"block hash\",\"agent\":\"ramchain\",\"method\":\"block\",\"fields\":[{\"field\":\"hash\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"txid\",\"agent\":\"ramchain\",\"method\":\"tx\",\"fields\":[{\"field\":\"txid\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"addnode\",\"agent\":\"iguana\",\"method\":\"addnode\",\"fields\":[{\"field\":\"ipaddr\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"maxpeers\",\"agent\":\"iguana\",\"method\":\"maxpeers\",\"fields\":[{\"field\":\"max\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"peers\",\"agent\":\"iguana\",\"method\":\"peers\",\"fields\":[{\"field\":\"coin\",\"cols\":65,\"rows\":1}]}, \
+{\"disp\":\"nodestatus\",\"agent\":\"iguana\",\"method\":\"nodestatus\",\"fields\":[{\"field\":\"ipaddr\",\"cols\":65,\"rows\":1}]} \
+]"
+
 char *HTMLheader =
 "<!DOCTYPE HTML> \
 <html style=\"overflow-y:scroll;-webkit-user-select: text\"> \
@@ -48,6 +60,7 @@ char *HTMLfooter =
 </html>";
 
 #define HTML_EMIT(str)  if ( (str) != 0 && (str)[0] != 0 ) strcpy(&retbuf[size],str), size += (int32_t)strlen(str)
+char Prevjsonstr[1024],Currentjsonstr[1024];
 
 char *iguana_rpc(char *agent,cJSON *json,char *data,int32_t datalen)
 {
@@ -72,33 +85,73 @@ void iguana_urldecode(char *str)
 char *iguana_htmlget(char *path)
 {
     char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json);
-    bits256 hash2; int32_t height; char jsonreq[1024];
-    printf("GETCHECK.(%s)\n",path);
+    bits256 hash2; int32_t height,i; char buf[16],retbuf[512];
+    for (i=0; path[i]!=0; i++)
+        if ( path[i] == ' ' )
+            break;
+    path[i] = 0;
+    //printf("GETCHECK.(%s)\n",path);
     if ( strncmp(path,"/ramchain/",strlen("/ramchain/")) == 0 )
     {
         path += strlen("/ramchain/");
-        if ( strncmp(path,"height/",strlen("height/")) == 0 )
+        if ( strncmp(path,"block/",strlen("block/")) == 0 )
         {
-            height = atoi(path + strlen("height/"));
-            sprintf(jsonreq,"{\"agent\":\"ramchain\",\"method\":\"block\",\"height\":%d}",height);
-            return(ramchain_parser(0,0,"block",cJSON_Parse(jsonreq)));
-        }
-        else if ( strncmp(path,"blockhash/",strlen("blockhash/")) == 0 )
-        {
-            decode_hex(hash2.bytes,sizeof(hash2),path + strlen("blockhash/"));
-            char str[65]; printf("ramchain blockhash.%s\n",bits256_str(str,hash2));
-            sprintf(jsonreq,"{\"agent\":\"ramchain\",\"method\":\"block\",\"hash\":\"%s\"}",str);
-            return(ramchain_parser(0,0,"block",cJSON_Parse(jsonreq)));
+            path += strlen("block/");
+            if ( strncmp(path,"height/",strlen("height/")) == 0 )
+            {
+                height = atoi(path + strlen("height/"));
+                sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"block\",\"coin\":\"%s\",\"height\":%d}",Default_coin,height);
+                return(ramchain_parser(0,0,"block",cJSON_Parse(Currentjsonstr)));
+            }
+            else if ( strncmp(path,"blockhash/",strlen("blockhash/")) == 0 )
+            {
+                decode_hex(hash2.bytes,sizeof(hash2),path + strlen("blockhash/"));
+                char str[65]; printf("ramchain blockhash.%s\n",bits256_str(str,hash2));
+                sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"block\",\"coin\":\"%s\",\"hash\":\"%s\"}",Default_coin,str);
+                return(ramchain_parser(0,0,"block",cJSON_Parse(Currentjsonstr)));
+            }
         }
         else if ( strncmp(path,"txid/",strlen("txid/")) == 0 )
         {
             decode_hex(hash2.bytes,sizeof(hash2),path + strlen("txid/"));
             char str[65]; printf("ramchain txid.%s\n",bits256_str(str,hash2));
-            sprintf(jsonreq,"{\"agent\":\"ramchain\",\"method\":\"tx\",\"txid\":\"%s\"}",str);
-            return(ramchain_parser(0,0,"tx",cJSON_Parse(jsonreq)));
+            sprintf(Currentjsonstr,"{\"agent\":\"ramchain\",\"method\":\"tx\",\"coin\":\"%s\",\"txid\":\"%s\"}",Default_coin,str);
+            return(ramchain_parser(0,0,"tx",cJSON_Parse(Currentjsonstr)));
         }
         return(clonestr("{\"error\":\"ramchain unknown request\"}"));
-    } else printf("no match to (%s)\n",path);
+    }
+    else if ( strncmp(path,"/iguana/",strlen("/iguana/")) == 0 )
+    {
+        strcpy(Currentjsonstr,path);
+        path += strlen("/iguana/");
+        if ( strncmp(path,"setcoin/",strlen("setcoin/")) == 0 )
+        {
+            path += strlen("setcoin/");
+            for (i=0; i<8&&path[i]!=0&&path[i]!=' '; i++)
+                buf[i] = path[i];
+            buf[i] = 0;
+            touppercase(buf);
+            for (i=0; i<64; i++)
+            {
+                if ( Coins[i] == 0 || Coins[i]->symbol[0] == 0 )
+                    continue;
+                printf("coin.(%s)\n",Coins[i]->symbol);
+                if ( strcmp(Coins[i]->symbol,buf) == 0 )
+                {
+                    if ( strcmp(Default_coin,buf) != 0 )
+                    {
+                        strcpy(Default_coin,buf);
+                        return(clonestr("{\"result\":\"changed default coin\"}"));
+                    }
+                    else return(clonestr("{\"result\":\"coin already default\"}"));
+                }
+            }
+            sprintf(retbuf,"{\"result\":\"coin not found\",\"coin\":\"%s\"}",buf);
+            return(clonestr(retbuf));
+        }
+        return(clonestr("{\"result\":\"iguana method not found\"}"));
+    }
+    else printf("no match to (%s)\n",path);
     return(0);
 }
 
@@ -215,17 +268,21 @@ char *iguana_rpcparse(char *jsonstr)
     //return(json);
 }
 
-int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJSON *json,char *tabname)
+int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJSON *json,char *tabname,char *origjsonstr)
 {
     char *url = "http://127.0.0.1:7778";
-    int i,j,m,size = 0,n,rows,cols; cJSON *array,*obj,*array2,*item;
+    int i,j,m,size = 0,n,rows,cols; cJSON *array,*obj,*array2,*item,*tmp;
     char formheader[512],formfooter[512],clickname[512],buf[512],fieldbuf[512],fieldindex[2],postjson[8192];
-    char *disp,*fieldname,*button,*formname,*agent,*method;
+    char *disp,*fieldname,*button,*agent,*method,*str;
     bufsize--;
-    HTML_EMIT("<html> <head></head> <body> Result: <text>");
-    HTML_EMIT(result);
+    HTML_EMIT("<html> <head></head> <body> <text>");
+    HTML_EMIT("Selected coin: <b>"); HTML_EMIT(Default_coin); HTML_EMIT("<b><br><br/>");
+    HTML_EMIT(origjsonstr); HTML_EMIT(" -> ");
+    HTML_EMIT("<textarea cols=\"150\" rows=\"10\"  name=\"jsonresult\"/>");
+    tmp = cJSON_Parse(result), str = cJSON_Print(tmp), free_json(tmp);
+    HTML_EMIT(str); free(str);
     HTML_EMIT(error);
-    HTML_EMIT("</text><br><br/>");
+    HTML_EMIT("</textarea><br><br/>");
     formheader[0] = formfooter[0] = 0;
     if ( (array= jarray(&n,json,"forms")) != 0 )
     {
@@ -234,53 +291,53 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
             item = jitem(array,i);
             //printf("FORM[%d] of %d %s\n",i,n,jprint(item,0));
             // {"forms":[{"name":"block","agent":"ramchain","fields":[{"disp":"height of block","field":"height","cols":10,"rows":1},{"disp":"blockhash","field":"hash","cols":65,"rows":1}]}]}
-            if ( (formname= jstr(item,"name")) == 0 )
-                formname = "form";
-            sprintf(clickname,"%s%d_%s",tabname,i,formname);
+            if ( (method= jstr(item,"method")) == 0 )
+                method = "missing";
+            sprintf(clickname,"%s%d_%s",tabname,i,method);
             if ( (button= jstr(item,"button")) == 0 )
-                button = formname;
+                button = method;
             sprintf(buf,"<script> function click_%s()\n{\n",clickname);
             HTML_EMIT(buf);
             if ( (agent= jstr(item,"agent")) == 0 )
                 agent = "iguana";
-            if ( (method= jstr(item,"method")) == 0 )
-                method = formname;
-            sprintf(postjson,"%s",agent);
+            sprintf(postjson,"%s/%s",agent,method);
             //printf("form.%s button.%s [%s]\n",formname,button,postjson);
             if ( (array2= jarray(&m,item,"fields")) != 0 )
             {
                 for (j=0; j<m; j++)
                 {
                     obj = jitem(array2,j);
-                    //printf("item[%d] -> (%s)\n",j,jprint(obj,0));
+                    printf("item[%d] -> (%s)\n",j,jprint(obj,0));
                     sprintf(fieldindex,"%c",'A'+j);
                     if ( (fieldname= jstr(obj,"field")) != 0 )
                     {
-                        sprintf(buf,"%s = document.%s.%s.value;\n",fieldindex,formname,fieldname);
+                        sprintf(buf,"%s = document.%s.%s.value;\n",fieldindex,clickname,fieldname);
                         HTML_EMIT(buf);
                         //sprintf(postjson+strlen(postjson),",\"%s\":\"' + %s + '\"",fieldname,fieldindex);
-                        sprintf(postjson+strlen(postjson),"/%s/' + %s + '",fieldname,fieldindex);
+                        if ( strcmp(fieldname,"skip") != 0 )
+                            sprintf(postjson+strlen(postjson),"/%s/' + %s + '",fieldname,fieldindex);
+                        else sprintf(postjson+strlen(postjson),"/' + %s + '",fieldindex);
                     }
                 }
                 //strcat(postjson,"}");
                 sprintf(&retbuf[size],"location.href = '%s/%s';\n}</script>\r\n",url,postjson), size += strlen(&retbuf[size]);
-                sprintf(formheader,"<b>%s</b><form name=\"%s\" action=\"%s\" method=\"POST\" onsubmit=\"return submitForm(this);\"><table>",formname,formname,url);
+                sprintf(formheader,"<form name=\"%s\" action=\"%s\" method=\"POST\" onsubmit=\"return submitForm(this);\"><table>",clickname,url);
                 HTML_EMIT(formheader);
+                if ( (disp= jstr(item,"disp")) == 0 )
+                    disp = fieldname;
                 for (j=0; j<m; j++)
                 {
                     obj = jitem(array2,j);
-                    rows = juint(json,"rows");
-                    cols = juint(json,"cols");
+                    rows = juint(obj,"rows");
+                    cols = juint(obj,"cols");
                     if ( (fieldname= jstr(obj,"field")) == 0 )
                         sprintf(fieldbuf,"%s_%c",clickname,'A'+j), fieldname = fieldbuf;
-                    if ( (disp= jstr(json,"disp")) == 0 )
-                        disp = fieldname;
-                    if ( rows == 0 && cols == 0 )
+                     if ( rows == 0 && cols == 0 )
                         sprintf(buf,"<input type=\"text\" name=\"%s\"/>",fieldname);
                     else sprintf(buf,"<textarea cols=\"%d\" rows=\"%d\"  name=\"%s\"/></textarea>",cols,rows,fieldname);
-                    sprintf(&retbuf[size],"<td>%s</td> <td> %s </td><br>\r\n",disp,buf), size += strlen(&retbuf[size]);
+                    sprintf(&retbuf[size],"<td>%s</td> <td> %s </td>\r\n",disp,buf), size += strlen(&retbuf[size]);
                 }
-                sprintf(formfooter,"<td colspan=\"2\"> <input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></td> </tr>\n</table></form><br/>",button,clickname);
+                sprintf(formfooter,"<td colspan=\"2\"> <input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></td> </tr>\n</table></form>",button,clickname);
                 HTML_EMIT(formfooter);
             }
         }
@@ -293,7 +350,7 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
 char *iguana_htmlresponse(char *retbuf,int32_t bufsize,int32_t *remainsp,int32_t localaccess,char *retstr,int32_t freeflag)
 {
     static char *html = "<html> <head></head> <body> %s </body> </html>";
-    char *result=0,*error=0; int32_t n; cJSON *json;
+    char *result=0,*error=0; int32_t n; cJSON *json,*formsjson;
     retbuf[0] = 0;
     /*if ( localaccess == 0 )
      sprintf(retbuf+strlen(retbuf),"Access-Control-Allow-Origin: *\r\n");
@@ -306,17 +363,15 @@ char *iguana_htmlresponse(char *retbuf,int32_t bufsize,int32_t *remainsp,int32_t
      sprintf(retbuf+strlen(retbuf),"Content-Length: %d\r\n\r\n",n);*/
     sprintf(retbuf+strlen(retbuf),"<!DOCTYPE HTML>\n\r");
     n = (int32_t)strlen(retbuf);
-    if ( (json= cJSON_Parse(retstr)) != 0 )
-    {
-        error = jstr(json,"error");
-        if ( (result= jstr(json,"result")) != 0 )
-        {
-            jadd(json,"forms",cJSON_Parse("[{\"name\":\"block\",\"agent\":\"ramchain\",\"fields\":[{\"field\":\"height\",\"cols\":10,\"rows\":1}]},{\"name\":\"blockhash\",\"agent\":\"ramchain\",\"fields\":[{\"field\":\"blockhash\",\"cols\":65,\"rows\":1}]},{\"name\":\"txid\",\"agent\":\"ramchain\",\"fields\":[{\"field\":\"txid\",\"cols\":65,\"rows\":1}]}]"));
-            printf("process.(%s)\n",jprint(json,0));
-            n = iguana_htmlgen(&retbuf[n],bufsize-n,result,error,json,"ramchain");
-        }
-        free_json(json);
-    }
+    formsjson = cJSON_Parse(IGUANA_FORMS);
+    if ( (json= cJSON_Parse(retstr)) == 0 )
+        json = cJSON_CreateObject();
+    jadd(json,"forms",formsjson);
+    error = jstr(json,"error");
+    result = jstr(json,"result");
+    //printf("process.(%s)\n",jprint(formsjson,0));
+    n = iguana_htmlgen(&retbuf[n],bufsize-n,result,error,json,"iguana",Currentjsonstr);
+    free_json(json);
     if ( n == 0 )
     {
         n = (int32_t)(strlen(html) + strlen(retstr) + 1);
@@ -389,7 +444,7 @@ void iguana_rpcloop(void *args)
         {
             i = 0;
             retstr = iguana_htmlresponse(space,size,&remains,1,retstr,1);
-            printf("RETBUF.(%s)\n",retstr);
+            //printf("RETBUF.(%s)\n",retstr);
             while ( remains > 0 )
             {
                 if ( (numsent= (int32_t)send(sock,&retstr[i],remains,MSG_NOSIGNAL)) < 0 )
@@ -410,6 +465,9 @@ void iguana_rpcloop(void *args)
             }
             //free(retstr);
         }
+        if ( Currentjsonstr[0] != 0 )
+            strcpy(Prevjsonstr,Currentjsonstr);
+        Currentjsonstr[0] = 0;
         //printf("done response sock.%d\n",sock);
         close(sock);
     }

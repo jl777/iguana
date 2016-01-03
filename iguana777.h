@@ -775,5 +775,6 @@ int32_t iguana_scriptgen(struct iguana_info *coin,uint8_t *script,char *asmstr,s
 int32_t iguana_ramchain_spendtxid(struct iguana_info *coin,bits256 *txidp,struct iguana_txid *T,int32_t numtxids,bits256 *X,int32_t numexternaltxids,struct iguana_spend *s);
 struct iguana_info *iguana_coinselect();
 int32_t unhex(char c);
+void touppercase(char *str);
 
 #endif
