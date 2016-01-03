@@ -15,6 +15,9 @@
 
 #include "iguana777.h"
 #include <sys/stat.h>
+#ifndef MAP_FILE
+#define MAP_FILE        0
+#endif
 
 char *OS_mvstr()
 {
