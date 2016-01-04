@@ -212,7 +212,7 @@ char *iguana_ramchain_glue(struct iguana_info *coin,char *method,char *jsonstr)
     return(retstr);
 }
 
-char *iguana_htmlget(int32_t *jsonflagp,char *path)
+char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path)
 {
     char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json);
     struct iguana_info *coin = 0; cJSON *json; bits256 hash2; int32_t height,i;
@@ -228,7 +228,14 @@ char *iguana_htmlget(int32_t *jsonflagp,char *path)
         *jsonflagp = 1;
         path += strlen("/json");
     } else *jsonflagp = 0;
-   //printf("GETCHECK.(%s)\n",path);
+    if ( strncmp(path,"/bitmap",strlen("/bitmap")) == 0 )
+    {
+        path += strlen("/bitmap");
+        *jsonflagp = 2;
+        iguana_bitmap(space,max,path[0] != 0 ? path : Default_coin);
+        return(space);
+    }
+  //printf("GETCHECK.(%s)\n",path);
     if ( Default_coin != 0 )
         coin = iguana_coin(Default_coin);
     if ( strncmp(path,"/ramchain/",strlen("/ramchain/")) == 0 )
@@ -482,7 +489,7 @@ char *iguana_htmlget(int32_t *jsonflagp,char *path)
     return(0);
 }
 
-char *iguana_rpcparse(int32_t *postflagp,char *jsonstr)
+char *iguana_rpcparse(char *retbuf,int32_t bufsize,int32_t *postflagp,char *jsonstr)
 {
     cJSON *json = 0; int32_t i,n,datalen,postflag = 0;
     char *key,*reststr,*str,*retstr,*data = 0,*value,*agent = "SuperNET";
@@ -494,17 +501,22 @@ char *iguana_rpcparse(int32_t *postflagp,char *jsonstr)
     {
         jsonstr += 4;
         str = 0;
-        if ( (str= iguana_htmlget(postflagp,jsonstr)) == 0 && (reststr= strstr(jsonstr,"Referer: http://127.0.0.1:7778")) != 0 )
+        if ( (str= iguana_htmlget(retbuf,bufsize,postflagp,jsonstr)) == 0 && (reststr= strstr(jsonstr,"Referer: http://127.0.0.1:7778")) != 0 )
         {
             reststr += strlen("Referer: http://127.0.0.1:7778");
-            str = iguana_htmlget(postflagp,reststr);
+            str = iguana_htmlget(retbuf,bufsize,postflagp,reststr);
         }
         if ( str != 0 )
         {
-            json = cJSON_CreateObject();
-            jaddstr(json,"result",str);
-            str = cJSON_Print(json);
-            free_json(json);
+            if ( *postflagp == 0 )
+            {
+                json = cJSON_CreateObject();
+                jaddstr(json,"result",str);
+                if ( str != retbuf )
+                    free(str);
+                str = cJSON_Print(json);
+                free_json(json);
+            }
             return(str);
         }
         jsonstr++;
@@ -603,28 +615,71 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     char formheader[512],formfooter[512],clickname[512],buf[512],fieldbuf[512],fieldindex[2],postjson[8192];
     char *disp,*fieldname,*button,*agent,*method,*str;
     bufsize--;
-    HTML_EMIT("<html> <head></head> <body> ");
-    HTML_EMIT("<p id=\"RTstats\"></p> <canvas id=\"canvas\" width=\"1024\" height=\"200\"></canvas>\
-<script>var Width = 1024; var Height = 200; var RTdisp = new Array(1024, 200, 4);\
-              setInterval(iguana_poll,50); \
+    HTML_EMIT("<html> <head></head> <body> <p id=\"RTstats\"></p> ");
+    sprintf(buf,"<canvas id=\"canvas\" width=\"%d\" height=\"%d\"></canvas><script>var Width = %d; var Height = %d;",IGUANA_WIDTH,IGUANA_HEIGHT,IGUANA_WIDTH,IGUANA_HEIGHT);
+    HTML_EMIT(buf);
+    HTML_EMIT("var RTparsed = 0; var RTpending = 0; var RTwidth; var RTheight; var RTamplitude; var RTname; \
+              var RTjson; var RTdisp = new Array(Width * Height * 3);\
+              setInterval(iguana_poll,500); \
 \
-function iguana_poll( )\n \
+function process_bitmap(bitmapjson) \
+{\
+    var red,green,blue,n,m; var bitmap = JSON.parse(bitmapjson); \
+    RTamplitude = bitmap.amplitude / 255; n = 0; RTname = bitmap.name; \
+    RTjson = bitmapjson; RTwidth = bitmap.width; RTheight = bitmap.height; \
+    red = 55; blue = 22; green = 222; m = 0;\
+    for (y=0; y<Height; y++)\
+        for (x=0; x<Width; x++)\
+        { \
+            if ( n+2 < bitmap.pixels.length )\
+                { red = bitmap.pixels[n++]; green = bitmap.pixels[n++]; blue = bitmap.pixels[n++]; }\
+            RTdisp[m++] = red; RTdisp[m++] = green; RTdisp[m++] = blue;\
+        }\
+    RTparsed = 1;\
+}\
+\
+function bitmap_handler() \
 { \
-              var y,x,n,red,green,blue,amplitude; \
-              var canvas = document.getElementById(\"canvas\"); \
-              var ctx = canvas.getContext(\"2d\"); \
-              var imagedata = ctx.getImageData(0,0,Width,Height); \
-              var bitmap = JSON.parse('{\"name\":\"testmap\",\"width\":1,\"height\":1,\"amplitude\":255,\"pixels\":[22,44,255]}'); \
-              amplitude = bitmap.amplitude / 255; n = 0; \
-              document.getElementById(\"RTstats\").innerHTML = Date() + ' ' + bitmap.name + ' amplitude  ' + bitmap.amplitude+ '   width ' + bitmap.width + '  height ' + bitmap.height;\
-              for (y=0; y<Height; y++)\
-                  for (x=0; x<Width; x++,n++)\
-                    { \
-                        if ( n+2 < bitmap.pixels.length+2 )\
-                            { red = bitmap.pixels[n++]; green = bitmap.pixels[n++]; blue = bitmap.pixels[n++]; }\
-                        ctx.fillStyle = 'rgba(' + red + ',' + green + ',' + blue + ',' + amplitude + ')';\
-                        ctx.fillRect(x, y, 1, 1);\
-                    }\
+    if ( this.status == 200 && this.responseText != null ) { \
+        process_bitmap(this.responseText); \
+      if ( RTpending > 0 ) RTpending--; \
+  } \
+} \
+\
+function httpGet()\
+{\
+    var client;\
+    if (window.XMLHttpRequest)\
+        client = new XMLHttpRequest();\
+    else\
+        client = new ActiveXObject(\"Microsoft.XMLHTTP\");\
+    client.onload = bitmap_handler;\
+    client.open(\"GET\",\"http://127.0.0.1:7778/json/bitmap\");\
+    client.send();\
+}\
+\
+function iguana_poll( )\
+{ \
+    var y,x,m,red,green,blue; \
+    document.getElementById(\"RTstats\").innerHTML = Date() + ' ' + RTpending + ' ' + RTname + ' amplitude  ' + RTamplitude + '   width ' + RTwidth + '  height ' + RTheight;\
+    if ( RTpending == 0 )\
+    {\
+        httpGet();\
+        RTpending++;\
+    }\
+    if ( RTparsed != 0 )\
+    {\
+        var canvas = document.getElementById(\"canvas\"); \
+        var ctx = canvas.getContext(\"2d\"); \
+        var imagedata = ctx.getImageData(0,0,Width,Height); \
+        for (y=m=0; y<Height; y++)\
+          for (x=0; x<Width; x++)\
+            { \
+              red = RTdisp[m++]; green = RTdisp[m++]; blue = RTdisp[m++]; \
+                ctx.fillStyle = 'rgba(' + red + ',' + green + ',' + blue + ',' + RTamplitude + ')';\
+                ctx.fillRect(x, y, 1, 1);\
+            }\
+    }\
 } </script><br>");
     HTML_EMIT("<br><text>Selected coin: <b>"); HTML_EMIT(Default_coin);
     sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana48_setagent"); HTML_EMIT(formfooter);
@@ -724,7 +779,7 @@ char *iguana_htmlresponse(char *retbuf,int32_t bufsize,int32_t *remainsp,int32_t
      sprintf(retbuf+strlen(retbuf),"Access-Control-Allow-Methods: GET, POST\r\n");
      sprintf(retbuf+strlen(retbuf),"Cache-Control: no-cache, no-store, must-revalidate\r\n");
      sprintf(retbuf+strlen(retbuf),"Content-type: text/html\r\n");
-     sprintf(retbuf+strlen(retbuf),"Content-Length: %d\r\n\r\n",n);*/
+     sprintf(retbuf+strlen(retbuf),"Content-Length: %8d\r\n\r\n",n);*/
     sprintf(retbuf+strlen(retbuf),"<!DOCTYPE HTML>\n\r");
     n = (int32_t)strlen(retbuf);
     formsjson = cJSON_Parse(IGUANA_FORMS);
@@ -756,7 +811,7 @@ void iguana_rpcloop(void *args)
 {
     int32_t recvlen,bindsock,postflag,sock,remains,numsent,len; socklen_t clilen;
     char ipaddr[64],jsonbuf[8192],*buf,*retstr,*space;//,*retbuf; ,n,i,m
-    struct sockaddr_in cli_addr; uint32_t ipbits,i,size = 1024*1024; uint16_t port;
+    struct sockaddr_in cli_addr; uint32_t ipbits,i,size = IGUANA_WIDTH*IGUANA_HEIGHT*16 + 512; uint16_t port;
     port = IGUANA_RPCPORT;//coin->chain->portrpc;
     bindsock = iguana_socket(1,"127.0.0.1",port);
     printf("iguana_rpcloop 127.0.0.1:%d bind sock.%d\n",port,bindsock);
@@ -764,7 +819,7 @@ void iguana_rpcloop(void *args)
     while ( bindsock >= 0 )
     {
         clilen = sizeof(cli_addr);
-        printf("ACCEPT (%s:%d) on sock.%d\n","127.0.0.1",port,bindsock);
+        //printf("ACCEPT (%s:%d) on sock.%d\n","127.0.0.1",port,bindsock);
         sock = accept(bindsock,(struct sockaddr *)&cli_addr,&clilen);
         if ( sock < 0 )
         {
@@ -799,8 +854,8 @@ void iguana_rpcloop(void *args)
                     recvlen += len;
                     buf = &buf[len];
                 } else usleep(10000);
-                printf("got.(%s) %d remains.%d of total.%d\n",jsonbuf,recvlen,remains,len);
-                retstr = iguana_rpcparse(&postflag,jsonbuf);
+                //printf("got.(%s) %d remains.%d of total.%d\n",jsonbuf,recvlen,remains,len);
+                retstr = iguana_rpcparse(space,size,&postflag,jsonbuf);
                 break;
             }
         }
@@ -829,7 +884,8 @@ void iguana_rpcloop(void *args)
                         printf("iguana sent.%d remains.%d of len.%d\n",numsent,remains,recvlen);
                 }
             }
-            //free(retstr);
+            if ( retstr != space)
+                free(retstr);
         }
         if ( Currentjsonstr[0] != 0 )
             strcpy(Prevjsonstr,Currentjsonstr);

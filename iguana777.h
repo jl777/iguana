@@ -18,6 +18,9 @@
 #include <stdint.h>
 //#define IGUANA_DISABLEPEERS
 
+#define IGUANA_WIDTH 1024
+#define IGUANA_HEIGHT 200
+
 #define IGUANA_MAXPENDHDRS 1
 #define _IGUANA_MAXPENDING 3    //64
 #define _IGUANA_MAXBUNDLES 8 
@@ -449,6 +452,8 @@ struct iguana_bundlereq
     uint8_t copyflag,serialized[];
 };
 
+struct iguana_bitmap { int32_t width,height,amplitude; char name[52]; uint8_t data[IGUANA_WIDTH*IGUANA_HEIGHT*3]; };
+
 struct iguana_info
 {
     char name[64],symbol[8];
@@ -467,6 +472,7 @@ struct iguana_info
     struct iguana_counts latest;
     struct iguana_ledger LEDGER,loadedLEDGER;
 
+    struct iguana_bitmap screen;
     //struct pollfd fds[IGUANA_MAXPEERS]; struct iguana_peer bindaddr; int32_t numsocks;
     struct iguana_memspace TXMEM;
     queue_t bundlesQ,hdrsQ,blocksQ,priorityQ,possibleQ,jsonQ,finishedQ,TerminateQ,cacheQ;
@@ -777,5 +783,5 @@ struct iguana_info *iguana_coinselect();
 int32_t unhex(char c);
 void touppercase(char *str);
 uint32_t is_ipaddr(char *str);
-
+void iguana_bitmap(char *space,int32_t max,char *name);
 #endif
