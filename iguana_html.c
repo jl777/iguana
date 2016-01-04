@@ -236,7 +236,7 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path)
         return(space);
     }
   //printf("GETCHECK.(%s)\n",path);
-    if ( Default_coin != 0 )
+    if ( Default_coin[0] != 0 )
         coin = iguana_coin(Default_coin);
     if ( strncmp(path,"/ramchain/",strlen("/ramchain/")) == 0 )
     {
