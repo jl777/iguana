@@ -15,18 +15,60 @@
 
 #include "iguana777.h"
 
+void iguana_bitmapbundle(uint8_t *rect,int32_t rowwidth,int32_t width,int32_t height,struct iguana_bundle *bp)
+{
+    int32_t x,y; uint8_t red,green,blue,*ptr; double frac,sum = 0.;
+    if ( bp != 0 )
+    {
+        if ( bp->red == 0 )
+            bp->red = rand(), bp->green = rand(), bp->blue = rand();
+        red = bp->red, green = bp->green, blue = bp->blue;
+        frac = (double)bp->n / (width * height);
+        for (y=0; y<height; y++,rect+=rowwidth*3)
+        {
+            ptr = rect;
+            for (x=0; x<width; x++,sum+=frac)
+            {
+                if ( bp->ipbits[(int32_t)sum] != 0 )
+                    *ptr++ = red, *ptr++ = green, *ptr++ = blue;
+                else *ptr++ = 0, *ptr++ = 0, *ptr++ = 0;
+            }
+        }
+    }
+}
 
 struct iguana_bitmap *iguana_bitmapfind(char *name)
 {
-    struct iguana_info *coin; int32_t i;
+    struct iguana_info *coin; int32_t width,height,n,hdrsi,x,y;
     if ( (coin= iguana_coin(name)) != 0 )
     {
         strcpy(coin->screen.name,coin->symbol);
         coin->screen.amplitude = 255;
         coin->screen.width = IGUANA_WIDTH;
         coin->screen.height = IGUANA_HEIGHT;
-        for (i=0; i<sizeof(coin->screen.data); i++)
-            coin->screen.data[i] = rand();
+        memset(coin->screen.data,0xff,sizeof(coin->screen.data));
+        if ( coin->bundlescount > 0 )
+        {
+            n = 100;
+            while ( n > 0 )
+            {
+                width = IGUANA_WIDTH / n;
+                height = IGUANA_HEIGHT / n;
+                //printf("n.%d -> (%d %d) rects.%d vs %d\n",n,width,height,width*height,coin->bundlescount);
+                if ( width*height >= coin->bundlescount )
+                    break;
+                n--;
+            }
+            for (y=hdrsi=0; y<height; y++)
+            {
+                for (x=0; x<width; x++,hdrsi++)
+                {
+                    if ( hdrsi >= coin->bundlescount )
+                        break;
+                    iguana_bitmapbundle(&coin->screen.data[3*(y*coin->screen.width*n + x*n)],coin->screen.width,n,n,coin->bundles[hdrsi]);
+                }
+            }
+        }
         return(&coin->screen);
     }
     return(0);

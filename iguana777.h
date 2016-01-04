@@ -440,7 +440,7 @@ struct iguana_bundle
     uint8_t recv[IGUANA_MAXBUNDLESIZE/8 + 1],requests[IGUANA_MAXBUNDLESIZE+1];
     //struct iguana_block *prevblock,*blocks[IGUANA_MAXBUNDLESIZE],*nextblock;
     bits256 prevbundlehash2,hashes[IGUANA_MAXBUNDLESIZE+1],nextbundlehash2,allhash;
-    struct iguana_ramchain ramchain;
+    struct iguana_ramchain ramchain; uint8_t red,green,blue;
 };
 
 struct iguana_bundlereq
