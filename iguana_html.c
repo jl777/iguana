@@ -369,7 +369,6 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path)
                 {
                     path += strlen("addcoin");
                     iguana_coinset(buf,path);
-                    return(clonestr(buf));
                     sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"%s\"}",path);
                     json = cJSON_Parse(Currentjsonstr);
                     retstr = iguana_coinjson(coin,"addcoin",json);
@@ -872,7 +871,7 @@ void iguana_rpcloop(void *args)
                 {
                     if ( errno != EAGAIN && errno != EWOULDBLOCK )
                     {
-                        printf("%s: %s numsent.%d vs remains.%d len.%d errno.%d (%s) usock.%d\n",retstr,ipaddr,numsent,remains,recvlen,errno,strerror(errno),sock);
+                        //printf("%s: %s numsent.%d vs remains.%d len.%d errno.%d (%s) usock.%d\n",retstr,ipaddr,numsent,remains,recvlen,errno,strerror(errno),sock);
                         break;
                     }
                 }

@@ -407,7 +407,7 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
                     if ( block->havehashes != 0 && (hashes= block->rawdata) != 0 && block->copyflag == 0 )
                     {
                         iguana_allhashcmp(coin,bp,hashes,block->numhashes);
-                        if ( 1 && block->numhashes > coin->chain->bundlesize && bp->hdrsi == coin->bundlescount-1 )
+                        if ( 0 && block->numhashes > coin->chain->bundlesize && bp->hdrsi == coin->bundlescount-1 )
                         {
                             printf("am block1, check allhashes numhashes.%d\n",block->numhashes);
                             iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,((bits256 *)block->rawdata)[coin->chain->bundlesize],zero);
@@ -614,7 +614,7 @@ int32_t iguana_reqhdrs(struct iguana_info *coin)
                     else lag = 30 + (rand() % 30);
                     if ( i < coin->bundlescount-1 && (bp->numhashes >= (rand() % bp->n) || time(NULL) < bp->hdrtime+lag) )
                         continue;
-                    if ( (bp->numhashes < bp->n || strcmp(coin->symbol,"BTC") != 0) && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+lag )
+                    if ( bp->numhashes < bp->n && bp->bundleheight+bp->numhashes < coin->longestchain && time(NULL) > bp->issuetime+lag )
                     {
                         //printf("LAG.%ld hdrsi.%d numhashes.%d:%d needhdrs.%d qsize.%d zcount.%d\n",time(NULL)-bp->hdrtime,i,bp->numhashes,bp->n,iguana_needhdrs(coin),queue_size(&coin->hdrsQ),coin->zcount);
                         if ( bp->issuetime == 0 )

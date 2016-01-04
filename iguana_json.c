@@ -298,7 +298,7 @@ char *iguana_agentjson(char *name,struct iguana_info *coin,char *method,cJSON *j
 char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json)
 {
     int32_t i,max,retval; struct iguana_peer *addr; char *ipaddr; cJSON *retjson = 0;
-    //printf("iguana_json(%s)\n",jprint(json,0));
+    //printf("iguana_coinjson(%s)\n",jprint(json,0));
     if ( strcmp(method,"peers") == 0 )
         return(jprint(iguana_peersjson(coin),1));
     else if ( strcmp(method,"addnode") == 0 )
@@ -364,7 +364,7 @@ char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json)
 char *iguana_jsonstr(struct iguana_info *coin,char *jsonstr)
 {
     cJSON *json; char *retjsonstr,*methodstr,*agentstr;
-    printf("iguana_jsonstr.(%s)\n",jsonstr);
+    //printf("iguana_jsonstr.(%s)\n",jsonstr);
     if ( (json= cJSON_Parse(jsonstr)) != 0 )
     {
         if ( (methodstr= jstr(json,"method")) != 0 )
@@ -558,7 +558,7 @@ void iguana_main(void *arg)
     iguana_launch(iguana_coin("BTCD"),"rpcloop",iguana_rpcloop,iguana_coin("BTCD"),IGUANA_PERMTHREAD);
     if ( coinargs != 0 )
         iguana_launch(iguana_coin("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
-    else if ( 1 )
+    else if ( 0 )
     {
 #ifdef __APPLE__
         sleep(1);
