@@ -606,17 +606,17 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     HTML_EMIT("<html> <head></head> <body> ");
     HTML_EMIT("<p id=\"RTstats\"></p> <canvas id=\"canvas\" width=\"1024\" height=\"200\"></canvas>\
 <script>var Width = 1024; var Height = 200; var RTdisp = new Array(1024, 200, 4);\
-              setInterval(iguana_poll,5000); \
+              setInterval(iguana_poll,50); \
 \
 function iguana_poll( )\n \
 { \
-              var y,x,n,w,h,red,green,blue,amplitude; \
+              var y,x,n,red,green,blue,amplitude; \
               var canvas = document.getElementById(\"canvas\"); \
               var ctx = canvas.getContext(\"2d\"); \
               var imagedata = ctx.getImageData(0,0,Width,Height); \
               var bitmap = JSON.parse('{\"name\":\"testmap\",\"width\":1,\"height\":1,\"amplitude\":255,\"pixels\":[22,44,255]}'); \
               amplitude = bitmap.amplitude / 255; n = 0; \
-              document.getElementById(\"RTstats\").innerHTML = Date() + ' ' + bitmap.name + ' amplitude  ' + bitmap.amplitude+ '   length ' + bitmap.pixels.length;\
+              document.getElementById(\"RTstats\").innerHTML = Date() + ' ' + bitmap.name + ' amplitude  ' + bitmap.amplitude+ '   width ' + bitmap.width + '  height ' + bitmap.height;\
               for (y=0; y<Height; y++)\
                   for (x=0; x<Width; x++,n++)\
                     { \
