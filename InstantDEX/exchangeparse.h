@@ -17,119 +17,55 @@
 #ifndef xcode_exchangeparse_h
 #define xcode_exchangeparse_h
 
-char *MGWassets[][3] =
-{
-    { "12659653638116877017", "BTC", "8" },
-    { "17554243582654188572", "BTC", "8" }, // assetid, name, decimals
-    { "4551058913252105307", "BTC", "8" },
-    { "6918149200730574743", "BTCD", "4" },
-    { "11060861818140490423", "BTCD", "4" },
-    { "13120372057981370228", "BITS", "6" },
-    { "16344939950195952527", "DOGE", "4" },
-    { "2303962892272487643", "DOGE", "4" },
-    { "6775076774325697454", "OPAL", "8" },
-    { "7734432159113182240", "VPN", "4" },
-    { "9037144112883608562", "VRC", "8" },
-    { "1369181773544917037", "BBR", "8" },
-    { "17353118525598940144", "DRK", "8" },
-    { "2881764795164526882", "LTC", "4" },
-    { "7117580438310874759", "BC", "4" },
-    { "275548135983837356", "VIA", "4" },
-    { "6220108297598959542", "CNMT", "0" },
-    { "7474435909229872610", "CNMT", "0" },
-};
 
-char *Tradedassets[][4] =
-{
-    { "6220108297598959542", "CNMT", "0", "poloniex" },
-    { "7474435909229872610", "CNMT", "0", "poloniex" },
-    { "979292558519844732", "MMNXT", "0", "poloniex" },
-    { "12982485703607823902", "XUSD", "0", "poloniex" },
-    { "13634675574519917918", "INDEX", "0", "poloniex" },
-    { "6932037131189568014", "JLH", "0", "poloniex" },
-    { "14273984620270850703", "NXTI", "0", "poloniex" },
-    { "12071612744977229797", "UNITY", "4", "poloniex" },
-};
+char *Supported_exchanges[] = { INSTANTDEX_NAME, INSTANTDEX_NXTAEUNCONF, INSTANTDEX_NXTAENAME, INSTANTDEX_BASKETNAME, "basketNXT", "basketUSD", "basketBTC", "basketCNY", INSTANTDEX_ACTIVENAME, "wallet", "jumblr", "pangea", "peggy", // peggy MUST be last of special exchanges
+    "bitfinex", "btc38", "bitstamp", "btce", "poloniex", "bittrex", "huobi", "coinbase", "okcoin", "lakebtc", "quadriga",
+    //"bityes", "kraken", "gatecoin", "quoine", "jubi", "hitbtc"  // no trading for these exchanges yet
+}; // "bter" <- orderbook is backwards and all entries are needed, later to support, "exmo" flakey apiservers
 
-char *is_tradedasset(char *exchange,char *assetidstr)
+void init_exchanges()
 {
     int32_t i;
-    for (i=0; i<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); i++)
-        if ( strcmp(Tradedassets[i][0],assetidstr) == 0 )
-        {
-            strcpy(exchange,Tradedassets[i][3]);
-            return(Tradedassets[i][1]);
-        }
-    return(0);
-}
-
-uint64_t is_MGWcoin(char *name)
-{
-    int32_t i;
-    for (i=0; i<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); i++)
-        if ( strcmp(MGWassets[i][1],name) == 0 )
-            return(calc_nxt64bits(MGWassets[i][0]));
-    return(0);
-}
-
-char *is_MGWasset(uint64_t *multp,uint64_t assetid)
-{
-    int32_t i; char assetidstr[64];
-    expand_nxt64bits(assetidstr,assetid);
-    for (i=0; i<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); i++)
-        if ( strcmp(MGWassets[i][0],assetidstr) == 0 )
-        {
-            if ( multp != 0 )
-            {
-                *multp = calc_decimals_mult(myatoi(MGWassets[i][2],9));
-                //printf("%s -> %d MGW assetmult.%llu\n",MGWassets[i][2],atoi(MGWassets[i][2]),(long long)*multp);
-            }
-            return(MGWassets[i][1]);
-        }
-    return(0);
-}
-
-int32_t get_duplicates(uint64_t *duplicates,uint64_t baseid)
-{
-    int32_t i,j,n = 0; char assetidstr[64],name[64]; uint64_t tmp;
-    unstringbits(name,baseid);
-    if ( (tmp= is_MGWcoin(name)) != 0 )
-        baseid = tmp;
-    else
+    for (FIRST_EXTERNAL=0; FIRST_EXTERNAL<sizeof(Supported_exchanges)/sizeof(*Supported_exchanges); FIRST_EXTERNAL++)
     {
-        for (i=0; i<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); i++)
-            if ( strcmp(Tradedassets[i][1],name) == 0 )
-            {
-                baseid = calc_nxt64bits(Tradedassets[i][0]);
-                printf("baseid.%llu <- (%s)\n",(long long)baseid,name);
-            }
+        find_exchange(0,Supported_exchanges[FIRST_EXTERNAL]);
+        if ( strcmp(Supported_exchanges[FIRST_EXTERNAL],"peggy") == 0 )
+        {
+            FIRST_EXTERNAL++;
+            break;
+        }
     }
-    expand_nxt64bits(assetidstr,baseid);
-    duplicates[n++] = baseid;
-    for (i=0; i<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); i++)
-        if ( strcmp(Tradedassets[i][0],assetidstr) == 0 )
-        {
-            for (j=0; j<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); j++)
-            {
-                if ( i != j && strcmp(Tradedassets[i][1],Tradedassets[j][1]) == 0 )
-                {
-                    duplicates[n++] = calc_nxt64bits(Tradedassets[j][0]);
-                    printf("found duplicate.%s\n",Tradedassets[j][0]);
-                }
-            }
-            break;
-        }
-    for (i=0; i<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); i++)
-        if ( strcmp(MGWassets[i][0],assetidstr) == 0 )
-        {
-            for (j=0; j<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); j++)
-            {
-                if ( i != j && strcmp(MGWassets[i][1],MGWassets[j][1]) == 0 )
-                    duplicates[n++] = calc_nxt64bits(MGWassets[j][0]);
-            }
-            break;
-        }
-    return(n);
+    for (i=FIRST_EXTERNAL; i<sizeof(Supported_exchanges)/sizeof(*Supported_exchanges); i++)
+        find_exchange(0,Supported_exchanges[i]);
+    prices777_initpair(-1,0,0,0,0.,0,0,0,0);
+    void prices777_basketsloop(void *ptr);
+    iguana_launch(iguana_coin("BTCD"),"basketloop",(void *)prices777_basketsloop,0,IGUANA_EXCHANGETHREAD);
+    //prices777_makebasket("{\"name\":\"NXT/BTC\",\"base\":\"NXT\",\"rel\":\"BTC\",\"basket\":[{\"exchange\":\"bittrex\"},{\"exchange\":\"poloniex\"},{\"exchange\":\"btc38\"}]}",0);
+}
+
+void init_InstantDEX()
+{
+    int32_t a,b;
+    //init_pingpong_queue(&Pending_offersQ,"pending_offers",0,0,0);
+    //Pending_offersQ.offset = 0;
+    init_exchanges();
+    find_exchange(&a,INSTANTDEX_NXTAENAME), find_exchange(&b,INSTANTDEX_NAME);
+    if ( a != INSTANTDEX_NXTAEID || b != INSTANTDEX_EXCHANGEID )
+        printf("invalid exchangeid %d, %d\n",a,b);
+    find_exchange(&a,INSTANTDEX_NXTAENAME), find_exchange(&b,INSTANTDEX_NAME);
+    if ( a != INSTANTDEX_NXTAEID || b != INSTANTDEX_EXCHANGEID )
+        printf("invalid exchangeid %d, %d\n",a,b);
+    printf("NXT-> %llu BTC -> %llu\n",(long long)stringbits("NXT"),(long long)stringbits("BTC"));
+    //INSTANTDEX.readyflag = 1;
+}
+
+int32_t supported_exchange(char *exchangestr)
+{
+    int32_t i;
+    for (i=0; i<sizeof(Supported_exchanges)/sizeof(*Supported_exchanges); i++)
+        if ( strcmp(exchangestr,Supported_exchanges[i]) == 0 )
+            return(i);
+    return(-1);
 }
 
 cJSON *exchanges_json()
@@ -247,7 +183,7 @@ double prices777_standard(char *exchangestr,char *url,struct prices777 *prices,c
     char *jsonstr; cJSON *json; double hbla = 0.;
     if ( (jsonstr= issue_curl(url)) != 0 )
     {
-        if ( strcmp(exchangestr,"btc38") == 0 )
+        //if ( strcmp(exchangestr,"btc38") == 0 )
             printf("(%s) -> (%s)\n",url,jsonstr);
         if ( (json= cJSON_Parse(jsonstr)) != 0 )
         {
@@ -1038,6 +974,7 @@ uint64_t prices777_truefx(uint64_t *millistamps,double *bids,double *asks,double
     }
     return(idnum);
 }
+
 
 double prices777_fxcm(double lhlogmatrix[8][8],double logmatrix[8][8],double bids[64],double asks[64],double highs[64],double lows[64])
 {

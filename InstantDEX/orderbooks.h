@@ -17,6 +17,88 @@
 #ifndef xcode_orderbooks_h
 #define xcode_orderbooks_h
 
+char *peggy_contracts[64] =
+{
+    "BTCD", "USD", "EUR", "JPY", "GBP", "AUD", "CAD", "CHF", "NZD", // major currencies
+    "CNY", "RUB", "MXN", "BRL", "INR", "HKD", "TRY", "ZAR", "PLN", "NOK", "SEK", "DKK", "CZK", "HUF", "ILS", "KRW", "MYR", "PHP", "RON", "SGD", "THB", "BGN", "IDR", "HRK",
+    "BTCUSD", "NXTBTC", "SuperNET", "ETHBTC", "LTCBTC", "XMRBTC", "BTSBTC", "XCPBTC",  // BTC priced
+    "XAUUSD", "XAGUSD", "XPTUSD", "XPDUSD", "Copper", "NGAS", "UKOil", "USOil", // USD priced
+    "Bund", "NAS100", "SPX500", "US30", "EUSTX50", "UK100", "JPN225", "GER30", "SUI30", "AUS200", "HKG33", "XAUUSD", "BTCRUB", "BTCCNY", "BTCUSD" // abstract
+};
+
+char *MGWassets[][3] =
+{
+    { "12659653638116877017", "BTC", "8" },
+    { "17554243582654188572", "BTC", "8" }, // assetid, name, decimals
+    { "4551058913252105307", "BTC", "8" },
+    { "6918149200730574743", "BTCD", "4" },
+    { "11060861818140490423", "BTCD", "4" },
+    { "13120372057981370228", "BITS", "6" },
+    { "16344939950195952527", "DOGE", "4" },
+    { "2303962892272487643", "DOGE", "4" },
+    { "6775076774325697454", "OPAL", "8" },
+    { "7734432159113182240", "VPN", "4" },
+    { "9037144112883608562", "VRC", "8" },
+    { "1369181773544917037", "BBR", "8" },
+    { "17353118525598940144", "DRK", "8" },
+    { "2881764795164526882", "LTC", "4" },
+    { "7117580438310874759", "BC", "4" },
+    { "275548135983837356", "VIA", "4" },
+    { "6220108297598959542", "CNMT", "0" },
+    { "7474435909229872610", "CNMT", "0" },
+};
+
+char *Tradedassets[][4] =
+{
+    { "6220108297598959542", "CNMT", "0", "poloniex" },
+    { "7474435909229872610", "CNMT", "0", "poloniex" },
+    { "979292558519844732", "MMNXT", "0", "poloniex" },
+    { "12982485703607823902", "XUSD", "0", "poloniex" },
+    { "13634675574519917918", "INDEX", "0", "poloniex" },
+    { "6932037131189568014", "JLH", "0", "poloniex" },
+    { "14273984620270850703", "NXTI", "0", "poloniex" },
+    { "12071612744977229797", "UNITY", "4", "poloniex" },
+};
+
+char *is_tradedasset(char *exchange,char *assetidstr)
+{
+    int32_t i;
+    for (i=0; i<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); i++)
+        if ( strcmp(Tradedassets[i][0],assetidstr) == 0 )
+        {
+            strcpy(exchange,Tradedassets[i][3]);
+            return(Tradedassets[i][1]);
+        }
+    return(0);
+}
+
+uint64_t is_MGWcoin(char *name)
+{
+    int32_t i;
+    for (i=0; i<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); i++)
+        if ( strcmp(MGWassets[i][1],name) == 0 )
+            return(calc_nxt64bits(MGWassets[i][0]));
+    return(0);
+}
+
+char *is_MGWasset(uint64_t assetid)
+{
+    int32_t i; char assetidstr[64];
+    expand_nxt64bits(assetidstr,assetid);
+    for (i=0; i<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); i++)
+        if ( strcmp(MGWassets[i][0],assetidstr) == 0 )
+            return(MGWassets[i][1]);
+    return(0);
+}
+
+uint64_t prices777_equiv(uint64_t assetid)
+{
+    char *str;
+    if ( (str= is_MGWasset(assetid)) != 0 )
+        return(stringbits(str));
+    return(assetid);
+}
+
 struct prices777 *prices777_find(int32_t *invertedp,uint64_t baseid,uint64_t relid,char *exchange)
 {
     int32_t i; struct prices777 *prices;
@@ -287,8 +369,11 @@ int32_t InstantDEX_verify(uint64_t destNXTaddr,uint64_t sendasset,uint64_t sendq
 
 cJSON *wallet_swapjson(char *recv,uint64_t recvasset,char *send,uint64_t sendasset,uint64_t orderid,uint64_t quoteid)
 {
+    return(cJSON_Parse(clonestr("{\"error\":\"notyet\"}")));
+#ifdef notyet
     int32_t iter; uint64_t assetid; struct coin777 *coin; struct InstantDEX_quote *iQ;
     char account[128],walletstr[512],*addr,*str; cJSON *walletitem = 0;
+    printf("wallet_swapjson is not yet\n");
     if ( (iQ= find_iQ(quoteid)) != 0 && iQ->s.wallet != 0 )
     {
         walletitem = cJSON_Parse(iQ->walletstr);
@@ -324,6 +409,7 @@ cJSON *wallet_swapjson(char *recv,uint64_t recvasset,char *send,uint64_t sendass
     if ( walletitem == 0 )
         walletitem = cJSON_CreateObject(), jaddstr(walletitem,"error","cant find local coin daemons");
     return(walletitem);
+#endif
 }
 
 void _prices777_item(cJSON *item,int32_t group,struct prices777 *prices,int32_t bidask,double price,double volume,uint64_t orderid,uint64_t quoteid)
@@ -586,7 +672,7 @@ void prices777_jsonstrs(struct prices777 *prices,struct prices777_basketinfo *OB
     }
     for (allflag=0; allflag<4; allflag++)
     {
-        strs[allflag] = prices777_orderbook_jsonstr(allflag/2,SUPERNET.my64bits,prices,OB,MAX_DEPTH,allflag%2);
+        strs[allflag] = prices777_orderbook_jsonstr(allflag/2,IGUANA_MY64BITS,prices,OB,MAX_DEPTH,allflag%2);
         if ( Debuglevel > 2 )
             printf("strs[%d].(%s) prices.%p\n",allflag,strs[allflag],prices);
     }
@@ -1021,7 +1107,7 @@ struct prices777 *prices777_addbundle(int32_t *validp,int32_t loadprices,struct 
                 printf("First pair for (%s), start polling]\n",exchange_str(prices->exchangeid));
                 exchange->polling = 1;
                 if ( strcmp(exchange->name,"wallet") != 0 )//&& strcmp(exchange->name,"jumblr") != 0 && strcmp(exchange->name,"pangea") != 0 )
-                    portable_thread_create((void *)prices777_exchangeloop,&Exchanges[prices->exchangeid]);
+                    iguana_launch(iguana_coin("BTCD"),"exchangeloop",(void *)prices777_exchangeloop,&Exchanges[prices->exchangeid],IGUANA_EXCHANGETHREAD);
             }
             BUNDLE.ptrs[BUNDLE.num] = prices;
             printf("prices777_addbundle.(%s) (%s/%s).%s %llu %llu\n",prices->contract,prices->base,prices->rel,prices->exchange,(long long)prices->baseid,(long long)prices->relid);
@@ -1031,6 +1117,357 @@ struct prices777 *prices777_addbundle(int32_t *validp,int32_t loadprices,struct 
         return(prices);
     }
     return(0);
+}
+
+int32_t is_native_crypto(char *name,uint64_t bits)
+{
+    int32_t i,n;
+    if ( (n= (int32_t)strlen(name)) > 0 || (n= unstringbits(name,bits)) <= 5 )
+    {
+        for (i=0; i<n; i++)
+        {
+            if ( (name[i] >= '0' && name[i] <= '9') || (name[i] >= 'A' && name[i] <= 'Z') )// || (name[i] >= '0' && name[i] <= '9') )
+                continue;
+            printf("(%s) is not native crypto\n",name);
+            return(0);
+        }
+        printf("(%s) is native crypto\n",name);
+        return(1);
+    }
+    return(0);
+}
+
+char *_issue_getAsset(char *assetidstr)
+{
+    char cmd[4096],*jsonstr;
+    //sprintf(cmd,"requestType=getAsset&asset=%s",assetidstr);
+    sprintf(cmd,"requestType=getAsset&asset=%s",assetidstr);
+    //printf("_cmd.(%s)\n",cmd);
+    jsonstr = issue_NXTPOST(cmd);
+    //printf("(%s) -> (%s)\n",cmd,jsonstr);
+    return(jsonstr);
+}
+
+char *_issue_getCurrency(char *assetidstr)
+{
+    char cmd[4096];
+    //sprintf(cmd,"requestType=getAsset&asset=%s",assetidstr);
+    sprintf(cmd,"requestType=getCurrency&currency=%s",assetidstr);
+    //printf("_cmd.(%s)\n",cmd);
+    return(issue_NXTPOST(cmd));
+}
+
+int32_t is_mscoin(char *assetidstr)
+{
+    char *jsonstr; cJSON *json; int32_t retcode = 0;
+    if ( (jsonstr= _issue_getCurrency(assetidstr)) != 0 )
+    {
+        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+        {
+            if ( get_cJSON_int(json,"errorCode") == 0 )
+                retcode = 1;
+            free_json(json);
+        }
+        free(jsonstr);
+    }
+    return(retcode);
+}
+
+int32_t get_assetname(char *name,uint64_t assetid)
+{
+    char assetidstr[64],*jsonstr; cJSON *json;
+    name[0] = 0;
+    if ( is_native_crypto(name,assetid) != 0 )
+        return((int32_t)strlen(name));
+    expand_nxt64bits(assetidstr,assetid);
+    name[0] = 0;
+    if ( (jsonstr= _issue_getAsset(assetidstr)) != 0 )
+    {
+        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+        {
+            extract_cJSON_str(name,15,json,"name");
+            free_json(json);
+        }
+        free(jsonstr);
+    }
+    return((int32_t)strlen(assetidstr));
+}
+
+uint32_t get_blockutime(uint32_t blocknum)
+{
+    cJSON *json;
+    uint32_t timestamp = 0;
+    char cmd[4096],*jsonstr;
+    sprintf(cmd,"requestType=getBlock&height=%u",blocknum);
+    if ( (jsonstr= issue_NXTPOST(cmd)) != 0 )
+    {
+        //printf("(%s) -> (%s)\n",cmd,jsonstr);
+        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+        {
+            if ( (timestamp= juint(json,"timestamp")) != 0 )
+                timestamp += NXT_GENESISTIME;
+            free_json(json);
+        }
+        free(jsonstr);
+    }
+    return(timestamp);
+}
+
+uint64_t calc_decimals_mult(int32_t decimals)
+{
+    int32_t i; uint64_t mult = 1;
+    for (i=7-decimals; i>=0; i--)
+        mult *= 10;
+    return(mult);
+}
+
+int32_t _set_assetname(uint64_t *multp,char *buf,char *jsonstr,uint64_t assetid)
+{
+    int32_t type = 0,decimals = -1; cJSON *json=0; char assetidstr[64],*str;
+    *multp = 1;
+    buf[0] = 0;
+    if ( assetid != 0 )
+    {
+        //fprintf(stderr,"assetid.%llu\n",(long long)assetid);
+        if ( (str= is_MGWasset(assetid)) != 0 )
+        {
+            strcpy(buf,str);
+            return(0);
+        }
+        if ( is_native_crypto(buf,assetid) != 0 )
+        {
+            unstringbits(buf,assetid);
+            return(0);
+        }
+    }
+    if ( jsonstr == 0 )
+    {
+        if ( assetid == 0 )
+            printf("_set_assetname null assetid\n"), getchar();
+        expand_nxt64bits(assetidstr,assetid);
+        type = 2;
+        if ( (jsonstr= _issue_getAsset(assetidstr)) != 0 )
+        {
+            //printf("%llu (%s) -> (%s)\n",(long long)assetid,assetidstr,jsonstr);
+            if ( (json= cJSON_Parse(jsonstr)) != 0 )
+            {
+                if ( get_cJSON_int(json,"errorCode") != 0 )
+                {
+                    free_json(json), free(jsonstr);
+                    if ( (jsonstr= _issue_getCurrency(assetidstr)) != 0 )
+                    {
+                        //printf("(%s) -> (%s)\n",assetidstr,jsonstr);
+                        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+                        {
+                            if ( get_cJSON_int(json,"errorCode") != 0 )
+                            {
+                                printf("(%s) not asset and not currency (%s)\n",assetidstr,jsonstr);//, getchar();
+                                free_json(json), free(jsonstr);
+                                return(-1);
+                            }
+                            type = 5;
+                        }
+                    }
+                }
+            }
+            free(jsonstr), jsonstr = 0;
+        } else return(-1);
+    }
+    if ( multp != 0 )
+        *multp = 0;
+    if ( json == 0 )
+        json = cJSON_Parse(jsonstr);
+    if ( json != 0 )
+    {
+        if ( get_cJSON_int(json,"errorCode") == 0 )
+        {
+            decimals = (int32_t)get_cJSON_int(json,"decimals");
+            if ( multp != 0 && decimals >= 0 && decimals <= 8 )
+                *multp = calc_decimals_mult(decimals);
+            if ( extract_cJSON_str(buf,16,json,"name") <= 0 )
+                decimals = -1;
+            //printf("%s decimals.%d (%s)\n",assetidstr,decimals,buf);
+        }
+        free_json(json);
+    }
+    return(type);
+}
+
+char *peggy_mapname(char *basebuf,char *relbuf,int32_t i) // sorry it is messy thing
+{
+    char *base,*rel,buf[16];
+    base = rel = 0;
+    strcpy(buf,peggy_contracts[i]);
+    base = buf, rel = "BTCD";
+    if ( strlen(buf) > 3 && strcmp(buf+strlen(buf)-3,"USD") == 0 )
+    {
+        if ( strcmp(buf,"BTCUSD") == 0 )
+            base = "BTC";
+        buf[strlen(buf)-3] = 0;
+    }
+    else if ( strcmp(buf,"Copper") == 0 || strcmp(buf,"NGAS") == 0 || strcmp(buf,"UKOil") == 0 || strcmp(buf,"USOil") == 0 || strcmp(buf,"US30") == 0 || strcmp(buf,"SPX500") == 0 || strcmp(buf,"NAS100") == 0 )
+        rel = "USD";
+    else if ( strcmp(buf,"Bund") == 0 )
+        rel = "yield";
+    else if ( strcmp(buf,"EUSTX50") == 0 )
+        rel = "EUR";
+    else if ( strcmp(buf,"JPN225") == 0 )
+        rel = "JPY";
+    else if ( strcmp(buf,"UK100") == 0 )
+        rel = "GBP";
+    else if ( strcmp(buf,"GER30") == 0 )
+        rel = "EUR";
+    else if ( strcmp(buf,"SUI30") == 0 )
+        rel = "CHF";
+    else if ( strcmp(buf,"AUS200") == 0 )
+        rel = "AUD";
+    else if ( strcmp(buf,"HKG33") == 0 )
+        rel = "HKD";
+    else if ( strlen(buf) > 3 && strcmp(buf+strlen(buf)-3,"BTC") == 0 )
+        base = buf, buf[strlen(buf)-3] = 0;
+    if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-1 && strcmp(peggy_contracts[i],"BTCUSD") == 0 )
+        base = "BTC", rel = "USD";
+    else if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-2 && strcmp(peggy_contracts[i],"BTCCNY") == 0 )
+        base = "BTC", rel = "CNY";
+    else if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-3 && strcmp(peggy_contracts[i],"BTCRUB") == 0 )
+        base = "BTC", rel = "RUB";
+    else if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-4 && strcmp(peggy_contracts[i],"XAUUSD") == 0 )
+        base = "XAU", rel = "USD";
+    else if ( i == 0 )
+        base = "BTCD", rel = "maincurrency peggy, price is BTCD/BTC for info only";
+    basebuf[0] = relbuf[0] = 0;
+    if ( rel != 0 )
+        strcpy(relbuf,rel);//, printf("rel.(%s) ",rel);
+    if ( base != 0 )
+        strcpy(basebuf,base);//, printf("base.(%s) ",base);
+    return(basebuf);
+}
+
+uint64_t peggy_basebits(char *name)
+{
+    int32_t i; char basebuf[64],relbuf[64];
+    for (i=0; i<64; i++)
+    {
+        if ( strcmp(name,peggy_contracts[i]) == 0 )
+        {
+            peggy_mapname(basebuf,relbuf,i);
+            return(stringbits(basebuf));
+        }
+    }
+    return(0);
+}
+
+uint64_t peggy_relbits(char *name)
+{
+    int32_t i; char basebuf[64],relbuf[64];
+    for (i=0; i<64; i++)
+    {
+        if ( strcmp(name,peggy_contracts[i]) == 0 )
+        {
+            peggy_mapname(basebuf,relbuf,i);
+            return(stringbits(relbuf));
+        }
+    }
+    return(0);
+}
+
+int32_t prices777_key(char *key,char *exchange,char *name,char *base,uint64_t baseid,char *rel,uint64_t relid)
+{
+    int32_t len,keysize = 0;
+    memcpy(&key[keysize],&baseid,sizeof(baseid)), keysize += sizeof(baseid);
+    memcpy(&key[keysize],&relid,sizeof(relid)), keysize += sizeof(relid);
+    strcpy(&key[keysize],exchange), keysize += strlen(exchange) + 1;
+    strcpy(&key[keysize],name), keysize += strlen(name) + 1;
+    memcpy(&key[keysize],base,strlen(base)+1), keysize += strlen(base) + 1;
+    if ( rel != 0 && (len= (int32_t)strlen(rel)) > 0 )
+        memcpy(&key[keysize],rel,len+1), keysize += len+1;
+    return(keysize);
+}
+
+uint64_t InstantDEX_name(char *key,int32_t *keysizep,char *exchange,char *name,char *base,uint64_t *baseidp,char *rel,uint64_t *relidp)
+{
+    uint64_t baseid,relid,assetbits = 0; char *s,*str;
+    baseid = *baseidp, relid = *relidp;
+    //printf(">>>>>> name.(%s) (%s/%s) %llu/%llu\n",name,base,rel,(long long)baseid,(long long)relid);
+    if ( strcmp(base,"5527630") == 0 || baseid == 5527630 )
+        strcpy(base,"NXT");
+    if ( strcmp(rel,"5527630") == 0 || relid == 5527630 )
+        strcpy(rel,"NXT");
+    if ( relid == 0 && rel[0] != 0 )
+    {
+        if ( is_decimalstr(rel) != 0 )
+            relid = calc_nxt64bits(rel);
+        else relid = is_MGWcoin(rel);
+    }
+    else if ( (str= is_MGWasset(relid)) != 0 )
+        strcpy(rel,str);
+    if ( baseid == 0 && base[0] != 0 )
+    {
+        if ( is_decimalstr(base) != 0 )
+            baseid = calc_nxt64bits(base);
+        else baseid = is_MGWcoin(base);
+    }
+    else if ( (str= is_MGWasset(baseid)) != 0 )
+        strcpy(base,str);
+    if ( strcmp("InstantDEX",exchange) == 0 || strcmp("nxtae",exchange) == 0 || strcmp("unconf",exchange) == 0 || (baseid != 0 && relid != 0) )
+    {
+        if ( strcmp(rel,"NXT") == 0 )
+            s = "+", relid = stringbits("NXT"), strcpy(rel,"NXT");
+        else if ( strcmp(base,"NXT") == 0 )
+            s = "-", baseid = stringbits("NXT"), strcpy(base,"NXT");
+        else s = "";
+        if ( base[0] == 0 )
+        {
+            get_assetname(base,baseid);
+            //printf("mapped %llu -> (%s)\n",(long long)baseid,base);
+        }
+        if ( rel[0] == 0 )
+        {
+            get_assetname(rel,relid);
+            //printf("mapped %llu -> (%s)\n",(long long)relid,rel);
+        }
+        if ( name[0] == 0 )
+        {
+            if ( relid == NXT_ASSETID )
+                sprintf(name,"%llu",(long long)baseid);
+            else if ( baseid == NXT_ASSETID )
+                sprintf(name,"-%llu",(long long)relid);
+            else sprintf(name,"%llu/%llu",(long long)baseid,(long long)relid);
+        }
+    }
+    else
+    {
+        if ( base[0] != 0 && rel[0] != 0 && baseid == 0 && relid == 0 )
+        {
+            baseid = peggy_basebits(base), relid = peggy_basebits(rel);
+            if ( name[0] == 0 && baseid != 0 && relid != 0 )
+            {
+                strcpy(name,base); // need to be smarter
+                strcat(name,"/");
+                strcat(name,rel);
+            }
+        }
+        if ( name[0] == 0 || baseid == 0 || relid == 0 || base[0] == 0 || rel[0] == 0 )
+        {
+            if ( baseid == 0 && base[0] != 0 )
+                baseid = stringbits(base);
+            else if ( baseid != 0 && base[0] == 0 )
+                sprintf(base,"%llu",(long long)baseid);
+            if ( relid == 0 && rel[0] != 0 )
+            {
+                relid = stringbits(rel);
+                printf("set relid.%llu <- (%s)\n",(long long)relid,rel);
+            }
+            else if ( relid != 0 && rel[0] == 0 )
+                sprintf(rel,"%llu",(long long)relid);
+            if ( name[0] == 0 )
+                strcpy(name,base), strcat(name,"/"), strcat(name,rel);
+        }
+    }
+    *baseidp = baseid, *relidp = relid;
+    *keysizep = prices777_key(key,exchange,name,base,baseid,rel,relid);
+    //printf("<<<<<<< name.(%s) (%s/%s) %llu/%llu\n",name,base,rel,(long long)baseid,(long long)relid);
+    return(assetbits);
 }
 
 int32_t create_basketitem(struct prices777_basket *basketitem,cJSON *item,char *refbase,char *refrel,int32_t basketsize)
@@ -1303,7 +1740,7 @@ double prices777_unconfNXT(struct prices777 *prices,int32_t maxdepth)
     prices->lastbid = prices->lastask = 0.;
     prices->O.numbids = prices->O.numasks = 0;
     sprintf(url,"requestType=getUnconfirmedTransactions");
-    if ( SUPERNET.disableNXT == 0 && (str= issue_NXTPOST(url)) != 0 )
+    if ( IGUANA_disableNXT == 0 && (str= issue_NXTPOST(url)) != 0 )
     {
         //printf("{%s}\n",str);
         if ( (json= cJSON_Parse(str)) != 0 )
@@ -1426,7 +1863,7 @@ int32_t calc_baseflags(char *exchange,char *base,uint64_t *baseidp)
                 else
                 {
                     printf("set base.(%s) -> %llu\n",base,(long long)*baseidp);
-                    if ( (str= is_MGWasset(&tmp,*baseidp)) != 0 )
+                    if ( (str= is_MGWasset(*baseidp)) != 0 )
                         strcpy(base,str), flags |= (BASE_EXCHANGEASSET | BASE_ISMGW);
                 }
             }
@@ -1438,7 +1875,7 @@ int32_t calc_baseflags(char *exchange,char *base,uint64_t *baseidp)
         }
         else
         {
-            if ( (str= is_MGWasset(&tmp,*baseidp)) != 0 )
+            if ( (str= is_MGWasset(*baseidp)) != 0 )
             {
                 printf("is MGWasset.(%s)\n",str);
                 strcpy(base,str), flags |= (BASE_EXCHANGEASSET | BASE_ISMGW | BASE_ISASSET);
@@ -1532,6 +1969,49 @@ void add_nxtbtc(cJSON *array,int32_t groupid,double wt)
             jaddi(array,item);
         }
     }
+}
+
+int32_t get_duplicates(uint64_t *duplicates,uint64_t baseid)
+{
+    int32_t i,j,n = 0; char assetidstr[64],name[64]; uint64_t tmp;
+    unstringbits(name,baseid);
+    if ( (tmp= is_MGWcoin(name)) != 0 )
+        baseid = tmp;
+    else
+    {
+        for (i=0; i<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); i++)
+            if ( strcmp(Tradedassets[i][1],name) == 0 )
+            {
+                baseid = calc_nxt64bits(Tradedassets[i][0]);
+                printf("baseid.%llu <- (%s)\n",(long long)baseid,name);
+            }
+    }
+    expand_nxt64bits(assetidstr,baseid);
+    duplicates[n++] = baseid;
+    for (i=0; i<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); i++)
+        if ( strcmp(Tradedassets[i][0],assetidstr) == 0 )
+        {
+            for (j=0; j<(int32_t)(sizeof(Tradedassets)/sizeof(*Tradedassets)); j++)
+            {
+                if ( i != j && strcmp(Tradedassets[i][1],Tradedassets[j][1]) == 0 )
+                {
+                    duplicates[n++] = calc_nxt64bits(Tradedassets[j][0]);
+                    printf("found duplicate.%s\n",Tradedassets[j][0]);
+                }
+            }
+            break;
+        }
+    for (i=0; i<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); i++)
+        if ( strcmp(MGWassets[i][0],assetidstr) == 0 )
+        {
+            for (j=0; j<(int32_t)(sizeof(MGWassets)/sizeof(*MGWassets)); j++)
+            {
+                if ( i != j && strcmp(MGWassets[i][1],MGWassets[j][1]) == 0 )
+                    duplicates[n++] = calc_nxt64bits(MGWassets[j][0]);
+            }
+            break;
+        }
+    return(n);
 }
 
 cJSON *make_arrayNXT(cJSON *directarray,cJSON **arrayBTCp,char *base,char *rel,uint64_t baseid,uint64_t relid)

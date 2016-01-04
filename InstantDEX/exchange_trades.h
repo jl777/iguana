@@ -18,7 +18,7 @@
 #define xcode_exchanges_h
 
 #define SHA512_DIGEST_SIZE (512 / 8)
-void *curl_post(CURL **cHandlep,char *url,char *userpass,char *postfields,char *hdr0,char *hdr1,char *hdr2,char *hdr3);
+void *curl_post(void **cHandlep,char *url,char *userpass,char *postfields,char *hdr0,char *hdr1,char *hdr2,char *hdr3);
 
 char *exchange_would_submit(char *postreq,char *hdr1,char *hdr2,char *hdr3, char *hdr4)
 {
@@ -1126,10 +1126,221 @@ uint64_t submit_triggered_nxtae(int32_t dotrade,char **retjsonstrp,int32_t is_MS
     return(txid);
 }
 
+int32_t get_assettype(int32_t *numdecimalsp,char *assetidstr)
+{
+    cJSON *json; char name[64],*jsonstr; uint64_t assetid; int32_t ap_type = -1; //struct assethash *ap,A;
+    *numdecimalsp = -1;
+    name[0] = 0;
+    if ( is_native_crypto(name,calc_nxt64bits(assetidstr)) > 0 )
+    {
+        //printf("found native crypto.(%s) name.(%s)\n",assetidstr,name);
+        ap_type = 0;
+        *numdecimalsp = 8;
+        return(0);
+    }
+    if ( (assetid= calc_nxt64bits(assetidstr)) == NXT_ASSETID )
+    {
+        //printf("found NXT_ASSETID.(%s)\n",assetidstr);
+        ap_type = 0;
+        *numdecimalsp = 8;
+        return(0);
+    }
+    /*if ( (ap= find_asset(assetid)) != 0 )
+     {
+     *numdecimalsp = ap->decimals;
+     return(ap->type);
+     }*/
+    memset(name,0,sizeof(name));
+    if ( (jsonstr= _issue_getAsset(assetidstr)) != 0 )
+    {
+        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+        {
+            if ( get_cJSON_int(json,"errorCode") == 0 )
+            {
+                //printf("assetstr.(%s)\n",jsonstr);
+                if ( extract_cJSON_str(name,16,json,"name") <= 0 )
+                    *numdecimalsp = -1;
+                else *numdecimalsp = (int32_t)get_cJSON_int(json,"decimals");
+                ap_type = 2;
+            } //else printf("errorcode.%lld (%s)\n",(long long)get_cJSON_int(json,"errorCode"),jsonstr);
+            free_json(json);
+        } else printf("cant parse.(%s)\n",jsonstr);
+        free(jsonstr);
+    } else printf("couldnt getAsset.(%s)\n",assetidstr);
+    if ( ap_type < 0 )
+    {
+        if ( (jsonstr= _issue_getCurrency(assetidstr)) != 0 )
+        {
+            if ( (json= cJSON_Parse(jsonstr)) != 0 )
+            {
+                if ( get_cJSON_int(json,"errorCode") == 0 )
+                {
+                    if ( extract_cJSON_str(name,16,json,"name") <= 0 )
+                        *numdecimalsp = -1;
+                    else *numdecimalsp = (int32_t)get_cJSON_int(json,"decimals");
+                    ap_type = 5;
+                }
+                free_json(json);
+            }
+            free(jsonstr);
+        }
+    }
+    /*memset(&A,0,sizeof(A));
+     A.assetid = assetid;
+     A.minvol = A.mult = calc_decimals_mult(*numdecimalsp);
+     A.decimals = *numdecimalsp;
+     A.type = ap_type;
+     strcpy(A.name,name);
+     create_asset(assetid,&A);*/
+    return(ap_type);
+}
+
+uint64_t assetmult(char *assetidstr)
+{
+    int32_t ap_type,decimals; uint64_t mult = 0;
+    ap_type = get_assettype(&decimals,assetidstr);
+    if ( decimals >= 0 && decimals <= 8 )
+        mult = calc_decimals_mult(decimals);
+    return(mult);
+}
+
+int32_t assetdecimals(char *assetidstr)
+{
+    int32_t ap_type,decimals = 0;
+    ap_type = get_assettype(&decimals,assetidstr);
+    if ( ap_type == 0 )
+        return(8);
+    return(decimals);
+}
+
+uint64_t min_asset_amount(uint64_t assetid)
+{
+    char assetidstr[64];
+    if ( assetid == NXT_ASSETID )
+        return(1);
+    expand_nxt64bits(assetidstr,assetid);
+    return(assetmult(assetidstr));
+}
+
+int32_t get_assetdecimals(uint64_t assetid)
+{
+    char assetidstr[64];
+    if ( assetid == NXT_ASSETID )
+        return(8);
+    expand_nxt64bits(assetidstr,assetid);
+    return(assetdecimals(assetidstr));
+}
+
+uint64_t get_assetmult(uint64_t assetid)
+{
+    char assetidstr[64];
+    expand_nxt64bits(assetidstr,assetid);
+    return(assetmult(assetidstr));
+}
+
+double get_minvolume(uint64_t assetid)
+{
+    return(dstr(get_assetmult(assetid)));
+}
+
+int64_t get_asset_quantity(int64_t *unconfirmedp,char *NXTaddr,char *assetidstr)
+{
+    char cmd[2*MAX_JSON_FIELD],*jsonstr; struct destbuf assetid; int32_t i,n,iter; cJSON *array,*item,*obj,*json; int64_t quantity,qty = 0;
+    uint64_t assetidbits = calc_nxt64bits(assetidstr);
+    quantity = *unconfirmedp = 0;
+    if ( assetidbits == NXT_ASSETID )
+    {
+        sprintf(cmd,"requestType=getBalance&account=%s",NXTaddr);
+        if ( (jsonstr= issue_NXTPOST(cmd)) != 0 )
+        {
+            //printf("(%s) -> (%s)\n",cmd,jsonstr);
+            if ( (json= cJSON_Parse(jsonstr)) != 0 )
+            {
+                qty = get_API_nxt64bits(cJSON_GetObjectItem(json,"balanceNQT"));
+                *unconfirmedp = get_API_nxt64bits(cJSON_GetObjectItem(json,"unconfirmedBalanceNQT"));
+                printf("(%s)\n",jsonstr);
+                free_json(json);
+            }
+            free(jsonstr);
+        }
+        return(qty);
+    }
+    sprintf(cmd,"requestType=getAccount&account=%s",NXTaddr);
+    if ( (jsonstr= issue_NXTPOST(cmd)) != 0 )
+    {
+        //printf("(%s) -> (%s)\n",cmd,jsonstr);
+        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+        {
+            for (iter=0; iter<2; iter++)
+            {
+                qty = 0;
+                array = cJSON_GetObjectItem(json,iter==0?"assetBalances":"unconfirmedAssetBalances");
+                if ( is_cJSON_Array(array) != 0 )
+                {
+                    n = cJSON_GetArraySize(array);
+                    for (i=0; i<n; i++)
+                    {
+                        item = cJSON_GetArrayItem(array,i);
+                        obj = cJSON_GetObjectItem(item,"asset");
+                        copy_cJSON(&assetid,obj);
+                        //printf("i.%d of %d: %s(%s)\n",i,n,assetid,cJSON_Print(item));
+                        if ( strcmp(assetid.buf,assetidstr) == 0 )
+                        {
+                            qty = get_cJSON_int(item,iter==0?"balanceQNT":"unconfirmedBalanceQNT");
+                            break;
+                        }
+                    }
+                }
+                if ( iter == 0 )
+                    quantity = qty;
+                else *unconfirmedp = qty;
+            }
+            free_json(json);
+        }
+        free(jsonstr);
+    }
+    return(quantity);
+}
+
+uint64_t calc_asset_qty(uint64_t *availp,uint64_t *priceNQTp,char *NXTaddr,int32_t checkflag,uint64_t assetid,double price,double vol)
+{
+    char assetidstr[64];
+    uint64_t ap_mult,priceNQT,quantityQNT = 0;
+    int64_t unconfirmed,balance;
+    *priceNQTp = *availp = 0;
+    if ( assetid != NXT_ASSETID )
+    {
+        expand_nxt64bits(assetidstr,assetid);
+        if ( (ap_mult= get_assetmult(assetid)) != 0 )
+        {
+            //price = (double)get_satoshi_obj(srcitem,"priceNQT") / ap_mult;
+            //vol = (double)get_satoshi_obj(srcitem,"quantityQNT") * ((double)ap_mult / SATOSHIDEN);
+            priceNQT = (price * ap_mult + (ap_mult/2)/SATOSHIDEN);
+            quantityQNT = (vol * SATOSHIDEN) / ap_mult;
+            balance = get_asset_quantity(&unconfirmed,NXTaddr,assetidstr);
+            //printf("%s balance %.8f unconfirmed %.8f vs price %llu qty %llu for asset.%s | price_vol.(%f * %f) * (%lld / %llu)\n",NXTaddr,dstr(balance),dstr(unconfirmed),(long long)priceNQT,(long long)quantityQNT,assetidstr,price,vol,(long long)SATOSHIDEN,(long long)ap_mult);
+            //getchar();
+            if ( checkflag != 0 && (balance < quantityQNT || unconfirmed < quantityQNT) )
+            {
+                printf("balance %.8f < qty %.8f || unconfirmed %.8f < qty %llu\n",dstr(balance),dstr(quantityQNT),dstr(unconfirmed),(long long)quantityQNT);
+                return(0);
+            }
+            *priceNQTp = priceNQT;
+            *availp = unconfirmed;
+        } else printf("%llu null apmult\n",(long long)assetid);
+    }
+    else
+    {
+        *priceNQTp = price * SATOSHIDEN;
+        quantityQNT = vol;
+    }
+    return(quantityQNT);
+}
+
 char *fill_nxtae(int32_t dotrade,uint64_t *txidp,uint64_t nxt64bits,char *secret,int32_t dir,double price,double volume,uint64_t baseid,uint64_t relid)
 {
     uint64_t txid,assetid,avail,qty,priceNQT,ap_mult; char retbuf[512],*errstr;
-    if ( nxt64bits != calc_nxt64bits(SUPERNET.NXTADDR) )
+    if ( nxt64bits != IGUANA_MY64BITS )
         return(clonestr("{\"error\":\"must use your NXT address\"}"));
     else if ( baseid == NXT_ASSETID )
         dir = -dir, assetid = relid;

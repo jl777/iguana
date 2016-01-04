@@ -343,7 +343,6 @@ int32_t btc_pub2rmd(uint8_t rmd160[20],uint8_t pubkey[33])
     calc_OP_HASH160(hashstr,rmd160,pubkeystr);
     return(0);
 }
-#endif
 
 void *jumblr_bpkey(char *pubP,struct coin777 *coin,char *coinaddr)
 {
@@ -1492,5 +1491,6 @@ void test_subatomic()
     }
     getchar();
 }
+#endif
 
 #endif

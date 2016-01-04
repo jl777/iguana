@@ -63,6 +63,13 @@ int32_t iQcmp(struct InstantDEX_quote *iQA,struct InstantDEX_quote *iQB)
     return(-1);
 }
 
+uint64_t calc_txid(unsigned char *buf,int32_t len)
+{
+    bits256 hash;
+    vcalc_sha256(0,hash.bytes,buf,len);
+    return(hash.txid);
+}
+
 uint64_t calc_quoteid(struct InstantDEX_quote *iQ)
 {
     struct InstantDEX_quote Q;
@@ -168,6 +175,7 @@ struct InstantDEX_quote *create_iQ(struct InstantDEX_quote *iQ,char *walletstr)
     return(newiQ);
 }
 
+#ifdef later
 cJSON *pangea_walletitem(cJSON *walletitem,struct coin777 *coin,int32_t rakemillis,int64_t bigblind,int64_t ante,int32_t minbuyin,int32_t maxbuyin)
 {
     char *addr; struct destbuf pubkey;
@@ -205,7 +213,7 @@ cJSON *set_walletstr(cJSON *walletitem,char *walletstr,struct InstantDEX_quote *
     if ( walletitem == 0 )
        walletitem = cJSON_CreateObject();
     unstringbits(base,iQ->s.basebits), unstringbits(rel,iQ->s.relbits);
-    flip = (iQ->s.offerNXT != SUPERNET.my64bits);
+    flip = (iQ->s.offerNXT != IGUANA_MY64BITS);
     if ( strcmp(base,"NXT") != 0 )
         coin = coin777_find(base,1);
     else if ( strcmp(rel,"NXT") != 0 )
@@ -247,10 +255,11 @@ cJSON *set_walletstr(cJSON *walletitem,char *walletstr,struct InstantDEX_quote *
     }
     return(0);
 }
+#endif
 
 char *InstantDEX_str(char *walletstr,char *buf,int32_t extraflag,struct InstantDEX_quote *iQ)
 {
-    char _buf[4096],_walletstr[256],base[64],rel[64],*exchange,*str; cJSON *walletitem,*json; struct coin777 *coin;
+    cJSON *json; char _buf[4096],base[64],rel[64],*str;
     unstringbits(base,iQ->s.basebits), unstringbits(rel,iQ->s.relbits);
     if ( buf == 0 )
         buf = _buf;
@@ -262,6 +271,8 @@ char *InstantDEX_str(char *walletstr,char *buf,int32_t extraflag,struct InstantD
     //printf("InstantDEX_str.(%s)\n",buf);
     if ( (json= cJSON_Parse(buf)) != 0 )
     {
+#ifdef later
+        char _buf[4096],_walletstr[256],base[64],rel[64],*exchange,*str; cJSON *walletitem,*json; struct coin777 *coin;
         if ( walletstr == 0 )
         {
             walletstr = _walletstr;
@@ -282,7 +293,8 @@ char *InstantDEX_str(char *walletstr,char *buf,int32_t extraflag,struct InstantD
             }
 //printf("exchange.(%s) iswallet.%d (%s) base.(%s) coin.%p (%s)\n",exchange,iQ->s.wallet,walletstr,base,coin,jprint(json,0));
         } else printf("InstantDEX_str cant find exchangeid.%d\n",iQ->exchangeid);
-        str = jprint(json,1);
+#endif
+       str = jprint(json,1);
         strcpy(buf,str);
         //printf("str.(%s) %p\n",buf,buf);
         free(str);
@@ -290,6 +302,40 @@ char *InstantDEX_str(char *walletstr,char *buf,int32_t extraflag,struct InstantD
     if ( buf == _buf )
         return(clonestr(buf));
     else return(buf);
+}
+
+uint64_t _get_AEquote(char *str,uint64_t orderid)
+{
+    cJSON *json;
+    uint64_t nxt64bits = 0;
+    char cmd[256],*jsonstr;
+    sprintf(cmd,"requestType=get%sOrder&order=%llu",str,(long long)orderid);
+    if ( (jsonstr= issue_NXTPOST(cmd)) != 0 )
+    {
+        //printf("(%s) -> (%s)\n",cmd,jsonstr);
+        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+        {
+            nxt64bits = get_API_nxt64bits(cJSON_GetObjectItem(json,"account"));
+            free_json(json);
+        }
+        free(jsonstr);
+    }
+    return(nxt64bits);
+}
+
+char *cancel_NXTorderid(char *NXTaddr,char *nxtsecret,uint64_t orderid)
+{
+    uint64_t nxt64bits; char cmd[1025],secret[8192],*str = "Bid",*retstr = 0;
+    if ( (nxt64bits= _get_AEquote(str,orderid)) == 0 )
+        str = "Ask", nxt64bits = _get_AEquote(str,orderid);
+    if ( nxt64bits == calc_nxt64bits(NXTaddr) )
+    {
+        escape_code(secret,nxtsecret);
+        sprintf(cmd,"requestType=cancel%sOrder&secretPhrase=%s&feeNQT=%lld&deadline=%d&order=%llu",str,secret,(long long)MIN_NQTFEE,DEFAULT_NXT_DEADLINE,(long long)orderid);
+        retstr = issue_NXTPOST(cmd);
+        //printf("(%s) -> (%s)\n",cmd,retstr);
+    }
+    return(retstr);
 }
 
 char *InstantDEX_cancelorder(cJSON *argjson,char *activenxt,char *secret,uint64_t orderid,uint64_t quoteid)
@@ -682,6 +728,7 @@ int offer_checkitem(struct pending_trade *pend,cJSON *item)
 
 void trades_update()
 {
+#ifdef later
     int32_t iter; struct pending_trade *pend;
     for (iter=0; iter<2; iter++)
     {
@@ -703,6 +750,7 @@ void trades_update()
             }
         }
     }
+#endif
 }
 
 void InstantDEX_update(char *NXTaddr,char *NXTACCTSECRET)
@@ -752,8 +800,8 @@ char *InstantDEX_placebidask(char *remoteaddr,uint64_t orderid,char *exchangestr
     char walletstr[256],*str,*retstr = 0; int32_t inverted,dir; struct prices777 *prices; double price,volume;
     if ( secret == 0 || activenxt == 0 )
     {
-        secret = SUPERNET.NXTACCTSECRET;
-        activenxt = SUPERNET.NXTADDR;
+        secret = IGUANA_NXTACCTSECRET;
+        activenxt = IGUANA_NXTADDR;
     }
 //printf("placebidask.(%s)\n",jprint(origjson,0));
     if ( (obj= jobj(origjson,"wallet")) != 0 )
@@ -797,9 +845,9 @@ char *InstantDEX_placebidask(char *remoteaddr,uint64_t orderid,char *exchangestr
             if ( is_specialexchange(exchangestr) == 0 )
                 return(prices777_trade(0,0,0,0,1,0,activenxt,secret,prices,dir,price,volume,iQ,0,iQ->s.quoteid,extra));
             //printf("check automatch\n");
-            if ( strcmp(exchangestr,"wallet") != 0 && strcmp(exchangestr,"jumblr") != 0 && strcmp(exchangestr,"pangea") != 0 && iQ->s.automatch != 0 && (SUPERNET.automatch & 1) != 0 && (retstr= automatch(prices,dir,volume,price,activenxt,secret)) != 0 )
-                return(retstr);
-            if ( strcmp(SUPERNET.NXTACCTSECRET,secret) != 0 )
+            //if ( strcmp(exchangestr,"wallet") != 0 && strcmp(exchangestr,"jumblr") != 0 && strcmp(exchangestr,"pangea") != 0 && iQ->s.automatch != 0 && (SUPERNET.automatch & 1) != 0 && (retstr= automatch(prices,dir,volume,price,activenxt,secret)) != 0 )
+            //    return(retstr);
+            if ( strcmp(IGUANA_NXTACCTSECRET,secret) != 0 )
                 return(clonestr("{\"error\":\"cant do queued requests with non-default accounts\"}"));
             retstr = InstantDEX_str(walletstr,0,1,iQ);
             //printf("create_iQ.(%llu) quoteid.%llu walletstr.(%s) %p\n",(long long)iQ->s.offerNXT,(long long)iQ->s.quoteid,walletstr,walletstr);
@@ -814,7 +862,7 @@ char *InstantDEX_placebidask(char *remoteaddr,uint64_t orderid,char *exchangestr
             if ( (retstr= autofill(remoteaddr,iQ,activenxt,secret)) == 0 )
             {
                 //printf("create_iQ.(%llu) quoteid.%llu\n",(long long)iQ->s.offerNXT,(long long)iQ->s.quoteid);
-                if ( strcmp(SUPERNET.NXTACCTSECRET,secret) != 0 )
+                if ( strcmp(IGUANA_NXTACCTSECRET,secret) != 0 )
                     return(clonestr("{\"error\":\"cant do queued requests with non-default accounts\"}"));
                 prices777_InstantDEX(prices,MAX_DEPTH);
                 printf("remote got create_iQ.(%llu) quoteid.%llu wallet.(%s) baseamount %llu\n",(long long)iQ->s.offerNXT,(long long)iQ->s.quoteid,walletstr,(long long)iQ->s.baseamount);

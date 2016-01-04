@@ -10,7 +10,10 @@
 // ALL globals must be here!
 const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "BitcoinDark", "129" } };
 struct iguana_info *Coins[64];
-int32_t USE_JAY;
+int32_t USE_JAY,FIRST_EXTERNAL,IGUANA_disableNXT,Debuglevel;
+uint32_t prices777_NXTBLOCK,MAX_DEPTH = 100;
+char NXTAPIURL[256],IGUANA_NXTADDR[256],IGUANA_NXTACCTSECRET[256];
+uint64_t IGUANA_MY64BITS;
 queue_t helperQ;
 static int32_t initflag;
 #ifdef __linux__

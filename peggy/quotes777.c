@@ -522,56 +522,6 @@ char *peggy_emitprices(int32_t *nonzp,struct peggy_info *PEGS,uint32_t blocktime
     return(opreturnstr);
 }
 
-char *peggy_mapname(char *basebuf,char *relbuf,int32_t i) // sorry it is messy thing
-{
-    char *base,*rel,buf[16];
-    base = rel = 0;
-    strcpy(buf,peggy_contracts[i]);
-    base = buf, rel = "BTCD";
-    if ( strlen(buf) > 3 && strcmp(buf+strlen(buf)-3,"USD") == 0 )
-    {
-        if ( strcmp(buf,"BTCUSD") == 0 )
-            base = "BTC";
-        buf[strlen(buf)-3] = 0;
-    }
-    else if ( strcmp(buf,"Copper") == 0 || strcmp(buf,"NGAS") == 0 || strcmp(buf,"UKOil") == 0 || strcmp(buf,"USOil") == 0 || strcmp(buf,"US30") == 0 || strcmp(buf,"SPX500") == 0 || strcmp(buf,"NAS100") == 0 )
-        rel = "USD";
-    else if ( strcmp(buf,"Bund") == 0 )
-        rel = "yield";
-    else if ( strcmp(buf,"EUSTX50") == 0 )
-        rel = "EUR";
-    else if ( strcmp(buf,"JPN225") == 0 )
-        rel = "JPY";
-    else if ( strcmp(buf,"UK100") == 0 )
-        rel = "GBP";
-    else if ( strcmp(buf,"GER30") == 0 )
-        rel = "EUR";
-    else if ( strcmp(buf,"SUI30") == 0 )
-        rel = "CHF";
-    else if ( strcmp(buf,"AUS200") == 0 )
-        rel = "AUD";
-    else if ( strcmp(buf,"HKG33") == 0 )
-        rel = "HKD";
-    else if ( strlen(buf) > 3 && strcmp(buf+strlen(buf)-3,"BTC") == 0 )
-        base = buf, buf[strlen(buf)-3] = 0;
-    if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-1 && strcmp(peggy_contracts[i],"BTCUSD") == 0 )
-        base = "BTC", rel = "USD";
-    else if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-2 && strcmp(peggy_contracts[i],"BTCCNY") == 0 )
-        base = "BTC", rel = "CNY";
-    else if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-3 && strcmp(peggy_contracts[i],"BTCRUB") == 0 )
-        base = "BTC", rel = "RUB";
-    else if ( i == sizeof(peggy_contracts)/sizeof(*peggy_contracts)-4 && strcmp(peggy_contracts[i],"XAUUSD") == 0 )
-        base = "XAU", rel = "USD";
-    else if ( i == 0 )
-        base = "BTCD", rel = "maincurrency peggy, price is BTCD/BTC for info only";
-    basebuf[0] = relbuf[0] = 0;
-    if ( rel != 0 )
-        strcpy(relbuf,rel);//, printf("rel.(%s) ",rel);
-    if ( base != 0 )
-        strcpy(basebuf,base);//, printf("base.(%s) ",base);
-    return(basebuf);
-}
-
 uint64_t peggy_basebits(char *name)
 {
     int32_t i; char basebuf[64],relbuf[64];

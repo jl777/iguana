@@ -1,0 +1,35 @@
+# Updated by fix_deps.py
+pnacl/Release/InstantDEX/InstantDEX_main.o: InstantDEX/InstantDEX_main.c \
+  InstantDEX/../iguana777.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/poll.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/poll.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netdb.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet/in.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h \
+  InstantDEX/../includes/utlist.h InstantDEX/../includes/uthash.h \
+  InstantDEX/../includes/curve25519.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/memory.h \
+  InstantDEX/../includes/cJSON.h InstantDEX/../includes/../iguana777.h \
+  InstantDEX/InstantDEX_quote.h InstantDEX/trades.h InstantDEX/quotes.h \
+  InstantDEX/subatomic.h
+InstantDEX/InstantDEX_main.c:
+InstantDEX/../iguana777.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/poll.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/poll.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netdb.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet/in.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h:
+InstantDEX/../includes/utlist.h:
+InstantDEX/../includes/uthash.h:
+InstantDEX/../includes/curve25519.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/memory.h:
+InstantDEX/../includes/cJSON.h:
+InstantDEX/../includes/../iguana777.h:
+InstantDEX/InstantDEX_quote.h:
+InstantDEX/trades.h:
+InstantDEX/quotes.h:
+InstantDEX/subatomic.h:

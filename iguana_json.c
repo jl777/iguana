@@ -567,6 +567,7 @@ void iguana_main(void *arg)
     }
     if ( arg != 0 )
         iguana_JSON(arg);
+    init_InstantDEX();
     while ( 1 )
     {
         flag = 0;

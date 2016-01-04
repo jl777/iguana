@@ -410,7 +410,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     coin = iguana_coin(symbol);
     coin->launched = launched;
     if ( (coin->MAXPEERS= maxpeers) <= 0 )
-        coin->MAXPEERS = (strcmp(symbol,"BTC") == 0) ? 128 : 64;
+        coin->MAXPEERS = (strcmp(symbol,"BTC") == 0) ? 64 : 32;
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
@@ -521,3 +521,20 @@ void iguana_coins(void *arg)
         iguana_coinloop(coins);
     }
 }
+
+int32_t opreturns_init(uint32_t blocknum,uint32_t blocktimestamp,char *path)
+{
+    printf("opreturns_init not yet\n");
+    return(-1);
+}
+
+void peggy()
+{
+    printf("peggy not yet\n");
+}
+char *busdata_sync(uint32_t *noncep,char *jsonstr,char *broadcastmode,char *destNXTaddr)
+{
+    printf("busdata_sync.(%s)\n",jsonstr);
+    return(0);
+}
+

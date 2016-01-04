@@ -174,19 +174,19 @@ char *iguana_parsebidask(char *base,char *rel,char *exchange,double *pricep,doub
     return(0);
 }
 
-char *iguana_InstantDEX(char *path,char *method)
+char *iguana_InstantDEX(char *jsonstr,char *path,char *method)
 {
     char *str,base[64],rel[64],exchange[64]; double price,volume;
     if ( (str= iguana_parsebidask(base,rel,exchange,&price,&volume,path)) != 0 )
     {
         if ( price > 0. && volume > 0. )
         {
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"%s\",\"base\":\"%s\",\"rel\":\"%s\",\"exchange\":\"%s\",\"price\":\%0.8f,\"volume\":%0.8f}",method,base,rel,exchange,price,volume);
-            return(clonestr(Currentjsonstr));
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"%s\",\"base\":\"%s\",\"rel\":\"%s\",\"exchange\":\"%s\",\"price\":\%0.8f,\"volume\":%0.8f}",method,base,rel,exchange,price,volume);
+            return(jsonstr);
         }
-        else return(clonestr("{\"error\":\"invalid price and or volume\"}"));
+        else return(0);
     }
-    return(clonestr("{\"error\":\"invalid price and or volume\"}"));
+    return(0);
 }
 
 void iguana_coinset(char *buf,char *path)
@@ -212,11 +212,11 @@ char *iguana_ramchain_glue(struct iguana_info *coin,char *method,char *jsonstr)
     return(retstr);
 }
 
-char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path)
+char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char *remoteaddr,int32_t localaccess)
 {
     char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json);
     struct iguana_info *coin = 0; cJSON *json; bits256 hash2; int32_t height,i;
-    char buf[64],retbuf[512],*retstr;
+    char buf[64],retbuf[512],jsonstr[1024],*retstr;
     for (i=0; path[i]!=0; i++)
         if ( path[i] == ' ' )
             break;
@@ -413,68 +413,71 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path)
     {
         double price,volume; char base[16],rel[16],exchange[16];
         path += strlen("/InstantDEX/");
+        jsonstr[0] = 0;
         if ( strncmp(path,"placebid/",strlen("placebid/")) == 0 )
         {
             path += strlen("placebid/");
-            return(iguana_InstantDEX(path,"placebid"));
+            if ( iguana_InstantDEX(jsonstr,path,"placebid") == 0 )
+                return(clonestr("{\"error\":\"error with placebid parameters\"}"));
         }
         else if ( strncmp(path,"placeask/",strlen("placeask/")) == 0 )
         {
             path += strlen("placeask/");
-            return(iguana_InstantDEX(path,"placeask"));
+            if ( iguana_InstantDEX(jsonstr,path,"placeask") == 0 )
+                return(clonestr("{\"error\":\"error with placeask parameters\"}"));
         }
         else if ( strncmp(path,"orderbook/",strlen("orderbook/")) == 0 )
         {
             path += strlen("orderbook/");
             iguana_parsebidask(base,rel,exchange,&price,&volume,path);
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"base\":\"%s\",\"rel\":\"%s\",\"exchange\":\"%s\"}",base,rel,exchange);
-            return(clonestr(Currentjsonstr));
+            if ( exchange[0] == 0 )
+                strcpy(exchange,"active");
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"orderbook\",\"base\":\"%s\",\"rel\":\"%s\",\"exchange\":\"%s\",\"allfields\":1}",base,rel,exchange);
         }
         else if ( strncmp(path,"orderstatus/",strlen("orderstatus/")) == 0 )
         {
             path += strlen("orderstatus/");
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"orderstatus\",\"orderid\":\"%s\"}",path);
-            return(clonestr(Currentjsonstr));
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"orderstatus\",\"orderid\":\"%s\"}",path);
         }
         else if ( strncmp(path,"cancelorder/",strlen("cancelorder/")) == 0 )
         {
             path += strlen("cancelorder/");
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"cancelorder\",\"orderid\":\"%s\"}",path);
-            return(clonestr(Currentjsonstr));
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"cancelorder\",\"orderid\":\"%s\"}",path);
         }
         else if ( strncmp(path,"balance/",strlen("balance/")) == 0 )
         {
             path += strlen("balance/");
             iguana_parsebidask(base,rel,exchange,&price,&volume,path);
             if ( path[0] != ' ' && path[0] != '/' )
-                sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"balance\",\"exchange\":\"%s\"}",path);
-            else sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"balance\"}");
-            return(clonestr(Currentjsonstr));
+                sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"balance\",\"exchange\":\"%s\"}",path);
+            else sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"balance\"}");
         }
         else if ( strncmp(path,"openorders",strlen("openorders")) == 0 )
         {
             path += strlen("openorders");
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"openorders\"}");
-            return(clonestr(Currentjsonstr));
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"openorders\"}");
         }
         else if ( strncmp(path,"tradehistory",strlen("tradehistory")) == 0 )
         {
             path += strlen("tradehistory");
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"tradehistory\"}");
-            return(clonestr(Currentjsonstr));
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"tradehistory\"}");
         }
         else if ( strncmp(path,"allorderbooks",strlen("allorderbooks")) == 0 )
         {
             path += strlen("allorderbooks");
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"allorderbooks\"}");
-            return(clonestr(Currentjsonstr));
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"allorderbooks\"}");
         }
         else if ( strncmp(path,"allexchanges",strlen("allexchanges")) == 0 )
         {
             path += strlen("allexchanges");
-            sprintf(Currentjsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"allexchanges\"}");
-            return(clonestr(Currentjsonstr));
+            sprintf(jsonstr,"{\"agent\":\"InstantDEX\",\"method\":\"allexchanges\"}");
         }
+        if ( jsonstr[0] != 0 )
+        {
+            strcpy(Currentjsonstr,jsonstr);
+            return(InstantDEX(jsonstr,remoteaddr,localaccess));
+        }
+        return(clonestr("{\"error\":\"unrecognized InstantDEX API call\"}"));
     }
     else if ( strncmp(path,"/pangea/",strlen("/pangea/")) == 0 )
     {
@@ -490,9 +493,11 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path)
 
 char *iguana_rpcparse(char *retbuf,int32_t bufsize,int32_t *postflagp,char *jsonstr)
 {
-    cJSON *json = 0; int32_t i,n,datalen,postflag = 0;
-    char *key,*reststr,*str,*retstr,*data = 0,*value,*agent = "SuperNET";
+    cJSON *json = 0; int32_t i,n,localaccess,datalen,postflag = 0;
+    char *key,*reststr,*str,*retstr,remoteaddr[65],*data = 0,*value,*agent = "SuperNET";
     //printf("rpcparse.(%s)\n",jsonstr);
+    localaccess = 1;
+    strcpy(remoteaddr,"127.0.0.1"); // need to verify this
     *postflagp = 0;
     if ( strncmp("POST",jsonstr,4) == 0 )
         jsonstr += 6, *postflagp = postflag = 1;
@@ -500,10 +505,10 @@ char *iguana_rpcparse(char *retbuf,int32_t bufsize,int32_t *postflagp,char *json
     {
         jsonstr += 4;
         str = 0;
-        if ( (str= iguana_htmlget(retbuf,bufsize,postflagp,jsonstr)) == 0 && (reststr= strstr(jsonstr,"Referer: http://127.0.0.1:7778")) != 0 )
+        if ( (str= iguana_htmlget(retbuf,bufsize,postflagp,jsonstr,remoteaddr,localaccess)) == 0 && (reststr= strstr(jsonstr,"Referer: http://127.0.0.1:7778")) != 0 )
         {
             reststr += strlen("Referer: http://127.0.0.1:7778");
-            str = iguana_htmlget(retbuf,bufsize,postflagp,reststr);
+            str = iguana_htmlget(retbuf,bufsize,postflagp,reststr,remoteaddr,localaccess);
         }
         if ( str != 0 )
         {
@@ -617,23 +622,43 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     HTML_EMIT("<html> <head></head> <body> <p id=\"RTstats\"></p> ");
     sprintf(buf,"<canvas id=\"canvas\" width=\"%d\" height=\"%d\"></canvas><script>var Width = %d; var Height = %d;",IGUANA_WIDTH,IGUANA_HEIGHT,IGUANA_WIDTH,IGUANA_HEIGHT);
     HTML_EMIT(buf);
-    HTML_EMIT("var RTparsed = 0; var RTpending = 0; var RTwidth; var RTheight; var RTamplitude; var RTname; \
-              var RTjson; var RTdisp = new Array(Width * Height * 3);\
-              setInterval(iguana_poll,500); \
+    HTML_EMIT("var RTparsed = 0; var RTcount = 0; var RTpending = 0; var RTwidth; var RTheight; var RTamplitude; var RTname; \
+              var RTjson; var RTdisp = new Array(Width * Height * 3);");
+    sprintf(buf,"setInterval(iguana_poll,%d);",IGUANS_JSMILLIS);
+    HTML_EMIT(buf);
+    HTML_EMIT("\
 \
 function process_bitmap(bitmapjson) \
 {\
     var red,green,blue,n,m; var bitmap = JSON.parse(bitmapjson); \
-    RTamplitude = bitmap.amplitude / 255; n = 0; RTname = bitmap.name; \
+    var canvas = document.getElementById(\"canvas\"); \
+    var ctx = canvas.getContext(\"2d\"); \
+    var image = ctx.getImageData(0,0,Width,Height); \
+    RTamplitude = bitmap.amplitude / 255; \
+    RTname = bitmap.name; \
     RTjson = bitmapjson; RTwidth = bitmap.width; RTheight = bitmap.height; \
-    red = 55; blue = 22; green = 222; m = 0;\
+    red = 55; blue = 22; green = 222; n = 0; m = 0;\
     for (y=0; y<Height; y++)\
+    {\
         for (x=0; x<Width; x++)\
-        { \
-            if ( n+2 < bitmap.pixels.length )\
-                { red = bitmap.pixels[n++]; green = bitmap.pixels[n++]; blue = bitmap.pixels[n++]; }\
-            RTdisp[m++] = red; RTdisp[m++] = green; RTdisp[m++] = blue;\
+        {\
+            if ( 0 ) \
+            { \
+                if ( n+2 < bitmap.pixels.length )\
+                { \
+                    red = bitmap.pixels[n++]; green = bitmap.pixels[n++]; blue = bitmap.pixels[n++]; \
+                    ctx.fillStyle = 'rgba(' + red + ',' + green + ',' + blue + ',' + RTamplitude + ')';\
+                }\
+                ctx.fillRect(x, y, 1, 1);\
+            } \
+            else \
+            { \
+              image.data[m++] = bitmap.pixels[n++]; image.data[m++] = bitmap.pixels[n++]; image.data[m++] = bitmap.pixels[n++]; image.data[m++] = 255; \
+            }\
         }\
+    }\
+    ctx.putImageData(image,0,0);\
+    RTcount++;\
     RTparsed = 1;\
 }\
 \
@@ -660,13 +685,13 @@ function httpGet()\
 function iguana_poll( )\
 { \
     var y,x,m,red,green,blue; \
-    document.getElementById(\"RTstats\").innerHTML = Date() + ' ' + RTpending + ' ' + RTname + ' amplitude  ' + RTamplitude + '   width ' + RTwidth + '  height ' + RTheight;\
+    document.getElementById(\"RTstats\").innerHTML = Date() + ' ' + RTcount + ' ' + RTname + ' amplitude  ' + RTamplitude + '   width ' + RTwidth + '  height ' + RTheight;\
     if ( RTpending == 0 )\
     {\
         httpGet();\
         RTpending++;\
     }\
-    if ( RTparsed != 0 )\
+    if ( 0 && RTparsed != 0 )\
     {\
         var canvas = document.getElementById(\"canvas\"); \
         var ctx = canvas.getContext(\"2d\"); \
@@ -681,7 +706,7 @@ function iguana_poll( )\
     }\
 } </script><br>");
     HTML_EMIT("<br><text>Selected coin: <b>"); HTML_EMIT(Default_coin);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana48_setagent"); HTML_EMIT(formfooter);
+    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana49_setagent"); HTML_EMIT(formfooter);
     sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana50_setagent"); HTML_EMIT(formfooter);
     sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana51_setagent"); HTML_EMIT(formfooter);
     sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana52_setagent"); HTML_EMIT(formfooter);

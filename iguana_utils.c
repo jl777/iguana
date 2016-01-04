@@ -1015,3 +1015,259 @@ void *iguana_filestr(int64_t *allocsizep,char *fname)
 	return(retval);
 }
 */
+
+void tolowercase(char *str)
+{
+    int32_t i;
+    if ( str == 0 || str[0] == 0 )
+        return;
+    for (i=0; str[i]!=0; i++)
+        str[i] = tolower(((int32_t)str[i]));
+}
+
+int32_t is_decimalstr(char *str)
+{
+    int32_t i;
+    if ( str == 0 || str[0] == 0 )
+        return(0);
+    for (i=0; str[i]!=0; i++)
+        if ( str[i] < '0' || str[i] > '9' )
+            return(0);
+    return(i);
+}
+
+int32_t unstringbits(char *buf,uint64_t bits)
+{
+    int32_t i;
+    for (i=0; i<8; i++,bits>>=8)
+        if ( (buf[i]= (char)(bits & 0xff)) == 0 )
+            break;
+    buf[i] = 0;
+    return(i);
+}
+
+uint64_t stringbits(char *str)
+{
+    uint64_t bits = 0;
+    if ( str == 0 )
+        return(0);
+    int32_t i,n = (int32_t)strlen(str);
+    if ( n > 8 )
+        n = 8;
+    for (i=n-1; i>=0; i--)
+        bits = (bits << 8) | (str[i] & 0xff);
+    //printf("(%s) -> %llx %llu\n",str,(long long)bits,(long long)bits);
+    return(bits);
+}
+char *unstringify(char *str)
+{
+    int32_t i,j,n;
+    if ( str == 0 )
+        return(0);
+    else if ( str[0] == 0 )
+        return(str);
+    n = (int32_t)strlen(str);
+    if ( str[0] == '"' && str[n-1] == '"' )
+        str[n-1] = 0, i = 1;
+    else i = 0;
+    for (j=0; str[i]!=0; i++)
+    {
+        if ( str[i] == '\\' && (str[i+1] == 't' || str[i+1] == 'n' || str[i+1] == 'b' || str[i+1] == 'r') )
+            i++;
+        else if ( str[i] == '\\' && str[i+1] == '"' )
+            str[j++] = '"', i++;
+        else str[j++] = str[i];
+    }
+    str[j] = 0;
+    return(str);
+}
+
+void reverse_hexstr(char *str)
+{
+    int i,n;
+    char *rev;
+    n = (int32_t)strlen(str);
+    rev = (char *)malloc(n + 1);
+    for (i=0; i<n; i+=2)
+    {
+        rev[n-2-i] = str[i];
+        rev[n-1-i] = str[i+1];
+    }
+    rev[n] = 0;
+    strcpy(str,rev);
+    free(rev);
+}
+
+double _pairaved(double valA,double valB)
+{
+	if ( valA != 0. && valB != 0. )
+		return((valA + valB) / 2.);
+	else if ( valA != 0. ) return(valA);
+	else return(valB);
+}
+
+int32_t nn_base64_decode (const char *in, size_t in_len,uint8_t *out, size_t out_len)
+{
+    uint32_t ii,io,rem,v; uint8_t ch;
+    //  Unrolled lookup of ASCII code points. 0xFF represents a non-base64 valid character.
+    const uint8_t DECODEMAP [256] = {
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0x3E, 0xFF, 0xFF, 0xFF, 0x3F,
+        0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B,
+        0x3C, 0x3D, 0xFF, 0xFF, 0xFF, 0x3E, 0xFF, 0xFF,
+        0xFF, 0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06,
+        0x07, 0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E,
+        0x0F, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16,
+        0x17, 0x18, 0x19, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x20,
+        0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28,
+        0x29, 0x2A, 0x2B, 0x2C, 0x2D, 0x2E, 0x2F, 0x30,
+        0x31, 0x32, 0x33, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+        0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF};
+    
+    for (io = 0, ii = 0, v = 0, rem = 0; ii < in_len; ii++) {
+        if (isspace ((uint32_t)in [ii]))
+            continue;
+        
+        if (in [ii] == '=')
+            break;
+        
+        ch = DECODEMAP [(uint32_t)in [ii]];
+        
+        /*  Discard invalid characters as per RFC 2045. */
+        if (ch == 0xFF)
+            break;
+        
+        v = (v << 6) | ch;
+        rem += 6;
+        
+        if (rem >= 8) {
+            rem -= 8;
+            if (io >= out_len)
+                return -ENOBUFS;
+            out [io++] = (v >> rem) & 255;
+        }
+    }
+    if (rem >= 8) {
+        rem -= 8;
+        if (io >= out_len)
+            return -ENOBUFS;
+        out [io++] = (v >> rem) & 255;
+    }
+    return io;
+}
+
+int32_t nn_base64_encode (const uint8_t *in, size_t in_len,char *out, size_t out_len)
+{
+    uint32_t ii,io,rem,v; uint8_t ch;
+    const uint8_t ENCODEMAP [64] =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    "abcdefghijklmnopqrstuvwxyz"
+    "0123456789+/";
+    
+    for (io = 0, ii = 0, v = 0, rem = 0; ii < in_len; ii++) {
+        ch = in [ii];
+        v = (v << 8) | ch;
+        rem += 8;
+        while (rem >= 6) {
+            rem -= 6;
+            if (io >= out_len)
+                return -ENOBUFS;
+            out [io++] = ENCODEMAP [(v >> rem) & 63];
+        }
+    }
+    
+    if (rem) {
+        v <<= (6 - rem);
+        if (io >= out_len)
+            return -ENOBUFS;
+        out [io++] = ENCODEMAP [v & 63];
+    }
+    
+    /*  Pad to a multiple of 3. */
+    while (io & 3) {
+        if (io >= out_len)
+            return -ENOBUFS;
+        out [io++] = '=';
+    }
+    
+    if (io >= out_len)
+        return -ENOBUFS;
+    
+    out [io] = '\0';
+    
+    return io;
+}
+
+int32_t is_DST(int32_t datenum)
+{
+    int32_t year,month,day;
+    year = datenum / 10000, month = (datenum / 100) % 100, day = (datenum % 100);
+    if ( month >= 4 && month <= 9 )
+        return(1);
+    else if ( month == 3 && day >= 29 )
+        return(1);
+    else if ( month == 10 && day < 25 )
+        return(1);
+    return(0);
+}
+
+int32_t extract_datenum(int32_t *yearp,int32_t *monthp,int32_t *dayp,int32_t datenum)
+{
+    *yearp = datenum / 10000, *monthp = (datenum / 100) % 100, *dayp = (datenum % 100);
+    if ( *yearp >= 2000 && *yearp <= 2038 && *monthp >= 1 && *monthp <= 12 && *dayp >= 1 && *dayp <= 31 )
+        return(datenum);
+    else return(-1);
+}
+
+int32_t expand_datenum(char *date,int32_t datenum) { int32_t year,month,day; date[0] = 0; if ( extract_datenum(&year,&month,&day,datenum) != datenum) return(-1); sprintf(date,"%d-%02d-%02d",year,month,day); return(0); }
+
+int32_t calc_datenum(int32_t year,int32_t month,int32_t day) { return((year * 10000) + (month * 100) + day); }
+
+
+int32_t ecb_decrdate(int32_t *yearp,int32_t *monthp,int32_t *dayp,char *date,int32_t datenum)
+{
+    static int lastday[13] = { 0, 31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31 };
+    int32_t year,month,day;
+    year = datenum / 10000, month = (datenum / 100) % 100, day = (datenum % 100);
+    //printf("%d -> %d %d %d\n",datenum,year,month,day);
+    if ( --day <= 0 )
+    {
+        if ( --month <= 0 )
+        {
+            if ( --year < 2000 )
+            {
+                printf("reached epoch start\n");
+                return(-1);
+            }
+            month = 12;
+        }
+        day = lastday[month];
+        if ( month == 2 && (year % 4) == 0 )
+            day++;
+    }
+    sprintf(date,"%d-%02d-%02d",year,month,day);
+    //printf("%d -> %d %d %d (%s)\n",datenum,year,month,day,date);
+    *yearp = year, *monthp = month, *dayp = day;
+    return((year * 10000) + (month * 100) + day);
+}
+

@@ -18,6 +18,9 @@
 #include <stdint.h>
 //#define IGUANA_DISABLEPEERS
 
+#define IGUANA_EXCHANGEIDLE 10
+#define IGUANS_JSMILLIS 50
+
 #define IGUANA_WIDTH 1024
 #define IGUANA_HEIGHT 200
 
@@ -52,6 +55,7 @@ struct iguana_txdatabits { uint64_t addrind:IGUANA_LOG2MAXPEERS,filecount:10,fpo
 #define IGUANA_SENDTHREAD 2
 #define IGUANA_RECVTHREAD 3
 #define IGUANA_HELPERTHREAD 4
+#define IGUANA_EXCHANGETHREAD 5
 
 #define IGUANA_DEDICATED_THREADS
 #ifdef IGUANA_DEDICATED_THREADS
@@ -784,4 +788,29 @@ int32_t unhex(char c);
 void touppercase(char *str);
 uint32_t is_ipaddr(char *str);
 void iguana_bitmap(char *space,int32_t max,char *name);
+double _pairaved(double valA,double valB);
+int32_t unstringbits(char *buf,uint64_t bits);
+uint64_t stringbits(char *str);
+int32_t is_decimalstr(char *str);
+void tolowercase(char *str);
+int32_t nn_base64_decode (const char *in, size_t in_len,uint8_t *out, size_t out_len);
+int32_t nn_base64_encode (const uint8_t *in, size_t in_len,char *out, size_t out_len);
+int32_t is_DST(int32_t datenum);
+int32_t extract_datenum(int32_t *yearp,int32_t *monthp,int32_t *dayp,int32_t datenum);
+int32_t expand_datenum(char *date,int32_t datenum);
+int32_t calc_datenum(int32_t year,int32_t month,int32_t day);
+int32_t ecb_decrdate(int32_t *yearp,int32_t *monthp,int32_t *dayp,char *date,int32_t datenum);
+int32_t conv_date(int32_t *secondsp,char *buf);
+uint32_t OS_conv_datenum(int32_t datenum,int32_t hour,int32_t minute,int32_t second);
+int32_t OS_conv_unixtime(int32_t *secondsp,time_t timestamp);
+bits128 calc_md5(char digeststr[33],void *buf,int32_t len);
+int32_t btc_coinaddr(char *coinaddr,uint8_t addrtype,char *pubkeystr);
+void reverse_hexstr(char *str);
+void init_InstantDEX();
+char *InstantDEX(char *jsonstr,char *remoteaddr,int32_t localaccess);
+
+char *busdata_sync(uint32_t *noncep,char *jsonstr,char *broadcastmode,char *destNXTaddr);
+void peggy();
+int32_t opreturns_init(uint32_t blocknum,uint32_t blocktimestamp,char *path);
+
 #endif

@@ -20,6 +20,8 @@
 #include <memory.h>
 #include <string.h>
 
+union _bits128 { uint8_t bytes[16]; uint16_t ushorts[8]; uint32_t uints[4]; uint64_t ulongs[2]; uint64_t txid; };
+typedef union _bits128 bits128;
 union _bits256 { uint8_t bytes[32]; uint16_t ushorts[16]; uint32_t uints[8]; uint64_t ulongs[4]; uint64_t txid; };
 typedef union _bits256 bits256;
 
