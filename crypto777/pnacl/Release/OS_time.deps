@@ -7,7 +7,7 @@ pnacl/Release/OS_time.o: OS_time.c OS_portable.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h \
-  ../includes/utlist.h ../includes/uthash.h
+  ../includes/libgfshare.h ../includes/utlist.h ../includes/uthash.h
 OS_time.c:
 OS_portable.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/poll.h:
@@ -17,5 +17,6 @@ OS_portable.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h:
+../includes/libgfshare.h:
 ../includes/utlist.h:
 ../includes/uthash.h:

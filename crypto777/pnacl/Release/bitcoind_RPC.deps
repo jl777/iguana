@@ -7,7 +7,8 @@ pnacl/Release/bitcoind_RPC.o: bitcoind_RPC.c OS_portable.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h \
-  ../includes/utlist.h ../includes/uthash.h ../includes/cJSON.h \
+  ../includes/libgfshare.h ../includes/utlist.h ../includes/uthash.h \
+  ../includes/cJSON.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/memory.h \
   ../includes/../iguana777.h ../includes/../includes/curve25519.h \
   ../includes/../includes/cJSON.h
@@ -20,6 +21,7 @@ OS_portable.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h:
+../includes/libgfshare.h:
 ../includes/utlist.h:
 ../includes/uthash.h:
 ../includes/cJSON.h:

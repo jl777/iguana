@@ -18,7 +18,7 @@ pnacl/Release/hmac_sha512.o: hmac_sha512.c hmac/crypt_argchk.c \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h \
-  ../includes/utlist.h ../includes/uthash.h \
+  ../includes/libgfshare.h ../includes/utlist.h ../includes/uthash.h \
   hmac/../../includes/curve25519.h hmac/../../includes/cJSON.h \
   ../includes/../iguana777.h hmac/sha1.c hmac/whirl.c hmac/whirltab.c \
   hmac/sha224.c hmac/sha256.c hmac/sha384.c hmac/sha512.c
@@ -61,6 +61,7 @@ hmac/../../crypto777/OS_portable.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h:
+../includes/libgfshare.h:
 ../includes/utlist.h:
 ../includes/uthash.h:
 hmac/../../includes/curve25519.h:

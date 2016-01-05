@@ -1670,15 +1670,15 @@ bits256 curve25519_shared(bits256 privkey,bits256 otherpub)
     return(hash);
 }
 
-int32_t curve25519_donna(uint8_t *mypublic,const uint8_t *secret,const uint8_t *basepoint)
-{
+int32_t curve25519_donna(uint8_t *mypublic,const uint8_t *secret,const uint8_t *basepoint);
+/*{
     bits256 val,p,bp;
     memcpy(p.bytes,secret,sizeof(p));
     memcpy(bp.bytes,basepoint,sizeof(bp));
     val = curve25519(p,bp);
     memcpy(mypublic,val.bytes,sizeof(val));
     return(0);
-}
+}*/
 
 uint64_t conv_NXTpassword(unsigned char *mysecret,unsigned char *mypublic,uint8_t *pass,int32_t passlen)
 {
