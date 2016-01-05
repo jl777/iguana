@@ -58,7 +58,7 @@ void iguana_initcoin(struct iguana_info *coin)
     portable_mutex_init(&coin->blocks_mutex);
     iguana_meminit(&coin->blockMEM,"blockMEM",coin->blockspace,sizeof(coin->blockspace),0);
     iguana_initQs(coin);
-    randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
+    OS_randombytes((unsigned char *)&coin->instance_nonce,sizeof(coin->instance_nonce));
     coin->starttime = (uint32_t)time(NULL);
     coin->avetime = 1 * 100;
     //coin->R.maxrecvbundles = IGUANA_INITIALBUNDLES;
@@ -128,9 +128,9 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
         }
         printf("finished calc\n");
     }
-    sprintf(oldfname,"%s_oldhdrs.txt",coin->symbol);
-    sprintf(tmpfname,"tmp/%s/hdrs.txt",coin->symbol);
-    sprintf(fname,"%s_hdrs.txt",coin->symbol);
+    sprintf(oldfname,"%s_oldhdrs.txt",coin->symbol), OS_compatible_path(oldfname);
+    sprintf(tmpfname,"tmp/%s/hdrs.txt",coin->symbol), OS_compatible_path(tmpfname);
+    sprintf(fname,"%s_hdrs.txt",coin->symbol), OS_compatible_path(fname);
     if ( (fp= fopen(tmpfname,"w")) != 0 )
     {
         if ( 0 )
@@ -180,12 +180,12 @@ int32_t iguana_savehdrs(struct iguana_info *coin)
             }
         }
         //printf("new hdrs.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
-        if ( ftell(fp) > iguana_filesize(fname) )
+        if ( ftell(fp) > OS_filesize(fname) )
         {
-            printf("new hdrs.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
+            printf("new hdrs.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)OS_filesize(fname));
             fclose(fp);
-            iguana_renamefile(fname,oldfname);
-            iguana_copyfile(tmpfname,fname,1);
+            OS_renamefile(fname,oldfname);
+            OS_copyfile(tmpfname,fname,1);
         } else fclose(fp);
     }
     myfree(hashes,coin->chain->bundlesize * sizeof(*hashes));
@@ -251,6 +251,15 @@ void iguana_parseline(struct iguana_info *coin,int32_t iter,FILE *fp)
                             bp->bundleheight = height;
                             if ( (block= iguana_blockfind(coin,hash2)) != 0 )
                                 block->mainchain = 1, block->height = height;
+                            if ( iguana_bundleload(coin,bp) != 0 )
+                            {
+                                bp->emitfinish = (uint32_t)time(NULL);
+                                for (bundlei=0; bundlei<bp->n; bundlei++)
+                                {
+                                    bp->fpos[bundlei] = 0;
+                                    bp->ipbits[bundlei] = (uint32_t)calc_ipbits("127.0.0.1");
+                                }
+                            }
                         }
                     }
                 }
@@ -306,6 +315,7 @@ struct iguana_info *iguana_startcoin(struct iguana_info *coin,int32_t initialhei
     for (iter=0; iter<2; iter++)
     {
         sprintf(fname,"%s_%s.txt",coin->symbol,(iter == 0) ? "peers" : "hdrs");
+        OS_compatible_path(fname);
         printf("parsefile.%d %s\n",iter,fname);
         if ( (fp= fopen(fname,"r")) != 0 )
         {

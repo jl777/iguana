@@ -1,0 +1,8 @@
+cd crypto777; make; cd ..
+make
+cd prices; make; cd ..
+cd InstantDEX; make; cd ..
+cd peggy; make; cd ..
+cd pangea; make; cd ..
+cd tradebots; make; cd ..
+

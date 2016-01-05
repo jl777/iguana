@@ -1107,7 +1107,7 @@ struct prices777 *prices777_addbundle(int32_t *validp,int32_t loadprices,struct 
                 printf("First pair for (%s), start polling]\n",exchange_str(prices->exchangeid));
                 exchange->polling = 1;
                 if ( strcmp(exchange->name,"wallet") != 0 )//&& strcmp(exchange->name,"jumblr") != 0 && strcmp(exchange->name,"pangea") != 0 )
-                    iguana_launch(iguana_coin("BTCD"),"exchangeloop",(void *)prices777_exchangeloop,&Exchanges[prices->exchangeid],IGUANA_EXCHANGETHREAD);
+                    iguana_launch(iguana_coinadd("BTCD"),"exchangeloop",(void *)prices777_exchangeloop,&Exchanges[prices->exchangeid],IGUANA_EXCHANGETHREAD);
             }
             BUNDLE.ptrs[BUNDLE.num] = prices;
             printf("prices777_addbundle.(%s) (%s/%s).%s %llu %llu\n",prices->contract,prices->base,prices->rel,prices->exchange,(long long)prices->baseid,(long long)prices->relid);
@@ -2220,5 +2220,1237 @@ char *prices777_activebooks(char *name,char *_base,char *_rel,uint64_t baseid,ui
         retstr = clonestr("{\"error\":\"null active orderbook\"}");
     return(retstr);
 }
+
+cJSON *basketitem_json(struct prices777 *prices)
+{
+    int32_t i; char numstr[64]; cJSON *json,*array,*item;
+    json = cJSON_CreateObject();
+    if ( prices != 0 )
+    {
+        jaddstr(json,"exchange",prices->exchange);
+        jaddstr(json,"name",prices->contract);
+        jaddstr(json,"base",prices->base);
+        sprintf(numstr,"%llu",(long long)prices->baseid), jaddstr(json,"baseid",numstr);
+        jaddstr(json,"rel",prices->rel);
+        sprintf(numstr,"%llu",(long long)prices->relid), jaddstr(json,"relid",numstr);
+        jaddnum(json,"commission",prices->commission);
+        if ( prices->basketsize != 0 )
+        {
+            array = cJSON_CreateArray();
+            for (i=0; i<prices->basketsize; i++)
+            {
+                item = basketitem_json(prices->basket[i].prices);
+                if ( prices->basket[i].groupsize != 0 )
+                    jaddnum(item,"groupsize",prices->basket[i].groupsize);
+                jaddnum(item,"group",prices->basket[i].groupid);
+                jaddnum(item,"wt",prices->basket[i].wt);
+                jaddi(array,item);
+            }
+            jadd(json,"basket",array);
+        }
+    }
+    return(json);
+}
+
+char *prices777_allorderbooks()
+{
+    int32_t i; cJSON *json,*array = cJSON_CreateArray();
+    for (i=0; i<BUNDLE.num; i++)
+        jaddi(array,basketitem_json(BUNDLE.ptrs[i]));
+    json = cJSON_CreateObject();
+    cJSON_AddItemToObject(json,"orderbooks",array);
+    return(jprint(json,1));
+}
+
+struct prices777 *prices777_initpair(int32_t needfunc,char *exchange,char *_base,char *_rel,double decay,char *_name,uint64_t baseid,uint64_t relid,int32_t basketsize)
+{
+    static long allocated;
+    struct exchange_funcs funcs[] =
+    {
+        {"nxtae", prices777_NXT, NXT_supports, NXT_tradestub },
+        {"unconf", prices777_unconfNXT, NXT_supports, NXT_tradestub },
+        {"InstantDEX", prices777_InstantDEX, InstantDEX_supports, InstantDEX_tradestub },
+        {"wallet", prices777_InstantDEX, InstantDEX_supports, InstantDEX_tradestub },
+        {"basket", prices777_basket, InstantDEX_supports, InstantDEX_tradestub },
+        {"basketNXT", prices777_basket, InstantDEX_supports, InstantDEX_tradestub },
+        {"basketBTC", prices777_basket, InstantDEX_supports, InstantDEX_tradestub },
+        {"basketUSD", prices777_basket, InstantDEX_supports, InstantDEX_tradestub },
+        {"basketCNY", prices777_basket, InstantDEX_supports, InstantDEX_tradestub },
+        {"active", prices777_basket, InstantDEX_supports, InstantDEX_tradestub },
+        {"peggy", prices777_InstantDEX, InstantDEX_supports, InstantDEX_tradestub },
+        {"jumblr", prices777_InstantDEX, InstantDEX_supports },
+        {"pangea", prices777_InstantDEX, InstantDEX_supports },
+        {"truefx", 0 }, {"ecb", 0 }, {"instaforex", 0 }, {"fxcm", 0 }, {"yahoo", 0 },
+        poloniex_funcs, bittrex_funcs, btce_funcs, bitfinex_funcs, btc38_funcs, huobi_funcs,
+        lakebtc_funcs, quadriga_funcs, okcoin_funcs, coinbase_funcs, bitstamp_funcs
+    };
+    int32_t i,rellen; char basebuf[64],relbuf[64],base[64],rel[64],name[64]; struct exchange_info *exchangeptr;
+    struct prices777 *prices;
+    safecopy(base,_base,sizeof(base));
+    safecopy(rel,_rel,sizeof(rel));
+    safecopy(name,_name,sizeof(name));
+    if ( needfunc < 0 )
+    {
+        for (i=0; i<sizeof(funcs)/sizeof(*funcs); i++)
+        {
+            if ( (exchangeptr= find_exchange(0,funcs[i].exchange)) != 0 )
+            {
+                printf("%p %s set supports.%p %p coinbalance.%p\n",exchangeptr,funcs[i].exchange,funcs[i].supports,funcs[i].trade,funcs[i].parsebalance);
+                exchangeptr->issue = funcs[i];
+            }
+        }
+        return(0);
+    }
+    //printf("init.(%s/%s) name.(%s) %llu %llu\n",base,rel,name,(long long)baseid,(long long)relid);
+    if ( strcmp(exchange,"nxtae") == 0 || strcmp(exchange,"unconf") == 0 )//|| strcmp(exchange,"InstantDEX") == 0 )
+    {
+        if ( strcmp(base,"NXT") == 0 || baseid == NXT_ASSETID )
+        {
+            strcpy(base,rel), baseid = relid;
+            strcpy(rel,"NXT"), relid = NXT_ASSETID;
+            printf("flip.(%s/%s) %llu %llu\n",base,rel,(long long)baseid,(long long)relid);
+        }
+    }
+    for (i=0; i<BUNDLE.num; i++)
+    {
+        if ( strcmp(BUNDLE.ptrs[i]->exchange,exchange) == 0 )
+        {
+            if ( baseid != 0 && relid != 0 && BUNDLE.ptrs[i]->baseid == baseid && BUNDLE.ptrs[i]->relid == relid )
+                return(BUNDLE.ptrs[i]);
+            if ( strcmp(BUNDLE.ptrs[i]->origbase,base) == 0 && strcmp(BUNDLE.ptrs[i]->origrel,rel) == 0 )
+                return(BUNDLE.ptrs[i]);
+        }
+    }
+    printf("cant find (%s) (%llu) (%llu) (%s) (%s)\n",exchange,(long long)baseid,(long long)relid,base,rel);
+    prices = calloc(1,sizeof(*prices) + basketsize*sizeof(*prices->basket));
+    // printf("new prices %ld\n",sizeof(*prices));
+    strcpy(prices->exchange,exchange), strcpy(prices->contract,name), strcpy(prices->base,base), strcpy(prices->rel,rel);
+    prices->baseid = baseid, prices->relid = relid;
+    prices->contractnum = InstantDEX_name(prices->key,&prices->keysize,exchange,prices->contract,prices->base,&prices->baseid,prices->rel,&prices->relid);
+    portable_mutex_init(&prices->mutex);
+    strcpy(prices->origbase,base);
+    if ( rel[0] != 0 )
+        strcpy(prices->origrel,rel);
+    allocated += sizeof(*prices);
+    safecopy(prices->exchange,exchange,sizeof(prices->exchange));
+    if ( strcmp(exchange,"nxtae") == 0 || strcmp(exchange,"unconf") == 0 || strcmp(exchange,INSTANTDEX_NAME) == 0 )
+    {
+        char tmp[16];
+        _set_assetname(&prices->basemult,tmp,0,prices->baseid);
+        _set_assetname(&prices->relmult,tmp,0,prices->relid);
+        if ( (prices->relid != NXT_ASSETID && prices->relid < (1LL << (5*8))) || (prices->baseid != NXT_ASSETID && prices->baseid == (1LL << (5*8))) )
+        {
+            printf("illegal baseid.%llu or relid.%llu\n",(long long)prices->baseid,(long long)prices->relid);
+            free(prices);
+            return(0);
+        }
+        //prices->nxtbooks = calloc(1,sizeof(*prices->nxtbooks));
+        safecopy(prices->lbase,base,sizeof(prices->lbase)), tolowercase(prices->lbase);
+        safecopy(prices->lrel,rel,sizeof(prices->lrel)), tolowercase(prices->lrel);
+        rellen = (int32_t)(strlen(prices->rel) + 1);
+        tmp[0] = 0;
+        prices->type = _set_assetname(&prices->ap_mult,tmp,0,prices->baseid);
+        printf("nxtbook.(%s) -> NXT %s %llu/%llu vs (%s) mult.%llu (%llu/%llu)\n",base,prices->contract,(long long)prices->baseid,(long long)prices->relid,tmp,(long long)prices->ap_mult,(long long)prices->basemult,(long long)prices->relmult);
+    }
+    else
+    {
+        prices->basemult = prices->relmult = 1;
+        safecopy(prices->base,base,sizeof(prices->base)), touppercase(prices->base);
+        safecopy(prices->lbase,base,sizeof(prices->lbase)), tolowercase(prices->lbase);
+        if ( rel[0] == 0 && prices777_ispair(basebuf,relbuf,base) >= 0 )
+        {
+            strcpy(base,basebuf), strcpy(rel,relbuf);
+            //printf("(%s) is a pair (%s)+(%s)\n",base,basebuf,relbuf);
+        }
+        if ( rel[0] != 0 )
+        {
+            rellen = (int32_t)(strlen(rel) + 1);
+            safecopy(prices->rel,rel,sizeof(prices->rel)), touppercase(prices->rel);
+            safecopy(prices->lrel,rel,sizeof(prices->lrel)), tolowercase(prices->lrel);
+            if ( prices->contract[0] == 0 )
+            {
+                strcpy(prices->contract,prices->base);
+                if ( strcmp(prices->rel,&prices->contract[strlen(prices->contract)-3]) != 0 )
+                    strcat(prices->contract,"/"), strcat(prices->contract,prices->rel);
+            }
+            //printf("create base.(%s) rel.(%s)\n",prices->base,prices->rel);
+        }
+        else
+        {
+            if ( prices->contract[0] == 0 )
+                strcpy(prices->contract,base);
+        }
+    }
+    char str[65]; printf("%s init_pair.(%s) (%s)(%s).%llu -> (%s) keysize.%d crc.%u (baseid.%llu relid.%llu)\n",mbstr(str,allocated),exchange,base,rel,(long long)prices->contractnum,prices->contract,prices->keysize,calc_crc32(0,(void *)prices->key,prices->keysize),(long long)prices->baseid,(long long)prices->relid);
+    prices->decay = decay, prices->oppodecay = (1. - decay);
+    prices->RTflag = 1;
+    if ( (exchangeptr= find_exchange(0,exchange)) != 0 )
+    {
+        if ( prices->commission == 0. )
+            prices->commission = exchangeptr->commission;
+        prices->exchangeid = exchangeptr->exchangeid;
+        if ( exchangeptr->issue.update == 0 )
+        {
+            for (i=0; i<sizeof(funcs)/sizeof(*funcs); i++)
+            {
+                if ( strcmp(exchange,funcs[i].exchange) == 0 )
+                {
+                    exchangeptr->issue = funcs[i];
+                    //printf("return prices.%p\n",prices);
+                }
+            }
+        }
+        if ( exchangeptr->refcount == 0 )
+        {
+            printf("incr refcount.%s from %d\n",exchangeptr->name,exchangeptr->refcount);
+            exchangeptr->refcount++;
+        }
+        return(prices);
+    }
+    //printf("initialized.(%s).%lld\n",prices->contract,(long long)prices->contractnum);
+    return(prices);
+}
+
+int32_t is_pair(char *base,char *rel,char *refbase,char *refrel)
+{
+    if ( strcmp(base,refbase) == 0 && strcmp(rel,refrel) == 0 )
+        return(1);
+    else if ( strcmp(rel,refbase) == 0 && strcmp(base,refrel) == 0 )
+        return(-1);
+    return(0);
+}
+
+struct prices777 *prices777_poll(char *_exchangestr,char *_name,char *_base,uint64_t refbaseid,char *_rel,uint64_t refrelid)
+{
+    char exchangestr[64],base[64],rel[64],name[64],key[1024]; uint64_t baseid,relid;
+    int32_t keysize,exchangeid,valid; struct exchange_info *exchange; struct prices777 *prices;
+    baseid = refbaseid, relid = refrelid;
+    strcpy(exchangestr,_exchangestr), strcpy(base,_base), strcpy(rel,_rel), strcpy(name,_name);
+    if ( (strcmp(exchangestr,"huobi") == 0 && is_pair(base,rel,"BTC","CNY") == 0 && is_pair(base,rel,"LTC","CNY") == 0) ||
+        ((strcmp(exchangestr,"bityes") == 0 || strcmp(exchangestr,"okcoin") == 0) && is_pair(base,rel,"BTC","USD") == 0 && is_pair(base,rel,"LTC","USD") == 0) ||
+        ((strcmp(exchangestr,"bitstamp") == 0 || strcmp(exchangestr,"coinbase") == 0) && is_pair(base,rel,"BTC","USD") == 0) ||
+        (strcmp(exchangestr,"lakebtc") == 0 && is_pair(base,rel,"BTC","CNY") == 0 && is_pair(base,rel,"BTC","USD") == 0) ||
+        (strcmp(exchangestr,"quadriga") == 0 && is_pair(base,rel,"BTC","CAD") == 0 && is_pair(base,rel,"BTC","USD") == 0) ||
+        0 )
+    {
+        printf("%s (%s/%s) is not a supported trading pair\n",exchangestr,base,rel);
+        return(0);
+    }
+    InstantDEX_name(key,&keysize,exchangestr,name,base,&baseid,rel,&relid);
+    //printf("call addbundle\n");
+    if ( (prices= prices777_addbundle(&valid,0,0,exchangestr,baseid,relid)) != 0 )
+    {
+        printf("found (%s/%s).%s %llu %llu in slot-> %p\n",base,rel,exchangestr,(long long)baseid,(long long)relid,prices);
+        return(prices);
+    }
+    //printf("call find_exchange\n");
+    if ( (exchange= find_exchange(&exchangeid,exchangestr)) == 0 )
+    {
+        printf("cant add exchange.(%s)\n",exchangestr);
+        return(0);
+    }
+    if ( strcmp(exchangestr,"nxtae") == 0 || strcmp(exchangestr,"unconf") == 0 )
+    {
+        if ( strcmp(base,"NXT") != 0 && strcmp(rel,"NXT") != 0 )
+        {
+            printf("nxtae/unconf needs to be relative to NXT (%s/%s) %llu/%llu\n",base,rel,(long long)baseid,(long long)relid);
+            return(0);
+        }
+    }
+    if ( (prices= prices777_initpair(1,exchangestr,base,rel,0.,name,baseid,relid,0)) != 0 )
+    {
+        //printf("call addbundle after initpair\n");
+        prices777_addbundle(&valid,1,prices,0,0,0);
+    }
+    return(prices);
+}
+
+int32_t prices777_propagate(struct prices777 *prices)
+{
+    int32_t i,n = 0;
+    for (i=0; i<prices->numdependents; i++)
+    {
+        n++;
+        if ( (*prices->dependents[i]) < 0xff )
+            (*prices->dependents[i])++;
+        if ( Debuglevel > 2 )
+            printf("numdependents.%d of %d %p %d\n",i,prices->numdependents,prices->dependents[i],*prices->dependents[i]);
+    }
+    return(n);
+}
+
+int32_t prices777_updated;
+void prices777_basketsloop(void *ptr)
+{
+    extern int32_t prices777_NXTBLOCK;
+    int32_t i,n; uint32_t updated; struct prices777 *prices;
+    while ( 1 )
+    {
+        for (i=n=0; i<BUNDLE.num; i++)
+        {
+            updated = (uint32_t)time(NULL);
+            if ( (prices= BUNDLE.ptrs[i]) != 0 && prices->disabled == 0 && prices->basketsize != 0 )
+            {
+                if ( prices->changed != 0 )
+                {
+                    if ( Debuglevel > 2 )
+                        printf("%s updating basket(%s) lastprice %.8f changed.%p %d\n",prices->exchange,prices->contract,prices->lastprice,&prices->changed,prices->changed);
+                    prices->pollnxtblock = prices777_NXTBLOCK;
+                    n++;
+                    prices->lastupdate = updated;
+                    if ( (prices->lastprice= prices777_basket(prices,MAX_DEPTH)) != 0. )
+                    {
+                        if ( prices->O.numbids > 0 || prices->O.numasks > 0 )
+                        {
+                            prices777_jsonstrs(prices,&prices->O);
+                            prices777_updated += prices777_propagate(prices);
+                        }
+                    }
+                    prices->changed = 0;
+                }
+            }
+        }
+        if ( n == 0 )
+            usleep(250000);
+        else usleep(10000);
+    }
+}
+
+void prices777_exchangeloop(void *ptr)
+{
+    extern int32_t prices777_NXTBLOCK;
+    struct prices777 *prices; int32_t i,n,pollflag,isnxtae = 0; double updated = 0.; struct exchange_info *exchange = ptr;
+    if ( strcmp(exchange->name,"nxtae") == 0 || strcmp(exchange->name,"unconf") == 0 )
+        isnxtae = 1;
+    printf("POLL.(%s)\n",exchange->name);
+    while ( 1 )
+    {
+        for (i=n=0; i<BUNDLE.num; i++)
+        {
+            if ( (prices= BUNDLE.ptrs[i]) != 0 && prices->disabled == 0 && prices->basketsize == 0 && prices->exchangeid == exchange->exchangeid )
+            {
+                if ( prices->exchangeid == INSTANTDEX_EXCHANGEID && prices->dirty != 0 )
+                    pollflag = 1;
+                else if ( isnxtae == 0 )
+                    pollflag = milliseconds() > (exchange->lastupdate + exchange->pollgap*1000) && milliseconds() > (prices->lastupdate + 1000*IGUANA_EXCHANGEIDLE);
+                else if ( (strcmp(exchange->name,"unconf") == 0 && milliseconds() > prices->lastupdate + 5000) || prices->pollnxtblock < prices777_NXTBLOCK || milliseconds() > prices->lastupdate + 1000*IGUANA_EXCHANGEIDLE )
+                    pollflag = 1;
+                else continue;
+                //printf("(%s) pollflag.%d %p\n",exchange->name,pollflag,exchange->issue.update);
+                if ( pollflag != 0 && exchange->issue.update != 0 )
+                {
+                    portable_mutex_lock(&exchange->mutex);
+                    prices->lastprice = (*exchange->issue.update)(prices,MAX_DEPTH);
+                    portable_mutex_unlock(&exchange->mutex);
+                    updated = exchange->lastupdate = milliseconds(), prices->lastupdate = milliseconds();
+                    if ( prices->lastprice != 0. )
+                    {
+                        if ( Debuglevel > 2 && strcmp(exchange->name,"unconf") != 0 )
+                            printf("%-8s %8s (%8s %8s) %llu %llu isnxtae.%d poll %u -> %u %.8f hbla %.8f %.8f\n",prices->exchange,prices->contract,prices->base,prices->rel,(long long)prices->baseid,(long long)prices->relid,isnxtae,prices->pollnxtblock,prices777_NXTBLOCK,prices->lastprice,prices->lastbid,prices->lastask);
+                        prices777_propagate(prices);
+                    }
+                    prices->pollnxtblock = prices777_NXTBLOCK;
+                    prices->dirty = 0;
+                    n++;
+                }
+                /*if ( 0 && exchange->issue.trade != 0 && exchange->apikey[0] != 0 && exchange->exchangeid >= FIRST_EXTERNAL && time(NULL) > exchange->lastbalancetime+300 )
+                 {
+                 if ( (json= (*exchange->issue.balances)(exchange)) != 0 )
+                 {
+                 if ( exchange->balancejson != 0 )
+                 free_json(exchange->balancejson);
+                 exchange->balancejson = json;
+                 }
+                 exchange->lastbalancetime = (uint32_t)time(NULL);
+                 }*/
+            }
+        }
+        if ( n == 0 )
+            sleep(3);
+        else sleep(1);
+    }
+}
+
+int32_t prices777_init(char *jsonstr,int32_t peggyflag)
+{
+    static int32_t didinit;
+    char *btcdexchanges[] = { "poloniex", "bittrex" };//, "bter" };
+    char *btcusdexchanges[] = { "bityes", "bitfinex", "bitstamp", "okcoin", "coinbase", "btce", "lakebtc", "kraken" };
+    cJSON *json=0,*item,*exchanges; int32_t i,n; char *exchange,*base,*rel,*contract; struct exchange_info *exchangeptr=0; struct destbuf tmp;
+    if ( didinit != 0 )
+        return(0);
+    didinit = 1;
+    if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"unconf","BTC","NXT",0,"BTC/NXT",calc_nxt64bits("12659653638116877017"),NXT_ASSETID,0)) != 0 )
+        BUNDLE.num++;
+    if ( peggyflag != 0 )
+    {
+        if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"huobi","BTC","USD",0.,0,0,0,0)) != 0 )
+            BUNDLE.num++;
+        if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"btc38","CNY","NXT",0.,0,0,0,0)) != 0 )
+            BUNDLE.num++;
+        if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"okcoin","LTC","BTC",0.,0,0,0,0)) != 0 )
+            BUNDLE.num++;
+        if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"poloniex","LTC","BTC",0.,0,0,0,0)) != 0 )
+            BUNDLE.num++;
+        if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"poloniex","XMR","BTC",0.,0,0,0,0)) != 0 )
+            BUNDLE.num++;
+        if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"poloniex","BTS","BTC",0.,0,0,0,0)) != 0 )
+            BUNDLE.num++;
+        if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,"poloniex","XCP","BTC",0.,0,0,0,0)) != 0 )
+            BUNDLE.num++;
+        for (i=0; i<sizeof(btcdexchanges)/sizeof(*btcdexchanges); i++)
+            if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,btcusdexchanges[i],"BTC","USD",0.,0,0,0,0)) != 0 )
+                BUNDLE.num++;
+        for (i=0; i<sizeof(btcdexchanges)/sizeof(*btcdexchanges); i++)
+            if ( (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,btcdexchanges[i],"BTCD","BTC",0.,0,0,0,0)) != 0 )
+                BUNDLE.num++;
+    }
+    if ( (json= cJSON_Parse(jsonstr)) != 0 && (exchanges= jarray(&n,json,"prices")) != 0 )
+    {
+        printf("prices has %d items\n",n);
+        for (i=0; i<n; i++)
+        {
+            item = jitem(exchanges,i);
+            exchange = jstr(item,"exchange"), base = jstr(item,"base"), rel = jstr(item,"rel");
+            if ( (base == 0 || rel == 0) && (contract= jstr(item,"contract")) != 0 )
+                rel = 0, base = contract;
+            else contract = 0;
+            //printf("PRICES[%d] %p %p %p\n",i,exchange,base,rel);
+            if ( exchange != 0 && (strcmp(exchange,"bter") == 0 || strcmp(exchange,"exmo") == 0) )
+                continue;
+            if ( exchange != 0 && (exchangeptr= find_exchange(0,exchange)) != 0 )
+            {
+                exchangeptr->pollgap = get_API_int(cJSON_GetObjectItem(item,"pollgap"),IGUANA_EXCHANGEIDLE);
+                extract_cJSON_str(exchangeptr->apikey,sizeof(exchangeptr->apikey),item,"key");
+                if ( exchangeptr->apikey[0] == 0 )
+                    extract_cJSON_str(exchangeptr->apikey,sizeof(exchangeptr->apikey),item,"apikey");
+                extract_cJSON_str(exchangeptr->userid,sizeof(exchangeptr->userid),item,"userid");
+                extract_cJSON_str(exchangeptr->apisecret,sizeof(exchangeptr->apisecret),item,"secret");
+                if ( exchangeptr->apisecret[0] == 0 )
+                    extract_cJSON_str(exchangeptr->apisecret,sizeof(exchangeptr->apisecret),item,"apisecret");
+                if ( exchangeptr->commission == 0. )
+                    exchangeptr->commission = jdouble(item,"commission");
+                printf("%p ADDEXCHANGE.(%s) [%s, %s, %s] commission %.3f%%\n",exchangeptr,exchange,exchangeptr->apikey,exchangeptr->userid,exchangeptr->apisecret,exchangeptr->commission * 100);
+            } else printf(" exchangeptr.%p for (%p)\n",exchangeptr,exchange);
+            if ( exchange != 0 && strcmp(exchange,"truefx") == 0 )
+            {
+                copy_cJSON(&tmp,jobj(item,"truefxuser")), safecopy(BUNDLE.truefxuser,tmp.buf,sizeof(BUNDLE.truefxuser));
+                copy_cJSON(&tmp,jobj(item,"truefxpass")), safecopy(BUNDLE.truefxpass,tmp.buf,sizeof(BUNDLE.truefxpass));;
+                printf("truefx.(%s %s)\n",BUNDLE.truefxuser,BUNDLE.truefxpass);
+            }
+            else if ( base != 0 && rel != 0 && base[0] != 0 && rel[0] != 0 && (BUNDLE.ptrs[BUNDLE.num]= prices777_initpair(1,exchange,base,rel,jdouble(item,"decay"),contract,stringbits(base),stringbits(rel),0)) != 0 )
+            {
+                if ( exchangeptr != 0 && (BUNDLE.ptrs[BUNDLE.num]->commission= jdouble(item,"commission")) == 0. )
+                    BUNDLE.ptrs[BUNDLE.num]->commission = exchangeptr->commission;
+                printf("SET COMMISSION.%s %f for %s/%s\n",exchange,exchangeptr!=0?exchangeptr->commission:0,base,rel);
+                BUNDLE.num++;
+            }
+        }
+    } else printf("(%s) has no prices[]\n",jsonstr);
+    if ( json != 0 )
+        free_json(json);
+    for (i=0; i<MAX_EXCHANGES; i++)
+    {
+        exchangeptr = &Exchanges[i];
+        if ( (exchangeptr->refcount > 0 || strcmp(exchangeptr->name,"unconf") == 0) )//&& strcmp(exchangeptr->name,"pangea") != 0 && strcmp(exchangeptr->name,"jumblr") != 0 )
+            iguana_launch(iguana_coinadd("BTCD"),"exchangeloop",(void *)prices777_exchangeloop,exchangeptr,IGUANA_EXCHANGETHREAD);
+    }
+    return(0);
+}
+
+double prices777_yahoo(char *metal)
+{
+    // http://finance.yahoo.com/webservice/v1/symbols/allcurrencies/quote?format=json
+    // http://finance.yahoo.com/webservice/v1/symbols/XAU=X/quote?format=json
+    // http://finance.yahoo.com/webservice/v1/symbols/XAG=X/quote?format=json
+    // http://finance.yahoo.com/webservice/v1/symbols/XPT=X/quote?format=json
+    // http://finance.yahoo.com/webservice/v1/symbols/XPD=X/quote?format=json
+    char url[1024],*jsonstr; cJSON *json,*obj,*robj,*item,*field; double price = 0.;
+    sprintf(url,"http://finance.yahoo.com/webservice/v1/symbols/%s=X/quote?format=json",metal);
+    if ( (jsonstr= issue_curl(url)) != 0 )
+    {
+        //printf("(%s)\n",jsonstr);
+        if ( (json= cJSON_Parse(jsonstr)) != 0 )
+        {
+            if ( (obj= jobj(json,"list")) != 0 && (robj= jobj(obj,"resources")) != 0 && (item= jitem(robj,0)) != 0 )
+            {
+                if ( (robj= jobj(item,"resource")) != 0 && (field= jobj(robj,"fields")) != 0 && (price= jdouble(field,"price")) != 0 )
+                    price = 1. / price;
+            }
+            free_json(json);
+        }
+        free(jsonstr);
+    }
+    if ( Debuglevel > 2 )
+        printf("(%s %f) ",metal,price);
+    return(price);
+}
+
+cJSON *url_json(char *url)
+{
+    char *jsonstr; cJSON *json = 0;
+    if ( (jsonstr= issue_curl(url)) != 0 )
+    {
+        //printf("(%s) -> (%s)\n",url,jsonstr);
+        json = cJSON_Parse(jsonstr);
+        free(jsonstr);
+    }
+    return(json);
+}
+
+cJSON *url_json2(char *url)
+{
+    char *jsonstr; cJSON *json = 0;
+    if ( (jsonstr= issue_curl(url)) != 0 )
+    {
+        //printf("(%s) -> (%s)\n",url,jsonstr);
+        json = cJSON_Parse(jsonstr);
+        free(jsonstr);
+    }
+    return(json);
+}
+
+void prices777_btcprices(int32_t enddatenum,int32_t numdates)
+{
+    int32_t i,n,year,month,day,seconds,datenum; char url[1024],date[64],*dstr,*str; uint32_t timestamp,utc32[MAX_SPLINES];
+    cJSON *coindesk,*quandl,*btcdhist,*bpi,*array,*item;
+    double btcddaily[MAX_SPLINES],cdaily[MAX_SPLINES],qdaily[MAX_SPLINES],ask,high,low,bid,close,vol,quotevol,open,price = 0.;
+    coindesk = url_json("http://api.coindesk.com/v1/bpi/historical/close.json");
+    sprintf(url,"https://poloniex.com/public?command=returnChartData&currencyPair=BTC_BTCD&start=%ld&end=9999999999&period=86400",(long)(time(NULL)-numdates*3600*24));
+    if ( (bpi= jobj(coindesk,"bpi")) != 0 )
+    {
+        datenum = enddatenum;
+        memset(utc32,0,sizeof(utc32));
+        memset(cdaily,0,sizeof(cdaily));
+        if ( datenum == 0 )
+        {
+            datenum = OS_conv_unixtime(&seconds,(uint32_t)time(NULL));
+            printf("got datenum.%d %d %d %d\n",datenum,seconds/3600,(seconds/60)%24,seconds%60);
+        }
+        for (i=0; i<numdates; i++)
+        {
+            expand_datenum(date,datenum);
+            if ( (price= jdouble(bpi,date)) != 0 )
+            {
+                utc32[numdates - 1 - i] = OS_conv_datenum(datenum,12,0,0);
+                cdaily[numdates - 1 - i] = price * .001;
+                //printf("(%s %u %f) ",date,utc32[numdates - 1 - i],price);
+            }
+            datenum = ecb_decrdate(&year,&month,&day,date,datenum);
+        }
+        prices777_genspline(&BUNDLE.splines[MAX_CURRENCIES],MAX_CURRENCIES,"coindesk",utc32,cdaily,numdates,cdaily);
+        
+    } else printf("no bpi\n");
+    quandl = url_json("https://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?rows=64");
+    if ( (str= jstr(quandl,"updated_at")) != 0 && (datenum= conv_date(&seconds,str)) > 0 && (array= jarray(&n,quandl,"data")) != 0 )
+    {
+        printf("datenum.%d data.%d %d\n",datenum,n,cJSON_GetArraySize(array));
+        memset(utc32,0,sizeof(utc32)), memset(qdaily,0,sizeof(qdaily));
+        for (i=0; i<n&&i<MAX_SPLINES; i++)
+        {
+            // ["Date","24h Average","Ask","Bid","Last","Total Volume"]
+            // ["2015-07-25",289.27,288.84,288.68,288.87,44978.61]
+            item = jitem(array,i);
+            if ( Debuglevel > 2 )
+                printf("(%s) ",cJSON_Print(item));
+            if ( (dstr= jstr(jitem(item,0),0)) != 0 && (datenum= conv_date(&seconds,dstr)) > 0 )
+            {
+                price = jdouble(jitem(item,1),0), ask = jdouble(jitem(item,2),0), bid = jdouble(jitem(item,3),0);
+                close = jdouble(jitem(item,4),0), vol = jdouble(jitem(item,5),0);
+                if ( Debuglevel > 2 )
+                    fprintf(stderr,"%d.[%d %f %f %f %f %f].%d ",i,datenum,price,ask,bid,close,vol,n);
+                utc32[numdates - 1 - i] = OS_conv_datenum(datenum,12,0,0), qdaily[numdates - 1 - i] = price * .001;
+            }
+        }
+        prices777_genspline(&BUNDLE.splines[MAX_CURRENCIES+1],MAX_CURRENCIES+1,"quandl",utc32,qdaily,n<MAX_SPLINES?n:MAX_SPLINES,qdaily);
+    }
+    btcdhist = url_json(url);
+    //{"date":1406160000,"high":0.01,"low":0.00125,"open":0.01,"close":0.001375,"volume":1.50179994,"quoteVolume":903.58818412,"weightedAverage":0.00166204},
+    if ( (array= jarray(&n,btcdhist,0)) != 0 )
+    {
+        memset(utc32,0,sizeof(utc32)), memset(btcddaily,0,sizeof(btcddaily));
+        //printf("GOT.(%s)\n",cJSON_Print(array));
+        for (i=0; i<n; i++)
+        {
+            item = jitem(array,i);
+            timestamp = juint(item,"date"), high = jdouble(item,"high"), low = jdouble(item,"low"), open = jdouble(item,"open");
+            close = jdouble(item,"close"), vol = jdouble(item,"volume"), quotevol = jdouble(item,"quoteVolume"), price = jdouble(item,"weightedAverage");
+            //printf("[%u %f %f %f %f %f %f %f]",timestamp,high,low,open,close,vol,quotevol,price);
+            if ( Debuglevel > 2 )
+                printf("[%u %d %f]",timestamp,OS_conv_unixtime(&seconds,timestamp),price);
+            utc32[i] = timestamp - 12*3600, btcddaily[i] = price * 100.;
+        }
+        if ( Debuglevel > 2 )
+            printf("poloniex.%d\n",n);
+        prices777_genspline(&BUNDLE.splines[MAX_CURRENCIES+2],MAX_CURRENCIES+2,"btcdhist",utc32,btcddaily,n<MAX_SPLINES?n:MAX_SPLINES,btcddaily);
+    }
+    // https://poloniex.com/public?command=returnChartData&currencyPair=BTC_BTCD&start=1405699200&end=9999999999&period=86400
+}
+
+int32_t prices777_calcmatrix(double matrix[32][32])
+{
+    int32_t basenum,relnum,nonz,vnum,iter,numbase,numerrs = 0; double sum,vsum,price,price2,basevals[32],errsum=0;
+    memset(basevals,0,sizeof(basevals));
+    for (iter=0; iter<2; iter++)
+    {
+        numbase = 32;
+        for (basenum=0; basenum<numbase; basenum++)
+        {
+            for (vsum=sum=vnum=nonz=relnum=0; relnum<numbase; relnum++)
+            {
+                if ( basenum != relnum )
+                {
+                    if ( (price= matrix[basenum][relnum]) != 0. )
+                    {
+                        price /= (MINDENOMS[relnum] * .001);
+                        price *= (MINDENOMS[basenum] * .001);
+                        if ( iter == 0 )
+                            sum += (price), nonz++;//, printf("%.8f ",price);
+                        else sum += fabs((price) - (basevals[basenum] / basevals[relnum])), nonz++;
+                    }
+                    if ( (price2= matrix[relnum][basenum]) != 0. )
+                    {
+                        price2 *= (MINDENOMS[relnum] * .001);
+                        price2 /= (MINDENOMS[basenum] * .001);
+                        if ( iter == 0 )
+                            vsum += (price2), vnum++;
+                        else vsum += fabs(price2 - (basevals[relnum] / basevals[basenum])), vnum++;
+                    }
+                    //if ( iter == 0 && 1/price2 > price )
+                    //    printf("base.%d rel.%d price2 %f vs %f\n",basenum,relnum,1/price2,price);
+                }
+            }
+            if ( iter == 0 )
+                sum += 1., vsum += 1.;
+            if ( nonz != 0 )
+                sum /= nonz;
+            if ( vnum != 0 )
+                vsum /= vnum;
+            if ( iter == 0 )
+                basevals[basenum] = (sum + 1./vsum) / 2.;
+            else errsum += (sum + vsum)/2, numerrs++;//, printf("(%.8f %.8f) ",sum,vsum);
+            //printf("date.%d (%.8f/%d %.8f/%d).%02d -> %.8f\n",i,sum,nonz,vsum,vnum,basenum,basevals[basenum]);
+        }
+        if ( iter == 0 )
+        {
+            for (sum=relnum=0; relnum<numbase; relnum++)
+                sum += (basevals[relnum]);//, printf("%.8f ",(basevals[relnum]));
+            //printf("date.%d sums %.8f and vsums iter.%d\n",i,sum/7,iter);
+            sum /= (numbase - 1);
+            for (relnum=0; relnum<numbase; relnum++)
+                basevals[relnum] /= sum;//, printf("%.8f ",basevals[relnum]);
+            //printf("date.%d sums %.8f and vsums iter.%d\n",i,sum,iter);
+        }
+        else
+        {
+            for (basenum=0; basenum<numbase; basenum++)
+                matrix[basenum][basenum] = basevals[basenum];
+        }
+    }
+    if ( numerrs != 0 )
+        errsum /= numerrs;
+    return(errsum);
+}
+
+int32_t ecb_matrix(double matrix[32][32],char *date)
+{
+    FILE *fp=0; int32_t n=0,datenum,year=0,seconds,month=0,day=0,loaded = 0; char fname[64],_date[64];
+    if ( date == 0 )
+        date = _date, memset(_date,0,sizeof(_date));
+    sprintf(fname,"ECB/%s",date), iguana_compatible_path(fname);
+    if ( date[0] != 0 && (fp= fopen(fname,"rb")) != 0 )
+    {
+        if ( fread(matrix,1,sizeof(matrix[0][0])*32*32,fp) == sizeof(matrix[0][0])*32*32 )
+            loaded = 1;
+        else printf("fread error\n");
+        fclose(fp);
+    } else printf("ecb_matrix.(%s) load error fp.%p\n",fname,fp);
+    if ( loaded == 0 )
+    {
+        datenum = conv_date(&seconds,date);
+        year = datenum / 10000, month = (datenum / 100) % 100, day = (datenum % 100);
+        if ( (n= prices777_ecb(date,&matrix[0][0],year,month,day)) > 0 )
+        {
+            sprintf(fname,"ECB/%s",date), iguana_compatible_path(fname);
+            if ( (fp= fopen(fname,"wb")) != 0 )
+            {
+                if ( fwrite(matrix,1,sizeof(matrix[0][0])*32*32,fp) == sizeof(matrix[0][0])*32*32 )
+                    loaded = 1;
+                fclose(fp);
+            }
+        } else printf("peggy_matrix error loading %d.%d.%d\n",year,month,day);
+    }
+    if ( loaded == 0 && n == 0 )
+    {
+        printf("peggy_matrix couldnt process loaded.%d n.%d\n",loaded,n);
+        return(-1);
+    }
+    //"2000-01-03"
+    if ( (datenum= conv_date(&seconds,date)) < 0 )
+        return(-1);
+    printf("loaded.(%s) nonz.%d (%d %d %d) datenum.%d\n",date,n,year,month,day,datenum);
+    return(datenum);
+}
+
+void price777_update(double *btcusdp,double *btcdbtcp)
+{
+    int32_t i,n,seconds,datenum; uint32_t timestamp; char url[1024],*dstr,*str;
+    double btcddaily=0.,btcusd=0.,ask,high,low,bid,close,vol,quotevol,open,price = 0.;
+    //cJSON *btcdtrades,*btcdtrades2,*,*bitcoincharts,;
+    cJSON *quandl,*btcdhist,*array,*item,*bitcoinave,*blockchaininfo,*coindesk=0;
+    //btcdtrades = url_json("https://poloniex.com/public?command=returnTradeHistory&currencyPair=BTC_BTCD");
+    //btcdtrades2 = url_json("https://bittrex.com/api/v1.1/public/getmarkethistory?market=BTC-BTCD&count=50");
+    bitcoinave = url_json("https://api.bitcoinaverage.com/ticker/USD/");
+    //bitcoincharts = url_json("http://api.bitcoincharts.com/v1/weighted_prices.json");
+    blockchaininfo = url_json("https://blockchain.info/ticker");
+    coindesk = url_json("http://api.coindesk.com/v1/bpi/historical/close.json");
+    sprintf(url,"https://poloniex.com/public?command=returnChartData&currencyPair=BTC_BTCD&start=%ld&end=9999999999&period=86400",(long)(time(NULL)-2*3600*24));
+    quandl = url_json("https://www.quandl.com/api/v1/datasets/BAVERAGE/USD.json?rows=1");
+    if ( quandl != 0 && (str= jstr(quandl,"updated_at")) != 0 && (datenum= conv_date(&seconds,str)) > 0 && (array= jarray(&n,quandl,"data")) != 0 )
+    {
+        //printf("datenum.%d data.%d %d\n",datenum,n,cJSON_GetArraySize(array));
+        for (i=0; i<1; i++)
+        {
+            // ["Date","24h Average","Ask","Bid","Last","Total Volume"]
+            // ["2015-07-25",289.27,288.84,288.68,288.87,44978.61]
+            item = jitem(array,i);
+            if ( (dstr= jstr(jitem(item,0),0)) != 0 && (datenum= conv_date(&seconds,dstr)) > 0 )
+            {
+                btcusd = price = jdouble(jitem(item,1),0), ask = jdouble(jitem(item,2),0), bid = jdouble(jitem(item,3),0);
+                close = jdouble(jitem(item,4),0), vol = jdouble(jitem(item,5),0);
+                //fprintf(stderr,"%d.[%d %f %f %f %f %f].%d ",i,datenum,price,ask,bid,close,vol,n);
+            }
+        }
+    }
+    price = 0.;
+    for (i=n=0; i<BUNDLE.num; i++)
+    {
+        if ( strcmp(BUNDLE.ptrs[i]->lbase,"btcd") == 0 && strcmp(BUNDLE.ptrs[i]->lrel,"btc") == 0 && BUNDLE.ptrs[i]->lastprice != 0. )
+        {
+            price += BUNDLE.ptrs[i]->lastprice;
+            n++;
+        }
+    }
+    if ( n != 0 )
+    {
+        price /= n;
+        *btcdbtcp = price;
+        //printf("set BTCD price %f\n",price);
+        BUNDLE.btcdbtc = price;
+    }
+    else
+    {
+        btcdhist = url_json(url);
+        //{"date":1406160000,"high":0.01,"low":0.00125,"open":0.01,"close":0.001375,"volume":1.50179994,"quoteVolume":903.58818412,"weightedAverage":0.00166204},
+        if ( btcdhist != 0 && (array= jarray(&n,btcdhist,0)) != 0 )
+        {
+            //printf("GOT.(%s)\n",cJSON_Print(array));
+            for (i=0; i<1; i++)
+            {
+                item = jitem(array,i);
+                timestamp = juint(item,"date"), high = jdouble(item,"high"), low = jdouble(item,"low"), open = jdouble(item,"open");
+                close = jdouble(item,"close"), vol = jdouble(item,"volume"), quotevol = jdouble(item,"quoteVolume"), price = jdouble(item,"weightedAverage");
+                //printf("[%u %f %f %f %f %f %f %f]",timestamp,high,low,open,close,vol,quotevol,price);
+                //printf("[%u %d %f]",timestamp,OS_conv_unixtime(&seconds,timestamp),price);
+                btcddaily = price;
+                if ( btcddaily != 0 )
+                    BUNDLE.btcdbtc = *btcdbtcp = btcddaily;
+            }
+            //printf("poloniex.%d\n",n);
+        }
+        if ( btcdhist != 0 )
+            free_json(btcdhist);
+    }
+    // https://blockchain.info/ticker
+    /*
+     {
+     "USD" : {"15m" : 288.22, "last" : 288.22, "buy" : 288.54, "sell" : 288.57,  "symbol" : "$"},
+     "ISK" : {"15m" : 38765.88, "last" : 38765.88, "buy" : 38808.92, "sell" : 38812.95,  "symbol" : "kr"},
+     "HKD" : {"15m" : 2234, "last" : 2234, "buy" : 2236.48, "sell" : 2236.71,  "symbol" : "$"},
+     "TWD" : {"15m" : 9034.19, "last" : 9034.19, "buy" : 9044.22, "sell" : 9045.16,  "symbol" : "NT$"},
+     "CHF" : {"15m" : 276.39, "last" : 276.39, "buy" : 276.69, "sell" : 276.72,  "symbol" : "CHF"},
+     "EUR" : {"15m" : 262.46, "last" : 262.46, "buy" : 262.75, "sell" : 262.78,  "symbol" : "€"},
+     "DKK" : {"15m" : 1958.92, "last" : 1958.92, "buy" : 1961.1, "sell" : 1961.3,  "symbol" : "kr"},
+     "CLP" : {"15m" : 189160.6, "last" : 189160.6, "buy" : 189370.62, "sell" : 189390.31,  "symbol" : "$"},
+     "CAD" : {"15m" : 375.45, "last" : 375.45, "buy" : 375.87, "sell" : 375.91,  "symbol" : "$"},
+     "CNY" : {"15m" : 1783.67, "last" : 1783.67, "buy" : 1785.65, "sell" : 1785.83,  "symbol" : "¥"},
+     "THB" : {"15m" : 10046.98, "last" : 10046.98, "buy" : 10058.14, "sell" : 10059.18,  "symbol" : "฿"},
+     "AUD" : {"15m" : 394.77, "last" : 394.77, "buy" : 395.2, "sell" : 395.25,  "symbol" : "$"},
+     "SGD" : {"15m" : 395.08, "last" : 395.08, "buy" : 395.52, "sell" : 395.56,  "symbol" : "$"},
+     "KRW" : {"15m" : 335991.51, "last" : 335991.51, "buy" : 336364.55, "sell" : 336399.52,  "symbol" : "₩"},
+     "JPY" : {"15m" : 35711.99, "last" : 35711.99, "buy" : 35751.64, "sell" : 35755.35,  "symbol" : "¥"},
+     "PLN" : {"15m" : 1082.74, "last" : 1082.74, "buy" : 1083.94, "sell" : 1084.06,  "symbol" : "zł"},
+     "GBP" : {"15m" : 185.84, "last" : 185.84, "buy" : 186.04, "sell" : 186.06,  "symbol" : "£"},
+     "SEK" : {"15m" : 2471.02, "last" : 2471.02, "buy" : 2473.76, "sell" : 2474.02,  "symbol" : "kr"},
+     "NZD" : {"15m" : 436.89, "last" : 436.89, "buy" : 437.37, "sell" : 437.42,  "symbol" : "$"},
+     "BRL" : {"15m" : 944.91, "last" : 944.91, "buy" : 945.95, "sell" : 946.05,  "symbol" : "R$"},
+     "RUB" : {"15m" : 16695.05, "last" : 16695.05, "buy" : 16713.58, "sell" : 16715.32,  "symbol" : "RUB"}
+     }*/
+    /*{
+     "24h_avg": 281.22,
+     "ask": 280.12,
+     "bid": 279.33,
+     "last": 279.58,
+     "timestamp": "Sun, 02 Aug 2015 09:36:34 -0000",
+     "total_vol": 39625.8
+     }*/
+    
+    if ( bitcoinave != 0 )
+    {
+        if ( (price= jdouble(bitcoinave,"24h_avg")) > SMALLVAL )
+        {
+            //printf("bitcoinave %f %f\n",btcusd,price);
+            dxblend(&btcusd,price,0.5);
+        }
+        free_json(bitcoinave);
+    }
+    if ( quandl != 0 )
+        free_json(quandl);
+    if ( coindesk != 0 )
+        free_json(coindesk);
+    if ( blockchaininfo != 0 )
+    {
+        if ( (item= jobj(blockchaininfo,"USD")) != 0 && item != 0 && (price= jdouble(item,"15m")) > SMALLVAL )
+        {
+            //printf("blockchaininfo %f %f\n",btcusd,price);
+            dxblend(&btcusd,price,0.5);
+        }
+        free_json(blockchaininfo);
+    }
+    if ( btcusd != 0 )
+        BUNDLE.btcusd = *btcusdp = btcusd;
+    
+    
+    // https://poloniex.com/public?command=returnChartData&currencyPair=BTC_BTCD&start=1405699200&end=9999999999&period=86400
+    
+    // https://poloniex.com/public?command=returnTradeHistory&currencyPair=BTC_BTCD
+    //https://bittrex.com/api/v1.1/public/getmarkethistory?market=BTC-BTCD&count=50
+    /*{"success":true,"message":"","result":[{"Id":8551089,"TimeStamp":"2015-07-25T16:00:41.597","Quantity":59.60917089,"Price":0.00642371,"Total":0.38291202,"FillType":"FILL","OrderType":"BUY"},{"Id":8551088,"TimeStamp":"2015-07-25T16:00:41.597","Quantity":7.00000000,"Price":0.00639680,"Total":0.04477760,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8551087,"TimeStamp":"2015-07-25T16:00:41.597","Quantity":6.51000000,"Price":0.00639679,"Total":0.04164310,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8551086,"TimeStamp":"2015-07-25T16:00:41.597","Quantity":6.00000000,"Price":0.00633300,"Total":0.03799800,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8551085,"TimeStamp":"2015-07-25T16:00:41.593","Quantity":4.76833955,"Price":0.00623300,"Total":0.02972106,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8551084,"TimeStamp":"2015-07-25T16:00:41.593","Quantity":5.00000000,"Price":0.00620860,"Total":0.03104300,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8551083,"TimeStamp":"2015-07-25T16:00:41.593","Quantity":4.91803279,"Price":0.00620134,"Total":0.03049839,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8551082,"TimeStamp":"2015-07-25T16:00:41.593","Quantity":4.45166432,"Price":0.00619316,"Total":0.02756986,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8551081,"TimeStamp":"2015-07-25T16:00:41.59","Quantity":2.00000000,"Price":0.00619315,"Total":0.01238630,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547525,"TimeStamp":"2015-07-25T06:20:43.69","Quantity":1.23166045,"Price":0.00623300,"Total":0.00767693,"FillType":"FILL","OrderType":"BUY"},{"Id":8547524,"TimeStamp":"2015-07-25T06:20:43.69","Quantity":5.00000000,"Price":0.00613300,"Total":0.03066500,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547523,"TimeStamp":"2015-07-25T06:20:43.687","Quantity":10.00000000,"Price":0.00609990,"Total":0.06099900,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547522,"TimeStamp":"2015-07-25T06:20:43.687","Quantity":0.12326502,"Price":0.00609989,"Total":0.00075190,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547521,"TimeStamp":"2015-07-25T06:20:43.687","Quantity":3.29000000,"Price":0.00609989,"Total":0.02006863,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547520,"TimeStamp":"2015-07-25T06:20:43.687","Quantity":5.00000000,"Price":0.00604400,"Total":0.03022000,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547519,"TimeStamp":"2015-07-25T06:20:43.683","Quantity":12.80164947,"Price":0.00603915,"Total":0.07731108,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547518,"TimeStamp":"2015-07-25T06:20:43.683","Quantity":10.00000000,"Price":0.00602715,"Total":0.06027150,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547517,"TimeStamp":"2015-07-25T06:20:43.683","Quantity":4.29037397,"Price":0.00600000,"Total":0.02574224,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547516,"TimeStamp":"2015-07-25T06:20:43.683","Quantity":77.55994092,"Price":0.00598921,"Total":0.46452277,"FillType":"PARTIAL_FILL","OrderType":"BUY"},{"Id":8547515,"TimeStamp":"2015-07-25T06:20:43.68","Quantity":0.08645064,"Price":0.00598492,"Total":0.00051740,"FillType":"PARTIAL_FILL","OrderType":"BUY"}]}
+     */
+    
+    // https://api.bitcoinaverage.com/ticker/global/all
+    /* {
+     "AED": {
+     "ask": 1063.28,
+     "bid": 1062.1,
+     "last": 1062.29,
+     "timestamp": "Sat, 25 Jul 2015 17:13:14 -0000",
+     "volume_btc": 0.0,
+     "volume_percent": 0.0
+     },*/
+    
+    // http://api.bitcoincharts.com/v1/weighted_prices.json
+    // {"USD": {"7d": "279.79", "30d": "276.05", "24h": "288.55"}, "IDR": {"7d": "3750799.88", "30d": "3636926.02", "24h": "3860769.92"}, "ILS": {"7d": "1033.34", "30d": "1031.58", "24h": "1092.36"}, "GBP": {"7d": "179.51", "30d": "175.30", "24h": "185.74"}, "DKK": {"30d": "1758.61"}, "CAD": {"7d": "364.04", "30d": "351.27", "24h": "376.12"}, "MXN": {"30d": "4369.33"}, "XRP": {"7d": "35491.70", "30d": "29257.39", "24h": "36979.02"}, "SEK": {"7d": "2484.50", "30d": "2270.94"}, "SGD": {"7d": "381.93", "30d": "373.69", "24h": "393.94"}, "HKD": {"7d": "2167.99", "30d": "2115.77", "24h": "2232.12"}, "AUD": {"7d": "379.42", "30d": "365.85", "24h": "394.93"}, "CHF": {"30d": "250.61"}, "timestamp": 1437844509, "CNY": {"7d": "1724.99", "30d": "1702.32", "24h": "1779.48"}, "LTC": {"7d": "67.46", "30d": "51.97", "24h": "61.61"}, "NZD": {"7d": "425.01", "30d": "409.33", "24h": "437.86"}, "THB": {"30d": "8632.82"}, "EUR": {"7d": "257.32", "30d": "249.88", "24h": "263.42"}, "ARS": {"30d": "3271.98"}, "NOK": {"30d": "2227.54"}, "RUB": {"7d": "16032.32", "30d": "15600.38", "24h": "16443.39"}, "INR": {"30d": "16601.17"}, "JPY": {"7d": "34685.73", "30d": "33617.77", "24h": "35652.79"}, "CZK": {"30d": "6442.13"}, "BRL": {"7d": "946.76", "30d": "900.77", "24h": "964.09"}, "NMC": {"7d": "454.06", "30d": "370.39", "24h": "436.71"}, "PLN": {"7d": "1041.81", "30d": "1024.96", "24h": "1072.49"}, "ZAR": {"30d": "3805.55"}}
+}
+
+double blend_price(double *volp,double wtA,cJSON *jsonA,double wtB,cJSON *jsonB)
+{
+    //A.{"ticker":{"base":"BTS","target":"CNY","price":"0.02958291","volume":"3128008.39295500","change":"0.00019513","markets":[{"market":"BTC38","price":"0.02960000","volume":3051650.682955},{"market":"Bter","price":"0.02890000","volume":76357.71}]},"timestamp":1438490881,"success":true,"error":""}
+    // B.{"id":"bts\/cny","price":"0.02940000","price_before_24h":"0.02990000","volume_first":"3048457.6857147217","volume_second":"90629.45859575272","volume_btc":"52.74","best_market":"btc38","latest_trade":"2015-08-02 03:57:38","coin1":"BitShares","coin2":"CNY","markets":[{"market":"btc38","price":"0.02940000","volume":"3048457.6857147217","volume_btc":"52.738317962865"},{"market":"bter","price":"0.04350000","volume":"0","volume_btc":"0"}]}
+    double priceA,priceB,priceB24,price,volA,volB; cJSON *obj;
+    priceA = priceB = priceB24= price = volA = volB = 0.;
+    if ( jsonA != 0 && (obj= jobj(jsonA,"ticker")) != 0 )
+    {
+        priceA = jdouble(obj,"price");
+        volA = jdouble(obj,"volume");
+    }
+    if ( jsonB != 0 )
+    {
+        priceB = jdouble(jsonB,"price");
+        priceB24 = jdouble(jsonB,"price_before_24h");
+        volB = jdouble(jsonB,"volume_first");
+    }
+    //printf("priceA %f volA %f, priceB %f %f volB %f\n",priceA,volA,priceB,priceB24,volB);
+    if ( priceB > SMALLVAL && priceB24 > SMALLVAL )
+        priceB = (priceB * .1) + (priceB24 * .9);
+    else if ( priceB < SMALLVAL )
+        priceB = priceB24;
+    if ( priceA*volA < SMALLVAL )
+        price = priceB;
+    else if ( priceB*volB < SMALLVAL )
+        price = priceA;
+    else price = (wtA * priceA) + (wtB * priceB);
+    *volp = (volA + volB);
+    return(price);
+}
+
+void _crypto_update(double cryptovols[2][8][2],struct prices777_data *dp,int32_t selector,int32_t peggyflag)
+{
+    char *cryptonatorA = "https://www.cryptonator.com/api/full/%s-%s"; //unity-btc
+    char *cryptocoinchartsB = "http://api.cryptocoincharts.info/tradingPair/%s_%s"; //bts_btc
+    char *cryptostrs[9] = { "btc", "nxt", "unity", "eth", "ltc", "xmr", "bts", "xcp", "etc" };
+    int32_t iter,i,j; double btcusd,btcdbtc,cnyusd,prices[8][2],volumes[8][2];
+    char base[16],rel[16],url[512],*str; cJSON *jsonA,*jsonB;
+    if ( peggyflag != 0 )
+    {
+        cnyusd = BUNDLE.cnyusd;
+        btcusd = BUNDLE.btcusd;
+        btcdbtc = BUNDLE.btcdbtc;
+        //printf("update with btcusd %f btcd %f cnyusd %f cnybtc %f\n",btcusd,btcdbtc,cnyusd,cnyusd/btcusd);
+        if ( btcusd < SMALLVAL || btcdbtc < SMALLVAL )
+        {
+            price777_update(&btcusd,&btcdbtc);
+            printf("price777_update with btcusd %f btcd %f\n",btcusd,btcdbtc);
+        }
+        memset(prices,0,sizeof(prices));
+        memset(volumes,0,sizeof(volumes));
+        for (j=0; j<sizeof(cryptostrs)/sizeof(*cryptostrs); j++)
+        {
+            str = cryptostrs[j];
+            if ( strcmp(str,"etc") == 0 )
+            {
+                if ( prices[3][0] > SMALLVAL )
+                    break;
+                i = 3;
+            } else i = j;
+            for (iter=0; iter<1; iter++)
+            {
+                if ( i == 0 && iter == 0 )
+                    strcpy(base,"btcd"), strcpy(rel,"btc");
+                else strcpy(base,str), strcpy(rel,iter==0?"btc":"cny");
+                //if ( selector == 0 )
+                {
+                    sprintf(url,cryptonatorA,base,rel);
+                    jsonA = url_json(url);
+                }
+                //else
+                {
+                    sprintf(url,cryptocoinchartsB,base,rel);
+                    jsonB = url_json(url);
+                }
+                prices[i][iter] = blend_price(&volumes[i][iter],0.4,jsonA,0.6,jsonB);
+                if ( iter == 1 )
+                {
+                    if ( btcusd > SMALLVAL )
+                    {
+                        prices[i][iter] *= cnyusd / btcusd;
+                        volumes[i][iter] *= cnyusd / btcusd;
+                    } else prices[i][iter] = volumes[i][iter] = 0.;
+                }
+                cryptovols[0][i][iter] = _pairaved(cryptovols[0][i][iter],prices[i][iter]);
+                cryptovols[1][i][iter] = _pairaved(cryptovols[1][i][iter],volumes[i][iter]);
+                if ( Debuglevel > 2 )
+                    printf("(%f %f).%d:%d ",cryptovols[0][i][iter],cryptovols[1][i][iter],i,iter);
+                //if ( cnyusd < SMALLVAL || btcusd < SMALLVAL )
+                //    break;
+            }
+        }
+    }
+}
+
+void crypto_update(int32_t peggyflag)
+{
+    _crypto_update(BUNDLE.cryptovols,&BUNDLE.data,1,peggyflag);
+    while ( 1 )
+    {
+        _crypto_update(BUNDLE.cryptovols,&BUNDLE.data,1,peggyflag);
+        sleep(100);
+    }
+}
+
+void prices777_RTupdate(double cryptovols[2][8][2],double RTmetals[4],double *RTprices,struct prices777_data *dp)
+{
+    char *cryptostrs[8] = { "btc", "nxt", "unity", "eth", "ltc", "xmr", "bts", "xcp" };
+    int32_t iter,i,c,baserel,basenum,relnum; double cnyusd,btcusd,btcdbtc,bid,ask,price,vol,prices[8][2],volumes[8][2];
+    char base[16],rel[16];
+    price777_update(&btcusd,&btcdbtc);
+    memset(prices,0,sizeof(prices));
+    memset(volumes,0,sizeof(volumes));
+    for (i=0; i<sizeof(cryptostrs)/sizeof(*cryptostrs); i++)
+        for (iter=0; iter<2; iter++)
+            prices[i][iter] = cryptovols[0][i][iter], volumes[i][iter] = cryptovols[1][i][iter];
+    if ( prices[0][0] > SMALLVAL )
+        dxblend(&btcdbtc,prices[0][0],.9);
+    dxblend(&dp->btcdbtc,btcdbtc,.995);
+    if ( BUNDLE.btcdbtc < SMALLVAL )
+        BUNDLE.btcdbtc = dp->btcdbtc;
+    if ( (cnyusd= BUNDLE.cnyusd) > SMALLVAL )
+    {
+        if ( prices[0][1] > SMALLVAL )
+        {
+            //printf("cnyusd %f, btccny %f -> btcusd %f %f\n",cnyusd,prices[0][1],prices[0][1]*cnyusd,btcusd);
+            btcusd = prices[0][1] * cnyusd;
+            if ( dp->btcusd < SMALLVAL )
+                dp->btcusd = btcusd;
+            else dxblend(&dp->btcusd,btcusd,.995);
+            if ( BUNDLE.btcusd < SMALLVAL )
+                BUNDLE.btcusd = dp->btcusd;
+            if ( BUNDLE.data.btcusd < SMALLVAL )
+                BUNDLE.data.btcusd = dp->btcusd;
+            printf("cnyusd %f, btccny %f -> btcusd %f %f -> %f %f %f\n",cnyusd,prices[0][1],prices[0][1]*cnyusd,btcusd,dp->btcusd,BUNDLE.btcusd,BUNDLE.data.btcusd);
+        }
+    }
+    for (i=1; i<sizeof(cryptostrs)/sizeof(*cryptostrs); i++)
+    {
+        if ( (vol= volumes[i][0]+volumes[i][1]) > SMALLVAL )
+        {
+            price = ((prices[i][0] * volumes[i][0]) + (prices[i][1] * volumes[i][1])) / vol;
+            if ( Debuglevel > 2 )
+                printf("%s %f v%f + %f v%f -> %f %f\n",cryptostrs[i],prices[i][0],volumes[i][0],prices[i][1],volumes[i][1],price,dp->cryptos[i]);
+            dxblend(&dp->cryptos[i],price,.995);
+        }
+    }
+    btcusd = BUNDLE.btcusd;
+    btcdbtc = BUNDLE.btcdbtc;
+    if ( Debuglevel > 2 )
+        printf("    update with btcusd %f btcd %f\n",btcusd,btcdbtc);
+    if ( btcusd < SMALLVAL || btcdbtc < SMALLVAL )
+    {
+        price777_update(&btcusd,&btcdbtc);
+        if ( Debuglevel > 2 )
+            printf("     price777_update with btcusd %f btcd %f\n",btcusd,btcdbtc);
+    } else BUNDLE.btcusd = btcusd, BUNDLE.btcdbtc = btcdbtc;
+    for (c=0; c<sizeof(CONTRACTS)/sizeof(*CONTRACTS); c++)
+    {
+        for (iter=0; iter<3; iter++)
+        {
+            switch ( iter )
+            {
+                case 0: bid = dp->tbids[c], ask = dp->tasks[c]; break;
+                case 1: bid = dp->fbids[c], ask = dp->fasks[c]; break;
+                case 2: bid = dp->ibids[c], ask = dp->iasks[c]; break;
+            }
+            if ( (price= _pairaved(bid,ask)) > SMALLVAL )
+            {
+                if ( Debuglevel > 2 )
+                    printf("%.6f ",price);
+                dxblend(&RTprices[c],price,.995);
+                if ( 0 && (baserel= prices777_ispair(base,rel,CONTRACTS[c])) >= 0 )
+                {
+                    basenum = (baserel >> 8) & 0xff, relnum = baserel & 0xff;
+                    if ( basenum < 32 && relnum < 32 )
+                    {
+                        //printf("%s.%d %f <- %f\n",CONTRACTS[c],c,RTmatrix[basenum][relnum],RTprices[c]);
+                        //dxblend(&RTmatrix[basenum][relnum],RTprices[c],.999);
+                    }
+                }
+                if ( strcmp(CONTRACTS[c],"XAUUSD") == 0 )
+                    dxblend(&RTmetals[0],price,.995);
+            }
+        }
+    }
+    for (i=0; i<sizeof(Yahoo_metals)/sizeof(*Yahoo_metals); i++)
+        if ( BUNDLE.data.metals[i] != 0 )
+            dxblend(&RTmetals[i],BUNDLE.data.metals[i],.995);
+}
+
+int32_t prices777_getmatrix(double *basevals,double *btcusdp,double *btcdbtcp,double Hmatrix[32][32],double *RTprices,char *contracts[],int32_t num,uint32_t timestamp)
+{
+    int32_t i,j,c; char name[16]; double btcusd,btcdbtc;
+    memcpy(Hmatrix,BUNDLE.data.ecbmatrix,sizeof(BUNDLE.data.ecbmatrix));
+    prices777_calcmatrix(Hmatrix);
+    /*for (i=0; i<32; i++)
+     {
+     for (j=0; j<32; j++)
+     printf("%.6f ",Hmatrix[i][j]);
+     printf("%s\n",CURRENCIES[i]);
+     }*/
+    btcusd = BUNDLE.btcusd;
+    btcdbtc = BUNDLE.btcdbtc;
+    if ( btcusd > SMALLVAL )
+        dxblend(btcusdp,btcusd,.9);
+    if ( btcdbtc > SMALLVAL )
+        dxblend(btcdbtcp,btcdbtc,.9);
+    // char *cryptostrs[8] = { "btc", "nxt", "unity", "eth", "ltc", "xmr", "bts", "xcp" };
+    // "BTCUSD", "NXTBTC", "SuperNET", "ETHBTC", "LTCBTC", "XMRBTC", "BTSBTC", "XCPBTC",  // BTC priced
+    for (i=0; i<num; i++)
+    {
+        if ( contracts[i] == 0 )
+            continue;
+        if ( i == num-1 && strcmp(contracts[i],"BTCUSD") == 0 )
+        {
+            RTprices[i] = *btcusdp;
+            continue;
+        }
+        else if ( i == num-2 && strcmp(contracts[i],"BTCCNY") == 0 )
+        {
+            continue;
+        }
+        else if ( i == num-3 && strcmp(contracts[i],"BTCRUB") == 0 )
+        {
+            continue;
+        }
+        else if ( i == num-4 && strcmp(contracts[i],"XAUUSD") == 0 )
+        {
+            continue;
+        }
+        if ( strcmp(contracts[i],"NXTBTC") == 0 )
+            RTprices[i] = BUNDLE.data.cryptos[1];
+        else if ( strcmp(contracts[i],"SuperNET") == 0 )
+            RTprices[i] = BUNDLE.data.cryptos[2];
+        else if ( strcmp(contracts[i],"ETHBTC") == 0 )
+            RTprices[i] = BUNDLE.data.cryptos[3];
+        else if ( strcmp(contracts[i],"LTCBTC") == 0 )
+            RTprices[i] = BUNDLE.data.cryptos[4];
+        else if ( strcmp(contracts[i],"XMRBTC") == 0 )
+            RTprices[i] = BUNDLE.data.cryptos[5];
+        else if ( strcmp(contracts[i],"BTSBTC") == 0 )
+            RTprices[i] = BUNDLE.data.cryptos[6];
+        else if ( strcmp(contracts[i],"XCPBTC") == 0 )
+            RTprices[i] = BUNDLE.data.cryptos[7];
+        else if ( i < 32 )
+        {
+            basevals[i] = Hmatrix[i][i];
+            if ( Debuglevel > 2 )
+                printf("(%s %f).%d ",CURRENCIES[i],basevals[i],i);
+        }
+        else if ( (c= prices777_contractnum(contracts[i],0)) >= 0 )
+        {
+            RTprices[i] = BUNDLE.data.RTprices[c];
+            //if ( is_decimalstr(contracts[i]+strlen(contracts[i])-2) != 0 )
+            //    cprices[i] *= .0001;
+        }
+        else
+        {
+            for (j=0; j<sizeof(Yahoo_metals)/sizeof(*Yahoo_metals); j++)
+            {
+                sprintf(name,"%sUSD",Yahoo_metals[j]);
+                if ( contracts[i] != 0 && strcmp(name,contracts[i]) == 0 )
+                {
+                    RTprices[i] = BUNDLE.data.RTmetals[j];
+                    break;
+                }
+            }
+        }
+        if ( Debuglevel > 2 )
+            printf("(%f %f) i.%d num.%d %s %f\n",*btcusdp,*btcdbtcp,i,num,contracts[i],RTprices[i]);
+        //printf("RT.(%s %f) ",contracts[i],RTprices[i]);
+    }
+    return(BUNDLE.data.ecbdatenum);
+}
+
+int32_t prices_idle(int32_t peggyflag,int32_t idlegap)
+{
+    static double lastupdate,lastdayupdate; static int32_t didinit; static portable_mutex_t mutex;
+    int32_t i,datenum; struct prices777_data *dp = &BUNDLE.tmp;
+    *dp = BUNDLE.data;
+    if ( didinit == 0 )
+    {
+        portable_mutex_init(&mutex);
+        prices777_init(BUNDLE.jsonstr,peggyflag);
+        didinit = 1;
+        if ( peggyflag != 0 )
+        {
+            int32_t opreturns_init(uint32_t blocknum,uint32_t blocktimestamp,char *path);
+            opreturns_init(0,(uint32_t)time(NULL),"peggy");
+        }
+    }
+    if ( peggyflag != 0 && milliseconds() > lastupdate + (1000*idlegap) )
+    {
+        lastupdate = milliseconds();
+        if ( milliseconds() > lastdayupdate + 60000*60 )
+        {
+            lastdayupdate = milliseconds();
+            if ( (datenum= ecb_matrix(dp->ecbmatrix,dp->edate)) > 0 )
+            {
+                dp->ecbdatenum = datenum;
+                dp->ecbyear = dp->ecbdatenum / 10000,  dp->ecbmonth = (dp->ecbdatenum / 100) % 100,  dp->ecbday = (dp->ecbdatenum % 100);
+                expand_datenum(dp->edate,datenum);
+                memcpy(dp->RTmatrix,dp->ecbmatrix,sizeof(dp->RTmatrix));
+            }
+        }
+        for (i=0; i<sizeof(Yahoo_metals)/sizeof(*Yahoo_metals); i++)
+            BUNDLE.data.metals[i] = prices777_yahoo(Yahoo_metals[i]);
+        BUNDLE.truefxidnum = prices777_truefx(dp->tmillistamps,dp->tbids,dp->tasks,dp->topens,dp->thighs,dp->tlows,BUNDLE.truefxuser,BUNDLE.truefxpass,(uint32_t)BUNDLE.truefxidnum);
+        prices777_fxcm(dp->flhlogmatrix,dp->flogmatrix,dp->fbids,dp->fasks,dp->fhighs,dp->flows);
+        prices777_instaforex(dp->ilogmatrix,dp->itimestamps,dp->ibids,dp->iasks);
+        double btcdbtc,btcusd;
+        price777_update(&btcusd,&btcdbtc);
+        if ( btcusd > SMALLVAL )
+            dxblend(&dp->btcusd,btcusd,0.99);
+        if ( btcdbtc > SMALLVAL )
+            dxblend(&dp->btcdbtc,btcdbtc,0.99);
+        if ( BUNDLE.data.btcusd == 0 )
+            BUNDLE.data.btcusd = dp->btcusd;
+        if ( BUNDLE.data.btcdbtc == 0 )
+            BUNDLE.data.btcdbtc = dp->btcdbtc;
+        if ( dp->ecbmatrix[USD][USD] > SMALLVAL && dp->ecbmatrix[CNY][CNY] > SMALLVAL )
+            BUNDLE.cnyusd = (dp->ecbmatrix[CNY][CNY] / dp->ecbmatrix[USD][USD]);
+        portable_mutex_lock(&mutex);
+        BUNDLE.data = *dp;
+        portable_mutex_unlock(&mutex);
+        //kv777_write(BUNDLE.kv,"data",5,&BUNDLE.data,sizeof(BUNDLE.data));
+        prices777_RTupdate(BUNDLE.cryptovols,BUNDLE.data.RTmetals,BUNDLE.data.RTprices,&BUNDLE.data);
+        //printf("update finished\n");
+        void peggy();
+        peggy();
+        didinit = 1;
+    }
+    return(0);
+}
+
+void prices777_sim(uint32_t now,int32_t numiters)
+{
+    double btca,btcb,btcd,btc,btcdusd,basevals[MAX_CURRENCIES],btcdprices[MAX_CURRENCIES+1];
+    int32_t i,j,datenum,seconds; uint32_t timestamp,starttime = (uint32_t)time(NULL);
+    for (i=0; i<numiters; i++)
+    {
+        timestamp = now - (rand() % (3600*24*64));
+        btca = 1000. * prices777_splineval(&BUNDLE.splines[MAX_CURRENCIES+0],timestamp,0);
+        btcb = 1000. * prices777_splineval(&BUNDLE.splines[MAX_CURRENCIES+1],timestamp,0);
+        btc = _pairaved(btca,btcb);
+        btcd = .01 * prices777_splineval(&BUNDLE.splines[MAX_CURRENCIES+2],timestamp,0);
+        btcdusd = (btc * btcd);
+        datenum = OS_conv_unixtime(&seconds,timestamp);
+        for (j=0; j<MAX_CURRENCIES; j++)
+        {
+            basevals[j] = prices777_splineval(&BUNDLE.splines[j],timestamp,0);
+            btcdprices[j] = basevals[j] / (btcdusd * basevals[USD]);
+        }
+        if ( (i % 100000) == 0 )
+        {
+            printf("%d:%02d:%02d %.8f %.8f -> USD %.8f (EURUSD %.8f %.8f) ",datenum,seconds/3600,(seconds%3600)/60,btc,btcd,btcdusd,btcdprices[EUR]/btcdprices[USD],basevals[EUR]/basevals[USD]);
+            for (j=0; j<MAX_CURRENCIES; j++)
+                printf("%.8f ",btcdprices[j]);
+            printf("\n");
+        }
+    }
+    printf("sim took %ld seconds\n",(long)(time(NULL) - starttime));
+}
+
+void prices777_getlist(char *retbuf)
+{
+    int32_t i,j; struct prices777 *prices; char pair[16],*jsonstr; cJSON *json,*array,*item;
+    json = cJSON_CreateObject();
+    array = cJSON_CreateArray();
+    for (i=0; i<sizeof(CURRENCIES)/sizeof(*CURRENCIES); i++)
+        cJSON_AddItemToArray(array,cJSON_CreateString(CURRENCIES[i]));
+    cJSON_AddItemToObject(json,"currency",array);
+    array = cJSON_CreateArray();
+    for (i=0; i<32; i++)
+        for (j=0; j<32; j++)
+        {
+            if ( i != j )
+            {
+                sprintf(pair,"%s%s",CURRENCIES[i],CURRENCIES[j]);
+                cJSON_AddItemToArray(array,cJSON_CreateString(pair));
+            }
+        }
+    cJSON_AddItemToObject(json,"pairs",array);
+    array = cJSON_CreateArray();
+    for (i=0; i<sizeof(CONTRACTS)/sizeof(*CONTRACTS); i++)
+        cJSON_AddItemToArray(array,cJSON_CreateString(CONTRACTS[i]));
+    cJSON_AddItemToObject(json,"contract",array);
+    array = cJSON_CreateArray();
+    for (i=0; i<BUNDLE.num; i++)
+    {
+        if ( (prices= BUNDLE.ptrs[i]) != 0 )
+        {
+            item = cJSON_CreateObject();
+            cJSON_AddItemToObject(item,prices->exchange,cJSON_CreateString(prices->contract));
+            cJSON_AddItemToObject(item,"base",cJSON_CreateString(prices->base));
+            if ( prices->rel[0] != 0 )
+                cJSON_AddItemToObject(item,"rel",cJSON_CreateString(prices->rel));
+            //printf("(%s) (%s) (%s)\n",prices->contract,prices->base,prices->rel);
+            cJSON_AddItemToArray(array,item);
+        }
+    }
+    cJSON_AddItemToObject(json,"result",cJSON_CreateString("success"));
+    cJSON_AddItemToObject(json,"list",array);
+    jsonstr = cJSON_Print(json), _stripwhite(jsonstr,' '), free_json(json);
+    strcpy(retbuf,jsonstr), free(jsonstr);
+    printf("list -> (%s)\n",retbuf);
+}
+
 
 #endif

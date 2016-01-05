@@ -1,0 +1,3 @@
+# Updated by fix_deps.py
+pnacl/Release/pangea777.o: pangea777.c
+pangea777.c:

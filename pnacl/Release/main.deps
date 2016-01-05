@@ -1,18 +1,9 @@
 # Updated by fix_deps.py
-pnacl/Release/main.o: main.c iguana777.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/poll.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/poll.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netdb.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet/in.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h \
-  includes/utlist.h includes/uthash.h includes/curve25519.h \
-  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/memory.h \
-  includes/cJSON.h includes/../iguana777.h \
+pnacl/Release/main.o: main.c pnacl_main.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/ioctl.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/mount.h \
   /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/select.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h \
   includes/ppapi/c/ppb.h includes/ppapi/c/pp_macros.h \
   includes/ppapi/c/pp_stdint.h includes/ppapi/c/ppb_var.h \
   includes/ppapi/c/pp_bool.h includes/ppapi/c/pp_module.h \
@@ -23,25 +14,24 @@ pnacl/Release/main.o: main.c iguana777.h \
   includes/ppapi/c/ppb_var_array.h includes/ppapi/c/ppb_var_dictionary.h \
   includes/ppapi/c/pp_errors.h includes/ppapi/c/ppp_messaging.h \
   includes/ppapi/c/ppp_instance.h includes/ppapi/c/pp_point.h \
-  includes/ppapi/c/pp_rect.h includes/ppapi/c/pp_size.h
+  includes/ppapi/c/pp_rect.h includes/ppapi/c/pp_size.h iguana777.h \
+  crypto777/OS_portable.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/poll.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/poll.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netdb.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet/in.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h \
+  crypto777/../includes/libgfshare.h crypto777/../includes/utlist.h \
+  crypto777/../includes/uthash.h includes/curve25519.h \
+  /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/memory.h \
+  includes/cJSON.h crypto777/../includes/../iguana777.h
 main.c:
-iguana777.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/poll.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/poll.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netdb.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet/in.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h:
-includes/utlist.h:
-includes/uthash.h:
-includes/curve25519.h:
-/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/memory.h:
-includes/cJSON.h:
-includes/../iguana777.h:
+pnacl_main.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/ioctl.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/mount.h:
 /Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/select.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/time.h:
 includes/ppapi/c/ppb.h:
 includes/ppapi/c/pp_macros.h:
 includes/ppapi/c/pp_stdint.h:
@@ -62,3 +52,18 @@ includes/ppapi/c/ppp_instance.h:
 includes/ppapi/c/pp_point.h:
 includes/ppapi/c/pp_rect.h:
 includes/ppapi/c/pp_size.h:
+iguana777.h:
+crypto777/OS_portable.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/poll.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/poll.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netdb.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet/in.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/netinet6/in6.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/sys/socket.h:
+crypto777/../includes/libgfshare.h:
+crypto777/../includes/utlist.h:
+crypto777/../includes/uthash.h:
+includes/curve25519.h:
+/Users/jimbolaptop/Downloads/nacl_sdk/pepper_44/include/pnacl/memory.h:
+includes/cJSON.h:
+crypto777/../includes/../iguana777.h:

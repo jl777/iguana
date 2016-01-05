@@ -1,14 +1,29 @@
-/* Copyright (c) 2012 The Chromium Authors. All rights reserved.
- * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file. */
-#include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
+/******************************************************************************
+ * Copyright © 2014-2015 The SuperNET Developers.                             *
+ *                                                                            *
+ * See the AUTHORS, DEVELOPER-AGREEMENT and LICENSE files at                  *
+ * the top-level directory of this distribution for the individual copyright  *
+ * holder information and the developer policies on copyright and licensing.  *
+ *                                                                            *
+ * Unless otherwise agreed in a custom licensing agreement, no part of the    *
+ * SuperNET software, including this file may be copied, modified, propagated *
+ * or distributed except according to the terms contained in the LICENSE file *
+ *                                                                            *
+ * Removal or modification of this copyright notice is prohibited.            *
+ *                                                                            *
+ ******************************************************************************/
+
+#define CHROMEAPP_NAME iguana
+#define CHROMEAPP_STR "iguana"
+#define CHROMEAPP_CONF "iguana.conf"
+#define CHROMEAPP_MAIN iguana_main
+#define CHROMEAPP_JSON iguana_JSON
+#define CHROMEAPP_HANDLER Handler_iguana
+
+#include "pnacl_main.h"
 #include "iguana777.h"
 
-
 // ALL globals must be here!
-const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "BitcoinDark", "129" } };
 struct iguana_info *Coins[64];
 int32_t USE_JAY,FIRST_EXTERNAL,IGUANA_disableNXT,Debuglevel;
 uint32_t prices777_NXTBLOCK,MAX_DEPTH = 100;
@@ -22,6 +37,7 @@ int32_t IGUANA_NUMHELPERS = 4;
 int32_t IGUANA_NUMHELPERS = 4;
 #endif
 
+#ifdef oldway
 void *iguana(void *arg)
 {
     if ( arg == 0 )
@@ -327,7 +343,7 @@ static PP_Bool Instance_DidCreate(PP_Instance instance,uint32_t argc,const char*
     // filesystem.
     InitializeMessageQueue();
     pthread_create(&g_handle_message_thread, NULL, &HandleMessageThread, NULL);
-    pthread_create(&iguana_thread,NULL,&iguana,iguana_filestr(&allocsize,"iguana.conf"));
+    pthread_create(&iguana_thread,NULL,&iguana,OS_filestr(&allocsize,"iguana.conf"));
     nacl_io_init_ppapi(instance,g_get_browser_interface);
     umount("/");
     mount("", "/memfs", "memfs", 0, "");
@@ -643,4 +659,4 @@ int main(int argc, const char * argv[])
     return 0;
 }
 #endif
-
+#endif

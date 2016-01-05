@@ -410,7 +410,7 @@ int32_t iguana_send_ping(struct iguana_info *coin,struct iguana_peer *addr)
   	int32_t len; uint64_t nonce; uint8_t serialized[sizeof(struct iguana_msghdr) + sizeof(nonce)];
     if ( (nonce= addr->pingnonce) == 0 )
     {
-        randombytes((uint8_t *)&nonce,sizeof(nonce));
+        OS_randombytes((uint8_t *)&nonce,sizeof(nonce));
         addr->pingnonce = nonce;
         addr->pingtime = (uint32_t)time(NULL);
     }
@@ -423,7 +423,7 @@ void iguana_gotpong(struct iguana_info *coin,struct iguana_peer *addr,uint64_t n
 {
     if ( addr->sendmillis != 0 )
     {
-        addr->pingtime = (milliseconds() - addr->sendmillis) + 1;
+        addr->pingtime = (OS_milliseconds() - addr->sendmillis) + 1;
         addr->pingsum += addr->pingtime, addr->numpings++;
         printf("%s pingtime %.0f numpings.%d [%.3f] ",addr->ipaddr,addr->pingtime,addr->numpings,addr->pingsum/addr->numpings);
     }
@@ -462,7 +462,7 @@ int32_t iguana_getdata(struct iguana_info *coin,uint8_t *serialized,int32_t type
     return(iguana_sethdr((void *)serialized,coin->chain->netmagic,"getdata",&serialized[sizeof(struct iguana_msghdr)],len));
 }
 
-int32_t iguana_rwvin(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgvin *msg)
+int32_t iguana_rwvin(int32_t rwflag,struct OS_memspace *mem,uint8_t *serialized,struct iguana_msgvin *msg)
 {
     int32_t len = 0;
     len += iguana_rwbignum(rwflag,&serialized[len],sizeof(msg->prev_hash),msg->prev_hash.bytes);
@@ -479,7 +479,7 @@ int32_t iguana_rwvin(int32_t rwflag,struct iguana_memspace *mem,uint8_t *seriali
     return(len);
 }
 
-int32_t iguana_rwvout(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgvout *msg)
+int32_t iguana_rwvout(int32_t rwflag,struct OS_memspace *mem,uint8_t *serialized,struct iguana_msgvout *msg)
 {
     int32_t len = 0;
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->value),&msg->value);
@@ -494,7 +494,7 @@ int32_t iguana_rwvout(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serial
     return(len);
 }
 
-int32_t iguana_rwtx(int32_t rwflag,struct iguana_memspace *mem,uint8_t *serialized,struct iguana_msgtx *msg,int32_t maxsize,bits256 *txidp,int32_t height,int32_t hastimestamp)
+int32_t iguana_rwtx(int32_t rwflag,struct OS_memspace *mem,uint8_t *serialized,struct iguana_msgtx *msg,int32_t maxsize,bits256 *txidp,int32_t height,int32_t hastimestamp)
 {
     int32_t i,len = 0; uint8_t *txstart = serialized; char txidstr[65];
     len += iguana_rwnum(rwflag,&serialized[len],sizeof(msg->version),&msg->version);
@@ -567,7 +567,7 @@ char *iguana_txbytes(struct iguana_info *coin,bits256 *txidp,struct iguana_txid 
     return(txbytes);
 }
 
-int32_t iguana_gentxarray(struct iguana_info *coin,struct iguana_memspace *mem,struct iguana_txblock *txdata,int32_t *lenp,uint8_t *data,int32_t datalen)
+int32_t iguana_gentxarray(struct iguana_info *coin,struct OS_memspace *mem,struct iguana_txblock *txdata,int32_t *lenp,uint8_t *data,int32_t datalen)
 {
     struct iguana_msgtx *tx; bits256 hash2; struct iguana_msgblock msg; int32_t i,n,len,numvouts,numvins;
     memset(&msg,0,sizeof(msg));
@@ -612,7 +612,7 @@ int32_t iguana_send_hashes(struct iguana_info *coin,char *command,struct iguana_
     return(retval);
 }
 
-int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_memspace *rawmem,struct iguana_memspace *txmem,struct iguana_memspace *hashmem,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
+int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct OS_memspace *rawmem,struct OS_memspace *txmem,struct OS_memspace *hashmem,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
 {
     int32_t i,retval,srvmsg,bloom,intvectors,len= -100; uint64_t nonce,x; uint32_t type; bits256 hash2;
     bloom = intvectors = srvmsg = -1;

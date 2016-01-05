@@ -419,7 +419,7 @@ int32_t iguana_processjsonQ(struct iguana_info *coin) // reentrant, can be calle
 
 char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag,int32_t maxmillis)
 {
-    struct iguana_jsonitem *ptr; char *retjsonstr = 0; int32_t len,allocsize; double expiration = milliseconds() + maxmillis;
+    struct iguana_jsonitem *ptr; char *retjsonstr = 0; int32_t len,allocsize; double expiration = OS_milliseconds() + maxmillis;
     if ( coin == 0 )
     {
         //printf("no coin case.(%s)\n",jsonstr);
@@ -435,7 +435,7 @@ char *iguana_blockingjsonstr(struct iguana_info *coin,char *jsonstr,uint64_t tag
         ptr->retjsonstrp = &retjsonstr;
         memcpy(ptr->jsonstr,jsonstr,len+1);
         queue_enqueue("jsonQ",&coin->jsonQ,&ptr->DL,0);
-        while ( milliseconds() < expiration )
+        while ( OS_milliseconds() < expiration )
         {
             usleep(100);
             if ( (retjsonstr= *ptr->retjsonstrp) != 0 )
@@ -467,10 +467,10 @@ char *iguana_JSON(char *jsonstr)
             else return(clonestr("{\"error\":\"error launching coin\"}"));
         }
         if ( (tag= j64bits(json,"tag")) == 0 )
-            randombytes((uint8_t *)&tag,sizeof(tag));
+            OS_randombytes((uint8_t *)&tag,sizeof(tag));
         if ( (symbol= jstr(json,"coin")) != 0 )
         {
-            if ( (coin= iguana_coin(symbol)) != 0 && coin->launched == 0 )
+            if ( (coin= iguana_coinfind(symbol)) != 0 && coin->launched == 0 )
                 iguana_launchcoin(symbol,json);
         }
         else coin = 0;
@@ -529,8 +529,8 @@ void iguana_main(void *arg)
     if ( (retstr= iguana_addagent("jumblr",jumblr_parser,"127.0.0.1",cJSON_Parse("[\"test\"]"),0,0,0)) != 0 )
         printf("%s\n",retstr), free(retstr);
     iguana_initQ(&helperQ,"helperQ");
-    ensure_directory("DB");
-    ensure_directory("tmp");
+    OS_ensure_directory("DB");
+    OS_ensure_directory("tmp");
     if ( jsonstr != 0 && (json= cJSON_Parse(jsonstr)) != 0 )
     {
         if ( jobj(json,"numhelpers") != 0 )
@@ -553,12 +553,12 @@ void iguana_main(void *arg)
     {
         sprintf(helperstr,"{\"name\":\"helper.%d\"}",i);
         helperargs = clonestr(helperstr);
-        iguana_launch(iguana_coin("BTCD"),"iguana_helper",iguana_helper,helperargs,IGUANA_PERMTHREAD);
+        iguana_launch(iguana_coinadd("BTCD"),"iguana_helper",iguana_helper,helperargs,IGUANA_PERMTHREAD);
     }
-    iguana_launch(iguana_coin("BTCD"),"rpcloop",iguana_rpcloop,iguana_coin("BTCD"),IGUANA_PERMTHREAD);
+    iguana_launch(iguana_coinadd("BTCD"),"rpcloop",iguana_rpcloop,iguana_coinadd("BTCD"),IGUANA_PERMTHREAD);
     if ( coinargs != 0 )
-        iguana_launch(iguana_coin("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
-    else if ( 0 )
+        iguana_launch(iguana_coinadd("BTCD"),"iguana_coins",iguana_coins,coinargs,IGUANA_PERMTHREAD);
+    else if ( 1 )
     {
 #ifdef __APPLE__
         sleep(1);
@@ -567,7 +567,7 @@ void iguana_main(void *arg)
     }
     if ( arg != 0 )
         iguana_JSON(arg);
-    init_InstantDEX();
+    //init_InstantDEX();
     while ( 1 )
     {
         flag = 0;

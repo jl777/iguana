@@ -15,9 +15,20 @@
 
 
 #include "iguana777.h"
+const char *Hardcoded_coins[][3] = { { "BTC", "bitcoin", "0" }, { "BTCD", "BitcoinDark", "129" } };
 
+struct iguana_info *iguana_coinfind(const char *symbol)
+{
+    int32_t i;
+    for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
+    {
+        if ( Coins[i] != 0 && strcmp(Coins[i]->symbol,symbol) == 0 )
+            return(Coins[i]);
+    }
+    return(0);
+}
 
-struct iguana_info *iguana_coin(const char *symbol)
+struct iguana_info *iguana_coinadd(const char *symbol)
 {
     struct iguana_info *coin; int32_t i = 0;
     if ( symbol == 0 )
@@ -41,7 +52,7 @@ struct iguana_info *iguana_coin(const char *symbol)
     {
         for (i=0; i<sizeof(Coins)/sizeof(*Coins); i++)
         {
-            if ( Hardcoded_coins[i][0] == 0 )
+            if ( i >= sizeof(Hardcoded_coins)/sizeof(*Hardcoded_coins) || Hardcoded_coins[i][0] == 0 )
                 break;
             if ( strcmp(symbol,Hardcoded_coins[i][0]) == 0 )
             {
@@ -189,20 +200,20 @@ uint32_t iguana_updatemetrics(struct iguana_info *coin)
 {
     char fname[512],tmpfname[512],oldfname[512]; int32_t i; struct iguana_peer *addr; FILE *fp;
     iguana_peermetrics(coin);
-    sprintf(fname,"%s_peers.txt",coin->symbol);
-    sprintf(oldfname,"%s_oldpeers.txt",coin->symbol);
-    sprintf(tmpfname,"tmp/%s/peers.txt",coin->symbol);
+    sprintf(fname,"%s_peers.txt",coin->symbol), OS_compatible_path(fname);
+    sprintf(oldfname,"%s_oldpeers.txt",coin->symbol), OS_compatible_path(oldfname);
+    sprintf(tmpfname,"tmp/%s/peers.txt",coin->symbol), OS_compatible_path(tmpfname);
     if ( (fp= fopen(tmpfname,"w")) != 0 )
     {
         for (i=0; i<coin->peers.numranked; i++)
             if ( (addr= coin->peers.ranked[i]) != 0 )
                 fprintf(fp,"%s\n",addr->ipaddr);
-        if ( ftell(fp) > iguana_filesize(fname) )
+        if ( ftell(fp) > OS_filesize(fname) )
         {
-            printf("new peers.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)iguana_filesize(fname));
+            printf("new peers.txt %ld vs (%s) %ld\n",ftell(fp),fname,(long)OS_filesize(fname));
             fclose(fp);
-            iguana_renamefile(fname,oldfname);
-            iguana_copyfile(tmpfname,fname,1);
+            OS_renamefile(fname,oldfname);
+            OS_copyfile(tmpfname,fname,1);
         } else fclose(fp);
     }
     return((uint32_t)time(NULL));
@@ -235,7 +246,7 @@ void iguana_mergeQ(struct iguana_info *coin,struct iguana_bundle *bp,struct igua
     queue_enqueue("helperQ",&helperQ,&ptr->DL,0);
 }
 
-int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_memspace *memB,struct iguana_helper *ptr)
+int32_t iguana_helpertask(FILE *fp,struct OS_memspace *mem,struct OS_memspace *memB,struct iguana_helper *ptr)
 {
     struct iguana_info *coin; struct iguana_peer *addr; struct iguana_bundle *bp,*nextbp;
     coin = ptr->coin, addr = ptr->addr;
@@ -273,7 +284,7 @@ int32_t iguana_helpertask(FILE *fp,struct iguana_memspace *mem,struct iguana_mem
 void iguana_helper(void *arg)
 {
     FILE *fp = 0; char fname[512],name[64],*helpername = 0; cJSON *argjson=0; int32_t i,flag;
-    struct iguana_helper *ptr; struct iguana_info *coin; struct iguana_memspace MEM,*MEMB;
+    struct iguana_helper *ptr; struct iguana_info *coin; struct OS_memspace MEM,*MEMB;
     if ( arg != 0 && (argjson= cJSON_Parse(arg)) != 0 )
         helpername = jstr(argjson,"name");
     if ( helpername == 0 )
@@ -282,6 +293,7 @@ void iguana_helper(void *arg)
         helpername = name;
     }
     sprintf(fname,"tmp/%s",helpername);
+    OS_compatible_path(fname);
     fp = fopen(fname,"wb");
     if ( argjson != 0 )
         free_json(argjson);
@@ -407,7 +419,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     struct iguana_chain *iguana_createchain(cJSON *json);
     struct iguana_info *coin; int32_t j,m,mapflags; char dirname[512]; cJSON *peers;
     mapflags = IGUANA_MAPRECVDATA | maphash*IGUANA_MAPTXIDITEMS | maphash*IGUANA_MAPPKITEMS | maphash*IGUANA_MAPBLOCKITEMS | maphash*IGUANA_MAPPEERITEMS;
-    coin = iguana_coin(symbol);
+    coin = iguana_coinadd(symbol);
     coin->launched = launched;
     if ( (coin->MAXPEERS= maxpeers) <= 0 )
         coin->MAXPEERS = (strcmp(symbol,"BTC") == 0) ? 64 : 32;
@@ -419,9 +431,9 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
         coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*64;
     coin->myservices = services;
     sprintf(dirname,"DB/%s",symbol);
-    ensure_directory(dirname);
+    OS_ensure_directory(dirname);
     sprintf(dirname,"tmp/%s",symbol);
-    ensure_directory(dirname);
+    OS_ensure_directory(dirname);
     coin->initialheight = initialheight;
     coin->mapflags = mapflags;
     coin->MAXMEM = juint(json,"RAM");
@@ -457,7 +469,7 @@ int32_t iguana_launchcoin(char *symbol,cJSON *json)
     int64_t maxrecvcache; uint64_t services; struct iguana_info **coins,*coin;
     if ( symbol == 0 )
         return(-1);
-    if ( (coin= iguana_coin(symbol)) == 0 )
+    if ( (coin= iguana_coinadd(symbol)) == 0 )
         return(-1);
     if ( coin->launched == 0 )
     {

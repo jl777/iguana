@@ -79,7 +79,43 @@ char Default_agent[64] = { "ALL" };
 {\"newline\":0,\"disp\":\"pangea\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"pangea\",\"cols\":1,\"rows\":1}]}, \
 {\"newline\":0,\"disp\":\"jumblr\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"jumblr\",\"cols\":1,\"rows\":1}]}, \
 {\"disp\":\"ramchain\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"ramchain\",\"cols\":1,\"rows\":1}]}, \
-{\"newline\":0,\"disp\":\"iguana\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"iguana\",\"cols\":1,\"rows\":1}]} \
+{\"newline\":0,\"disp\":\"iguana\",\"agent\":\"iguana\",\"method\":\"setagent\",\"fields\":[{\"field\":\"iguana\",\"cols\":1,\"rows\":1}]}, \
+\
+{\"agent\":\"hash\",\"method\":\"NXT\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":100,\"rows\":1}]}, \
+    {\"agent\":\"hash\",\"method\":\"curve25519\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"rmd160_sha256\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+{\"agent\":\"hash\",\"method\":\"sha256_sha256\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+{\"agent\":\"hash\",\"method\":\"base64_encode\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+{\"agent\":\"hash\",\"method\":\"base64_decode\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+{\"agent\":\"hash\",\"method\":\"crc32\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"sha512\",\"fields\":[{\"skip\":1,\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"sha384\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"sha256\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"sha224\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"rmd320\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"rmd256\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"rmd160\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"rmd128\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"sha1\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"md2\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"md4\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"md5\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"tiger\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"whirlpool\",\"fields\":[{\"skip\":1,\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_sha512\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_sha384\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_sha256\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_sha224\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_rmd320\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_rmd256\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_rmd160\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_rmd128\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_sha1\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_md2\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_md4\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_md5\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_tiger\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}, \
+    {\"agent\":\"hash\",\"method\":\"hmac_whirlpool\",\"fields\":[{\"skip\":1,\"field\":\"password\",\"cols\":32,\"rows\":1},{\"field\":\"message\",\"cols\":64,\"rows\":3}]}\
 ]"
 
 char *HTMLheader =
@@ -212,6 +248,70 @@ char *iguana_ramchain_glue(struct iguana_info *coin,char *method,char *jsonstr)
     return(retstr);
 }
 
+char *iguana_hashparse(char *path)
+{
+    int32_t i,j,len,iter,n; uint8_t databuf[512],databuf2[512];
+    char hexstr[1025],password[512],hexstr2[1025],hashname[512],*name,*msg; cJSON *json;
+    typedef void (*hashfunc)(char *hexstr,uint8_t *buf,uint8_t *msg,int32_t len);
+    typedef char *(*hmacfunc)(char *dest,char *key,int32_t key_size,char *message);
+    struct hashfunc_entry { char *name; hashfunc hashfunc; };
+    struct hmacfunc_entry { char *name; hmacfunc hmacfunc; };
+    struct hashfunc_entry hashes[] = { {"NXT",calc_NXTaddr}, {"curve25519",calc_curve25519_str }, {"base64_encode",calc_base64_encodestr}, {"base64_decode",calc_base64_decodestr}, {"crc32",calc_crc32str}, {"rmd160_sha256",rmd160ofsha256}, {"sha256_sha256",sha256_sha256}, {"sha256",vcalc_sha256}, {"sha512",calc_sha512}, {"sha384",calc_sha384}, {"sha224",calc_sha224}, {"rmd160",calc_rmd160}, {"rmd256",calc_rmd256}, {"rmd320",calc_rmd320}, {"rmd128",calc_rmd128}, {"sha1",calc_sha1}, {"md5",calc_md5str}, {"tiger",calc_tiger}, {"whirlpool",calc_whirlpool} };
+    struct hmacfunc_entry hmacs[] = { {"hmac_sha256",hmac_sha256_str}, {"hmac_sha512",hmac_sha512_str}, {"hmac_sha384",hmac_sha384_str}, {"hmac_sha224",hmac_sha224_str}, {"hmac_rmd160",hmac_rmd160_str}, {"hmac_rmd256",hmac_rmd256_str}, {"hmac_rmd320",hmac_rmd320_str}, {"hmac_rmd128",hmac_rmd128_str}, {"hmac_sha1",hmac_sha1_str}, {"hmac_md5",hmac_md5_str}, {"hmac_tiger",hmac_tiger_str}, {"hmac_whirlpool",hmac_whirlpool_str} };
+    n = (int32_t)sizeof(hashes)/sizeof(*hashes);
+    for (j=0; j<sizeof(hashname)&&path[j]!=0&&path[j]!='/'; j++)
+        hashname[j] = path[j];
+    hashname[j] = 0;
+    printf("ITER0 set hashname.(%s)\n",hashname);
+    path += j;
+    path++;
+    msg = path;
+    for (j=0; path[j]!='/'&&path[j]!=0&&path[j]!=' '; j++)
+        ;
+    path[j] = 0;
+    if ( path[j] != 0 )
+        j++;
+    for (j=0; j<sizeof(password)&&path[j]!=0&&path[j]!='/'; j++)
+        password[j] = path[j];
+    password[j] = 0;
+    printf("msg.(%s) password.(%s)\n",msg,password);
+    for (iter=0; iter<2; iter++)
+    {
+        for (i=0; i<n; i++)
+        {
+            name = (iter == 0) ? hashes[i].name : hmacs[i].name;
+            printf("iter.%d i.%d (%s) vs (%s) %d\n",iter,i,name,hashname,strcmp(hashname,name) == 0);
+            if ( strcmp(hashname,name) == 0 )
+            {
+                json = cJSON_CreateObject();
+                len = (int32_t)strlen(path);
+                if ( iter == 0 )
+                    (*hashes[i].hashfunc)(hexstr,databuf,(uint8_t *)msg,len);
+                else (*hmacs[i].hmacfunc)(hexstr,password,j,msg);
+                jaddstr(json,"result","hash calculated");
+                jaddstr(json,"message",msg);
+                jaddstr(json,name,hexstr);
+                if ( is_hexstr(path,(int32_t)strlen(path)) > 0 && len <= (sizeof(databuf2)<<1) )
+                {
+                    decode_hex(databuf,len>>1,(void *)path);
+                    if ( iter == 0 )
+                        (*hashes[i].hashfunc)(hexstr2,databuf2,(uint8_t *)msg,len);
+                    else (*hmacs[i].hmacfunc)(hexstr2,password,j,msg);
+                    jaddstr(json,"result","hashes calculated");
+                    jaddstr(json,"binaryhash",hexstr2);
+                }
+                return(jprint(json,1));
+            }
+        }
+        for (j=0; j<100&&path[j]!=0&&path[j]!='/'; j++)
+            password[j] = path[j];
+        password[j] = 0;
+        printf("ITER1 set password.(%s)\n",password);
+        n = (int32_t)sizeof(hmacs)/sizeof(*hmacs);
+    }
+    return(clonestr("{\"error\":\"cant find hash function\"}"));
+}
+
 char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char *remoteaddr,int32_t localaccess)
 {
     char *iguana_coinjson(struct iguana_info *coin,char *method,cJSON *json);
@@ -237,7 +337,7 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char 
     }
   //printf("GETCHECK.(%s)\n",path);
     if ( Default_coin[0] != 0 )
-        coin = iguana_coin(Default_coin);
+        coin = iguana_coinfind(Default_coin);
     if ( strncmp(path,"/ramchain/",strlen("/ramchain/")) == 0 )
     {
         path += strlen("/ramchain/");
@@ -285,6 +385,11 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char 
             sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"%s\",\"coin\":\"%s\"}",path,Default_coin);
             return(iguana_ramchain_glue(coin,path,Currentjsonstr));
         }
+    }
+    else if ( strncmp(path,"/hash/",strlen("/hash/")) == 0 )
+    {
+        path += strlen("/hash/");
+        return(iguana_hashparse(path));
     }
     else if ( strncmp(path,"/iguana/",strlen("/iguana/")) == 0 )
     {
@@ -337,7 +442,7 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char 
                 path += strlen("peers/");
                 if ( Default_coin[0] != 0 )
                 {
-                    coin= iguana_coin(Default_coin);
+                    coin= iguana_coinfind(Default_coin);
                     sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"peers\",\"coin\":\"%s\"}",Default_coin);
                 } else sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"peers\"}");
                 json = cJSON_Parse(Currentjsonstr);
@@ -345,7 +450,7 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char 
                 free_json(json);
                 return(retstr);
             }
-            else if ( Default_coin[0] != 0 && (coin= iguana_coin(Default_coin)) != 0 )
+            else if ( Default_coin[0] != 0 && (coin= iguana_coinfind(Default_coin)) != 0 )
             {
                 if ( strncmp(path,"addnode/",strlen("addnode/")) == 0 )
                 {
@@ -369,31 +474,44 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char 
                 {
                     path += strlen("addcoin");
                     iguana_coinset(buf,path);
-                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"%s\"}",path);
-                    json = cJSON_Parse(Currentjsonstr);
-                    retstr = iguana_coinjson(coin,"addcoin",json);
-                    free_json(json);
-                    return(retstr);
+                    if ( (coin= iguana_coinadd(buf)) != 0 )
+                    {
+                        sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"addcoin\",\"coin\":\"%s\"}",buf);
+                        json = cJSON_Parse(Currentjsonstr);
+                        retstr = iguana_coinjson(coin,"addcoin",json);
+                        free_json(json);
+                        strcpy(Default_coin,buf);
+                    }
+                    else retstr = clonestr("{\"error\":\"cant create coin\"}");
+                        return(retstr);
                 }
                 else if ( strncmp(path,"startcoin",strlen("startcoin")) == 0 )
                 {
                     path += strlen("startcoin");
                     iguana_coinset(buf,path);
-                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"startcoin\",\"coin\":\"%s\"}",path);
-                    json = cJSON_Parse(Currentjsonstr);
-                    retstr = iguana_coinjson(coin,"startcoin",json);
-                    free_json(json);
-                    return(retstr);
+                    if ( (coin= iguana_coinfind(buf)) != 0 )
+                    {
+                        sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"startcoin\",\"coin\":\"%s\"}",buf);
+                        json = cJSON_Parse(Currentjsonstr);
+                        retstr = iguana_coinjson(coin,"startcoin",json);
+                        free_json(json);
+                    }
+                    else retstr = clonestr("{\"error\":\"cant create coin\"}");
+                        return(retstr);
                 }
                 else if ( strncmp(path,"pausecoin",strlen("pausecoin")) == 0 )
                 {
                     path += strlen("pausecoin");
                     iguana_coinset(buf,path);
-                    sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"pausecoin\",\"coin\":\"%s\"}",path);
-                    json = cJSON_Parse(Currentjsonstr);
-                    retstr = iguana_coinjson(coin,"pausecoin",json);
-                    free_json(json);
-                    return(retstr);
+                    if ( (coin= iguana_coinfind(buf)) != 0 )
+                    {
+                        sprintf(Currentjsonstr,"{\"agent\":\"iguana\",\"method\":\"pausecoin\",\"coin\":\"%s\"}",buf);
+                        json = cJSON_Parse(Currentjsonstr);
+                        retstr = iguana_coinjson(coin,"pausecoin",json);
+                        free_json(json);
+                    }
+                    else retstr = clonestr("{\"error\":\"cant create coin\"}");
+                        return(retstr);
                 }
                 else if ( strncmp(path,"maxpeers/",strlen("maxpeers/")) == 0 )
                 {
@@ -475,7 +593,8 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char 
         if ( jsonstr[0] != 0 )
         {
             strcpy(Currentjsonstr,jsonstr);
-            return(InstantDEX(jsonstr,remoteaddr,localaccess));
+            return(clonestr(jsonstr));
+            //return(InstantDEX(jsonstr,remoteaddr,localaccess));
         }
         return(clonestr("{\"error\":\"unrecognized InstantDEX API call\"}"));
     }
@@ -622,8 +741,7 @@ int32_t iguana_htmlgen(char *retbuf,int32_t bufsize,char *result,char *error,cJS
     HTML_EMIT("<html> <head></head> <body> <p id=\"RTstats\"></p> ");
     sprintf(buf,"<canvas id=\"canvas\" width=\"%d\" height=\"%d\"></canvas><script>var Width = %d; var Height = %d;",IGUANA_WIDTH,IGUANA_HEIGHT,IGUANA_WIDTH,IGUANA_HEIGHT);
     HTML_EMIT(buf);
-    HTML_EMIT("var RTparsed = 0; var RTcount = 0; var RTpending = 0; var RTwidth; var RTheight; var RTamplitude; var RTname; \
-              var RTjson; var RTdisp = new Array(Width * Height * 3);");
+    HTML_EMIT("var RTparsed = 0; var RTcount = 0; var RTpending = 0; var RTwidth; var RTheight; var RTamplitude; var RTname; var RTjson;");
     sprintf(buf,"setInterval(iguana_poll,%d);",IGUANS_JSMILLIS);
     HTML_EMIT(buf);
     HTML_EMIT("\
@@ -691,27 +809,17 @@ function iguana_poll( )\
         httpGet();\
         RTpending++;\
     }\
-    if ( 0 && RTparsed != 0 )\
-    {\
-        var canvas = document.getElementById(\"canvas\"); \
-        var ctx = canvas.getContext(\"2d\"); \
-        var imagedata = ctx.getImageData(0,0,Width,Height); \
-        for (y=m=0; y<Height; y++)\
-          for (x=0; x<Width; x++)\
-            { \
-              red = RTdisp[m++]; green = RTdisp[m++]; blue = RTdisp[m++]; \
-                ctx.fillStyle = 'rgba(' + red + ',' + green + ',' + blue + ',' + RTamplitude + ')';\
-                ctx.fillRect(x, y, 1, 1);\
-            }\
-    }\
 } </script><br>");
     HTML_EMIT("<br><text>Selected coin: <b>"); HTML_EMIT(Default_coin);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana49_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana50_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana51_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana52_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","ramchain","iguana53_setagent"); HTML_EMIT(formfooter);
-    sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","iguana","iguana54_setagent"); HTML_EMIT(formfooter);
+    if ( 0 )
+    {
+        sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana49_setagent"); HTML_EMIT(formfooter);
+        sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","PAX","iguana50_setagent"); HTML_EMIT(formfooter);
+        sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","pangea","iguana51_setagent"); HTML_EMIT(formfooter);
+        sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","jumblr","iguana52_setagent"); HTML_EMIT(formfooter);
+        sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","ramchain","iguana53_setagent"); HTML_EMIT(formfooter);
+        sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","iguana","iguana54_setagent"); HTML_EMIT(formfooter);
+    }
     HTML_EMIT("   Agent:    "); HTML_EMIT(Default_agent);
 
     HTML_EMIT("<br><br/>");

@@ -39,7 +39,7 @@ void init_exchanges()
         find_exchange(0,Supported_exchanges[i]);
     prices777_initpair(-1,0,0,0,0.,0,0,0,0);
     void prices777_basketsloop(void *ptr);
-    iguana_launch(iguana_coin("BTCD"),"basketloop",(void *)prices777_basketsloop,0,IGUANA_EXCHANGETHREAD);
+    iguana_launch(iguana_coinadd("BTCD"),"basketloop",(void *)prices777_basketsloop,0,IGUANA_EXCHANGETHREAD);
     //prices777_makebasket("{\"name\":\"NXT/BTC\",\"base\":\"NXT\",\"rel\":\"BTC\",\"basket\":[{\"exchange\":\"bittrex\"},{\"exchange\":\"poloniex\"},{\"exchange\":\"btc38\"}]}",0);
 }
 

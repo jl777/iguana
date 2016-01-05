@@ -287,16 +287,16 @@ struct iguana_bundle *iguana_bundlecreate(struct iguana_info *coin,int32_t *bund
             bp->coin = coin;
             bp->avetime = coin->avetime * 2.;
             coin->bundles[coin->bundlescount] = bp;
-            if ( coin->bundlescount > 0 )
-                coin->bundles[coin->bundlescount-1]->nextbp = bp;
             for (bundlei=0; bundlei<bp->n; bundlei++)
                 bp->fpos[bundlei] = -1;
+            if ( coin->bundlescount > 0 )
+                coin->bundles[coin->bundlescount-1]->nextbp = bp;
             *bundleip = 0;
             printf("ht.%d alloc.[%d] new hdrs.%s %s\n",bp->bundleheight,coin->bundlescount,str,bits256_str(str2,allhash));
-            iguana_blockQ(coin,bp,0,bundlehash2,1);
-            coin->bundlescount++; // must be LAST thing done
             iguana_bundlehash2add(coin,0,bp,0,bundlehash2);
+            iguana_blockQ(coin,bp,0,bundlehash2,1);
             queue_enqueue("hdrsQ",&coin->hdrsQ,queueitem(str),1);
+            coin->bundlescount++;
         }
         else
         {
@@ -332,6 +332,7 @@ struct iguana_txid *iguana_bundletx(struct iguana_info *coin,struct iguana_bundl
         if ( mode == 0 )
             iguana_peerfname(coin,&hdrsi,"tmp",fname,bp->ipbits[bundlei],bp->hashes[0],zero,1);
         else iguana_peerfname(coin,&hdrsi,"DB",fname,0,bp->hashes[0],zero,bp->n);
+        OS_compatible_path(fname);
         if ( (fp= fopen(fname,"rb")) != 0 )
         {
             fseek(fp,(long)&rdata.Toffset - (long)&rdata,SEEK_SET);
@@ -485,7 +486,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                         {
                             if ( iguana_peerfname(coin,&hdrsi,"tmp",fname,ipbits,bp->hashes[0],zero,1) >= 0 )
                             {
-                                if ( iguana_removefile(fname,0) > 0 )
+                                if ( OS_removefile(fname,0) > 0 )
                                     coin->peers.numfiles--, m++;
                             }
                             else printf("error removing.(%s)\n",fname);

@@ -984,7 +984,7 @@ void iguana_bitmapbundle(uint8_t *rect,int32_t rowwidth,int32_t width,int32_t he
 struct iguana_bitmap *iguana_bitmapfind(char *name)
 {
     struct iguana_info *coin; int32_t width,height,n,hdrsi,x,y;
-    if ( (coin= iguana_coin(name)) != 0 )
+    if ( (coin= iguana_coinfind(name)) != 0 )
     {
         strcpy(coin->screen.name,coin->symbol);
         coin->screen.amplitude = 255;

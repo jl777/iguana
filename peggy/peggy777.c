@@ -25,10 +25,10 @@
 #include <time.h>
 #include "../iguana777.h"
 
-#include "txind777.c"
-#include "opreturn777.c"
-#include "serdes777.c"
-#include "accts777.c"
+#include "txind777.h"
+#include "opreturn777.h"
+#include "serdes777.h"
+#include "accts777.h"
 
 // CfB "the rule is simple = others can know the redemption day only AFTER the price for that day is set in stone."
 #define PEGGY_NUMCOEFFS 539

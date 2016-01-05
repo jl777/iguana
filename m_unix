@@ -1,2 +1,12 @@
-gcc -O2 -o iguana *.c InstantDEX/*.c -lssl -lcrypto -lpthread -lcurl -lm
-echo it should have created iguana, which can be run with ./iguana
+cd crypto777; gcc -O2 -c *.c; ar rcu libcrypto777.a *.o; cp libcrypto777.a ..; cd ..
+gcc -O2 -o iguana *.c libcrypto777.a -lssl -lcrypto -lpthread -lm
+
+#gcc -O2 -o prices prices/*.c libcrypto777.a -lssl -lcrypto -lcurl -lpthread -lm
+#gcc -O2 -o InstantDEX InstantDEX/*.c libcrypto777.a -lssl -lcrypto -lcurl -lpthread -lm
+#gcc -O2 -o PAX peggy/*.c libcrypto777.a -lssl -lcrypto -lcurl -lpthread -lm
+#gcc -O2 -o pangea pangea/*.c libcrypto777.a -lssl -lcrypto -lcurl -lpthread -lm
+#gcc -O2 -o tradebots tradebots/*.c libcrypto777.a -lssl -lcrypto -lcurl -lpthread -lm
+
+#echo it should have created iguana, prices, InstantDEX, PAX, pangea and tradebots
+#echo native iguana apps are run by ./iguana, ./InstantDEX, etc.
+#echo iguana apps will appear in your browser at http://127.0.0.1:7778/?method
