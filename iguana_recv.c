@@ -342,16 +342,15 @@ struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_bl
 {
     struct iguana_block *block; bits256 zero,*hashes; struct iguana_bundle *bp = 0;
     int32_t bundlei = -2;
-    *bundleip = -2;
+    *bundleip = -2; *blockp = 0;
     if ( origblock == 0 )
         return(0);
     memset(zero.bytes,0,sizeof(zero));
-    block = iguana_blockhashset(coin,-1,origblock->hash2,1);
-    if ( block != origblock )
-        iguana_blockcopy(coin,block,origblock);
-    *blockp = block;
-    if ( block != 0 )
+    if ( (block= iguana_blockhashset(coin,-1,origblock->hash2,1)) != 0 )
     {
+        if ( block != origblock )
+            iguana_blockcopy(coin,block,origblock);
+        *blockp = block;
         if ( bits256_nonz(block->prev_block) > 0 )
             iguana_patch(coin,block);
         if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,block->hash2)) != 0 )

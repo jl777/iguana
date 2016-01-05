@@ -443,14 +443,17 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 if ( bp->fpos[bundlei] >= 0 )
                 {
                     numrecv++;
-                    datasize += block->recvlen;
-                    /*if ( block->ipbits != 0 )
+                    if ( block != 0 )
                     {
-                        iguana_memreset(&coin->blockMEM);
-                        if ( iguana_peertxdata(coin,&checki,fname,&coin->blockMEM,block->ipbits,block->hash2) != 0 && checki == bundlei )
-                            datasize += block->recvlen;
-                        else block->recvlen = block->ipbits = 0;
-                    }*/
+                        datasize += block->recvlen;
+                        /*if ( block->ipbits != 0 )
+                         {
+                         iguana_memreset(&coin->blockMEM);
+                         if ( iguana_peertxdata(coin,&checki,fname,&coin->blockMEM,block->ipbits,block->hash2) != 0 && checki == bundlei )
+                         datasize += block->recvlen;
+                         else block->recvlen = block->ipbits = 0;
+                         }*/
+                    }
                 }
                 else
                 {
@@ -458,7 +461,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     if ( bp->issued[bundlei] > SMALLVAL )
                         numissued++;
                 }
-                if ( bp->ipbits[bundlei] == 0 && block->copyflag != 0 && block->rawdata != 0 )
+                if ( block != 0 && bp->ipbits[bundlei] == 0 && block->copyflag != 0 && block->rawdata != 0 )
                 {
                     struct iguana_cacheptr *ptr;
                     ptr = mycalloc('c',1,sizeof(*ptr) + block->recvlen);
