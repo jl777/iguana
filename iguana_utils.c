@@ -1098,14 +1098,6 @@ void reverse_hexstr(char *str)
     free(rev);
 }
 
-double _pairaved(double valA,double valB)
-{
-	if ( valA != 0. && valB != 0. )
-		return((valA + valB) / 2.);
-	else if ( valA != 0. ) return(valA);
-	else return(valB);
-}
-
 int32_t nn_base64_decode (const char *in, size_t in_len,uint8_t *out, size_t out_len)
 {
     uint32_t ii,io,rem,v; uint8_t ch;
