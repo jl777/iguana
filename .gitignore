@@ -32,3 +32,7 @@ peggy/pnacl/Release/PAX.pexe
 libs/libnacl_spawn.a
 
 libs/libcli_main.a
+
+libs/libcli_main.a
+
+libs/libcrypto.a

@@ -250,8 +250,8 @@ char *iguana_ramchain_glue(struct iguana_info *coin,char *method,char *jsonstr)
 
 char *iguana_hashparse(char *path)
 {
-    int32_t i,j,len,iter,n; uint8_t databuf[512],databuf2[512];
-    char hexstr[1025],password[512],hexstr2[1025],hashname[512],*name,*msg; cJSON *json;
+    int32_t i,j,len,iter,n; uint8_t databuf[512];
+    char hexstr[1025],password[512],hashname[512],*name,*msg; cJSON *json;
     typedef void (*hashfunc)(char *hexstr,uint8_t *buf,uint8_t *msg,int32_t len);
     typedef char *(*hmacfunc)(char *dest,char *key,int32_t key_size,char *message);
     struct hashfunc_entry { char *name; hashfunc hashfunc; };
@@ -291,22 +291,9 @@ char *iguana_hashparse(char *path)
                 jaddstr(json,"result","hash calculated");
                 jaddstr(json,"message",msg);
                 jaddstr(json,name,hexstr);
-                if ( is_hexstr(path,(int32_t)strlen(path)) > 0 && len <= (sizeof(databuf2)<<1) )
-                {
-                    decode_hex(databuf,len>>1,(void *)path);
-                    if ( iter == 0 )
-                        (*hashes[i].hashfunc)(hexstr2,databuf2,(uint8_t *)msg,len);
-                    else (*hmacs[i].hmacfunc)(hexstr2,password,j,msg);
-                    jaddstr(json,"result","hashes calculated");
-                    jaddstr(json,"binaryhash",hexstr2);
-                }
                 return(jprint(json,1));
             }
         }
-        for (j=0; j<100&&path[j]!=0&&path[j]!='/'; j++)
-            password[j] = path[j];
-        password[j] = 0;
-        printf("ITER1 set password.(%s)\n",password);
         n = (int32_t)sizeof(hmacs)/sizeof(*hmacs);
     }
     return(clonestr("{\"error\":\"cant find hash function\"}"));
