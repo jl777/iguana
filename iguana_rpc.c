@@ -251,6 +251,8 @@ char *ramchain_coinparser(struct iguana_info *coin,char *method,cJSON *json)
     char *hashstr,*txidstr,*coinaddr,*txbytes,rmd160str[41],str[65]; int32_t height,i,n,valid = 0;
     cJSON *addrs,*retjson,*retitem; uint8_t rmd160[20],addrtype; bits256 hash2,checktxid;
     memset(&hash2,0,sizeof(hash2)); struct iguana_txid *tx,T; struct iguana_block *block = 0;
+    if ( coin == 0 )
+        return(clonestr("{\"error\":\"ramchain_coinparser needs coin\"}"));
     if ( (coinaddr= jstr(json,"address")) != 0 )
     {
         if ( btc_addr2univ(&addrtype,rmd160,coinaddr) == 0 )
@@ -434,7 +436,6 @@ char *iguana_jsoncheck(char *retstr,int32_t freeflag)
 
 char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *method,cJSON *json)
 {
-    static struct iguana_info *lastcoin; extern char Default_coin[];
     char *symbol,*str,*retstr; int32_t height; cJSON *argjson,*obj;
     /*{"agent":"ramchain","method":"block","coin":"BTCD","hash":"<sha256hash>"}
     {"agent":"ramchain","method":"block","coin":"BTCD","height":345600}
@@ -451,16 +452,12 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
     {"agent":"ramchain","method":"txs","coin":"BTCD","height":12345}
     {"agent":"ramchain","method":"txs","coin":"BTCD","address":"<coinaddress>"}
     {"agent":"ramchain","method":"status","coin":"BTCD"}*/
-    if ( (symbol= jstr(json,"coin")) == 0 )
-        symbol = Default_coin;
-    if ( symbol != 0 && symbol[0] != 0 )
+    if ( (symbol= jstr(json,"coin")) != 0 && symbol[0] != 0 )
     {
         if ( coin == 0 )
             coin = iguana_coinfind(symbol);
         else if ( strcmp(symbol,coin->symbol) != 0 )
             return(clonestr("{\"error\":\"mismatched coin symbol\"}"));
-        if ( coin != 0 )
-            lastcoin = coin;
     }
     if ( strcmp(method,"explore") == 0 )
     {
@@ -498,11 +495,6 @@ char *ramchain_parser(struct iguana_agent *agent,struct iguana_info *coin,char *
             return(clonestr("{\"result\":\"explore search cant find height, blockhash, txid\"}"));
         }
         return(clonestr("{\"result\":\"explore no coin or search\"}"));
-    }
-    if ( coin == 0 && (coin= lastcoin) == 0 )
-    {
-        if ( (coin= iguana_coinselect()) == 0 )
-            return(clonestr("{\"error\":\"no coin specified and no existing coin or more than one\"}"));
     }
     return(ramchain_coinparser(coin,method,json));
 }
