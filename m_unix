@@ -1,4 +1,4 @@
-cd crypto777; gcc -O2 -c *.c; ar rcu libcrypto777.a *.o; cp libcrypto777.a ..; cd ..
+cd crypto777; gcc -O2 -c *.c jpeg/*.c ; ar rcu libcrypto777.a *.o; cp libcrypto777.a ..; cd ..
 gcc -O2 -o iguana *.c libcrypto777.a -lssl -lcrypto -lpthread -lm
 
 #gcc -O2 -o prices prices/*.c libcrypto777.a -lssl -lcrypto -lcurl -lpthread -lm

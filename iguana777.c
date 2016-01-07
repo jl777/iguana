@@ -359,7 +359,7 @@ void iguana_coinloop(void *arg)
             if ( (coin= coins[i]) != 0 )
             {
                 now = (uint32_t)time(NULL);
-                if ( coin->newramchain != 0 && now > coin->savedblocks+60 )
+                if ( 0 && coin->newramchain != 0 && now > coin->savedblocks+60 )
                 {
                     char fname[512]; FILE *fp;
                     sprintf(fname,"blocks.%s",coin->symbol), OS_compatible_path(fname);
