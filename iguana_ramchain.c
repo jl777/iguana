@@ -1702,11 +1702,15 @@ struct iguana_ramchain *iguana_bundleload(struct iguana_info *coin,struct iguana
             if ( (block= bp->blocks[i]) != 0 || (block= iguana_blockhashset(coin,bp->bundleheight+i,bp->hashes[i],1)) != 0 )
             {
                 block->queued = 1;
+                block->height = bp->bundleheight + i;
+                block->hdrsi = bp->hdrsi;
+                block->bundlei = i;
+                block->fpipbits = (uint32_t)calc_ipbits("127.0.0.1");
+
                 if ( bp->blocks[i] == 0 )
                     bp->blocks[i] = block;
                 if ( bits256_nonz(bp->hashes[i]) == 0 )
                     bp->hashes[i] = B[i].hash2;
-                block->fpipbits = (uint32_t)calc_ipbits("127.0.0.1");
                 _iguana_chainlink(coin,block);
             }
         }

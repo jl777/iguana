@@ -408,13 +408,6 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
             bp->numhashes = 0;
             numbundles++;
             numrecv = datasize = numsaved = 0;
-            /*if ( bp->emitfinish > coin->startutc )
-            {
-                bp->numrecv = bp->n;
-                numrecv += bp->n;
-                numsaved += bp->n;
-                bp->numhashes = bp->n;
-            }*/
             missing = -1;
             lefti = -1;
             if ( bp->numrecv >= bp->n )
@@ -519,7 +512,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                 }
                 if ( numsaved >= bp->n && bp->emitfinish == 0 )
                 {
-                    printf(">>>>>>>>>>>>>>>>>>>>>>> EMIT\n");
+                    //printf(">>>>>>>>>>>>>>>>>>>>>>> EMIT\n");
                     bp->emitfinish = 1;
                     iguana_emitQ(coin,bp);
                 }
@@ -530,7 +523,7 @@ void iguana_bundlestats(struct iguana_info *coin,char *str)
                     else bp->threshold = bp->avetime * 2;
                 } else*/
                 bp->threshold = bp->avetime;
-                bp->metric = sqrt(bp->threshold * fabs((bp->n - bp->numrecv)) * sqrt(bp->estsize - bp->datasize)) / coin->chain->bundlesize;
+                bp->metric = (bp->n - numsaved) / (bp->hdrsi + 1);//sqrt(abs((bp->n - bp->numrecv)) * sqrt(bp->estsize - bp->datasize)) / coin->chain->bundlesize;
             } else bp->threshold = 10000., bp->metric = 0.;
             totalrecv += numrecv;
             totalsaved += numsaved;
