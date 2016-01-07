@@ -1,3 +1,0 @@
-# Updated by fix_deps.py
-pnacl/Release/cards777.o: cards777.c
-cards777.c:

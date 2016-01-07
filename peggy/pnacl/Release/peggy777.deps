@@ -1,3 +1,0 @@
-# Updated by fix_deps.py
-pnacl/Release/peggy777.o: peggy777.c
-peggy777.c:
