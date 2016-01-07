@@ -7,32 +7,16 @@ pnacl/Release/iguana_unstripped.pexe
 
 pnacl/Release/iguana_unstripped.bc
 
-*.a
-
-*.a
-
-*.a
-
 tradebots/pnacl/Release/tradebots_unstripped.pexe
 
 peggy/pnacl/Release/PAX_unstripped.pexe
 
 peggy/pnacl/Release/PAX_unstripped.bc
 
-libs/libz.a
-
-libs/libz.a
-
 tradebots/pnacl/Release/tradebots.pexe
 
 tradebots/pnacl/Release/tradebots_unstripped.bc
 
 peggy/pnacl/Release/PAX.pexe
-
-libs/libnacl_spawn.a
-
-libs/libcli_main.a
-
-libs/libcli_main.a
 
 libs/libcrypto.a
