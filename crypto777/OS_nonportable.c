@@ -68,7 +68,7 @@ void *OS_nonportable_mapfile(char *fname,uint64_t *filesizep,int32_t enablewrite
 	else fd = _sopen(fname, _O_RDONLY | _O_BINARY, _SH_DENYNO);
 	if ( fd < 0 )
 	{
-		printf("map_file: error opening enablewrite.%d %s\n",enablewrite,fname);
+		//printf("map_file: error opening enablewrite.%d %s\n",enablewrite,fname);
         return(0);
 	}
     if ( *filesizep == 0 )

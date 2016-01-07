@@ -87,7 +87,8 @@ struct iguana_info *iguana_coinselect()
 
 void iguana_recvalloc(struct iguana_info *coin,int32_t numitems)
 {
-    coin->blocks.ptrs = myrealloc('W',coin->blocks.ptrs,coin->blocks.ptrs==0?0:coin->blocks.maxbits * sizeof(*coin->blocks.ptrs),numitems * sizeof(*coin->blocks.ptrs));
+    //coin->blocks.ptrs = myrealloc('W',coin->blocks.ptrs,coin->blocks.ptrs==0?0:coin->blocks.maxbits * sizeof(*coin->blocks.ptrs),numitems * sizeof(*coin->blocks.ptrs));
+    coin->blocks.RO = myrealloc('W',coin->blocks.RO,coin->blocks.RO==0?0:coin->blocks.maxbits * sizeof(*coin->blocks.RO),numitems * sizeof(*coin->blocks.RO));
     printf("realloc waitingbits.%d -> %d\n",coin->blocks.maxbits,numitems);
     coin->blocks.maxbits = numitems;
 }
@@ -348,7 +349,7 @@ void iguana_coinloop(void *arg)
     iguana_rwiAddrind(coin,0,0,0);
     iguana_possible_peer(coin,"127.0.0.1");
     memset(zero.bytes,0,sizeof(zero));
-    if ( (bp= iguana_bundlecreate(coin,&bundlei,0,*(bits256 *)coin->chain->genesis_hashdata,zero)) != 0 )
+    if ( (bp= iguana_bundlecreate(coin,&bundlei,0,*(bits256 *)coin->chain->genesis_hashdata,zero,1)) != 0 )
         bp->bundleheight = 0;
     while ( 1 )
     {
@@ -358,7 +359,20 @@ void iguana_coinloop(void *arg)
             if ( (coin= coins[i]) != 0 )
             {
                 now = (uint32_t)time(NULL);
-                if ( coin->isRT == 0 && now > coin->starttime+600 && coin->blocksrecv >= coin->longestchain-1 && coin->blocks.hwmchain.height >= coin->longestchain-1 )
+                if ( coin->newramchain != 0 && now > coin->savedblocks+60 )
+                {
+                    char fname[512]; FILE *fp;
+                    sprintf(fname,"blocks.%s",coin->symbol), OS_compatible_path(fname);
+                    if ( (fp= fopen(fname,"wb")) != 0 )
+                    {
+                        if ( fwrite(coin->blocks.RO,sizeof(*coin->blocks.RO),coin->longestchain,fp) != coin->longestchain )
+                            printf("error saving blocks\n");
+                        else printf("%s saved\n",fname);
+                        fclose(fp);
+                        coin->savedblocks = (uint32_t)time(NULL);
+                    }
+                }
+                if ( coin->isRT == 0 && now > coin->startutc+600 && coin->blocksrecv >= coin->longestchain-1 && coin->blocks.hwmchain.height >= coin->longestchain-1 )
                 {
                     printf(">>>>>>> %s isRT blockrecv.%d vs longest.%d\n",coin->symbol,coin->blocksrecv,coin->longestchain);
                     coin->isRT = 1;
@@ -378,13 +392,12 @@ void iguana_coinloop(void *arg)
                         if ( iguana_updateramchain(coin) != 0 )
                             iguana_syncs(coin), flag++; // merge ramchain fragments into full ramchain
                     }
-                    if ( now > lastdisp+1 )
+                    //if ( now > lastdisp+1 )
                     {
                         lastdisp = (uint32_t)now;
                         iguana_bundlestats(coin,str);
                         if ( str[0] != 0 )
                         {
-                            printf("%s.%-2d %s time %.2f files.%d Q.%d %d\n",coin->symbol,flag,str,(double)(time(NULL)-coin->starttime)/60.,coin->peers.numfiles,queue_size(&coin->priorityQ),queue_size(&coin->blocksQ));
                             if ( (rand() % 30) == 0 )
                                 myallocated(0,0);
                         }
@@ -426,7 +439,7 @@ struct iguana_info *iguana_setcoin(char *symbol,void *launched,int32_t maxpeers,
     if ( (coin->MAXRECVCACHE= maxrecvcache) == 0 )
         coin->MAXRECVCACHE = IGUANA_MAXRECVCACHE;
     if ( (coin->MAXPENDING= maxpending) <= 0 )
-        coin->MAXPENDING = _IGUANA_MAXPENDING;//(strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*32;
+        coin->MAXPENDING = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXPENDING : _IGUANA_MAXPENDING*13;
     if ( (coin->MAXBUNDLES= maxbundles) <= 0 )
         coin->MAXBUNDLES = (strcmp(symbol,"BTC") == 0) ? _IGUANA_MAXBUNDLES : _IGUANA_MAXBUNDLES*64;
     coin->myservices = services;

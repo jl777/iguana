@@ -14,6 +14,7 @@
  ******************************************************************************/
 
 #include "iguana777.h"
+#include "crypto777/jpeg/jpeglib.h"
 
 #define NUM_COMBINED 100
 
@@ -77,6 +78,85 @@ double Latestbids[NUM_COMBINED+1],Latestasks[NUM_COMBINED+1];
 int32_t Last_keypress_time,Disable_currency_display,Invert_currency_display,Display_mode=1;
 uint64_t Reloadflag;
 //struct wbits State_wbits,Parsed_wbits,Parsedbits[NUM_COMBINED+1],Processedbits[NUM_COMBINED+1],Processed_wbits,Trade_wbits,Feedback_wbits;
+
+void gen_ppmfile(char *fname,int32_t binaryflag,uint8_t *bitmap,int32_t width,int32_t height)
+{
+    int32_t x,j,red,green,blue;
+    FILE *fp;
+    /*
+     Each PPM image consists of the following:
+     
+     A "magic number" for identifying the file type. A ppm image's magic number is the two characters "P6".
+     Whitespace (blanks, TABs, CRs, LFs).
+     A width, formatted as ASCII characters in decimal.
+     Whitespace.
+     A height, again in ASCII decimal.
+     Whitespace.
+     The maximum color value (Maxval), again in ASCII decimal. Must be less than 65536 and more than zero.
+     A single whitespace character (usually a newline).
+     A raster of Height rows, in order from top to bottom. Each row consists of Width pixels, in order from left to right. Each pixel is a triplet of red, green, and blue samples, in that order. Each sample is represented in pure binary by either 1 or 2 bytes. If the Maxval is less than 256, it is 1 byte. Otherwise, it is 2 bytes. The most significant byte is first.
+     */
+    if ( (fp= fopen(fname,"wb")) != 0 )
+    {
+        fprintf(fp,"P6 %d %d 255\n",width,height);
+        for (j=0; j<height; j++)
+            for (x=0; x<width; x++)
+            {
+                red = *bitmap++, green = *bitmap++, blue = *bitmap++;
+                if ( binaryflag != 0 )
+                {
+                    fputc(red & 0xff,fp);
+                    fputc(green & 0xff,fp);
+                    fputc(blue & 0xff,fp);
+                } else fprintf(fp,"%d %d %d\n",red,green,blue);
+            }
+        fclose(fp);
+    }
+}
+
+void gen_jpegfile(char *fname,int32_t quality,uint8_t *bitmap,int32_t width,int32_t height)
+{
+    struct jpeg_compress_struct cinfo;
+    struct jpeg_error_mgr jerr;
+    FILE * outfile;		/* target file */
+    JSAMPROW row_pointer[1];	/* pointer to JSAMPLE row[s] */
+    int row_stride;		/* physical row width in image buffer */
+    cinfo.err = jpeg_std_error(&jerr);
+    jpeg_create_compress(&cinfo);
+    if ((outfile = fopen(fname, "wb")) == NULL)
+    {
+        fprintf(stderr, "can't open %s\n", fname);
+        exit(1);
+    }
+    jpeg_stdio_dest(&cinfo, outfile);
+    cinfo.image_width = width; 	/* image width and height, in pixels */
+    cinfo.image_height = height;
+    cinfo.input_components = 3;		/* # of color components per pixel */
+    cinfo.in_color_space = JCS_RGB; 	/* colorspace of input image */
+    jpeg_set_defaults(&cinfo);
+    jpeg_set_quality(&cinfo, quality, TRUE /* limit to baseline-JPEG values */);
+    jpeg_start_compress(&cinfo, TRUE);
+    row_stride = width * 3;	/* JSAMPLEs per row in image_buffer */
+    while (cinfo.next_scanline < cinfo.image_height)
+    {
+        row_pointer[0] = &bitmap[cinfo.next_scanline * row_stride];
+        (void) jpeg_write_scanlines(&cinfo, row_pointer, 1);
+    }
+    jpeg_finish_compress(&cinfo);
+    fclose(outfile);
+    jpeg_destroy_compress(&cinfo);
+}
+
+/*
+int main()
+{
+    int i; unsigned char image[100][300][3];
+    memset(image,0,sizeof(image));
+    for (i=0; i<300; i++)
+        image[50][i][0] = 0x55, image[50][i][1] = 0xaa, image[50][i][2] = 0xff;
+    write_JPEG_file("test.jpg",50,image,300,100);
+    return(0);
+}*/
 
 double _pairaved(double valA,double valB)
 {
@@ -959,23 +1039,43 @@ void *display_loop(void *ptr)
 }
 #endif
 
-void iguana_bitmapbundle(uint8_t *rect,int32_t rowwidth,int32_t width,int32_t height,struct iguana_bundle *bp)
+void iguana_bitmapbundle(struct iguana_info *coin,uint8_t *rect,int32_t rowwidth,int32_t width,int32_t height,struct iguana_bundle *bp)
 {
-    int32_t x,y; uint8_t red,green,blue,*ptr; double frac,sum = 0.;
+    int32_t x,y; uint8_t red,green,blue,*ptr; struct iguana_block *block; double frac,sum = 0.;
     if ( bp != 0 )
     {
         if ( bp->red == 0 )
             bp->red = rand(), bp->green = rand(), bp->blue = rand();
-        red = bp->red, green = bp->green, blue = bp->blue;
+        red = green = blue = 0;
         frac = (double)bp->n / (width * height);
         for (y=0; y<height; y++,rect+=rowwidth*3)
         {
             ptr = rect;
             for (x=0; x<width; x++,sum+=frac)
             {
-                if ( bp->ipbits[(int32_t)sum] != 0 )
-                    *ptr++ = red, *ptr++ = green, *ptr++ = blue;
-                else *ptr++ = 0, *ptr++ = 0, *ptr++ = 0;
+                green = red = blue = 0;
+                if ( bp->ramchain.H.data != 0 )
+                {
+                    blue = 0xff;
+                    if ( bp->bundleheight+(int32_t)sum > coin->blocks.hwmchain.height )
+                        red = 0xff, green = 0xff, blue = 0;
+                    else green = 0xff, blue = 0, red = 0;
+                }
+                else
+                {
+                    red = green = blue = 0;
+                    if ( (block= bp->blocks[(int32_t)sum]) != 0 )
+                    {
+                        blue = 0xff;
+                        if ( block->RO.recvlen != 0 )
+                            green = 0xcc;
+                        else green = 0x40;
+                        if ( block->fpipbits != 0 )
+                            red = 0xcc;
+                        else red = 0x40;
+                    }
+                }
+                *ptr++ = red, *ptr++ = green, *ptr++ = blue;
             }
         }
     }
@@ -984,7 +1084,7 @@ void iguana_bitmapbundle(uint8_t *rect,int32_t rowwidth,int32_t width,int32_t he
 struct iguana_bitmap *iguana_bitmapfind(char *name)
 {
     struct iguana_info *coin; int32_t width,height,n,hdrsi,x,y;
-    if ( (coin= iguana_coinfind(name)) != 0 )
+    if ( (coin= iguana_coinfind(name)) != 0 || (coin= iguana_coinfind("BTCD")) != 0 )
     {
         strcpy(coin->screen.name,coin->symbol);
         coin->screen.amplitude = 255;
@@ -1009,7 +1109,7 @@ struct iguana_bitmap *iguana_bitmapfind(char *name)
                 {
                     if ( hdrsi >= coin->bundlescount )
                         break;
-                    iguana_bitmapbundle(&coin->screen.data[3*(y*coin->screen.width*n + x*n)],coin->screen.width,n,n,coin->bundles[hdrsi]);
+                    iguana_bitmapbundle(coin,&coin->screen.data[3*(y*coin->screen.width*n + x*n)],coin->screen.width,n,n,coin->bundles[hdrsi]);
                 }
             }
         }
@@ -1020,8 +1120,12 @@ struct iguana_bitmap *iguana_bitmapfind(char *name)
 
 void iguana_bitmap(char *space,int32_t max,char *name)
 {
-    struct iguana_bitmap *rect; char pixel[64]; uint8_t *ptr; int32_t h,w,red,green,blue,x,y,n,len = 0;
-    if ( name == 0 || name[0] == 0 || (rect= iguana_bitmapfind(name)) == 0 )
+    struct iguana_info *coin; struct iguana_bitmap *rect; char pixel[64],fname[512];
+    uint8_t *ptr; int32_t h,w,red,green,blue,x,y,n,len = 0;
+    if ( name == 0 || name[0] == 0 )
+        name = "BTCD";
+    coin = iguana_coinfind(name);
+    if ( (rect= iguana_bitmapfind(name)) == 0 )
     {
         strcpy(space,"{\"name\":\"nobitmap\",\"amplitude\":222,\"width\":1,\"height\":1,\"pixels\":[222,0,22]}");
         //sprintf(space,"Content-type: text/standard\r\n");
@@ -1031,7 +1135,7 @@ void iguana_bitmap(char *space,int32_t max,char *name)
     }
     else
     {
-        sprintf(space,"{\"name\":\"%s\",\"amplitude\":%u,\"width\":%d,\"height\":%d,\"pixels\":[",name,rect->amplitude,rect->width,rect->height), len = (int32_t)strlen(space);
+        sprintf(space,"{\"name\":\"%s\",\"status\":\"%s\",\"amplitude\":%u,\"width\":%d,\"height\":%d,\"pixels\":[",name,coin!=0?coin->statusstr:"no coin",rect->amplitude,rect->width,rect->height), len = (int32_t)strlen(space);
         ptr = rect->data;
         h = rect->height, w = rect->width;
         for (y=0; y<h; y++)
@@ -1046,6 +1150,11 @@ void iguana_bitmap(char *space,int32_t max,char *name)
             }
         }
         space[len-1] = ']', space[len++] = '}', space[len++] = 0;
+        //if ( (rand() % 100) == 0 )
+        {
+            sprintf(fname,"%s.jpg",name);
+            gen_jpegfile(fname,1,rect->data,rect->width,rect->height);
+        }
         //printf("BIGMAP.(%s)\n",space);
     }
 }

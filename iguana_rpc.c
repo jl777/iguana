@@ -72,13 +72,13 @@ char *jumblr_parser(struct iguana_agent *agent,struct iguana_info *coin,char *me
 struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *tx,struct iguana_block *block,int32_t i)
 {
     struct iguana_bundle *bp; uint32_t txidind;
-    if ( i >= 0 && i < block->txn_count )
+    if ( i >= 0 && i < block->RO.txn_count )
     {
         if ( block->height >= 0 ) //
         {
             if ( (bp= coin->bundles[block->hdrsi]) != 0 )
             {
-                if ( (txidind= bp->firsttxidinds[block->bundlei]) > 0 )
+                if ( (txidind= block->RO.firsttxidind) > 0 )//bp->firsttxidinds[block->bundlei]) > 0 )
                 {
                     if ( iguana_bundletx(coin,bp,block->bundlei,tx,txidind+i) == tx )
                         return(tx);
@@ -87,35 +87,35 @@ struct iguana_txid *iguana_blocktx(struct iguana_info *coin,struct iguana_txid *
                 } else printf("iguana_blocktx null txidind\n");
             } else printf("iguana_blocktx no bp\n");
         }
-    } else printf("i.%d vs txn_count.%d\n",i,block->txn_count);
+    } else printf("i.%d vs txn_count.%d\n",i,block->RO.txn_count);
     return(0);
 }
 
 cJSON *iguana_blockjson(struct iguana_info *coin,struct iguana_block *block,int32_t txidsflag)
 {
     char str[65]; int32_t i; struct iguana_txid *tx,T; cJSON *array,*json = cJSON_CreateObject();
-    jaddstr(json,"blockhash",bits256_str(str,block->hash2));
+    jaddstr(json,"blockhash",bits256_str(str,block->RO.hash2));
     jaddnum(json,"height",block->height);
-    jaddstr(json,"merkle_root",bits256_str(str,block->merkle_root));
-    jaddstr(json,"prev_block",bits256_str(str,block->prev_block));
-    jaddnum(json,"timestamp",block->timestamp);
-    jaddnum(json,"nonce",block->nonce);
-    jaddnum(json,"nBits",block->bits);
-    jaddnum(json,"version",block->version);
-    jaddnum(json,"PoW",block->PoW);
-    jaddnum(json,"numvouts",block->numvouts);
-    jaddnum(json,"numvins",block->numvins);
-    jaddnum(json,"ipbits",block->ipbits);
-    jaddnum(json,"recvlen",block->recvlen);
+    jaddnum(json,"ipbits",block->fpipbits);
+    jaddstr(json,"merkle_root",bits256_str(str,block->RO.merkle_root));
+    jaddstr(json,"prev_block",bits256_str(str,block->RO.prev_block));
+    jaddnum(json,"timestamp",block->RO.timestamp);
+    jaddnum(json,"nonce",block->RO.nonce);
+    jaddnum(json,"nBits",block->RO.bits);
+    jaddnum(json,"version",block->RO.version);
+    jaddnum(json,"numvouts",block->RO.numvouts);
+    jaddnum(json,"numvins",block->RO.numvins);
+    jaddnum(json,"recvlen",block->RO.recvlen);
     jaddnum(json,"hdrsi",block->hdrsi);
+    jaddnum(json,"PoW",block->PoW);
     jaddnum(json,"bundlei",block->bundlei);
     jaddnum(json,"mainchain",block->mainchain);
     jaddnum(json,"valid",block->valid);
-    jaddnum(json,"txn_count",block->txn_count);
+    jaddnum(json,"txn_count",block->RO.txn_count);
     if ( txidsflag != 0 )
     {
         array = cJSON_CreateArray();
-        for (i=0; i<block->txn_count; i++)
+        for (i=0; i<block->RO.txn_count; i++)
         {
             if ( (tx= iguana_blocktx(coin,&T,block,i)) != 0 )
                 jaddistr(array,bits256_str(str,tx->txid));
@@ -251,7 +251,7 @@ char *ramchain_coinparser(struct iguana_info *coin,char *method,cJSON *json)
     char *hashstr,*txidstr,*coinaddr,*txbytes,rmd160str[41],str[65]; int32_t height,i,n,valid = 0;
     cJSON *addrs,*retjson,*retitem; uint8_t rmd160[20],addrtype; bits256 hash2,checktxid;
     memset(&hash2,0,sizeof(hash2)); struct iguana_txid *tx,T; struct iguana_block *block = 0;
-    if ( coin == 0 )
+    if ( coin == 0 && (coin= iguana_coinselect()) == 0 )
         return(clonestr("{\"error\":\"ramchain_coinparser needs coin\"}"));
     if ( (coinaddr= jstr(json,"address")) != 0 )
     {
@@ -275,9 +275,9 @@ char *ramchain_coinparser(struct iguana_info *coin,char *method,cJSON *json)
         retitem = cJSON_CreateObject();
         if ( (block= iguana_blockfind(coin,hash2)) != 0 )
         {
-            if ( (height >= 0 && block->height == height) || memcmp(hash2.bytes,block->hash2.bytes,sizeof(hash2)) == 0 )
+            if ( (height >= 0 && block->height == height) || memcmp(hash2.bytes,block->RO.hash2.bytes,sizeof(hash2)) == 0 )
             {
-                char str[65],str2[65]; printf("hash2.(%s) -> %s\n",bits256_str(str,hash2),bits256_str(str2,block->hash2));
+                char str[65],str2[65]; printf("hash2.(%s) -> %s\n",bits256_str(str,hash2),bits256_str(str2,block->RO.hash2));
                 return(jprint(iguana_blockjson(coin,block,juint(json,"txids")),1));
             }
         }
@@ -339,7 +339,7 @@ char *ramchain_coinparser(struct iguana_info *coin,char *method,cJSON *json)
         retitem = cJSON_CreateArray();
         if ( block != 0 )
         {
-            for (i=0; i<block->txn_count; i++)
+            for (i=0; i<block->RO.txn_count; i++)
             {
                 if ( (tx= iguana_blocktx(coin,&T,block,i)) != 0 )
                     jaddi(retitem,iguana_txjson(coin,tx,-1));

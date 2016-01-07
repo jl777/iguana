@@ -84,9 +84,9 @@ struct OS_memspace
 #endif
 };
 
-struct tai { uint64_t x; };
+struct tai { uint64_t x; double millis; };
 struct taidate { int32_t year,month,day; };
-struct taitime { struct taidate date; int32_t hour,minute,second; uint32_t offset; };
+struct taitime { struct taidate date; int32_t hour,minute,second; uint32_t offset; double millis; };
 int32_t leapsecs_sub(struct tai *);
 
 struct tai tai_now();
@@ -97,10 +97,10 @@ struct taidate tai2date(struct tai t);
 int32_t taidate_str(char *s,struct taidate cd);
 char *taitime_str(char *s,struct taitime ct);
 int32_t taidate_mjd(struct taidate cd);
-uint64_t tai2utime(struct tai t);
+uint32_t tai2utime(struct tai t);
 struct tai taitime2tai(struct taitime ct);
 char *tai_str(char *str,struct tai t);
-char *utime_str(char *str,struct tai t);
+char *utc_str(char *str,struct tai t);
 
 int32_t msync(void *addr,size_t len,int32_t flags);
 

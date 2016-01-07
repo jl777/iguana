@@ -16,14 +16,14 @@
 #include "OS_portable.h"
 
 #define TAI_PACK 8
-#define UTC_ADJUST -36
+//#define UTC_ADJUST -36
 #define tai_approx(t) ((double) ((t)->x))
 #define tai_less(t,u) ((t)->x < (u)->x)
 
 int32_t leapsecs_sub(struct tai *);
-
-struct tai tai_now() { struct tai t; t.x = 4611686018427387914ULL + (uint64_t)time(NULL); return(t); }
-uint32_t tai2utc(struct tai t) { t.x -= 4611686018427387914ULL; return((uint32_t)t.x); }
+static struct tai First_TAI;
+uint32_t First_utc;
+int32_t UTC_ADJUST;
 
 struct taidate taidate_frommjd(int32_t day,int32_t *pwday,int32_t *pyday)
 {
@@ -63,17 +63,30 @@ struct taidate taidate_frommjd(int32_t day,int32_t *pwday,int32_t *pyday)
 
 struct taitime tai2time(struct tai t,int32_t *pwday,int32_t *pyday)
 {
-    uint64_t u; int32_t leap,s; struct taitime ct;
+    uint64_t u,tmp; int32_t leap,s; double diff; struct taitime ct;
     leap = leapsecs_sub(&t);
     u = t.x;
-    u += (58486 + 60); // was off my a minute
+    u += (58486 + 60); // was off by a minute
     s = u % 86400ULL;
+    memset(&ct,0,sizeof(ct));
     ct.second = (s % 60) + leap; s /= 60;
     ct.minute = s % 60; s /= 60;
     ct.hour = s;
     u /= 86400ULL;
     ct.date = taidate_frommjd((int32_t)(u - 53375995543064ULL),pwday,pyday);
     ct.offset = 0;
+    if ( First_TAI.x != 0 && t.x > First_TAI.x )
+    {
+        tmp = (t.x - First_TAI.x);
+        diff = (t.millis - First_TAI.millis);
+        if ( diff < tmp*1000 )
+            tmp = 0, printf("TAI diff %f vs tmp.%lld\n",diff,(long long)tmp);
+        else tmp = diff * 1000000000.;
+        //printf("tmp.%llu \n",(long long)tmp);
+        tmp %= (uint64_t)1000000000000;
+        ct.millis = ((double)tmp / 1000000000.);
+    }
+    //printf("TAI millis: %lld -1st.%lld %f - %f -> %f | %f\n",(long long)t.x,(long long)First_TAI.x,t.millis,First_TAI.millis,t.millis-First_TAI.millis,ct.millis);
     return(ct);
 }
 
@@ -234,11 +247,27 @@ int32_t taidate_mjd(struct taidate cd)
     return d;
 }
 
-uint64_t tai2utime(struct tai t)
+uint32_t tai2utc(struct tai t) { t.x -= 4611686018427387914ULL; return((uint32_t)t.x); }
+
+uint32_t tai2utime(struct tai t)
 {
     uint64_t mjd; struct taitime ct = tai2time(t,0,0);
     mjd = taidate_mjd(ct.date);
-    return(mjd * 24*3600 + ct.hour*3600 + ct.minute*60 + ct.second);
+    return((uint32_t)(mjd * 24*3600 + ct.hour*3600 + ct.minute*60 + ct.second));
+}
+
+struct tai tai_now()
+{
+    struct tai t;
+    t.x = 4611686018427387914ULL + (uint64_t)time(NULL);
+    t.millis = OS_milliseconds();
+    if ( First_TAI.x == 0 )
+    {
+        First_TAI = t, First_utc = (uint32_t)time(NULL);
+        UTC_ADJUST = -36;
+        printf("TAINOW.%llu %03.3f UTC.%u vs %u [diff %d]\n",(long long)t.x,t.millis,First_utc,tai2utc(t),UTC_ADJUST);
+    }
+    return(t);
 }
 
 struct tai leapsecs_add(struct tai t,int32_t hit)
@@ -266,6 +295,7 @@ struct tai taitime2tai(struct taitime ct)
     s = ct.hour * 60 + ct.minute;
     s = (s - ct.offset) * 60 + ct.second;
     t.x = day * 86400ULL + 4611686014920671114ULL + (uint64_t)s;
+    t.millis = ct.millis;
     return(leapsecs_add(t,ct.second == 60));
 }
 
@@ -345,17 +375,14 @@ char *tai_str(char *str,struct tai t)
 {
     struct taitime ct;
     ct = tai2time(t,0,0);
-    sprintf(str,"%d-%02d-%02d %02d:%02d:%02d",ct.date.year,ct.date.month,ct.date.day,ct.hour,ct.minute,ct.second);
+    sprintf(str,"%d-%02d-%02d %02d:%02d:%02d %03.3f",ct.date.year,ct.date.month,ct.date.day,ct.hour,ct.minute,ct.second,ct.millis);
     return(str);
 }
 
-char *utime_str(char *str,struct tai t)
+char *utc_str(char *str,struct tai t)
 {
-    struct taitime ct;
     t.x += UTC_ADJUST;
-    ct = tai2time(t,0,0);
-    sprintf(str,"%d-%02d-%02d %02d:%02d:%02d",ct.date.year,ct.date.month,ct.date.day,ct.hour,ct.minute,ct.second);
-    return(str);
+    return(tai_str(str,t));
 }
 
 #ifdef ENABLE_TEST

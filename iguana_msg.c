@@ -295,13 +295,13 @@ int32_t iguana_serialize_block(bits256 *hash2p,uint8_t serialized[sizeof(struct 
 {
     struct iguana_msgblock msg;
     memset(&msg,0,sizeof(msg));
-    msg.H.version = block->version;
-    msg.H.prev_block = block->prev_block;
-    msg.H.merkle_root = block->merkle_root;
-    msg.H.timestamp = block->timestamp;
-    msg.H.bits = block->bits;
-    msg.H.nonce = block->nonce;
-    msg.txn_count = block->txn_count;
+    msg.H.version = block->RO.version;
+    msg.H.prev_block = block->RO.prev_block;
+    msg.H.merkle_root = block->RO.merkle_root;
+    msg.H.timestamp = block->RO.timestamp;
+    msg.H.bits = block->RO.bits;
+    msg.H.nonce = block->RO.nonce;
+    msg.txn_count = block->RO.txn_count;
     return(iguana_rwblock(1,hash2p,serialized,&msg));
 }
 
@@ -614,6 +614,7 @@ int32_t iguana_send_hashes(struct iguana_info *coin,char *command,struct iguana_
 
 int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct OS_memspace *rawmem,struct OS_memspace *txmem,struct OS_memspace *hashmem,struct iguana_msghdr *H,uint8_t *data,int32_t datalen)
 {
+    uint8_t serialized[512];
     int32_t i,retval,srvmsg,bloom,intvectors,len= -100; uint64_t nonce,x; uint32_t type; bits256 hash2;
     bloom = intvectors = srvmsg = -1;
     if ( addr != 0 )
@@ -655,6 +656,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct O
                 iguana_gotping(coin,addr,nonce,data);
                 addr->msgcounts.ping++;
             }
+            iguana_queue_send(coin,addr,serialized,"getaddr",0,0,0);
         }
     }
     else if ( strcmp(H->command,"pong") == 0 )
@@ -667,6 +669,7 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct O
         } else printf("unexpected pong datalen.%d\n",datalen);
         if ( len == datalen && addr != 0 )
             addr->msgcounts.pong++;
+        iguana_queue_send(coin,addr,serialized,"getaddr",0,0,0);
     }
     else if ( strcmp(H->command,"addr") == 0 )
     {
@@ -723,8 +726,8 @@ int32_t iguana_parser(struct iguana_info *coin,struct iguana_peer *addr,struct O
         iguana_memreset(rawmem), iguana_memreset(txmem);//, iguana_memreset(hashmem);
         memset(&txdata,0,sizeof(txdata));
         if ( (len= iguana_gentxarray(coin,rawmem,&txdata,&len,data,datalen)) == datalen )
-            iguana_gotblockM(coin,addr,&txdata,rawmem->ptr,data,datalen);
-        else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",txdata.block.txn_count,len,datalen);
+            iguana_gotblockM(coin,addr,&txdata,rawmem->ptr,H,data,datalen);
+        else printf("parse error block txn_count.%d, len.%d vs datalen.%d\n",txdata.block.RO.txn_count,len,datalen);
     }
     else if ( strcmp(H->command,"reject") == 0 )
     {

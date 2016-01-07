@@ -10039,5 +10039,133 @@ void iguana_dedicatedrecv(void *arg)
                                             xmlhttp.send(null);\
                                             }\
                                             var jsonstr = httpGet(\"http://127.0.0.1:7778/json/bitmap\"); \
-
+                                            struct iguana_bundlereq *iguana_recvblock(struct iguana_info *coin,struct iguana_peer *addr,struct iguana_bundlereq *req,struct iguana_block *origblock,int32_t numtx,int32_t datalen,int32_t recvlen,int32_t *newhwmp)
+            {
+                struct iguana_bundle *bp=0; int32_t bundlei = -2; struct iguana_block *block; double duration;
+                bp = iguana_bundleset(coin,&block,&bundlei,origblock);
+                if ( block != 0 )
+                {
+                    block->RO.recvlen = recvlen;
+                    block->ipbits = req->ipbits;
+                    if ( bp == 0 && req->copyflag != 0 && block->rawdata == 0 )
+                    {
+                        char str[65]; printf("%s copyflag.%d %d data %d %p\n",bits256_str(str,block->RO.hash2),req->copyflag,block->height,req->recvlen,bp);
+                        block->rawdata = mycalloc('n',1,block->RO.recvlen);
+                        memcpy(block->rawdata,req->serialized,block->RO.recvlen);
+                        block->copyflag = 1;
+                    }
+                    //printf("datalen.%d ipbits.%x\n",datalen,req->ipbits);
+                } else printf("cant create block.%llx block.%p bp.%p bundlei.%d\n",(long long)origblock->RO.hash2.txid,block,bp,bundlei);
+                if ( bp != 0 && bundlei >= 0 )
+                {
+                    //bp->ipbits[bundlei] = block->ipbits;
+                    if ( 0 && bp->requests[bundlei] > 2 )
+                        printf("recv bundlei.%d hdrs.%d reqs.[%d] fpos.%d datalen.%d recvlen.(%d %d) ipbits.(%x %x %x)\n",bundlei,bp->hdrsi,bp->requests[bundlei],bp->fpos[bundlei],datalen,block->RO.recvlen,req->recvlen,block->ipbits,bp->ipbits[bundlei],req->ipbits);
+                    if ( recvlen > 0 )
+                    {
+                        SETBIT(bp->recv,bundlei);
+                        if ( bp->issued[bundlei] > 0 )
+                        {
+                            bp->durationsum += (int32_t)(time(NULL) - bp->issued[bundlei]);
+                            bp->durationcount++;
+                            if ( duration < bp->avetime/10. )
+                                duration = bp->avetime/10.;
+                            else if ( duration > bp->avetime*10. )
+                                duration = bp->avetime * 10.;
+                            dxblend(&bp->avetime,duration,.99);
+                            dxblend(&coin->avetime,bp->avetime,.9);
+                        }
+                    }
+                    if ( 0 && strcmp(coin->symbol,"BTC") != 0 && bundlei < coin->chain->bundlesize-1 && bits256_nonz(bp->hashes[bundlei+1]) != 0 && bp->fpos[bundlei+1] < 0 )
+                        iguana_blockQ(coin,bp,bundlei+1,bp->hashes[bundlei+1],0);
+                }
+                if ( 0 && block != 0 && strcmp(coin->symbol,"BTC") != 0 )
+                {
+                    if ( (bp = iguana_bundlefind(coin,&bp,&bundlei,block->RO.prev_block)) != 0 )
+                    {
+                        if ( bp->fpos[bundlei] < 0 )
+                            iguana_blockQ(coin,bp,bundlei,block->RO.prev_block,0);
+                    }
+                }
+                return(req);
+            }
+                struct iguana_bundle *iguana_bundleset(struct iguana_info *coin,struct iguana_block **blockp,int32_t *bundleip,struct iguana_block *origblock)
+            {
+                struct iguana_block *block; bits256 zero,*hashes; struct iguana_bundle *bp = 0;
+                int32_t bundlei = -2;
+                *bundleip = -2; *blockp = 0;
+                if ( origblock == 0 )
+                    return(0);
+                memset(zero.bytes,0,sizeof(zero));
+                if ( (block= iguana_blockhashset(coin,-1,origblock->RO.hash2,1)) != 0 )
+                {
+                    if ( block != origblock )
+                        iguana_blockcopy(coin,block,origblock);
+                    *blockp = block;
+                    if ( bits256_nonz(block->RO.prev_block) > 0 )
+                        iguana_patch(coin,block);
+                    if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,block->RO.hash2)) != 0 )
+                    {
+                        if ( bundlei < coin->chain->bundlesize )
+                        {
+                            block->bundlei = bundlei;
+                            block->hdrsi = bp->hdrsi;
+                            //iguana_hash2set(coin,"blockadd",bp,block->bundlei,block->hash2);
+                            iguana_bundlehash2add(coin,0,bp,bundlei,block->RO.hash2);
+                            if ( bundlei == 0 )
+                            {
+                                if ( bp->hdrsi > 0 && (bp= coin->bundles[bp->hdrsi-1]) != 0 )
+                                {
+                                    //printf("add to prev hdrs.%d\n",bp->hdrsi);
+                                    iguana_bundlehash2add(coin,0,bp,coin->chain->bundlesize-1,block->RO.prev_block);
+                                    if ( 0 && bp->fpos[coin->chain->bundlesize-1] < 0 && strcmp(coin->symbol,"BTC") != 0 )
+                                        iguana_blockQ(coin,bp,coin->chain->bundlesize-1,block->RO.prev_block,0);
+                                }
+                            }
+                            else
+                            {
+                                //printf("prev issue.%d\n",bp->bundleheight+bundlei-1);
+                                iguana_bundlehash2add(coin,0,bp,bundlei-1,block->RO.prev_block);
+                                if ( 0 && bp->fpos[bundlei-1] < 0 && strcmp(coin->symbol,"BTC") != 0 )
+                                    iguana_blockQ(coin,bp,bundlei-1,block->RO.prev_block,0);
+                            }
+                        }
+                    }
+                    if ( (bp= iguana_bundlefind(coin,&bp,&bundlei,block->RO.prev_block)) != 0 )
+                    {
+                        //printf("found prev.%d\n",bp->bundleheight+bundlei);
+                        if ( bundlei < coin->chain->bundlesize )
+                        {
+                            if ( bundlei == coin->chain->bundlesize-1 )
+                            {
+                                if ( coin->bundlescount < bp->hdrsi+1 )
+                                {
+                                    char str[65]; printf("autoextend CREATE.%d new bundle.%s\n",bp->bundleheight + coin->chain->bundlesize,bits256_str(str,block->RO.hash2));
+                                    iguana_bundlecreate(coin,&bundlei,bp->bundleheight + coin->chain->bundlesize,block->RO.hash2,zero);
+                                }
+                            }
+                            else if ( bundlei < coin->chain->bundlesize-1 )
+                            {
+                                block->bundlei = bundlei + 1;
+                                block->hdrsi = bp->hdrsi;
+                                iguana_bundlehash2add(coin,0,bp,bundlei+1,block->RO.hash2);
+                            }
+                        }
+                    }
+                    //char str[65]; printf("iguana_recvblock (%s) %d %d[%d] %p\n",bits256_str(str,block->hash2),block->havebundle,block->hdrsi,bundlei,bp);
+                }
+                return(iguana_bundlefind(coin,&bp,bundleip,origblock->RO.hash2));
+            }
+                int32_t iguana_bundlemode(struct iguana_info *coin,struct iguana_bundle *bp,int32_t bundlei)
+            {
+                if ( bp->ipbits[bundlei] == 0 )
+                    return(-1);
+                else if ( bp->emitfinish > coin->starttime )
+                {
+                    if ( bp->ramchain.numblocks == bp->n )
+                        return(1);
+                    else return(2);
+                }
+                else return(0);
+            }
 #endif

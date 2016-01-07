@@ -306,10 +306,10 @@ char *iguana_htmlget(char *space,int32_t max,int32_t *jsonflagp,char *path,char 
     path[i] = 0;
     if ( path[strlen(path)-1] == '/' )
         path[strlen(path)-1] = 0;
-    if ( strncmp(path,"/json",strlen("/json")) == 0 )
+    if ( strncmp(path,"/api",strlen("/api")) == 0 )
     {
         *jsonflagp = 1;
-        path += strlen("/json");
+        path += strlen("/api");
     } else *jsonflagp = 0;
     iguana_coinset(coinstr,path);
     if ( coinstr[0] != 0 )
@@ -714,26 +714,14 @@ function process_bitmap(bitmapjson) \
     var ctx = canvas.getContext(\"2d\"); \
     var image = ctx.getImageData(0,0,Width,Height); \
     RTamplitude = bitmap.amplitude / 255; \
-    RTname = bitmap.name; \
+    RTname = bitmap.status; \
     RTjson = bitmapjson; RTwidth = bitmap.width; RTheight = bitmap.height; \
-    red = 55; blue = 22; green = 222; n = 0; m = 0;\
+    red = 0; blue = 0; green = 0; n = 0; m = 0;\
     for (y=0; y<Height; y++)\
     {\
         for (x=0; x<Width; x++)\
         {\
-            if ( 0 ) \
-            { \
-                if ( n+2 < bitmap.pixels.length )\
-                { \
-                    red = bitmap.pixels[n++]; green = bitmap.pixels[n++]; blue = bitmap.pixels[n++]; \
-                    ctx.fillStyle = 'rgba(' + red + ',' + green + ',' + blue + ',' + RTamplitude + ')';\
-                }\
-                ctx.fillRect(x, y, 1, 1);\
-            } \
-            else \
-            { \
-              image.data[m++] = bitmap.pixels[n++]; image.data[m++] = bitmap.pixels[n++]; image.data[m++] = bitmap.pixels[n++]; image.data[m++] = 255; \
-            }\
+            image.data[m++] = bitmap.pixels[n++]; image.data[m++] = bitmap.pixels[n++]; image.data[m++] = bitmap.pixels[n++]; image.data[m++] = 255; \
         }\
     }\
     ctx.putImageData(image,0,0);\
@@ -757,21 +745,22 @@ function httpGet()\
     else\
         client = new ActiveXObject(\"Microsoft.XMLHTTP\");\
     client.onload = bitmap_handler;\
-    client.open(\"GET\",\"http://127.0.0.1:7778/json/bitmap\");\
+    client.open(\"GET\",\"http://127.0.0.1:7778/api/bitmap\");\
     client.send();\
 }\
 \
 function iguana_poll( )\
 { \
     var y,x,m,red,green,blue; \
-    document.getElementById(\"RTstats\").innerHTML = Date() + ' ' + RTcount + ' ' + RTname + ' amplitude  ' + RTamplitude + '   width ' + RTwidth + '  height ' + RTheight;\
+    document.getElementById(\"RTstats\").innerHTML = RTcount + ' ' + RTname;\
     if ( RTpending == 0 )\
     {\
         httpGet();\
         RTpending++;\
     }\
 } </script><br>");
-    HTML_EMIT("<br><text>Selected coin: <b>");
+    //sprintf(buf,"<br> COIN: <textarea cols=\"8\" rows=\"1\"  name=\"COIN_NAME\"/>name</textarea>");
+    //HTML_EMIT(buf);
     if ( 0 )
     {
         sprintf(formfooter,"\t<input type=\"button\" value=\"%s\" onclick=\"click_%s()\" /></form>","InstantDEX","iguana49_setagent"); HTML_EMIT(formfooter);
@@ -816,6 +805,8 @@ function iguana_poll( )\
             //printf("form.%s button.%s [%s]\n",formname,button,postjson);
             if ( (array2= jarray(&m,item,"fields")) != 0 )
             {
+                //sprintf(buf,"COIN = document.COIN_NAME.value;\n");
+                //sprintf(postjson+strlen(postjson),"/%s/' + %s + '","coin","COIN");
                 for (j=0; j<m; j++)
                 {
                     obj = jitem(array2,j);

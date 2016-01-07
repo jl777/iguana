@@ -119,7 +119,7 @@ void *OS_portable_mapfile(char *fname,long *filesizep,int32_t enablewrite)
 	else fd = open(fname,O_RDONLY);
 	if ( fd < 0 )
 	{
-		printf("map_file: error opening enablewrite.%d %s\n",enablewrite,fname);
+		//printf("map_file: error opening enablewrite.%d %s\n",enablewrite,fname);
         return(0);
 	}
     if ( *filesizep == 0 )
